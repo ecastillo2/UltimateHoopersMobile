@@ -59,6 +59,8 @@
 		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
 	</ItemGroup>
 
+	<!-- Remove these problematic entries -->
+	<!-- 
 	<ItemGroup>
 	  <MauiXaml Remove="Pages\LoginPage.xaml" />
 	</ItemGroup>
@@ -68,6 +70,7 @@
 	    <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
 	  </EmbeddedResource>
 	</ItemGroup>
+	-->
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />

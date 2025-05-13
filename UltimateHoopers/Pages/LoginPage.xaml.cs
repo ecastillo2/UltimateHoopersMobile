@@ -1,4 +1,4 @@
-﻿namespace UltimateHoopers
+﻿namespace UltimateHoopers.Pages
 {
     public partial class LoginPage : ContentPage
     {
