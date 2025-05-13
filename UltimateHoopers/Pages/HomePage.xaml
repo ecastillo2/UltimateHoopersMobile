@@ -45,25 +45,7 @@
                 </Frame.GestureRecognizers>
             </Frame>
 
-            <!-- Hamburger Menu -->
-            <Frame Grid.Column="2"
-                   CornerRadius="25"
-                   HeightRequest="50"
-                   WidthRequest="50"
-                   Padding="0"
-                   BorderColor="{StaticResource BorderColor}"
-                   BackgroundColor="{StaticResource CardBackgroundColor}"
-                   HasShadow="True">
-
-                <Label Text="☰"
-                       HorizontalOptions="Center"
-                       VerticalOptions="Center"
-                       FontSize="24" />
-
-                <Frame.GestureRecognizers>
-                    <TapGestureRecognizer Tapped="OnMenuClicked" />
-                </Frame.GestureRecognizers>
-            </Frame>
+           
         </Grid>
 
         <!-- Content -->
@@ -140,7 +122,7 @@
 
                         <VerticalStackLayout Spacing="10">
                             <Label Text="🏋️" FontSize="32" HorizontalOptions="Start" />
-                            <Label Text="Training" 
+                            <Label Text="Hoopers" 
                                    FontSize="18" 
                                    FontAttributes="Bold"
                                    TextColor="{StaticResource PrimaryTextColor}" />

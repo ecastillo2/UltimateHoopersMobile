@@ -8,7 +8,6 @@ using Microsoft.OpenApi.Models;
 using System;
 using System.IO;
 using System.Reflection;
-using DataLayer;
 using WebAPI.Services;
 using WebAPI.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

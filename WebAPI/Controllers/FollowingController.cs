@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using DataLayer;
 using Domain;
 using Microsoft.AspNetCore.Authorization;
 

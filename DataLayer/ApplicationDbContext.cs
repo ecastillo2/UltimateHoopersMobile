@@ -1,5 +1,4 @@
-﻿// DataLayer/ApplicationDbContext.cs
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Domain;
 
 namespace DataLayer

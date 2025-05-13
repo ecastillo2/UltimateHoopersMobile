@@ -1,7 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using DataLayer.DAL;
-using DataLayer;
-using Domain;
 using Microsoft.AspNetCore.Authorization;
 using System.Net;
 using Order = Domain.Order;

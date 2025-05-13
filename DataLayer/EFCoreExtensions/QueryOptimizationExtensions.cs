@@ -1,5 +1,4 @@
-﻿// File: DataLayer/EFCoreExtensions/QueryOptimizationExtensions.cs
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Caching.Memory;
 using System;

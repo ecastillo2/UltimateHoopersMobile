@@ -1,6 +1,4 @@
-﻿// DataLayer/DependencyInjection.cs
-using DataLayer.DAL;
-using DataLayer.Repositories;
+﻿using DataLayer.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
