@@ -54,6 +54,8 @@ namespace Domain
         /// </summary>
         public string SubId { get; set; }
 
+        public string SignUpDate { get; set; }
+
         /// <summary>
         /// Gets or sets the date of last login
         /// </summary>
