@@ -161,7 +161,7 @@ namespace Messages
         </head>
         <body>
             <h1>Player Number: #{System.Web.HttpUtility.HtmlEncode(user.Profile.PlayerNumber)}</h1>
-            <h1>{System.Web.HttpUtility.HtmlEncode(user.UserName)}, Welcome!</h1>
+            <h1>{System.Web.HttpUtility.HtmlEncode(user.Email)}, Welcome!</h1>
             <p>Welcome to Ultimate Hooper – the home for passionate hoopers like you! We're excited to have you join our community of basketball enthusiasts who love the thrill of pickup games and connecting with other players.</p>
             <p>If you have any questions or need assistance, feel free to reach out to our team at <a href='mailto:support@ultimatehooper.com'>support@ultimatehooper.com</a>. We’re here to help you ball out. See you on the court!</p>
             <p>Stay legendary,<br/>The Ultimate Hooper Team</p>
