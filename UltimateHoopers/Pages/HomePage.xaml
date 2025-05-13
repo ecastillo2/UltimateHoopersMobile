@@ -3,332 +3,45 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="UltimateHoopers.Pages.HomePage"
              Title="Home"
-             BackgroundColor="{DynamicResource PageBackgroundColor}">
+             BackgroundColor="{StaticResource PageBackgroundColor}">
 
-    <Grid RowDefinitions="Auto,*,Auto"
-          Padding="20">
+    <Grid RowDefinitions="Auto,*" Padding="20">
 
-        <!-- Header with Hamburger Menu -->
-        <Grid Grid.Row="0" 
-              ColumnDefinitions="*,Auto,Auto"
-              Margin="0,10,0,20">
+        <!-- Header -->
+        <VerticalStackLayout Grid.Row="0" Margin="0,20,0,20">
+            <Label Text="Ultimate Hoopers" 
+                   FontSize="28" 
+                   FontAttributes="Bold"
+                   TextColor="{StaticResource PrimaryColor}" />
+            <Label Text="Welcome to your basketball hub" 
+                   FontSize="16"
+                   TextColor="{StaticResource SecondaryTextColor}"
+                   Margin="0,5,0,0" />
 
-            <VerticalStackLayout Grid.Column="0">
-                <Label Text="Ultimate Hoopers"
-                       FontSize="28"
-                       FontAttributes="Bold"
-                       TextColor="{DynamicResource PrimaryColor}" />
-
-                <Label Text="Welcome to your basketball hub"
-                       FontSize="16"
-                       TextColor="{DynamicResource SecondaryTextColor}" />
-            </VerticalStackLayout>
-
-            <!-- Profile Icon -->
-            <Frame Grid.Column="1"
-                   CornerRadius="25"
-                   HeightRequest="50"
-                   WidthRequest="50"
-                   Padding="0"
-                   BorderColor="{DynamicResource BorderColor}"
-                   BackgroundColor="{DynamicResource CardBackgroundColor}"
-                   HasShadow="True"
-                   Margin="0,0,10,0">
-
-                <Label Text="👤"
-                       HorizontalOptions="Center"
-                       VerticalOptions="Center"
-                       FontSize="24" />
-
-                <Frame.GestureRecognizers>
-                    <TapGestureRecognizer Tapped="OnProfileClicked" />
-                </Frame.GestureRecognizers>
-            </Frame>
-
-            <!-- Hamburger Menu -->
-            <Frame Grid.Column="2"
-                   CornerRadius="25"
-                   HeightRequest="50"
-                   WidthRequest="50"
-                   Padding="0"
-                   BorderColor="{DynamicResource BorderColor}"
-                   BackgroundColor="{DynamicResource CardBackgroundColor}"
-                   HasShadow="True">
-
-                <Label Text="☰"
-                       HorizontalOptions="Center"
-                       VerticalOptions="Center"
-                       FontSize="24" />
-
-                <Frame.GestureRecognizers>
-                    <TapGestureRecognizer Tapped="OnMenuClicked" />
-                </Frame.GestureRecognizers>
-            </Frame>
-        </Grid>
+            <Button Text="Open Menu" 
+                    Clicked="OnMenuClicked"
+                    BackgroundColor="{StaticResource PrimaryColor}"
+                    TextColor="White"
+                    Margin="0,20,0,0" 
+                    HeightRequest="50"
+                    CornerRadius="25" />
+        </VerticalStackLayout>
 
         <!-- Content -->
         <ScrollView Grid.Row="1">
-            <VerticalStackLayout Spacing="20">
-
-                <!-- Feature Cards -->
-                <Label Text="Features"
+            <VerticalStackLayout>
+                <Label Text="Welcome to the Ultimate Hoopers app!" 
                        FontSize="20"
-                       FontAttributes="Bold"
-                       TextColor="{DynamicResource PrimaryTextColor}"
-                       Margin="0,10,0,5" />
-
-                <Grid ColumnDefinitions="*,*" 
-                      RowDefinitions="Auto,Auto"
-                      ColumnSpacing="15"
-                      RowSpacing="15">
-
-                    <!-- My Stats Card -->
-                    <Frame Grid.Row="0" Grid.Column="0"
-                           BorderColor="{DynamicResource BorderColor}"
-                           BackgroundColor="{DynamicResource CardBackgroundColor}"
-                           CornerRadius="10"
-                           HasShadow="True"
-                           Padding="15">
-
-                        <VerticalStackLayout Spacing="10">
-                            <Label Text="📊" FontSize="32" HorizontalOptions="Start" />
-                            <Label Text="My Stats" 
-                                   FontSize="18" 
-                                   FontAttributes="Bold"
-                                   TextColor="{DynamicResource PrimaryTextColor}" />
-                            <Label Text="Track your performance" 
-                                   FontSize="14"
-                                   TextColor="{DynamicResource SecondaryTextColor}" />
-                        </VerticalStackLayout>
-
-                        <Frame.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnStatsClicked" />
-                        </Frame.GestureRecognizers>
-                    </Frame>
-
-                    <!-- Find Games Card -->
-                    <Frame Grid.Row="0" Grid.Column="1"
-                           BorderColor="{DynamicResource BorderColor}"
-                           BackgroundColor="{DynamicResource CardBackgroundColor}"
-                           CornerRadius="10"
-                           HasShadow="True"
-                           Padding="15">
-
-                        <VerticalStackLayout Spacing="10">
-                            <Label Text="🏀" FontSize="32" HorizontalOptions="Start" />
-                            <Label Text="Find Games" 
-                                   FontSize="18" 
-                                   FontAttributes="Bold"
-                                   TextColor="{DynamicResource PrimaryTextColor}" />
-                            <Label Text="Join local pickup games" 
-                                   FontSize="14"
-                                   TextColor="{DynamicResource SecondaryTextColor}" />
-                        </VerticalStackLayout>
-
-                        <Frame.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnFindGamesClicked" />
-                        </Frame.GestureRecognizers>
-                    </Frame>
-
-                    <!-- Training Card -->
-                    <Frame Grid.Row="1" Grid.Column="0"
-                           BorderColor="{DynamicResource BorderColor}"
-                           BackgroundColor="{DynamicResource CardBackgroundColor}"
-                           CornerRadius="10"
-                           HasShadow="True"
-                           Padding="15">
-
-                        <VerticalStackLayout Spacing="10">
-                            <Label Text="🏋️" FontSize="32" HorizontalOptions="Start" />
-                            <Label Text="Training" 
-                                   FontSize="18" 
-                                   FontAttributes="Bold"
-                                   TextColor="{DynamicResource PrimaryTextColor}" />
-                            <Label Text="Improve your skills" 
-                                   FontSize="14"
-                                   TextColor="{DynamicResource SecondaryTextColor}" />
-                        </VerticalStackLayout>
-
-                        <Frame.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnTrainingClicked" />
-                        </Frame.GestureRecognizers>
-                    </Frame>
-
-                    <!-- Teams Card -->
-                    <Frame Grid.Row="1" Grid.Column="1"
-                           BorderColor="{DynamicResource BorderColor}"
-                           BackgroundColor="{DynamicResource CardBackgroundColor}"
-                           CornerRadius="10"
-                           HasShadow="True"
-                           Padding="15">
-
-                        <VerticalStackLayout Spacing="10">
-                            <Label Text="👥" FontSize="32" HorizontalOptions="Start" />
-                            <Label Text="Teams" 
-                                   FontSize="18" 
-                                   FontAttributes="Bold"
-                                   TextColor="{DynamicResource PrimaryTextColor}" />
-                            <Label Text="Join or create teams" 
-                                   FontSize="14"
-                                   TextColor="{DynamicResource SecondaryTextColor}" />
-                        </VerticalStackLayout>
-
-                        <Frame.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnTeamsClicked" />
-                        </Frame.GestureRecognizers>
-                    </Frame>
-                </Grid>
-
-                <!-- Upcoming Games Section -->
-                <Label Text="Upcoming Games"
-                       FontSize="20"
-                       FontAttributes="Bold"
-                       TextColor="{DynamicResource PrimaryTextColor}"
-                       Margin="0,20,0,5" />
-
-                <!-- Game 1 -->
-                <Frame BorderColor="{DynamicResource BorderColor}"
-                       BackgroundColor="{DynamicResource CardBackgroundColor}"
-                       CornerRadius="10"
-                       HasShadow="True"
-                       Padding="15">
-
-                    <Grid ColumnDefinitions="Auto,*,Auto">
-                        <Label Grid.Column="0"
-                               Text="🏀"
-                               FontSize="32"
-                               VerticalOptions="Center"
-                               Margin="0,0,15,0" />
-
-                        <VerticalStackLayout Grid.Column="1"
-                                             VerticalOptions="Center">
-                            <Label Text="Downtown Court"
-                                   FontSize="18"
-                                   FontAttributes="Bold"
-                                   TextColor="{DynamicResource PrimaryTextColor}" />
-
-                            <Label Text="Saturday, May 17 • 3:00 PM"
-                                   FontSize="14"
-                                   TextColor="{DynamicResource SecondaryTextColor}" />
-
-                            <Label Text="8 players confirmed"
-                                   FontSize="14"
-                                   TextColor="{DynamicResource TertiaryColor}"
-                                   Margin="0,5,0,0" />
-                        </VerticalStackLayout>
-
-                        <Button Grid.Column="2"
-                                Text="Join"
-                                BackgroundColor="{DynamicResource PrimaryColor}"
-                                TextColor="White"
-                                CornerRadius="20"
-                                Padding="15,5"
-                                VerticalOptions="Center" />
-                    </Grid>
-                </Frame>
-
-                <!-- Game 2 -->
-                <Frame BorderColor="{DynamicResource BorderColor}"
-                       BackgroundColor="{DynamicResource CardBackgroundColor}"
-                       CornerRadius="10"
-                       HasShadow="True"
-                       Padding="15">
-
-                    <Grid ColumnDefinitions="Auto,*,Auto">
-                        <Label Grid.Column="0"
-                               Text="🏀"
-                               FontSize="32"
-                               VerticalOptions="Center"
-                               Margin="0,0,15,0" />
-
-                        <VerticalStackLayout Grid.Column="1"
-                                             VerticalOptions="Center">
-                            <Label Text="Westside Gym"
-                                   FontSize="18"
-                                   FontAttributes="Bold"
-                                   TextColor="{DynamicResource PrimaryTextColor}" />
-
-                            <Label Text="Sunday, May 18 • 5:30 PM"
-                                   FontSize="14"
-                                   TextColor="{DynamicResource SecondaryTextColor}" />
-
-                            <Label Text="5 players confirmed"
-                                   FontSize="14"
-                                   TextColor="{DynamicResource TertiaryColor}"
-                                   Margin="0,5,0,0" />
-                        </VerticalStackLayout>
-
-                        <Button Grid.Column="2"
-                                Text="Join"
-                                BackgroundColor="{DynamicResource PrimaryColor}"
-                                TextColor="White"
-                                CornerRadius="20"
-                                Padding="15,5"
-                                VerticalOptions="Center" />
-                    </Grid>
-                </Frame>
+                       HorizontalOptions="Center"
+                       TextColor="{StaticResource PrimaryTextColor}"
+                       Margin="0,50,0,0" />
+                <Label Text="Use the menu button above or swipe from the left edge to open the navigation menu."
+                       Margin="0,20,0,0"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center"
+                       HorizontalTextAlignment="Center" />
             </VerticalStackLayout>
         </ScrollView>
 
-        <!-- Navigation Footer -->
-        <Grid Grid.Row="2"
-              ColumnDefinitions="*,*,*,*"
-              BackgroundColor="{DynamicResource CardBackgroundColor}"
-              HeightRequest="60"
-              Margin="-20,-10,-20,0"
-              Padding="0,5,0,15">
-
-            <VerticalStackLayout Grid.Column="0"
-                                 HorizontalOptions="Center"
-                                 Spacing="2">
-                <Label Text="🏠"
-                       FontSize="20"
-                       HorizontalOptions="Center" />
-                <Label Text="Home"
-                       FontSize="12"
-                       TextColor="{DynamicResource PrimaryColor}"
-                       FontAttributes="Bold"
-                       HorizontalOptions="Center" />
-            </VerticalStackLayout>
-
-            <VerticalStackLayout Grid.Column="1"
-                                 HorizontalOptions="Center"
-                                 Spacing="2"
-                                 Opacity="0.6">
-                <Label Text="🔍"
-                       FontSize="20"
-                       HorizontalOptions="Center" />
-                <Label Text="Explore"
-                       FontSize="12"
-                       TextColor="{DynamicResource SecondaryTextColor}"
-                       HorizontalOptions="Center" />
-            </VerticalStackLayout>
-
-            <VerticalStackLayout Grid.Column="2"
-                                 HorizontalOptions="Center"
-                                 Spacing="2"
-                                 Opacity="0.6">
-                <Label Text="📅"
-                       FontSize="20"
-                       HorizontalOptions="Center" />
-                <Label Text="Schedule"
-                       FontSize="12"
-                       TextColor="{DynamicResource SecondaryTextColor}"
-                       HorizontalOptions="Center" />
-            </VerticalStackLayout>
-
-            <VerticalStackLayout Grid.Column="3"
-                                 HorizontalOptions="Center"
-                                 Spacing="2"
-                                 Opacity="0.6">
-                <Label Text="⚙️"
-                       FontSize="20"
-                       HorizontalOptions="Center" />
-                <Label Text="Settings"
-                       FontSize="12"
-                       TextColor="{DynamicResource SecondaryTextColor}"
-                       HorizontalOptions="Center" />
-            </VerticalStackLayout>
-        </Grid>
     </Grid>
 </ContentPage>

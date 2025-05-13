@@ -4,12 +4,12 @@
        xmlns:pages="clr-namespace:UltimateHoopers.Pages"
        x:Class="UltimateHoopers.AppShell"
        FlyoutBehavior="Flyout"
-       FlyoutBackgroundColor="{DynamicResource CardBackgroundColor}"
+       BackgroundColor="{StaticResource CardBackgroundColor}"
        FlyoutWidth="250">
 
     <!-- Flyout Header -->
     <Shell.FlyoutHeader>
-        <Grid BackgroundColor="{DynamicResource PrimaryColor}"
+        <Grid BackgroundColor="{StaticResource PrimaryColor}"
               HeightRequest="150"
               Padding="20">
             <VerticalStackLayout VerticalOptions="Center">
@@ -26,42 +26,42 @@
     </Shell.FlyoutHeader>
 
     <!-- Flyout Items -->
-    <FlyoutItem Title="Home" Icon="🏠">
+    <FlyoutItem Title="Home" Icon="home.png">
         <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" Route="HomePage" />
     </FlyoutItem>
 
-    <FlyoutItem Title="My Stats" Icon="📊">
+    <FlyoutItem Title="My Stats" Icon="stats.png">
         <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" />
         <!-- Replace with StatsPage once available -->
     </FlyoutItem>
 
-    <FlyoutItem Title="Find Games" Icon="🏀">
+    <FlyoutItem Title="Find Games" Icon="basketball.png">
         <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" />
         <!-- Replace with FindGamesPage once available -->
     </FlyoutItem>
 
-    <FlyoutItem Title="Training" Icon="🏋️">
+    <FlyoutItem Title="Training" Icon="training.png">
         <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" />
         <!-- Replace with TrainingPage once available -->
     </FlyoutItem>
 
-    <FlyoutItem Title="Teams" Icon="👥">
+    <FlyoutItem Title="Teams" Icon="team.png">
         <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" />
         <!-- Replace with TeamsPage once available -->
     </FlyoutItem>
 
-    <FlyoutItem Title="Settings" Icon="⚙️">
+    <FlyoutItem Title="Settings" Icon="settings.png">
         <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" />
         <!-- Replace with SettingsPage once available -->
     </FlyoutItem>
 
     <!-- MenuItems appear at the bottom of the Flyout -->
     <MenuItem Text="Notifications" 
-              IconImageSource="🔔" />
+              IconImageSource="notification.png" />
     <MenuItem Text="Help &amp; Support" 
-              IconImageSource="❓"
+              IconImageSource="help.png"
               Command="{Binding HelpCommand}" />
     <MenuItem Text="Logout" 
-              IconImageSource="🚪"
+              IconImageSource="logout.png"
               Command="{Binding LogoutCommand}" />
 </Shell>

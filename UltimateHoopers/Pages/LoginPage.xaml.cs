@@ -1,4 +1,6 @@
-﻿namespace UltimateHoopers.Pages
+﻿using Microsoft.Maui.Controls;
+
+namespace UltimateHoopers.Pages
 {
     public partial class LoginPage : ContentPage
     {
@@ -40,7 +42,7 @@
             LoginButton.IsEnabled = true;
         }
 
-        private async void OnCreateAccountClicked(object sender, EventArgs e)
+        private async void OnCreateAccountClicked(object sender, TappedEventArgs e)
         {
             // This would navigate to a registration page in a real app
             await DisplayAlert("Registration", "Registration functionality would be implemented here", "OK");

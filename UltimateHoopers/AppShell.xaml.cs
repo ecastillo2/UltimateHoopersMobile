@@ -1,7 +1,10 @@
-﻿using System.Windows.Input;
+﻿using Microsoft.Maui.Controls;
+using System;
+using System.Windows.Input;
 
 namespace UltimateHoopers
 {
+    [XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class AppShell : Shell
     {
         public ICommand HelpCommand { get; private set; }
@@ -41,8 +44,23 @@ namespace UltimateHoopers
             {
                 // Navigate back to LoginPage
                 Application.Current.MainPage = new Pages.LoginPage();
-                await DisplayAlert("Logout", "You have been logged out", "OK");
             }
+        }
+
+        // These methods can be used for tap gesture recognizers in Shell
+        private async void OnHelpTapped(object sender, TappedEventArgs e)
+        {
+            await ShowHelpDialog();
+        }
+
+        private async void OnLogoutTapped(object sender, TappedEventArgs e)
+        {
+            await PerformLogout();
+        }
+
+        private async void OnNotificationsTapped(object sender, TappedEventArgs e)
+        {
+            await DisplayAlert("Notifications", "Notifications feature coming soon!", "OK");
         }
     }
 }

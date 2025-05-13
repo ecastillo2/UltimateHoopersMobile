@@ -48,8 +48,8 @@ namespace UltimateHoopers.Controls
                 VerticalOptions = LayoutOptions.Start,
                 HorizontalOptions = LayoutOptions.End,
                 Margin = new Thickness(0, 70, 20, 0),
-                BorderColor = (Color)Application.Current.Resources["BorderColor"],
-                BackgroundColor = (Color)Application.Current.Resources["CardBackgroundColor"],
+                BorderColor = Colors.LightGray,
+                BackgroundColor = Colors.White,
                 CornerRadius = 10,
                 Padding = 0,
                 HasShadow = true
@@ -63,7 +63,7 @@ namespace UltimateHoopers.Controls
             // Menu Header
             var headerGrid = new Grid
             {
-                BackgroundColor = (Color)Application.Current.Resources["PrimaryColor"],
+                BackgroundColor = Colors.Purple, // Direct color assignment
                 HeightRequest = 60,
                 Padding = new Thickness(15)
             };
@@ -132,7 +132,7 @@ namespace UltimateHoopers.Controls
                 Text = title,
                 FontSize = 16,
                 VerticalOptions = LayoutOptions.Center,
-                TextColor = (Color)Application.Current.Resources["PrimaryTextColor"]
+                TextColor = Colors.DarkGray
             }, 1, 0);
 
             menuItem.Content = grid;
@@ -192,10 +192,8 @@ namespace UltimateHoopers.Controls
             bool answer = await DisplayAlert("Logout", "Are you sure you want to logout?", "Yes", "No");
             if (answer)
             {
-                // TODO: Implement logout functionality
-                await DisplayAlert("Logout", "You have been logged out", "OK");
-                // Navigate to login page
-                // await Shell.Current.GoToAsync("//LoginPage");
+                // Navigate back to login page
+                Application.Current.MainPage = new Pages.LoginPage();
             }
         }
     }

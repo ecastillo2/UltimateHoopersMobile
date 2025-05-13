@@ -1,4 +1,5 @@
 ﻿using Microsoft.Maui.Controls;
+using Microsoft.Maui.Graphics;
 
 namespace UltimateHoopers.Controls
 {
@@ -53,17 +54,17 @@ namespace UltimateHoopers.Controls
             var titleLabel = new Label
             {
                 FontSize = 28,
-                FontAttributes = FontAttributes.Bold
+                FontAttributes = FontAttributes.Bold,
+                TextColor = Colors.Purple // Using direct color instead of resource
             };
             titleLabel.SetBinding(Label.TextProperty, new Binding(nameof(Title), source: this));
-            titleLabel.SetDynamicResource(Label.TextColorProperty, "PrimaryColor");
 
             var subtitleLabel = new Label
             {
-                FontSize = 16
+                FontSize = 16,
+                TextColor = Colors.Gray // Using direct color instead of resource
             };
             subtitleLabel.SetBinding(Label.TextProperty, new Binding(nameof(Subtitle), source: this));
-            subtitleLabel.SetDynamicResource(Label.TextColorProperty, "SecondaryTextColor");
 
             titleStack.Add(titleLabel);
             titleStack.Add(subtitleLabel);
@@ -78,10 +79,10 @@ namespace UltimateHoopers.Controls
                 WidthRequest = 50,
                 Padding = 0,
                 HasShadow = true,
-                Margin = new Thickness(0, 0, 10, 0)
+                Margin = new Thickness(0, 0, 10, 0),
+                BorderColor = Colors.LightGray, // Using direct color instead of resource
+                BackgroundColor = Colors.White // Using direct color instead of resource
             };
-            profileFrame.SetDynamicResource(Frame.BorderColorProperty, "BorderColor");
-            profileFrame.SetDynamicResource(Frame.BackgroundColorProperty, "CardBackgroundColor");
 
             var profileLabel = new Label
             {
@@ -106,10 +107,10 @@ namespace UltimateHoopers.Controls
                 HeightRequest = 50,
                 WidthRequest = 50,
                 Padding = 0,
-                HasShadow = true
+                HasShadow = true,
+                BorderColor = Colors.LightGray, // Using direct color instead of resource
+                BackgroundColor = Colors.White // Using direct color instead of resource
             };
-            menuFrame.SetDynamicResource(Frame.BorderColorProperty, "BorderColor");
-            menuFrame.SetDynamicResource(Frame.BackgroundColorProperty, "CardBackgroundColor");
 
             var menuLabel = new Label
             {
