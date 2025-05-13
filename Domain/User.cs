@@ -39,6 +39,8 @@ namespace Domain
         [Required]
         public string PasswordHash { get; set; }
 
+        public string Password { get; set; }
+
         /// <summary>
         /// Gets or sets the access level (e.g., Admin, Staff, Standard)
         /// </summary>

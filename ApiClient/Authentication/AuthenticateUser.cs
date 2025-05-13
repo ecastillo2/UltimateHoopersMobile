@@ -1,116 +1,93 @@
 ﻿using Domain;
-using Newtonsoft.Json;
-using System.Net.Http.Headers;
+using System;
+using System.Net.Http;
 using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
-namespace ApiClient
+namespace ApiClient.Authentication
 {
-    /// <summary>
-    /// Authenticate User
-    /// </summary>
-    public static class AuthenticateUser
+    public class AuthenticateUser : IAuthenticateUser
     {
-        static WebApi _api = new WebApi();
+        private readonly HttpClient _httpClient;
+        private readonly IConfiguration _configuration;
+        private readonly ILogger<AuthenticateUser> _logger;
+        private readonly string _baseUrl;
 
-        /// <summary>
-        /// Authenticate Users
-        /// </summary>
-        /// <param name="Email"></param>
-        /// <param name="Username"></param>
-        /// <param name="Password"></param>
-        /// <returns></returns>
-        public static async Task<User> AuthenticateUsers(string AuthToken, string Email, string Username, string Password)
+        public AuthenticateUser(
+            HttpClient httpClient,
+            IConfiguration configuration,
+            ILogger<AuthenticateUser> logger)
         {
-            User user = new User();
-
-            var values = new User();
-            values.AuthToken = AuthToken;
-            values.Email = Email;
-            values.Password = Password;
-
-            var jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(values);
-
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
-            {
-
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                try
-                {
-                    HttpContent content = new StringContent(jsonString, Encoding.UTF8, "application/json");
-
-                    var response = await client.PostAsync("api/Authentication/Authenticate", content);
-
-                    var responseString = await response.Content.ReadAsStringAsync();
-                    string responseUri = response.RequestMessage.RequestUri.ToString();
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        user = JsonConvert.DeserializeObject<User>(responseString.ToString());
-                    }
-                }
-
-                catch (Exception ex)
-                {
-                    var x = ex;
-                }
-
-            }
-
-            return user;
+            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _baseUrl = _configuration["ApiSettings:BaseUrl"] ?? "https://api.undergroundhoopers.com";
         }
 
-
-        /// <summary>
-        /// Authenticate Users
-        /// </summary>
-        /// <param name="Email"></param>
-        /// <param name="Username"></param>
-        /// <param name="Password"></param>
-        /// <returns></returns>
-        public static async Task<PrivateRun> AuthenticatePrivateRun(string PrivateRunNumber,  string Password)
+        public async Task<User> AuthenticateAsync(string email, string password)
         {
-            PrivateRun user = new PrivateRun();
-
-            var values = new PrivateRun();
-            values.PrivateRunNumber = PrivateRunNumber;
-            values.Password = Password;
-
-            var jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(values);
-
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
+            try
             {
-
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                try
+                // Prepare login request payload
+                var loginRequest = new
                 {
-                    HttpContent content = new StringContent(jsonString, Encoding.UTF8, "application/json");
+                    Email = email,
+                    Password = password // Sending password as parameter, not trying to access user.Password
+                };
 
-                    var response = await client.PostAsync("api/Authentication/SocialMediaPrivateRunAuthenticate", content);
+                var content = new StringContent(
+                    JsonSerializer.Serialize(loginRequest),
+                    Encoding.UTF8,
+                    "application/json");
 
-                    var responseString = await response.Content.ReadAsStringAsync();
-                    string responseUri = response.RequestMessage.RequestUri.ToString();
+                // Send login request to the API
+                var response = await _httpClient.PostAsync($"{_baseUrl}/api/Auth/login", content);
 
-                    if (response.IsSuccessStatusCode)
-                    {
-                        user = JsonConvert.DeserializeObject<PrivateRun>(responseString.ToString());
-                    }
+                // Check for successful response
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("Authentication failed for email: {Email}, Status code: {StatusCode}",
+                        email, response.StatusCode);
+                    return null;
                 }
 
-                catch (Exception ex)
+                // Read and parse the response
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions
                 {
-                    var x = ex;
-                }
+                    PropertyNameCaseInsensitive = true
+                };
 
+                var authResult = JsonSerializer.Deserialize<AuthResult>(responseContent, options);
+
+                // Create a user object with the authentication result
+                var authenticatedUser = new User
+                {
+                    UserId = authResult.UserId,
+                    Email = email,
+                    Token = authResult.Token,
+                    AccessLevel = authResult.AccessLevel
+                };
+
+                return authenticatedUser;
             }
-
-            return user;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during authentication for email: {Email}", email);
+                return null;
+            }
         }
 
+        // Simple class to deserialize authentication result
+        private class AuthResult
+        {
+            public string UserId { get; set; }
+            public string Token { get; set; }
+            public string AccessLevel { get; set; }
+            public DateTime? ExpiresAt { get; set; }
+        }
     }
 }
