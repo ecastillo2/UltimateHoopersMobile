@@ -55,14 +55,14 @@ namespace UltimateHoopers.Controls
             {
                 FontSize = 28,
                 FontAttributes = FontAttributes.Bold,
-                TextColor = Colors.Purple // Using direct color instead of resource
+                TextColor = Colors.Purple
             };
             titleLabel.SetBinding(Label.TextProperty, new Binding(nameof(Title), source: this));
 
             var subtitleLabel = new Label
             {
                 FontSize = 16,
-                TextColor = Colors.Gray // Using direct color instead of resource
+                TextColor = Colors.Gray
             };
             subtitleLabel.SetBinding(Label.TextProperty, new Binding(nameof(Subtitle), source: this));
 
@@ -80,8 +80,8 @@ namespace UltimateHoopers.Controls
                 Padding = 0,
                 HasShadow = true,
                 Margin = new Thickness(0, 0, 10, 0),
-                BorderColor = Colors.LightGray, // Using direct color instead of resource
-                BackgroundColor = Colors.White // Using direct color instead of resource
+                BorderColor = Colors.LightGray,
+                BackgroundColor = Colors.White
             };
 
             var profileLabel = new Label
@@ -94,8 +94,9 @@ namespace UltimateHoopers.Controls
 
             profileFrame.Content = profileLabel;
 
+            // IMPORTANT: Create tap gesture recognizer with explicit handler
             var profileTap = new TapGestureRecognizer();
-            profileTap.Tapped += (sender, args) => ProfileClicked?.Invoke(this, EventArgs.Empty);
+            profileTap.Tapped += OnProfileTapped;
             profileFrame.GestureRecognizers.Add(profileTap);
 
             grid.Add(profileFrame, 1, 0);
@@ -108,8 +109,8 @@ namespace UltimateHoopers.Controls
                 WidthRequest = 50,
                 Padding = 0,
                 HasShadow = true,
-                BorderColor = Colors.LightGray, // Using direct color instead of resource
-                BackgroundColor = Colors.White // Using direct color instead of resource
+                BorderColor = Colors.LightGray,
+                BackgroundColor = Colors.White
             };
 
             var menuLabel = new Label
@@ -122,14 +123,26 @@ namespace UltimateHoopers.Controls
 
             menuFrame.Content = menuLabel;
 
+            // IMPORTANT: Create tap gesture recognizer with explicit handler
             var menuTap = new TapGestureRecognizer();
-            menuTap.Tapped += (sender, args) => MenuClicked?.Invoke(this, EventArgs.Empty);
+            menuTap.Tapped += OnMenuTapped;
             menuFrame.GestureRecognizers.Add(menuTap);
 
             grid.Add(menuFrame, 2, 0);
 
             // Set the content
             Content = grid;
+        }
+
+        // EXPLICIT handlers for tap gestures
+        private void OnMenuTapped(object sender, TappedEventArgs e)
+        {
+            MenuClicked?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void OnProfileTapped(object sender, TappedEventArgs e)
+        {
+            ProfileClicked?.Invoke(this, EventArgs.Empty);
         }
     }
 }

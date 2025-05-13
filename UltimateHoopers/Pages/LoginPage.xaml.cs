@@ -1,4 +1,6 @@
 ﻿using Microsoft.Maui.Controls;
+using System;
+using System.Threading.Tasks;
 
 namespace UltimateHoopers.Pages
 {
@@ -9,11 +11,10 @@ namespace UltimateHoopers.Pages
             InitializeComponent();
         }
 
+        // IMPORTANT: Button click event uses EventArgs (NOT TappedEventArgs)
         private async void OnLoginClicked(object sender, EventArgs e)
         {
-            // TODO: Add actual authentication logic here
-
-            // For now, we'll just validate that fields are not empty
+            // Validation logic
             if (string.IsNullOrWhiteSpace(UsernameEntry.Text))
             {
                 await DisplayAlert("Error", "Please enter a username", "OK");
@@ -26,25 +27,26 @@ namespace UltimateHoopers.Pages
                 return;
             }
 
-            // Simulate authentication with a brief delay
+            // Simulate login process
             LoginButton.IsEnabled = false;
             LoginButton.Text = "Signing in...";
 
             await Task.Delay(1000);
 
-            // Set the main page to AppShell instead of navigating within the current shell
+            // Set the main page to AppShell
             Application.Current.MainPage = new AppShell();
 
-            // Reset the login form
+            // Reset form
             UsernameEntry.Text = string.Empty;
             PasswordEntry.Text = string.Empty;
             LoginButton.Text = "Sign In";
             LoginButton.IsEnabled = true;
         }
 
-        private async void OnCreateAccountClicked(object sender, TappedEventArgs e)
+        // IMPORTANT: Button click event uses EventArgs (NOT TappedEventArgs)
+        // The XAML is using Clicked="OnCreateAccountClicked" for a Button
+        private async void OnCreateAccountClicked(object sender, EventArgs e)
         {
-            // This would navigate to a registration page in a real app
             await DisplayAlert("Registration", "Registration functionality would be implemented here", "OK");
         }
     }

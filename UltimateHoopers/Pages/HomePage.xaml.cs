@@ -1,11 +1,7 @@
-﻿// HomePage.xaml.cs
-using System;
-using Microsoft.Maui.Controls;
-using Microsoft.Maui.Controls.Xaml;
+﻿using Microsoft.Maui.Controls;
 
 namespace UltimateHoopers.Pages
 {
-    [XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class HomePage : ContentPage
     {
         public HomePage()
@@ -13,34 +9,34 @@ namespace UltimateHoopers.Pages
             InitializeComponent();
         }
 
-        private async void OnStatsClicked(object sender, EventArgs e)
+        // CORRECT HANDLERS FOR TAP GESTURE RECOGNIZERS
+        private async void OnStatsClicked(object sender, TappedEventArgs e)
         {
             await DisplayAlert("Stats", "Stats feature coming soon!", "OK");
         }
 
-        private async void OnFindGamesClicked(object sender, EventArgs e)
+        private async void OnFindGamesClicked(object sender, TappedEventArgs e)
         {
             await DisplayAlert("Find Games", "Find Games feature coming soon!", "OK");
         }
 
-        private async void OnTrainingClicked(object sender, EventArgs e)
+        private async void OnTrainingClicked(object sender, TappedEventArgs e)
         {
             await DisplayAlert("Training", "Training feature coming soon!", "OK");
         }
 
-        private async void OnTeamsClicked(object sender, EventArgs e)
+        private async void OnTeamsClicked(object sender, TappedEventArgs e)
         {
             await DisplayAlert("Teams", "Teams feature coming soon!", "OK");
         }
 
-        private async void OnProfileClicked(object sender, EventArgs e)
+        private async void OnProfileClicked(object sender, TappedEventArgs e)
         {
             await DisplayAlert("Profile", "Profile feature coming soon!", "OK");
         }
 
-        private void OnMenuClicked(object sender, EventArgs e)
+        private void OnMenuClicked(object sender, TappedEventArgs e)
         {
-            // Use Shell's flyout menu instead of custom menu popup
             Shell.Current.FlyoutIsPresented = true;
         }
     }

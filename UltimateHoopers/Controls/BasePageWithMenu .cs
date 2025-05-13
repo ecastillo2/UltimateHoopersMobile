@@ -1,4 +1,5 @@
 ﻿using Microsoft.Maui.Controls;
+using System;
 
 namespace UltimateHoopers.Controls
 {
@@ -23,8 +24,6 @@ namespace UltimateHoopers.Controls
                 HasShadow = false
             };
 
-            // Set Grid.Row and Grid.RowSpan in the page that uses this base class
-
             var grid = new Grid();
 
             // Semi-transparent background
@@ -34,9 +33,10 @@ namespace UltimateHoopers.Controls
                 Opacity = 0.5
             };
 
-            var tapGestureRecognizer = new TapGestureRecognizer();
-            tapGestureRecognizer.Tapped += OnCloseMenu;
-            overlay.GestureRecognizers.Add(tapGestureRecognizer);
+            // IMPORTANT: Use proper TappedEventArgs handler
+            var overlayTapGesture = new TapGestureRecognizer();
+            overlayTapGesture.Tapped += OverlayTapped;
+            overlay.GestureRecognizers.Add(overlayTapGesture);
 
             grid.Add(overlay);
 
@@ -55,15 +55,12 @@ namespace UltimateHoopers.Controls
                 HasShadow = true
             };
 
-            var menuStack = new VerticalStackLayout
-            {
-                Spacing = 0
-            };
+            var menuStack = new VerticalStackLayout { Spacing = 0 };
 
             // Menu Header
             var headerGrid = new Grid
             {
-                BackgroundColor = Colors.Purple, // Direct color assignment
+                BackgroundColor = Colors.Purple,
                 HeightRequest = 60,
                 Padding = new Thickness(15)
             };
@@ -80,18 +77,14 @@ namespace UltimateHoopers.Controls
             menuStack.Add(headerGrid);
 
             // Menu Items Stack
-            var menuItemsStack = new VerticalStackLayout
-            {
-                Padding = 0,
-                Spacing = 0
-            };
+            var menuItemsStack = new VerticalStackLayout { Padding = 0, Spacing = 0 };
 
-            // Add common menu items
-            menuItemsStack.Add(CreateMenuItem("👤", "My Profile", OnProfileMenuItemClicked));
-            menuItemsStack.Add(CreateMenuItem("⚙️", "Settings", OnSettingsMenuItemClicked));
-            menuItemsStack.Add(CreateMenuItem("🔔", "Notifications", OnNotificationsMenuItemClicked));
-            menuItemsStack.Add(CreateMenuItem("❓", "Help & Support", OnHelpMenuItemClicked));
-            menuItemsStack.Add(CreateMenuItem("🚪", "Logout", OnLogoutMenuItemClicked));
+            // Add menu items with EXPLICIT TappedEventArgs handlers
+            menuItemsStack.Add(CreateMenuItem("👤", "My Profile", ProfileItemTapped));
+            menuItemsStack.Add(CreateMenuItem("⚙️", "Settings", SettingsItemTapped));
+            menuItemsStack.Add(CreateMenuItem("🔔", "Notifications", NotificationsItemTapped));
+            menuItemsStack.Add(CreateMenuItem("❓", "Help & Support", HelpItemTapped));
+            menuItemsStack.Add(CreateMenuItem("🚪", "Logout", LogoutItemTapped));
 
             menuStack.Add(menuItemsStack);
             menuPanel.Content = menuStack;
@@ -100,7 +93,8 @@ namespace UltimateHoopers.Controls
             MenuPopup.Content = grid;
         }
 
-        private Frame CreateMenuItem(string icon, string title, EventHandler tappedHandler)
+        // This method now EXPLICITLY accepts TappedEventArgs and returns a Frame
+        private Frame CreateMenuItem(string icon, string title, EventHandler<TappedEventArgs> tappedHandler)
         {
             var menuItem = new Frame
             {
@@ -144,48 +138,42 @@ namespace UltimateHoopers.Controls
             return menuItem;
         }
 
-        // Menu handlers
-        protected void OnMenuClicked(object sender, EventArgs e)
-        {
-            if (MenuPopup != null)
-                MenuPopup.IsVisible = true;
-        }
-
-        protected void OnCloseMenu(object sender, EventArgs e)
+        // HANDLERS WITH PROPER TappedEventArgs
+        private void OverlayTapped(object sender, TappedEventArgs e)
         {
             if (MenuPopup != null)
                 MenuPopup.IsVisible = false;
         }
 
-        protected virtual async void OnProfileMenuItemClicked(object sender, EventArgs e)
+        private async void ProfileItemTapped(object sender, TappedEventArgs e)
         {
             if (MenuPopup != null)
                 MenuPopup.IsVisible = false;
             await DisplayAlert("Profile", "Profile page coming soon!", "OK");
         }
 
-        protected virtual async void OnSettingsMenuItemClicked(object sender, EventArgs e)
+        private async void SettingsItemTapped(object sender, TappedEventArgs e)
         {
             if (MenuPopup != null)
                 MenuPopup.IsVisible = false;
             await DisplayAlert("Settings", "Settings page coming soon!", "OK");
         }
 
-        protected virtual async void OnNotificationsMenuItemClicked(object sender, EventArgs e)
+        private async void NotificationsItemTapped(object sender, TappedEventArgs e)
         {
             if (MenuPopup != null)
                 MenuPopup.IsVisible = false;
             await DisplayAlert("Notifications", "Notifications page coming soon!", "OK");
         }
 
-        protected virtual async void OnHelpMenuItemClicked(object sender, EventArgs e)
+        private async void HelpItemTapped(object sender, TappedEventArgs e)
         {
             if (MenuPopup != null)
                 MenuPopup.IsVisible = false;
             await DisplayAlert("Help & Support", "Help & Support page coming soon!", "OK");
         }
 
-        protected virtual async void OnLogoutMenuItemClicked(object sender, EventArgs e)
+        private async void LogoutItemTapped(object sender, TappedEventArgs e)
         {
             if (MenuPopup != null)
                 MenuPopup.IsVisible = false;
@@ -195,6 +183,20 @@ namespace UltimateHoopers.Controls
                 // Navigate back to login page
                 Application.Current.MainPage = new Pages.LoginPage();
             }
+        }
+
+        // PUBLIC METHODS FOR XAML TO CALL
+        // These convert EventArgs to TappedEventArgs internally as needed
+        protected void OnMenuClicked(object sender, EventArgs e)
+        {
+            if (MenuPopup != null)
+                MenuPopup.IsVisible = true;
+        }
+
+        protected void OnMenuButtonTapped(object sender, TappedEventArgs e)
+        {
+            if (MenuPopup != null)
+                MenuPopup.IsVisible = true;
         }
     }
 }
