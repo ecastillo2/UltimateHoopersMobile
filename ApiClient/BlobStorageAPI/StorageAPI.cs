@@ -11,6 +11,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using SkiaSharp;
 using static System.Net.Mime.MediaTypeNames;
+using Domain;
 
 namespace ApiClient
 {
