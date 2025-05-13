@@ -30,8 +30,8 @@
 
             await Task.Delay(1000);
 
-            // Navigate to the home page
-            await Shell.Current.GoToAsync("///HomePage");
+            // Set the main page to AppShell instead of navigating within the current shell
+            Application.Current.MainPage = new AppShell();
 
             // Reset the login form
             UsernameEntry.Text = string.Empty;

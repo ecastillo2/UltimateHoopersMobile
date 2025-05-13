@@ -25,8 +25,7 @@ namespace UltimateHoopers
         private void RegisterRoutes()
         {
             // Register routes for navigation
-            // This allows you to navigate using Shell.Current.GoToAsync("//route")
-            // Routing.RegisterRoute("statspage", typeof(Pages.StatsPage));
+            Routing.RegisterRoute("homepage", typeof(Pages.HomePage));
             // Add additional routes as you create more pages
         }
 
@@ -40,10 +39,9 @@ namespace UltimateHoopers
             bool answer = await DisplayAlert("Logout", "Are you sure you want to logout?", "Yes", "No");
             if (answer)
             {
-                // TODO: Implement logout functionality
+                // Navigate back to LoginPage
+                Application.Current.MainPage = new Pages.LoginPage();
                 await DisplayAlert("Logout", "You have been logged out", "OK");
-                // Navigate to login page
-                // await Shell.Current.GoToAsync("//LoginPage");
             }
         }
     }

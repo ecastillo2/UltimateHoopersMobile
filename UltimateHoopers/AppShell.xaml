@@ -27,7 +27,7 @@
 
     <!-- Flyout Items -->
     <FlyoutItem Title="Home" Icon="🏠">
-        <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" />
+        <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" Route="HomePage" />
     </FlyoutItem>
 
     <FlyoutItem Title="My Stats" Icon="📊">
@@ -50,13 +50,16 @@
         <!-- Replace with TeamsPage once available -->
     </FlyoutItem>
 
-    <ShellContent Title="Settings" Icon="⚙️">
+    <FlyoutItem Title="Settings" Icon="⚙️">
         <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" />
         <!-- Replace with SettingsPage once available -->
-    </ShellContent>
+    </FlyoutItem>
 
     <!-- MenuItems appear at the bottom of the Flyout -->
     <Shell.MenuItems>
+        <MenuItem Text="Notifications" 
+                  IconImageSource="🔔"
+                  Command="{Binding NotificationsCommand}" />
         <MenuItem Text="Help &amp; Support" 
                   IconImageSource="❓"
                   Command="{Binding HelpCommand}" />

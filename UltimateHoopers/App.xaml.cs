@@ -8,9 +8,8 @@ namespace UltimateHoopers
         {
             InitializeComponent();
 
-            MainPage = new AppShell();
+            // Start with LoginPage instead of AppShell
+            MainPage = new Pages.LoginPage();
         }
-
-       
     }
 }
