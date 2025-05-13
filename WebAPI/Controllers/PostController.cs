@@ -1,315 +1,320 @@
-﻿// File: WebAPI/Controllers/PostControllerImproved.cs
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using DataLayer.DAL;
-using Domain;
-using DataLayer.EFCoreExtensions;
-using WebAPI.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using WebAPI.DTOs;
+using WebAPI.Services;
 
 namespace WebAPI.Controllers
 {
     /// <summary>
-    /// Controller for managing posts
+    /// Controller for post operations
     /// </summary>
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     public class PostController : ControllerBase
     {
-        private readonly IPostRepository _postRepository;
+        private readonly IPostService _postService;
+        private readonly IProfileService _profileService;
+        private readonly IStorageService _storageService;
+        private readonly Common.Services.IFileProcessorService _fileProcessor;
         private readonly ILogger<PostController> _logger;
 
-        /// <summary>
-        /// Constructor with dependency injection
-        /// </summary>
         public PostController(
-            IPostRepository postRepository,
+            IPostService postService,
+            IProfileService profileService,
+            IStorageService storageService,
+            Common.Services.IFileProcessorService fileProcessor,
             ILogger<PostController> logger)
         {
-            _postRepository = postRepository ?? throw new ArgumentNullException(nameof(postRepository));
+            _postService = postService ?? throw new ArgumentNullException(nameof(postService));
+            _profileService = profileService ?? throw new ArgumentNullException(nameof(profileService));
+            _storageService = storageService ?? throw new ArgumentNullException(nameof(storageService));
+            _fileProcessor = fileProcessor ?? throw new ArgumentNullException(nameof(fileProcessor));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         /// <summary>
-        /// Get all posts with pagination and filtering
+        /// Get paginated posts
         /// </summary>
-        /// <param name="timeZone">Timezone for calculating relative times</param>
         /// <param name="page">Page number (1-based)</param>
-        /// <param name="pageSize">Number of posts per page</param>
-        /// <param name="status">Filter by status (optional)</param>
-        /// <returns>List of posts</returns>
+        /// <param name="pageSize">Number of items per page</param>
+        /// <param name="timeZone">User's timezone for relative time calculation</param>
+        /// <returns>Paginated list of posts</returns>
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PagedResult<Post>))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [ResponseCache(Duration = 60, VaryByQueryKeys = new[] { "timeZone", "page", "pageSize", "status" })]
+        [ProducesResponseType(typeof(PagedResultDto<PostDto>), 200)]
+        [ProducesResponseType(typeof(ErrorDto), 500)]
         public async Task<IActionResult> GetPosts(
-            [FromQuery] string timeZone = "UTC",
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10,
-            [FromQuery] string status = null)
+            [FromQuery] string timeZone = "UTC")
         {
             try
             {
-                _logger.LogInformation(
-                    "Getting posts (Page: {Page}, PageSize: {PageSize}, Status: {Status})",
-                    page, pageSize, status ?? "All");
+                var result = await _postService.GetPostsAsync(page, pageSize, timeZone);
 
-                // Get posts with pagination and optional filtering
-                var posts = await _postRepository.GetPostsPagedAsync(timeZone, page, pageSize, status);
+                // Get profile ID from claim if authenticated
+                var profileId = User.FindFirst("ProfileId")?.Value;
 
-                return Ok(posts);
+                // Check saved and liked status for each post if user is authenticated
+                if (!string.IsNullOrEmpty(profileId))
+                {
+                    var savedPosts = await _postService.GetSavedPostsByProfileIdAsync(profileId);
+                    var likedPosts = await _postService.GetLikedPostsByProfileIdAsync(profileId);
+
+                    foreach (var post in result.Items)
+                    {
+                        post.IsSaved = savedPosts.Any(sp => sp.PostId == post.PostId);
+                        post.IsLiked = likedPosts.Any(lp => lp.PostId == post.PostId);
+                    }
+                }
+
+                return Ok(new PagedResultDto<PostDto>
+                {
+                    Items = result.Items.Select(MapToPostDto).ToList(),
+                    Page = result.Page,
+                    PageSize = result.PageSize,
+                    TotalCount = result.TotalCount,
+                    TotalPages = result.TotalPages,
+                    HasPreviousPage = result.HasPreviousPage,
+                    HasNextPage = result.HasNextPage
+                });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error retrieving posts");
-                return StatusCode(StatusCodes.Status500InternalServerError,
-                    new { message = "An error occurred while retrieving posts" });
+                return StatusCode(500, new ErrorDto { Message = "An error occurred while retrieving posts" });
             }
         }
 
         /// <summary>
-        /// Get post by ID
+        /// Get a specific post by ID
         /// </summary>
         /// <param name="id">Post ID</param>
-        /// <param name="timeZone">Timezone for calculating relative times</param>
+        /// <param name="timeZone">User's timezone for relative time calculation</param>
         /// <returns>Post details</returns>
         [HttpGet("{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Post))]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [ResponseCache(Duration = 30, VaryByQueryKeys = new[] { "timeZone" })]
+        [ProducesResponseType(typeof(PostDetailDto), 200)]
+        [ProducesResponseType(typeof(ErrorDto), 404)]
+        [ProducesResponseType(typeof(ErrorDto), 500)]
         public async Task<IActionResult> GetPost(string id, [FromQuery] string timeZone = "UTC")
         {
-            if (string.IsNullOrEmpty(id))
-            {
-                return BadRequest("Post ID is required");
-            }
-
             try
             {
-                _logger.LogInformation("Getting post with ID: {PostId}", id);
-
-                var post = await _postRepository.GetPostById(id, timeZone);
-
+                var post = await _postService.GetPostByIdAsync(id, timeZone);
                 if (post == null)
                 {
-                    return NotFound();
+                    return NotFound(new ErrorDto { Message = "Post not found" });
                 }
 
-                return Ok(post);
+                // Get profile ID from claim if authenticated
+                var profileId = User.FindFirst("ProfileId")?.Value;
+
+                // Check saved and liked status if user is authenticated
+                if (!string.IsNullOrEmpty(profileId))
+                {
+                    var isSaved = await _postService.IsPostSavedByProfileAsync(id, profileId);
+                    var isLiked = await _postService.IsPostLikedByProfileAsync(id, profileId);
+
+                    post.SavedPost = isSaved;
+                    post.LikedPost = isLiked;
+                }
+
+                return Ok(MapToPostDetailDto(post));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving post with ID: {PostId}", id);
-                return StatusCode(StatusCodes.Status500InternalServerError,
-                    new { message = "An error occurred while retrieving the post" });
+                _logger.LogError(ex, "Error retrieving post: {PostId}", id);
+                return StatusCode(500, new ErrorDto { Message = "An error occurred while retrieving the post" });
             }
         }
 
         /// <summary>
         /// Create a new post
         /// </summary>
-        /// <param name="model">Post data</param>
-        /// <returns>Created post details</returns>
+        /// <returns>Created post</returns>
         [HttpPost]
         [Authorize]
-        [ProducesResponseType(StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> CreatePost([FromBody] PostCreateModel model)
+        [ProducesResponseType(typeof(PostDetailDto), 201)]
+        [ProducesResponseType(typeof(ErrorDto), 400)]
+        [ProducesResponseType(typeof(ErrorDto), 500)]
+        public async Task<IActionResult> CreatePost([FromForm] CreatePostRequestDto request)
         {
-            if (model == null)
-            {
-                return BadRequest("Post data is required");
-            }
-
-            // Validate model
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(new ErrorDto
+                {
+                    Message = "Invalid request",
+                    Errors = ModelState.Values
+                        .SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                        .ToList()
+                });
+            }
+
+            // Get user ID and profile ID from claims
+            var userId = User.FindFirst("UserId")?.Value;
+            var profileId = User.FindFirst("ProfileId")?.Value;
+
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(profileId))
+            {
+                return BadRequest(new ErrorDto { Message = "User or profile ID not found in token" });
             }
 
             try
             {
-                // Get user ID from claims
-                var userId = User.FindFirst("UserId")?.Value;
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return Unauthorized("User ID not found in token");
-                }
-
-                // Create new post
+                // Create post object
                 var post = new Post
                 {
                     PostId = Guid.NewGuid().ToString(),
                     UserId = userId,
-                    ProfileId = model.ProfileId,
-                    Caption = model.Caption,
-                    PostText = model.PostText,
-                    Type = model.Type,
-                    PostType = model.PostType,
-                    Title = model.Title,
-                    Category = model.Category,
-                    Mention = model.Mention,
+                    ProfileId = profileId,
+                    Caption = request.Caption,
+                    PostText = request.PostText,
+                    Type = request.File != null ? _fileProcessor.CheckFileType(request.File) : "text",
                     Status = "Active",
-                    Likes = 0,
-                    DisLikes = 0,
-                    Hearted = 0,
-                    Views = 0
+                    PostType = request.PostType ?? "User",
+                    Title = request.Title,
+                    Category = request.Category,
+                    Mention = request.Mention,
+                    PostedDate = DateTime.UtcNow.ToString("o")
                 };
 
-                _logger.LogInformation("Creating new post for user: {UserId}", userId);
+                // Process file if uploaded
+                if (request.File != null && request.File.Length > 0)
+                {
+                    var fileType = _fileProcessor.CheckFileType(request.File);
+                    if (fileType == "image" || fileType == "video")
+                    {
+                        // Process file based on type
+                        if (fileType == "image")
+                        {
+                            // Convert image to WebP format
+                            var webpBytes = await _fileProcessor.ConvertToWebPAsync(fileType, request.File);
+                            var blobUrl = await _storageService.UploadFileAsync(webpBytes, $"{post.PostId}.webp", "postfile");
+                            post.PostFileURL = blobUrl;
+                        }
+                        else if (fileType == "video")
+                        {
+                            // Upload video (conversion will be handled by the storage service)
+                            var videoStream = request.File.OpenReadStream();
+                            var blobUrl = await _storageService.UploadFileAsync(
+                                videoStream,
+                                $"{post.PostId}.mp4",
+                                "postfile");
+                            post.PostFileURL = blobUrl;
 
-                await _postRepository.InsertPost(post);
+                            // Generate thumbnail
+                            var thumbnailUrl = await _storageService.GenerateVideoThumbnailAsync(
+                                request.File,
+                                $"{post.PostId}.png",
+                                "postthumbnail");
+                            post.ThumbnailUrl = thumbnailUrl;
+                        }
+                    }
+                    else
+                    {
+                        return BadRequest(new ErrorDto { Message = fileType }); // Return error message from file type check
+                    }
+                }
 
-                // Return created post
-                return CreatedAtAction(nameof(GetPost), new { id = post.PostId }, post);
+                // Create post
+                var createdPost = await _postService.CreatePostAsync(post);
+
+                // Generate post detail DTO
+                var postDetail = MapToPostDetailDto(createdPost);
+
+                return CreatedAtAction(nameof(GetPost), new { id = post.PostId }, postDetail);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating post");
-                return StatusCode(StatusCodes.Status500InternalServerError,
-                    new { message = "An error occurred while creating the post" });
+                return StatusCode(500, new ErrorDto { Message = "An error occurred while creating the post" });
             }
         }
 
         /// <summary>
-        /// Update an existing post
+        /// Update a post
         /// </summary>
         /// <param name="id">Post ID</param>
-        /// <param name="model">Updated post data</param>
-        /// <returns>No content if successful</returns>
+        /// <param name="request">Updated post data</param>
+        /// <returns>Updated post</returns>
         [HttpPut("{id}")]
         [Authorize]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdatePost(string id, [FromBody] PostUpdateModel model)
+        [ProducesResponseType(typeof(PostDetailDto), 200)]
+        [ProducesResponseType(typeof(ErrorDto), 400)]
+        [ProducesResponseType(typeof(ErrorDto), 403)]
+        [ProducesResponseType(typeof(ErrorDto), 404)]
+        [ProducesResponseType(typeof(ErrorDto), 500)]
+        public async Task<IActionResult> UpdatePost(string id, [FromBody] UpdatePostRequestDto request)
         {
-            if (string.IsNullOrEmpty(id) || model == null)
-            {
-                return BadRequest("Post ID and update data are required");
-            }
-
-            // Validate model
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(new ErrorDto
+                {
+                    Message = "Invalid request",
+                    Errors = ModelState.Values
+                        .SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                        .ToList()
+                });
             }
 
             try
             {
-                // Get user ID from claims
-                var userId = User.FindFirst("UserId")?.Value;
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return Unauthorized("User ID not found in token");
-                }
-
                 // Get existing post
-                var existingPost = await _postRepository.GetPostById(id, "UTC");
+                var existingPost = await _postService.GetPostByIdAsync(id, "UTC");
                 if (existingPost == null)
                 {
-                    return NotFound();
+                    return NotFound(new ErrorDto { Message = "Post not found" });
                 }
 
                 // Check if user has permission to update the post
+                var userId = User.FindFirst("UserId")?.Value;
+                var profileId = User.FindFirst("ProfileId")?.Value;
+
                 if (existingPost.UserId != userId && !User.IsInRole("Admin"))
                 {
                     return Forbid();
                 }
 
                 // Update post
-                var post = new Post
+                var updatedPost = new Post
                 {
                     PostId = id,
-                    Caption = model.Caption,
-                    PostText = model.PostText,
-                    Type = model.Type,
-                    Status = model.Status,
-                    PostType = model.PostType,
-                    Title = model.Title,
-                    Category = model.Category,
-                    Mention = model.Mention
+                    Caption = request.Caption ?? existingPost.Caption,
+                    PostText = request.PostText ?? existingPost.PostText,
+                    Status = request.Status ?? existingPost.Status,
+                    PostType = request.PostType ?? existingPost.PostType,
+                    Title = request.Title ?? existingPost.Title,
+                    Category = request.Category ?? existingPost.Category,
+                    Mention = request.Mention ?? existingPost.Mention
                 };
 
-                _logger.LogInformation("Updating post: {PostId}", id);
+                await _postService.UpdatePostAsync(updatedPost);
 
-                await _postRepository.UpdatePost(post);
+                // Get updated post
+                var post = await _postService.GetPostByIdAsync(id, "UTC");
 
-                // Return no content on successful update
-                return NoContent();
+                // Check saved and liked status if user is authenticated
+                if (!string.IsNullOrEmpty(profileId))
+                {
+                    var isSaved = await _postService.IsPostSavedByProfileAsync(id, profileId);
+                    var isLiked = await _postService.IsPostLikedByProfileAsync(id, profileId);
+
+                    post.SavedPost = isSaved;
+                    post.LikedPost = isLiked;
+                }
+
+                return Ok(MapToPostDetailDto(post));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating post: {PostId}", id);
-                return StatusCode(StatusCodes.Status500InternalServerError,
-                    new { message = "An error occurred while updating the post" });
-            }
-        }
-
-        /// <summary>
-        /// Update post status
-        /// </summary>
-        /// <param name="id">Post ID</param>
-        /// <param name="status">New status</param>
-        /// <returns>No content if successful</returns>
-        [HttpPatch("{id}/status")]
-        [Authorize]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdatePostStatus(string id, [FromQuery] string status)
-        {
-            if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(status))
-            {
-                return BadRequest("Post ID and status are required");
-            }
-
-            try
-            {
-                // Get user ID from claims
-                var userId = User.FindFirst("UserId")?.Value;
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return Unauthorized("User ID not found in token");
-                }
-
-                // Get existing post
-                var existingPost = await _postRepository.GetPostById(id, "UTC");
-                if (existingPost == null)
-                {
-                    return NotFound();
-                }
-
-                // Check if user has permission to update the post
-                if (existingPost.UserId != userId && !User.IsInRole("Admin"))
-                {
-                    return Forbid();
-                }
-
-                _logger.LogInformation("Updating post status: {PostId}, Status: {Status}", id, status);
-
-                await _postRepository.UpdatePostStatus(id, status);
-
-                // Return no content on successful update
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error updating post status: {PostId}, Status: {Status}", id, status);
-                return StatusCode(StatusCodes.Status500InternalServerError,
-                    new { message = "An error occurred while updating the post status" });
+                return StatusCode(500, new ErrorDto { Message = "An error occurred while updating the post" });
             }
         }
 
@@ -317,55 +322,41 @@ namespace WebAPI.Controllers
         /// Delete a post
         /// </summary>
         /// <param name="id">Post ID</param>
-        /// <returns>No content if successful</returns>
+        /// <returns>Success message</returns>
         [HttpDelete("{id}")]
         [Authorize]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(typeof(MessageDto), 200)]
+        [ProducesResponseType(typeof(ErrorDto), 403)]
+        [ProducesResponseType(typeof(ErrorDto), 404)]
+        [ProducesResponseType(typeof(ErrorDto), 500)]
         public async Task<IActionResult> DeletePost(string id)
         {
-            if (string.IsNullOrEmpty(id))
-            {
-                return BadRequest("Post ID is required");
-            }
-
             try
             {
-                // Get user ID from claims
-                var userId = User.FindFirst("UserId")?.Value;
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return Unauthorized("User ID not found in token");
-                }
-
                 // Get existing post
-                var existingPost = await _postRepository.GetPostById(id, "UTC");
+                var existingPost = await _postService.GetPostByIdAsync(id, "UTC");
                 if (existingPost == null)
                 {
-                    return NotFound();
+                    return NotFound(new ErrorDto { Message = "Post not found" });
                 }
 
                 // Check if user has permission to delete the post
+                var userId = User.FindFirst("UserId")?.Value;
+
                 if (existingPost.UserId != userId && !User.IsInRole("Admin"))
                 {
                     return Forbid();
                 }
 
-                _logger.LogInformation("Deleting post: {PostId}", id);
+                // Delete post
+                await _postService.DeletePostAsync(id);
 
-                await _postRepository.DeletePost(id);
-
-                // Return no content on successful delete
-                return NoContent();
+                return Ok(new MessageDto { Message = "Post deleted successfully" });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error deleting post: {PostId}", id);
-                return StatusCode(StatusCodes.Status500InternalServerError,
-                    new { message = "An error occurred while deleting the post" });
+                return StatusCode(500, new ErrorDto { Message = "An error occurred while deleting the post" });
             }
         }
 
@@ -373,67 +364,328 @@ namespace WebAPI.Controllers
         /// Get posts by profile ID
         /// </summary>
         /// <param name="profileId">Profile ID</param>
-        /// <param name="timeZone">Timezone for calculating relative times</param>
-        /// <returns>List of posts by profile</returns>
+        /// <param name="page">Page number (1-based)</param>
+        /// <param name="pageSize">Number of items per page</param>
+        /// <param name="timeZone">User's timezone for relative time calculation</param>
+        /// <returns>Paginated list of posts by profile</returns>
         [HttpGet("profile/{profileId}")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<Post>))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [ResponseCache(Duration = 60, VaryByQueryKeys = new[] { "timeZone" })]
-        public async Task<IActionResult> GetPostsByProfileId(string profileId, [FromQuery] string timeZone = "UTC")
+        [ProducesResponseType(typeof(PagedResultDto<PostDto>), 200)]
+        [ProducesResponseType(typeof(ErrorDto), 404)]
+        [ProducesResponseType(typeof(ErrorDto), 500)]
+        public async Task<IActionResult> GetPostsByProfile(
+            string profileId,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string timeZone = "UTC")
         {
-            if (string.IsNullOrEmpty(profileId))
-            {
-                return BadRequest("Profile ID is required");
-            }
-
             try
             {
-                _logger.LogInformation("Getting posts for profile: {ProfileId}", profileId);
-
-                var posts = await _postRepository.GetPostsByProfileId(profileId, timeZone);
-
-                if (posts == null || posts.Count == 0)
+                // Check if profile exists
+                var profile = await _profileService.GetProfileByIdAsync(profileId);
+                if (profile == null)
                 {
-                    // Return empty list instead of 404 for consistency
-                    return Ok(new List<Post>());
+                    return NotFound(new ErrorDto { Message = "Profile not found" });
                 }
 
-                return Ok(posts);
+                var result = await _postService.GetPostsByProfileIdAsync(profileId, page, pageSize, timeZone);
+
+                // Get current user's profile ID from claims if authenticated
+                var currentProfileId = User.FindFirst("ProfileId")?.Value;
+
+                // Check saved and liked status for each post if user is authenticated
+                if (!string.IsNullOrEmpty(currentProfileId))
+                {
+                    var savedPosts = await _postService.GetSavedPostsByProfileIdAsync(currentProfileId);
+                    var likedPosts = await _postService.GetLikedPostsByProfileIdAsync(currentProfileId);
+
+                    foreach (var post in result.Items)
+                    {
+                        post.SavedPost = savedPosts.Any(sp => sp.PostId == post.PostId);
+                        post.LikedPost = likedPosts.Any(lp => lp.PostId == post.PostId);
+                    }
+                }
+
+                return Ok(new PagedResultDto<PostDto>
+                {
+                    Items = result.Items.Select(MapToPostDto).ToList(),
+                    Page = result.Page,
+                    PageSize = result.PageSize,
+                    TotalCount = result.TotalCount,
+                    TotalPages = result.TotalPages,
+                    HasPreviousPage = result.HasPreviousPage,
+                    HasNextPage = result.HasNextPage
+                });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error retrieving posts for profile: {ProfileId}", profileId);
-                return StatusCode(StatusCodes.Status500InternalServerError,
-                    new { message = "An error occurred while retrieving posts for the profile" });
+                return StatusCode(500, new ErrorDto { Message = "An error occurred while retrieving posts" });
             }
         }
 
         /// <summary>
-        /// Get posts with a specific tag
+        /// Like a post
         /// </summary>
-        /// <param name="tagId">Tag ID</param>
-        /// <param name="timeZone">Timezone for calculating relative times</param>
-        /// <returns>List of posts with the tag</returns>
-        [HttpGet("tag/{tagId}")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<Post>))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [ResponseCache(Duration = 60, VaryByQueryKeys = new[] { "timeZone" })]
-        public async Task<IActionResult> GetPostsByTagId(string tagId, [FromQuery] string timeZone = "UTC")
+        /// <param name="id">Post ID</param>
+        /// <returns>Success message</returns>
+        [HttpPost("{id}/like")]
+        [Authorize]
+        [ProducesResponseType(typeof(MessageDto), 200)]
+        [ProducesResponseType(typeof(ErrorDto), 400)]
+        [ProducesResponseType(typeof(ErrorDto), 404)]
+        [ProducesResponseType(typeof(ErrorDto), 500)]
+        public async Task<IActionResult> LikePost(string id)
         {
-            if (string.IsNullOrEmpty(tagId))
+            // Get profile ID from claims
+            var profileId = User.FindFirst("ProfileId")?.Value;
+            if (string.IsNullOrEmpty(profileId))
             {
-                return BadRequest("Tag ID is required");
+                return BadRequest(new ErrorDto { Message = "Profile ID not found in token" });
             }
 
             try
             {
-                _logger.LogInformation("Getting posts with tag: {TagId}", tagId);
-
-                var posts = await _postRepository.GetPostsWithTagByTagId(tagId, timeZone);
-
-                if (posts == null || posts.Count == 0)
+                // Check if post exists
+                var post = await _postService.GetPostByIdAsync(id, "UTC");
+                if (post == null)
                 {
+                    return NotFound(new ErrorDto { Message = "Post not found" });
+                }
+
+                // Check if already liked
+                var isLiked = await _postService.IsPostLikedByProfileAsync(id, profileId);
+                if (isLiked)
+                {
+                    return BadRequest(new ErrorDto { Message = "Post already liked" });
+                }
+
+                // Like post
+                await _postService.LikePostAsync(id, profileId);
+
+                return Ok(new MessageDto { Message = "Post liked successfully" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error liking post: {PostId}, profile: {ProfileId}", id, profileId);
+                return StatusCode(500, new ErrorDto { Message = "An error occurred while liking the post" });
+            }
+        }
+
+        /// <summary>
+        /// Unlike a post
+        /// </summary>
+        /// <param name="id">Post ID</param>
+        /// <returns>Success message</returns>
+        [HttpDelete("{id}/like")]
+        [Authorize]
+        [ProducesResponseType(typeof(MessageDto), 200)]
+        [ProducesResponseType(typeof(ErrorDto), 400)]
+        [ProducesResponseType(typeof(ErrorDto), 404)]
+        [ProducesResponseType(typeof(ErrorDto), 500)]
+        public async Task<IActionResult> UnlikePost(string id)
+        {
+            // Get profile ID from claims
+            var profileId = User.FindFirst("ProfileId")?.Value;
+            if (string.IsNullOrEmpty(profileId))
+            {
+                return BadRequest(new ErrorDto { Message = "Profile ID not found in token" });
+            }
+
+            try
+            {
+                // Check if post exists
+                var post = await _postService.GetPostByIdAsync(id, "UTC");
+                if (post == null)
+                {
+                    return NotFound(new ErrorDto { Message = "Post not found" });
+                }
+
+                // Check if already liked
+                var isLiked = await _postService.IsPostLikedByProfileAsync(id, profileId);
+                if (!isLiked)
+                {
+                    return BadRequest(new ErrorDto { Message = "Post not liked" });
+                }
+
+                // Unlike post
+                await _postService.UnlikePostAsync(id, profileId);
+
+                return Ok(new MessageDto { Message = "Post unliked successfully" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error unliking post: {PostId}, profile: {ProfileId}", id, profileId);
+                return StatusCode(500, new ErrorDto { Message = "An error occurred while unliking the post" });
+            }
+        }
+
+        /// <summary>
+        /// Save a post
+        /// </summary>
+        /// <param name="id">Post ID</param>
+        /// <returns>Success message</returns>
+        [HttpPost("{id}/save")]
+        [Authorize]
+        [ProducesResponseType(typeof(MessageDto), 200)]
+        [ProducesResponseType(typeof(ErrorDto), 400)]
+        [ProducesResponseType(typeof(ErrorDto), 404)]
+        [ProducesResponseType(typeof(ErrorDto), 500)]
+        public async Task<IActionResult> SavePost(string id)
+        {
+            // Get profile ID from claims
+            var profileId = User.FindFirst("ProfileId")?.Value;
+            if (string.IsNullOrEmpty(profileId))
+            {
+                return BadRequest(new ErrorDto { Message = "Profile ID not found in token" });
+            }
+
+            try
+            {
+                // Check if post exists
+                var post = await _postService.GetPostByIdAsync(id, "UTC");
+                if (post == null)
+                {
+                    return NotFound(new ErrorDto { Message = "Post not found" });
+                }
+
+                // Check if already saved
+                var isSaved = await _postService.IsPostSavedByProfileAsync(id, profileId);
+                if (isSaved)
+                {
+                    return BadRequest(new ErrorDto { Message = "Post already saved" });
+                }
+
+                // Save post
+                await _postService.SavePostAsync(id, profileId);
+
+                return Ok(new MessageDto { Message = "Post saved successfully" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving post: {PostId}, profile: {ProfileId}", id, profileId);
+                return StatusCode(500, new ErrorDto { Message = "An error occurred while saving the post" });
+            }
+        }
+
+        /// <summary>
+        /// Unsave a post
+        /// </summary>
+        /// <param name="id">Post ID</param>
+        /// <returns>Success message</returns>
+        [HttpDelete("{id}/save")]
+        [Authorize]
+        [ProducesResponseType(typeof(MessageDto), 200)]
+        [ProducesResponseType(typeof(ErrorDto), 400)]
+        [ProducesResponseType(typeof(ErrorDto), 404)]
+        [ProducesResponseType(typeof(ErrorDto), 500)]
+        public async Task<IActionResult> UnsavePost(string id)
+        {
+            // Get profile ID from claims
+            var profileId = User.FindFirst("ProfileId")?.Value;
+            if (string.IsNullOrEmpty(profileId))
+            {
+                return BadRequest(new ErrorDto { Message = "Profile ID not found in token" });
+            }
+
+            try
+            {
+                // Check if post exists
+                var post = await _postService.GetPostByIdAsync(id, "UTC");
+                if (post == null)
+                {
+                    return NotFound(new ErrorDto { Message = "Post not found" });
+                }
+
+                // Check if saved
+                var isSaved = await _postService.IsPostSavedByProfileAsync(id, profileId);
+                if (!isSaved)
+                {
+                    return BadRequest(new ErrorDto { Message = "Post not saved" });
+                }
+
+                // Unsave post
+                await _postService.UnsavePostAsync(id, profileId);
+
+                return Ok(new MessageDto { Message = "Post unsaved successfully" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error unsaving post: {PostId}, profile: {ProfileId}", id, profileId);
+                return StatusCode(500, new ErrorDto { Message = "An error occurred while unsaving the post" });
+            }
+        }
+
+        // Helper methods for mapping entities to DTOs
+
+        private PostDto MapToPostDto(Post post)
+        {
+            return new PostDto
+            {
+                PostId = post.PostId,
+                Caption = post.Caption,
+                PostFileURL = post.PostFileURL,
+                Type = post.Type,
+                Status = post.Status,
+                PostType = post.PostType,
+                Title = post.Title,
+                Category = post.Category,
+                Likes = post.Likes,
+                PostedDate = post.PostedDate,
+                RelativeTime = post.RelativeTime,
+                ThumbnailUrl = post.ThumbnailUrl,
+                ProfileId = post.ProfileId,
+                UserName = post.UserName,
+                ProfileImageURL = post.ProfileImageURL,
+                PostCommentCount = post.PostCommentCount,
+                IsSaved = post.SavedPost ?? false,
+                IsLiked = post.LikedPost ?? false
+            };
+        }
+
+        private PostDetailDto MapToPostDetailDto(Post post)
+        {
+            return new PostDetailDto
+            {
+                PostId = post.PostId,
+                UserId = post.UserId,
+                Caption = post.Caption,
+                PostFileURL = post.PostFileURL,
+                Type = post.Type,
+                Status = post.Status,
+                PostType = post.PostType,
+                Title = post.Title,
+                Category = post.Category,
+                PostText = post.PostText,
+                Likes = post.Likes,
+                PostedDate = post.PostedDate,
+                RelativeTime = post.RelativeTime,
+                ThumbnailUrl = post.ThumbnailUrl,
+                ProfileId = post.ProfileId,
+                UserName = post.UserName,
+                ProfileImageURL = post.ProfileImageURL,
+                PostCommentCount = post.PostCommentCount,
+                Mention = post.Mention,
+                MentionUserNames = post.MentionUserNames,
+                IsSaved = post.SavedPost ?? false,
+                IsLiked = post.LikedPost ?? false,
+                Comments = post.PostComments?.Select(pc => new PostCommentDto
+                {
+                    PostCommentId = pc.PostCommentId,
+                    PostId = pc.PostId,
+                    PostCommentByProfileId = pc.PostCommentByProfileId,
+                    UserComment = pc.UserComment,
+                    PostCommentDate = pc.PostCommentDate.ToString(),
+                    RelativeTime = pc.RelativeTime,
+                    UserName = pc.UserName,
+                    ProfileImageURL = pc.ProfileImageURL
+                }).ToList(),
+                Mentions = post.ProfileMentions?.Select(p => new ProfileMentionDto
+                {
+                    ProfileId = p.ProfileId,
+                    UserName = p.UserName,
+                    ImageURL = p.ImageURL
+                }).ToList()
+            };
+        }
+    }
+}
