@@ -56,15 +56,12 @@
     </FlyoutItem>
 
     <!-- MenuItems appear at the bottom of the Flyout -->
-    <Shell.MenuItems>
-        <MenuItem Text="Notifications" 
-                  IconImageSource="🔔"
-                  Command="{Binding NotificationsCommand}" />
-        <MenuItem Text="Help &amp; Support" 
-                  IconImageSource="❓"
-                  Command="{Binding HelpCommand}" />
-        <MenuItem Text="Logout" 
-                  IconImageSource="🚪"
-                  Command="{Binding LogoutCommand}" />
-    </Shell.MenuItems>
+    <MenuItem Text="Notifications" 
+              IconImageSource="🔔" />
+    <MenuItem Text="Help &amp; Support" 
+              IconImageSource="❓"
+              Command="{Binding HelpCommand}" />
+    <MenuItem Text="Logout" 
+              IconImageSource="🚪"
+              Command="{Binding LogoutCommand}" />
 </Shell>
