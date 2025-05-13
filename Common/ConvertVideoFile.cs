@@ -1,12 +1,11 @@
 ﻿// File: Common/VideoProcessing/VideoConverter.cs
-using Domain;
 using Microsoft.Extensions.Logging;
-
 using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Xabe.FFmpeg;
+using Domain; // Added reference to Domain for AppException
 
 namespace Common.VideoProcessing
 {
@@ -93,7 +92,7 @@ namespace Common.VideoProcessing
                         _logger.LogInformation(
                             "Conversion progress: {Percent}%, Time: {Time}",
                             args.Percent,
-                            args.Duration); // Updated: using Duration instead of ProcessedDuration
+                            args.ProcessedDuration); // Using ProcessedDuration for Xabe.FFmpeg 6.0.1
                     }
                 };
 

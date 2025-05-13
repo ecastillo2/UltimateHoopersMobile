@@ -1,21 +1,23 @@
-﻿using Microsoft.Extensions.Logging;
+﻿// File: Common/VideoProcessing/VideoConverter.cs
+using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Xabe.FFmpeg;
+using Domain; // Added reference to Domain for AppException
 
-namespace Common.Services
+namespace Common.VideoProcessing
 {
     /// <summary>
-    /// Service to handle video conversion operations with proper error handling and logging
+    /// Handles video conversion operations with proper error handling and logging
     /// </summary>
-    public class VideoConversionService : IVideoConversionService
+    public class VideoConverter
     {
-        private readonly ILogger<VideoConversionService> _logger;
+        private readonly ILogger<VideoConverter> _logger;
         private readonly string _ffmpegDirectory;
 
-        public VideoConversionService(ILogger<VideoConversionService> logger, string ffmpegBasePath = null)
+        public VideoConverter(ILogger<VideoConverter> logger, string ffmpegBasePath = null)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
@@ -39,7 +41,14 @@ namespace Common.Services
             string outputFolder,
             CancellationToken cancellationToken = default)
         {
-            ValidateParameters(inputFilePath, outputFolder);
+            if (string.IsNullOrEmpty(inputFilePath))
+                throw new ArgumentException("Input file path cannot be empty", nameof(inputFilePath));
+
+            if (string.IsNullOrEmpty(outputFolder))
+                throw new ArgumentException("Output folder cannot be empty", nameof(outputFolder));
+
+            if (!File.Exists(inputFilePath))
+                throw new FileNotFoundException("Input file not found", inputFilePath);
 
             try
             {
@@ -51,15 +60,55 @@ namespace Common.Services
                 // If input file is already MP4, simply copy it to the output folder
                 if (inputFilePath.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase))
                 {
-                    return await CopyMp4FileAsync(inputFilePath, outputFolder);
+                    _logger.LogInformation("File is already MP4, copying to output folder");
+                    var outputFileName = Path.GetFileName(inputFilePath);
+                    var outputFilePath = Path.Combine(outputFolder, outputFileName);
+
+                    await CopyFileWithRetryAsync(inputFilePath, outputFilePath);
+                    return outputFilePath;
                 }
 
-                return await PerformConversionAsync(inputFilePath, outputFolder, cancellationToken);
+                // Convert to MP4
+                var outputFileNameMp4 = Path.GetFileNameWithoutExtension(inputFilePath) + ".mp4";
+                var outputFilePathMp4 = Path.Combine(outputFolder, outputFileNameMp4);
+
+                // Get media info for logging
+                var mediaInfo = await FFmpeg.GetMediaInfo(inputFilePath, cancellationToken);
+                _logger.LogInformation(
+                    "Converting video: Duration {Duration}, Size {Size}",
+                    mediaInfo.Duration,
+                    new FileInfo(inputFilePath).Length);
+
+                // Create conversion with progress reporting
+                var conversion = FFmpeg.Conversions.New()
+                    .AddParameter($"-i \"{inputFilePath}\"")
+                    .SetOutput(outputFilePathMp4);
+
+                // Add progress handler for logging
+                conversion.OnProgress += (sender, args) =>
+                {
+                    if (args.Percent % 10 == 0) // Log every 10%
+                    {
+                        _logger.LogInformation(
+                            "Conversion progress: {Percent}%, Time: {Time}",
+                            args.Percent,
+                            args.ProcessedDuration); // Using ProcessedDuration for Xabe.FFmpeg 6.0.1
+                    }
+                };
+
+                // Start conversion
+                await conversion.Start(cancellationToken);
+
+                _logger.LogInformation("Video conversion completed successfully: {OutputPath}", outputFilePathMp4);
+                return outputFilePathMp4;
             }
-            catch (Exception ex) when (IsFileSystemException(ex))
+            catch (Exception ex) when (
+                ex is IOException ||
+                ex is UnauthorizedAccessException ||
+                ex is System.Security.SecurityException)
             {
                 _logger.LogError(ex, "File system error during video conversion");
-                throw new InvalidOperationException("Unable to access file during conversion", ex);
+                throw new AppException("Unable to access file during conversion", ex);
             }
             catch (OperationCanceledException)
             {
@@ -71,68 +120,6 @@ namespace Common.Services
                 _logger.LogError(ex, "Error during video conversion");
                 return null;
             }
-        }
-
-        private void ValidateParameters(string inputFilePath, string outputFolder)
-        {
-            if (string.IsNullOrEmpty(inputFilePath))
-                throw new ArgumentException("Input file path cannot be empty", nameof(inputFilePath));
-
-            if (string.IsNullOrEmpty(outputFolder))
-                throw new ArgumentException("Output folder cannot be empty", nameof(outputFolder));
-
-            if (!File.Exists(inputFilePath))
-                throw new FileNotFoundException("Input file not found", inputFilePath);
-        }
-
-        private async Task<string> CopyMp4FileAsync(string inputFilePath, string outputFolder)
-        {
-            _logger.LogInformation("File is already MP4, copying to output folder");
-            var outputFileName = Path.GetFileName(inputFilePath);
-            var outputFilePath = Path.Combine(outputFolder, outputFileName);
-
-            await CopyFileWithRetryAsync(inputFilePath, outputFilePath);
-            return outputFilePath;
-        }
-
-        private async Task<string> PerformConversionAsync(
-            string inputFilePath,
-            string outputFolder,
-            CancellationToken cancellationToken)
-        {
-            // Create the output file path
-            var outputFileNameMp4 = Path.GetFileNameWithoutExtension(inputFilePath) + ".mp4";
-            var outputFilePathMp4 = Path.Combine(outputFolder, outputFileNameMp4);
-
-            // Get media info for logging
-            var mediaInfo = await FFmpeg.GetMediaInfo(inputFilePath, cancellationToken);
-            _logger.LogInformation(
-                "Converting video: Duration {Duration}, Size {Size}",
-                mediaInfo.Duration,
-                new FileInfo(inputFilePath).Length);
-
-            // Create conversion with progress reporting
-            var conversion = FFmpeg.Conversions.New()
-                .AddParameter($"-i \"{inputFilePath}\"")
-                .SetOutput(outputFilePathMp4);
-
-            // Add progress handler for logging
-            conversion.OnProgress += (sender, args) =>
-            {
-                if (args.Percent % 10 == 0) // Log every 10%
-                {
-                    _logger.LogInformation(
-                        "Conversion progress: {Percent}%, Time: {Time}",
-                        args.Percent,
-                        args.Duration); // Using Duration from the newest API version
-                }
-            };
-
-            // Start conversion
-            await conversion.Start(cancellationToken);
-
-            _logger.LogInformation("Video conversion completed successfully: {OutputPath}", outputFilePathMp4);
-            return outputFilePathMp4;
         }
 
         /// <summary>
@@ -177,13 +164,6 @@ namespace Common.Services
             throw new IOException(
                 $"Unable to copy file after {maxRetries} attempts: {sourceFilePath}",
                 lastException);
-        }
-
-        private bool IsFileSystemException(Exception ex)
-        {
-            return ex is IOException ||
-                   ex is UnauthorizedAccessException ||
-                   ex is System.Security.SecurityException;
         }
     }
 }
