@@ -1,5 +1,6 @@
 ﻿using Microsoft.Maui.Controls;
 using System;
+using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace UltimateHoopers
@@ -29,6 +30,7 @@ namespace UltimateHoopers
         {
             // Register routes for navigation
             Routing.RegisterRoute("homepage", typeof(Pages.HomePage));
+            Routing.RegisterRoute("postspage", typeof(Pages.PostsPage));
             // Add additional routes as you create more pages
         }
 

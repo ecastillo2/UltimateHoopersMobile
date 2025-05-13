@@ -1,0 +1,505 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="UltimateHoopers.Pages.PostsPage"
+             Title="Posts"
+             BackgroundColor="{StaticResource PageBackgroundColor}">
+
+    <Grid RowDefinitions="Auto,*,Auto"
+          Padding="0">
+        <!-- Reduced padding for Instagram-like full width -->
+
+        <!-- Header - Instagram-style -->
+        <Grid Grid.Row="0" 
+              BackgroundColor="{StaticResource CardBackgroundColor}"
+              Padding="10,10,10,10"
+              HeightRequest="60">
+
+            <Label Text="Ultimate Hoopers"
+                   FontSize="22"
+                   FontAttributes="Bold"
+                   TextColor="{StaticResource PrimaryColor}"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center" />
+
+            <HorizontalStackLayout HorizontalOptions="End"
+                                  VerticalOptions="Center">
+                <Label Text="🔔"
+                       FontSize="24"
+                       Margin="0,0,15,0" />
+
+                <Label Text="📩"
+                       FontSize="24" />
+            </HorizontalStackLayout>
+        </Grid>
+
+        <!-- Content - Instagram-style Feed -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="0">
+
+                <!-- Story Circles -->
+                <ScrollView Orientation="Horizontal" 
+                            Margin="0,10,0,10"
+                            HorizontalScrollBarVisibility="Never">
+                    <HorizontalStackLayout Spacing="15" Padding="10,0">
+                        <!-- Your Story -->
+                        <VerticalStackLayout HorizontalOptions="Center">
+                            <Frame CornerRadius="35" 
+                                   HeightRequest="70" 
+                                   WidthRequest="70"
+                                   Padding="0"
+                                   BorderColor="{StaticResource PrimaryColor}"
+                                   HasShadow="False">
+                                <Frame CornerRadius="32"
+                                       HeightRequest="64"
+                                       WidthRequest="64"
+                                       Margin="3"
+                                       Padding="0"
+                                       BorderColor="Transparent"
+                                       HasShadow="False">
+                                    <Label Text="👤" 
+                                           FontSize="34" 
+                                           HorizontalOptions="Center" 
+                                           VerticalOptions="Center" />
+                                </Frame>
+                            </Frame>
+                            <Label Text="Your Story" 
+                                   FontSize="12" 
+                                   HorizontalOptions="Center"
+                                   Margin="0,5,0,0" />
+                        </VerticalStackLayout>
+
+                        <!-- Other Stories -->
+                        <VerticalStackLayout HorizontalOptions="Center">
+                            <Frame CornerRadius="35" 
+                                   HeightRequest="70" 
+                                   WidthRequest="70"
+                                   Padding="0"
+                                   BorderColor="{StaticResource PrimaryColor}"
+                                   HasShadow="False">
+                                <Frame CornerRadius="32"
+                                       HeightRequest="64"
+                                       WidthRequest="64"
+                                       Margin="3"
+                                       Padding="0"
+                                       BorderColor="Transparent"
+                                       HasShadow="False">
+                                    <Label Text="🏀" 
+                                           FontSize="34" 
+                                           HorizontalOptions="Center" 
+                                           VerticalOptions="Center" />
+                                </Frame>
+                            </Frame>
+                            <Label Text="Michael J." 
+                                   FontSize="12" 
+                                   HorizontalOptions="Center"
+                                   Margin="0,5,0,0" />
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout HorizontalOptions="Center">
+                            <Frame CornerRadius="35" 
+                                   HeightRequest="70" 
+                                   WidthRequest="70"
+                                   Padding="0"
+                                   BorderColor="{StaticResource PrimaryColor}"
+                                   HasShadow="False">
+                                <Frame CornerRadius="32"
+                                       HeightRequest="64"
+                                       WidthRequest="64"
+                                       Margin="3"
+                                       Padding="0"
+                                       BorderColor="Transparent"
+                                       HasShadow="False">
+                                    <Label Text="🏀" 
+                                           FontSize="34" 
+                                           HorizontalOptions="Center" 
+                                           VerticalOptions="Center" />
+                                </Frame>
+                            </Frame>
+                            <Label Text="Sarah T." 
+                                   FontSize="12" 
+                                   HorizontalOptions="Center"
+                                   Margin="0,5,0,0" />
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout HorizontalOptions="Center">
+                            <Frame CornerRadius="35" 
+                                   HeightRequest="70" 
+                                   WidthRequest="70"
+                                   Padding="0"
+                                   BorderColor="{StaticResource PrimaryColor}"
+                                   HasShadow="False">
+                                <Frame CornerRadius="32"
+                                       HeightRequest="64"
+                                       WidthRequest="64"
+                                       Margin="3"
+                                       Padding="0"
+                                       BorderColor="Transparent"
+                                       HasShadow="False">
+                                    <Label Text="🏀" 
+                                           FontSize="34" 
+                                           HorizontalOptions="Center" 
+                                           VerticalOptions="Center" />
+                                </Frame>
+                            </Frame>
+                            <Label Text="Jamal K." 
+                                   FontSize="12" 
+                                   HorizontalOptions="Center"
+                                   Margin="0,5,0,0" />
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout HorizontalOptions="Center">
+                            <Frame CornerRadius="35" 
+                                   HeightRequest="70" 
+                                   WidthRequest="70"
+                                   Padding="0"
+                                   BorderColor="{StaticResource PrimaryColor}"
+                                   HasShadow="False">
+                                <Frame CornerRadius="32"
+                                       HeightRequest="64"
+                                       WidthRequest="64"
+                                       Margin="3"
+                                       Padding="0"
+                                       BorderColor="Transparent"
+                                       HasShadow="False">
+                                    <Label Text="🏀" 
+                                           FontSize="34" 
+                                           HorizontalOptions="Center" 
+                                           VerticalOptions="Center" />
+                                </Frame>
+                            </Frame>
+                            <Label Text="Lisa W." 
+                                   FontSize="12" 
+                                   HorizontalOptions="Center"
+                                   Margin="0,5,0,0" />
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout HorizontalOptions="Center">
+                            <Frame CornerRadius="35" 
+                                   HeightRequest="70" 
+                                   WidthRequest="70"
+                                   Padding="0"
+                                   BorderColor="{StaticResource PrimaryColor}"
+                                   HasShadow="False">
+                                <Frame CornerRadius="32"
+                                       HeightRequest="64"
+                                       WidthRequest="64"
+                                       Margin="3"
+                                       Padding="0"
+                                       BorderColor="Transparent"
+                                       HasShadow="False">
+                                    <Label Text="🏀" 
+                                           FontSize="34" 
+                                           HorizontalOptions="Center" 
+                                           VerticalOptions="Center" />
+                                </Frame>
+                            </Frame>
+                            <Label Text="Carlos R." 
+                                   FontSize="12" 
+                                   HorizontalOptions="Center"
+                                   Margin="0,5,0,0" />
+                        </VerticalStackLayout>
+                    </HorizontalStackLayout>
+                </ScrollView>
+
+                <!-- Separator -->
+                <BoxView Color="{StaticResource BorderColor}" 
+                         HeightRequest="1" 
+                         HorizontalOptions="Fill" />
+
+                <!-- Post 1 -->
+                <VerticalStackLayout Spacing="0">
+                    <!-- Post Header -->
+                    <Grid ColumnDefinitions="Auto,*,Auto" 
+                          Padding="10" 
+                          BackgroundColor="{StaticResource CardBackgroundColor}">
+                        <Frame Grid.Column="0" 
+                               CornerRadius="20" 
+                               HeightRequest="40" 
+                               WidthRequest="40" 
+                               Padding="0" 
+                               HasShadow="False"
+                               BorderColor="{StaticResource BorderColor}">
+                            <Label Text="👤" 
+                                   FontSize="24" 
+                                   HorizontalOptions="Center" 
+                                   VerticalOptions="Center" />
+                        </Frame>
+
+                        <VerticalStackLayout Grid.Column="1" 
+                                             Margin="10,0,0,0" 
+                                             VerticalOptions="Center">
+                            <Label Text="michael_johnson" 
+                                   FontAttributes="Bold" 
+                                   FontSize="14" 
+                                   TextColor="{StaticResource PrimaryTextColor}" />
+                            <Label Text="Downtown Court" 
+                                   FontSize="12" 
+                                   TextColor="{StaticResource SecondaryTextColor}" />
+                        </VerticalStackLayout>
+
+                        <Label Grid.Column="2" 
+                               Text="⋮" 
+                               FontSize="20" 
+                               HorizontalOptions="End" 
+                               VerticalOptions="Center" />
+                    </Grid>
+
+                    <!-- Post Image -->
+                    <Grid HeightRequest="400" BackgroundColor="LightGray">
+                        <Label Text="🏀" 
+                               FontSize="100" 
+                               HorizontalOptions="Center" 
+                               VerticalOptions="Center" />
+                        <Label Text="[Basketball Court Photo]" 
+                               HorizontalOptions="Center" 
+                               VerticalOptions="Center" 
+                               Margin="0,80,0,0" />
+                    </Grid>
+
+                    <!-- Post Actions -->
+                    <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto" 
+                          Padding="10" 
+                          BackgroundColor="{StaticResource CardBackgroundColor}">
+                        <Label Grid.Column="0" 
+                               Text="❤️" 
+                               FontSize="24" 
+                               Margin="0,0,15,0" />
+                        <Label Grid.Column="1" 
+                               Text="💬" 
+                               FontSize="24" 
+                               Margin="0,0,15,0" />
+                        <Label Grid.Column="2" 
+                               Text="📩" 
+                               FontSize="24" />
+                        <Label Grid.Column="4" 
+                               Text="🔖" 
+                               FontSize="24" 
+                               HorizontalOptions="End" />
+                    </Grid>
+
+                    <!-- Likes -->
+                    <Label Text="32 likes" 
+                           FontAttributes="Bold" 
+                           Margin="10,5,10,0" 
+                           BackgroundColor="{StaticResource CardBackgroundColor}"
+                           TextColor="{StaticResource PrimaryTextColor}" />
+
+                    <!-- Caption -->
+                    <VerticalStackLayout Padding="10,5,10,10" 
+                                         BackgroundColor="{StaticResource CardBackgroundColor}">
+                        <Label TextColor="{StaticResource PrimaryTextColor}">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span Text="michael_johnson " FontAttributes="Bold" />
+                                    <Span Text="Looking for players to join our game this Sunday at Downtown Court. We need 2-3 more players. All skill levels welcome! #basketball #pickup #sunday" />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+
+                        <Label Text="View all 12 comments" 
+                               TextColor="{StaticResource SecondaryTextColor}" 
+                               Margin="0,5,0,0" />
+
+                        <Label Text="2 hours ago" 
+                               FontSize="12" 
+                               TextColor="{StaticResource SecondaryTextColor}" 
+                               Margin="0,5,0,0" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+
+                <!-- Separator -->
+                <BoxView Color="{StaticResource BorderColor}" 
+                         HeightRequest="10" 
+                         HorizontalOptions="Fill" />
+
+                <!-- Post 2 -->
+                <VerticalStackLayout Spacing="0">
+                    <!-- Post Header -->
+                    <Grid ColumnDefinitions="Auto,*,Auto" 
+                          Padding="10" 
+                          BackgroundColor="{StaticResource CardBackgroundColor}">
+                        <Frame Grid.Column="0" 
+                               CornerRadius="20" 
+                               HeightRequest="40" 
+                               WidthRequest="40" 
+                               Padding="0" 
+                               HasShadow="False"
+                               BorderColor="{StaticResource BorderColor}">
+                            <Label Text="👤" 
+                                   FontSize="24" 
+                                   HorizontalOptions="Center" 
+                                   VerticalOptions="Center" />
+                        </Frame>
+
+                        <VerticalStackLayout Grid.Column="1" 
+                                             Margin="10,0,0,0" 
+                                             VerticalOptions="Center">
+                            <Label Text="sarah_thompson" 
+                                   FontAttributes="Bold" 
+                                   FontSize="14" 
+                                   TextColor="{StaticResource PrimaryTextColor}" />
+                            <Label Text="Elite Training Center" 
+                                   FontSize="12" 
+                                   TextColor="{StaticResource SecondaryTextColor}" />
+                        </VerticalStackLayout>
+
+                        <Label Grid.Column="2" 
+                               Text="⋮" 
+                               FontSize="20" 
+                               HorizontalOptions="End" 
+                               VerticalOptions="Center" />
+                    </Grid>
+
+                    <!-- Post Image -->
+                    <Grid HeightRequest="400" BackgroundColor="LightGray">
+                        <Label Text="🏀" 
+                               FontSize="100" 
+                               HorizontalOptions="Center" 
+                               VerticalOptions="Center" />
+                        <Label Text="[Basketball Training Photo]" 
+                               HorizontalOptions="Center" 
+                               VerticalOptions="Center" 
+                               Margin="0,80,0,0" />
+                    </Grid>
+
+                    <!-- Post Actions -->
+                    <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto" 
+                          Padding="10" 
+                          BackgroundColor="{StaticResource CardBackgroundColor}">
+                        <Label Grid.Column="0" 
+                               Text="❤️" 
+                               FontSize="24" 
+                               Margin="0,0,15,0" />
+                        <Label Grid.Column="1" 
+                               Text="💬" 
+                               FontSize="24" 
+                               Margin="0,0,15,0" />
+                        <Label Grid.Column="2" 
+                               Text="📩" 
+                               FontSize="24" />
+                        <Label Grid.Column="4" 
+                               Text="🔖" 
+                               FontSize="24" 
+                               HorizontalOptions="End" />
+                    </Grid>
+
+                    <!-- Likes -->
+                    <Label Text="55 likes" 
+                           FontAttributes="Bold" 
+                           Margin="10,5,10,0" 
+                           BackgroundColor="{StaticResource CardBackgroundColor}"
+                           TextColor="{StaticResource PrimaryTextColor}" />
+
+                    <!-- Caption -->
+                    <VerticalStackLayout Padding="10,5,10,10" 
+                                         BackgroundColor="{StaticResource CardBackgroundColor}">
+                        <Label TextColor="{StaticResource PrimaryTextColor}">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span Text="sarah_thompson " FontAttributes="Bold" />
+                                    <Span Text="Just finished my first training session with Coach Williams. His shooting drills are incredible! My three-point percentage has already improved. #basketball #training #threepointer" />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+
+                        <Label Text="View all 8 comments" 
+                               TextColor="{StaticResource SecondaryTextColor}" 
+                               Margin="0,5,0,0" />
+
+                        <Label Text="5 hours ago" 
+                               FontSize="12" 
+                               TextColor="{StaticResource SecondaryTextColor}" 
+                               Margin="0,5,0,0" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Navigation Footer -->
+        <Grid Grid.Row="2"
+              ColumnDefinitions="*,*,*,*,*"
+              BackgroundColor="{StaticResource CardBackgroundColor}"
+              HeightRequest="60"
+              Padding="0,5,0,15">
+
+            <VerticalStackLayout Grid.Column="0"
+                                 HorizontalOptions="Center"
+                                 Spacing="2">
+                <Label Text="🏠"
+                       FontSize="24"
+                       HorizontalOptions="Center" />
+
+                <VerticalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnHomeClicked" />
+                </VerticalStackLayout.GestureRecognizers>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Grid.Column="1"
+                                 HorizontalOptions="Center"
+                                 Spacing="2">
+                <Label Text="🔍"
+                       FontSize="24"
+                       HorizontalOptions="Center" />
+
+                <VerticalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnExploreClicked" />
+                </VerticalStackLayout.GestureRecognizers>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Grid.Column="2"
+                                 HorizontalOptions="Center"
+                                 Spacing="2">
+                <Frame HeightRequest="32"
+                       WidthRequest="32"
+                       CornerRadius="6"
+                       BorderColor="{StaticResource PrimaryColor}"
+                       BackgroundColor="Transparent"
+                       Padding="0">
+                    <Label Text="+"
+                           FontSize="24"
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"
+                           TextColor="{StaticResource PrimaryColor}" />
+                </Frame>
+
+                <VerticalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnCreatePostClicked" />
+                </VerticalStackLayout.GestureRecognizers>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Grid.Column="3"
+                                 HorizontalOptions="Center"
+                                 Spacing="2">
+                <Label Text="❤️"
+                       FontSize="24"
+                       HorizontalOptions="Center" />
+
+                <VerticalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnActivityClicked" />
+                </VerticalStackLayout.GestureRecognizers>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Grid.Column="4"
+                                 HorizontalOptions="Center"
+                                 Spacing="2">
+                <Frame CornerRadius="15"
+                       HeightRequest="30"
+                       WidthRequest="30"
+                       Padding="0"
+                       HasShadow="False"
+                       BorderColor="{StaticResource BorderColor}">
+                    <Label Text="👤"
+                           FontSize="18"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center" />
+                </Frame>
+
+                <VerticalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnProfileClicked" />
+                </VerticalStackLayout.GestureRecognizers>
+            </VerticalStackLayout>
+        </Grid>
+    </Grid>
+</ContentPage>

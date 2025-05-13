@@ -30,6 +30,10 @@
         <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" Route="HomePage" />
     </FlyoutItem>
 
+    <FlyoutItem Title="Posts" Icon="search.png">
+        <ShellContent ContentTemplate="{DataTemplate pages:PostsPage}" Route="PostsPage" />
+    </FlyoutItem>
+
     <FlyoutItem Title="My Stats" Icon="stats.png">
         <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" />
         <!-- Replace with StatsPage once available -->
