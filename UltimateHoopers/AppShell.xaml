@@ -7,6 +7,13 @@
     Shell.FlyoutBehavior="Flyout"
     Title="UltimateHoopers">
 
+    <!-- Login Page - This will be the initial page -->
+    <ShellContent
+        Title="Login"
+        ContentTemplate="{DataTemplate local:LoginPage}"
+        Route="LoginPage" />
+
+    <!-- Main Page - Will be navigated to after login -->
     <ShellContent
         Title="Home"
         ContentTemplate="{DataTemplate local:MainPage}"
