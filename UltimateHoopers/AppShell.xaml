@@ -1,23 +1,67 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<Shell
-    x:Class="UltimateHoopers.AppShell"
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="clr-namespace:UltimateHoopers"
-    xmlns:pages="clr-namespace:UltimateHoopers.Pages"
-    Shell.FlyoutBehavior="Flyout"
-    Title="UltimateHoopers">
+<?xml version="1.0" encoding="utf-8" ?>
+<Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+       xmlns:pages="clr-namespace:UltimateHoopers.Pages"
+       x:Class="UltimateHoopers.AppShell"
+       FlyoutBehavior="Flyout"
+       FlyoutBackgroundColor="{DynamicResource CardBackgroundColor}"
+       FlyoutWidth="250">
 
-    <!-- Login Page - This will be the initial page -->
-    <ShellContent
-        Title="Login"
-        ContentTemplate="{DataTemplate pages:LoginPage}"
-        Route="LoginPage" />
+    <!-- Flyout Header -->
+    <Shell.FlyoutHeader>
+        <Grid BackgroundColor="{DynamicResource PrimaryColor}"
+              HeightRequest="150"
+              Padding="20">
+            <VerticalStackLayout VerticalOptions="Center">
+                <Label Text="Ultimate Hoopers"
+                       TextColor="White"
+                       FontSize="22"
+                       FontAttributes="Bold" />
+                <Label Text="Welcome, Player!"
+                       TextColor="White"
+                       FontSize="16" 
+                       Margin="0,5,0,0" />
+            </VerticalStackLayout>
+        </Grid>
+    </Shell.FlyoutHeader>
 
-    <!-- Main Page - Will be navigated to after login -->
-    <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+    <!-- Flyout Items -->
+    <FlyoutItem Title="Home" Icon="🏠">
+        <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" />
+    </FlyoutItem>
 
+    <FlyoutItem Title="My Stats" Icon="📊">
+        <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" />
+        <!-- Replace with StatsPage once available -->
+    </FlyoutItem>
+
+    <FlyoutItem Title="Find Games" Icon="🏀">
+        <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" />
+        <!-- Replace with FindGamesPage once available -->
+    </FlyoutItem>
+
+    <FlyoutItem Title="Training" Icon="🏋️">
+        <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" />
+        <!-- Replace with TrainingPage once available -->
+    </FlyoutItem>
+
+    <FlyoutItem Title="Teams" Icon="👥">
+        <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" />
+        <!-- Replace with TeamsPage once available -->
+    </FlyoutItem>
+
+    <ShellContent Title="Settings" Icon="⚙️">
+        <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" />
+        <!-- Replace with SettingsPage once available -->
+    </ShellContent>
+
+    <!-- MenuItems appear at the bottom of the Flyout -->
+    <Shell.MenuItems>
+        <MenuItem Text="Help &amp; Support" 
+                  IconImageSource="❓"
+                  Command="{Binding HelpCommand}" />
+        <MenuItem Text="Logout" 
+                  IconImageSource="🚪"
+                  Command="{Binding LogoutCommand}" />
+    </Shell.MenuItems>
 </Shell>

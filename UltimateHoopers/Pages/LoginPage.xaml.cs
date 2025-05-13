@@ -30,8 +30,8 @@
 
             await Task.Delay(1000);
 
-            // Navigate to the main page
-            await Shell.Current.GoToAsync("///MainPage");
+            // Navigate to the home page
+            await Shell.Current.GoToAsync("///HomePage");
 
             // Reset the login form
             UsernameEntry.Text = string.Empty;
