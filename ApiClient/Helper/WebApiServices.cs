@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SocialMedia.Api.Client.Helper
+namespace ApiClient
 {
     public class WebApiService
     {

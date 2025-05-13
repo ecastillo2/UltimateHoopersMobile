@@ -1,134 +1,118 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Domain;
 using Microsoft.AspNetCore.Authorization;
-using Swashbuckle.Swagger;
+using DataLayer.Repositories;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace WebAPI.Controllers
 {
     /// <summary>
-    /// ColorOption Controller
+    /// Error Exception Controller
     /// </summary>
     [Route("api/[controller]")]
     public class ErrorExceptionController : Controller
     {
-        HttpResponseMessage returnMessage = new HttpResponseMessage();
-        private IErrorExceptionRepository colorOptionRepository;
-
+        private readonly IErrorExceptionRepository _repository;
 
         /// <summary>
         /// Error Exception Controller
         /// </summary>
-        /// <param name="colorOptionContext"></param>
-        public ErrorExceptionController(ErrorExceptionContext colorOptionContext)
+        /// <param name="repository">Error exception repository</param>
+        public ErrorExceptionController(IErrorExceptionRepository repository)
         {
-         
-            this.colorOptionRepository = new ErrorExceptionRepository(colorOptionContext);
-
+            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         }
 
         /// <summary>
         /// Get Error Exceptions
         /// </summary>
-        /// <returns></returns>
+        /// <returns>List of error exceptions</returns>
         [HttpGet("GetErrorExceptions")]
         [Authorize]
         public async Task<List<ErrorException>> GetErrorExceptions()
         {
-
-            return await colorOptionRepository.GetErrorExceptions();
-
+            return await _repository.GetErrorExceptions();
         }
 
         /// <summary>
         /// Get Error Exception ById
         /// </summary>
-        /// <param name="errorExceptionId"></param>
-        /// <returns></returns>
+        /// <param name="errorExceptionId">Error exception ID</param>
+        /// <returns>Error exception</returns>
         [HttpGet("GetErrorExceptionById")]
         [Authorize]
         public async Task<ErrorException> GetErrorExceptionById(string errorExceptionId)
         {
             try
             {
-                return await colorOptionRepository.GetErrorExceptionById(errorExceptionId);
+                return await _repository.GetErrorExceptionById(errorExceptionId);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                throw ex;
+                throw; // Consider using a more user-friendly error handling approach
             }
-
         }
 
         /// <summary>
         /// Create Error Exception
         /// </summary>
-        /// <param name="errorException"></param>
-        /// <returns></returns>
+        /// <param name="errorException">Error exception to create</param>
+        /// <returns>Task</returns>
         [HttpPost("CreateErrorException")]
-		//[Authorize]
-		public async Task CreateErrorException([FromBody] ErrorException errorException)
+        //[Authorize]
+        public async Task<IActionResult> CreateErrorException([FromBody] ErrorException errorException)
         {
-           
-            
             try
             {
-               await colorOptionRepository.InsertErrorException(errorException);
-
-                
+                await _repository.InsertErrorException(errorException);
+                return Ok(new { message = "Error exception created successfully" });
             }
             catch (Exception ex)
             {
-                var x = ex;
+                return StatusCode(500, new { message = "An error occurred while creating the error exception", error = ex.Message });
             }
-
         }
-
 
         /// <summary>
         /// Delete Error Exception
         /// </summary>
-        /// <param name="errorExceptionId"></param>
-        /// <returns></returns>
+        /// <param name="errorExceptionId">Error exception ID</param>
+        /// <returns>Result</returns>
         [HttpDelete("DeleteErrorException")]
         [Authorize]
-        public async Task<HttpResponseMessage> DeleteErrorException(string errorExceptionId)
+        public async Task<IActionResult> DeleteErrorException(string errorExceptionId)
         {
             try
             {
-                await colorOptionRepository.DeleteErrorException(errorExceptionId);
-
-                returnMessage.RequestMessage = new HttpRequestMessage(HttpMethod.Post, "DeleteErrorException");
-
-                return await Task.FromResult(returnMessage);
+                await _repository.DeleteErrorException(errorExceptionId);
+                return Ok(new { message = "Error exception deleted successfully" });
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.ToString());
+                return StatusCode(500, new { message = "An error occurred while deleting the error exception", error = ex.Message });
             }
-            return await Task.FromResult(returnMessage);
         }
 
         /// <summary>
         /// Update Error Exception
         /// </summary>
-        /// <param name="errorException"></param>
-        /// <returns></returns>
+        /// <param name="errorException">Error exception to update</param>
+        /// <returns>Result</returns>
         [HttpPost("UpdateErrorException")]
         [Authorize]
-        public async Task UpdateErrorException([FromBody] ErrorException errorException)
+        public async Task<IActionResult> UpdateErrorException([FromBody] ErrorException errorException)
         {
-
             try
             {
-                await colorOptionRepository.UpdateErrorException(errorException);
-
+                await _repository.UpdateErrorException(errorException);
+                return Ok(new { message = "Error exception updated successfully" });
             }
             catch (Exception ex)
             {
-                
+                return StatusCode(500, new { message = "An error occurred while updating the error exception", error = ex.Message });
             }
-
         }
-
     }
 }

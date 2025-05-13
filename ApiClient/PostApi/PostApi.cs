@@ -1,11 +1,12 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using ApiClient;
+using ApiClient.Interfaces;
+using Domain;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using SocialMedia.Api.Client.Helper;
-using SocialMedia.Api.Client.Interface;
-using SocialMedia.Domain;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;

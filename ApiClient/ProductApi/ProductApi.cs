@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json;
-using SocialMedia.Domain;
+using Domain;
 using System.Net.Http.Headers;
 using System.Text;
 

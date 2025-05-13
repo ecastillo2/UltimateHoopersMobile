@@ -29,21 +29,7 @@ namespace DataLayer
             // Configure DbContext
             services.AddDbContext<ApplicationDbContext>(options =>
             {
-                // Configure SQL Server with optimizations
-                options.UseSqlServer(connectionString, sqlOptions =>
-                {
-                    // Enable connection resiliency
-                    sqlOptions.EnableRetryOnFailure(
-                        maxRetryCount: 5,
-                        maxRetryDelay: System.TimeSpan.FromSeconds(30),
-                        errorNumbersToAdd: null);
-
-                    // Optimize data loading with batching
-                    sqlOptions.MaxBatchSize(100);
-
-                    // Set command timeout
-                    sqlOptions.CommandTimeout(30);
-                });
+               
 
                 // Disable change tracking for read-only scenarios
                 options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
@@ -65,19 +51,19 @@ namespace DataLayer
 
             // Register repositories
             services.AddScoped<IUserRepository, UserRepository>();
-            services.AddScoped<IProfileRepository, ProfileRepository>();
             services.AddScoped<IPostRepository, PostRepository>();
+            services.AddScoped<IPostCommentRepository, PostCommentRepository>();
+            services.AddScoped<IProfileRepository, ProfileRepository>();
+            services.AddScoped<IFollowingRepository, FollowingRepository>();
+            services.AddScoped<IFollowerRepository, FollowerRepository>();
             services.AddScoped<IGameRepository, GameRepository>();
-            services.AddScoped<ICourtRepository, CourtRepository>();
             services.AddScoped<IPrivateRunRepository, PrivateRunRepository>();
             services.AddScoped<IPrivateRunInviteRepository, PrivateRunInviteRepository>();
-            services.AddScoped<ILikedPostRepository, LikedPostRepository>();
-            services.AddScoped<ISavedPostRepository, SavedPostRepository>();
+            services.AddScoped<ICourtRepository, CourtRepository>();
             services.AddScoped<IProductRepository, ProductRepository>();
-            services.AddScoped<INotificationRepository, NotificationRepository>();
             services.AddScoped<ITagRepository, TagRepository>();
-            services.AddScoped<IFollowerRepository, FollowerRepository>();
-            services.AddScoped<IFollowingRepository, FollowingRepository>();
+            services.AddScoped<IActivityRepository, ActivityRepository>();
+            services.AddScoped<IErrorExceptionRepository, ErrorExceptionRepository>();
 
             // Add more repositories as needed
 

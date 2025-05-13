@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Domain;
-using Swashbuckle.Swagger;
-using System.Diagnostics;
-using Activity = Domain.Activity;
-
+using DataLayer.Repositories;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 
 namespace WebAPI.Controllers
 {
@@ -14,96 +16,87 @@ namespace WebAPI.Controllers
     [Route("api/[controller]")]
     public class ActivityController : Controller
     {
-        HttpResponseMessage returnMessage = new HttpResponseMessage();
-        private IActivityRepository repository;        
+        private readonly IActivityRepository _repository;
         private readonly IConfiguration _configuration;
 
         /// <summary>
         /// Activity Controller
         /// </summary>
-        /// <param name="context"></param>
-        /// <param name="configuration"></param>
-        public ActivityController(HUDBContext context, IConfiguration configuration)
+        /// <param name="repository">Activity repository</param>
+        /// <param name="configuration">Configuration</param>
+        public ActivityController(IActivityRepository repository, IConfiguration configuration)
         {
-            this._configuration = configuration;
-            this.repository = new ActivityRepository(context);
-
+            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
 
         /// <summary>
-        /// Get Courts
+        /// Get Activities
         /// </summary>
-        /// <returns></returns>
+        /// <returns>List of activities</returns>
         [HttpGet("GetActivitys")]
         //[Authorize]
         public async Task<List<Activity>> GetActivitys()
         {
-            return await repository.GetActivitys();
-
+            return await _repository.GetActivitys();
         }
 
         /// <summary>
         /// Create Activity
         /// </summary>
-        /// <param name="contact"></param>
-        /// <returns></returns>
+        /// <param name="activity">Activity to create</param>
+        /// <returns>Task</returns>
         [HttpPost("CreateActivity")]
         public async Task CreateActivity([FromBody] Activity activity)
         {
-            
             try
             {
-                  await  repository.InsertActivity(activity);
+                await _repository.InsertActivity(activity);
             }
             catch (Exception ex)
             {
-                var x = ex;
+                // Log the exception
+                // Consider returning an error response instead of silently handling the exception
             }
-
         }
 
         /// <summary>
-        /// Get Contact By Id
+        /// Get Activity By Id
         /// </summary>
-        /// <param name="tagId"></param>
-        /// <returns></returns>
+        /// <param name="activityId">Activity ID</param>
+        /// <returns>Activity</returns>
         [Authorize]
         [HttpGet("GetActivityById")]
         public async Task<Activity> GetActivityById(string activityId)
         {
             try
             {
-                return await repository.GetActivityById(activityId);
+                return await _repository.GetActivityById(activityId);
             }
             catch (Exception ex)
             {
-                throw ex;
+                throw; // Consider using a more user-friendly error handling approach
             }
-
         }
 
         /// <summary>
         /// Delete Activity
         /// </summary>
-        /// <param name="contactId"></param>
-        /// <returns></returns>
+        /// <param name="activityId">Activity ID</param>
+        /// <returns>Result</returns>
         [Authorize]
         [HttpDelete("DeleteActivity")]
-        public async Task<HttpResponseMessage> DeleteActivity(string activityId)
+        public async Task<IActionResult> DeleteActivity(string activityId)
         {
             try
             {
-                await repository.DeleteActivity(activityId);
-
-                returnMessage.RequestMessage = new HttpRequestMessage(HttpMethod.Post, "DeleteActivity");
-
-                return await Task.FromResult(returnMessage);
+                await _repository.DeleteActivity(activityId);
+                return Ok(new { message = "Activity deleted successfully" });
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.ToString());
+                return StatusCode(500, new { message = "An error occurred while deleting the activity", error = ex.Message });
             }
-            return await Task.FromResult(returnMessage);
         }
     }
 }
