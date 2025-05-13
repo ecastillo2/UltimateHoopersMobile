@@ -1,6 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using DataLayer.DAL;
-using DataLayer;
 using Microsoft.AspNetCore.Authorization;
 
 namespace WebAPI.Controllers

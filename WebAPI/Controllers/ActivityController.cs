@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using DataLayer.DAL;
 using Microsoft.AspNetCore.Authorization;
 using Domain;
 using Swashbuckle.Swagger;

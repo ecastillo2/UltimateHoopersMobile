@@ -1,7 +1,5 @@
 ﻿using System.Net;
 using Microsoft.AspNetCore.Mvc;
-using DataLayer.DAL;
-using DataLayer;
 using Domain;
 using Microsoft.AspNetCore.Authorization;
 

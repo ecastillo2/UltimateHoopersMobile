@@ -1,18 +1,11 @@
-﻿// File: WebAPI/Services/AuthenticationService.cs
-using System;
+﻿using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using DataLayer.DAL;
 using Domain;
-using System.Security.Cryptography;
-using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
 using Org.BouncyCastle.Crypto.Generators;
-using System.Text.RegularExpressions;
+
 
 namespace WebAPI.Services
 {

@@ -1,6 +1,4 @@
-﻿// File: WebAPI/Extensions/ServiceCollectionExtensions.cs
-using DataLayer;
-using DataLayer.DAL;
+﻿using DataLayer.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

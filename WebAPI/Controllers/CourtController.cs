@@ -1,9 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using DataLayer.DAL;
 using Domain;
 using Microsoft.AspNetCore.Authorization;
 using System.Net;
-using DataLayer;
 
 namespace WebAPI.Controllers
 {
