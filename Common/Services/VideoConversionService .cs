@@ -124,7 +124,7 @@ namespace Common.Services
                     _logger.LogInformation(
                         "Conversion progress: {Percent}%, Time: {Time}",
                         args.Percent,
-                        args.ProcessedDuration);
+                        args.Duration); // Using Duration from the newest API version
                 }
             };
 
@@ -185,10 +185,5 @@ namespace Common.Services
                    ex is UnauthorizedAccessException ||
                    ex is System.Security.SecurityException;
         }
-    }
-
-    public interface IVideoConversionService
-    {
-        Task<string> ConvertToMp4Async(string inputFilePath, string outputFolder, CancellationToken cancellationToken = default);
     }
 }

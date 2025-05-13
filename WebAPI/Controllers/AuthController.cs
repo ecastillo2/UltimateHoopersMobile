@@ -94,8 +94,6 @@ namespace WebAPI.Controllers
                     PasswordHash = _authService.HashPassword(request.Password),
                     FirstName = request.FirstName,
                     LastName = request.LastName,
-                    // According to Domain/User.cs, the property is actually named "SignUpDate" 
-                    // and it's a string type
                     SignUpDate = now.ToString("yyyy-MM-dd HH:mm:ss"),
                     AccessLevel = "Standard",
                     Status = "Active"
@@ -158,7 +156,8 @@ namespace WebAPI.Controllers
 
                 // Save reset token to user
                 user.ResetCode = resetToken;
-                user.ResetLink = resetLink;
+                // The ResetLink property doesn't exist, so we'll only save the token
+                // user.ResetLink = resetLink; // Remove this line
 
                 _userRepository.Update(user);
                 await _userRepository.SaveAsync();
@@ -195,7 +194,8 @@ namespace WebAPI.Controllers
                 // Update password
                 foundUser.PasswordHash = _authService.HashPassword(request.NewPassword);
                 foundUser.ResetCode = null;
-                foundUser.ResetLink = null;
+                // Remove this line since ResetLink property doesn't exist
+                // foundUser.ResetLink = null;
 
                 _userRepository.Update(foundUser);
                 await _userRepository.SaveAsync();

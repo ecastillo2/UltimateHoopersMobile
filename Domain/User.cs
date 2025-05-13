@@ -75,6 +75,8 @@ namespace Domain
         /// </summary>
         public DateTime CreatedDate { get; set; }
 
+        public string? ResetCode { get; set; }
+
         /// <summary>
         /// Gets or sets the last modified date
         /// </summary>

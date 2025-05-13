@@ -93,7 +93,7 @@ namespace Common.VideoProcessing
                         _logger.LogInformation(
                             "Conversion progress: {Percent}%, Time: {Time}",
                             args.Percent,
-                            args.ProcessedDuration);
+                            args.Duration); // Updated: using Duration instead of ProcessedDuration
                     }
                 };
 
