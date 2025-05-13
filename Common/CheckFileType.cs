@@ -1,34 +1,33 @@
 ﻿using Microsoft.AspNetCore.Http;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Common
 {
     public static class CheckFileType
     {
-
-        private static readonly List<string> _imageContentTypes = new List<string>
-    {
-        "image/jpeg",
-        "image/png",
-        "image/gif",
-        "image/webp",
-        // Add other image MIME types if necessary
-    };
-
-        private static readonly List<string> _videoContentTypes = new List<string>
-    {
-       "video/mp4",
-    "video/x-msvideo",
-    "video/x-flv",
-    "video/x-matroska",
-    "video/quicktime", // Added for .MOV files
-    // Add other video MIME types if necessary
-        // Add other video MIME types if necessary
-    };
+        // Use readonly collections that are initialized once
+        private static readonly Dictionary<string, string> _mediaContentTypes = new Dictionary<string, string>
+        {
+            // Images
+            { "image/jpeg", "image" },
+            { "image/png", "image" },
+            { "image/gif", "image" },
+            { "image/webp", "image" },
+            
+            // Videos
+            { "video/mp4", "video" },
+            { "video/x-msvideo", "video" },
+            { "video/x-flv", "video" },
+            { "video/x-matroska", "video" },
+            { "video/quicktime", "video" }
+        };
 
         /// <summary>
-        /// Get8Digits
+        /// Determines the type of file based on its MIME content type
         /// </summary>
-        /// <returns></returns>
+        /// <param name="file">The uploaded file to check</param>
+        /// <returns>The file type category or an error message</returns>
         public static string CheckFileTypeReturn(IFormFile file)
         {
             if (file == null || file.Length == 0)
@@ -36,21 +35,9 @@ namespace Common
                 return "No file uploaded.";
             }
 
-            // Check if the file is an image
-            if (_imageContentTypes.Contains(file.ContentType))
-            {
-                return "image";
-            }
-            // Check if the file is a video
-            else if (_videoContentTypes.Contains(file.ContentType))
-            {
-                return "video";
-            }
-            else
-            {
-                return "Invalid file type. Only images and videos are allowed.";
-            }
+            return _mediaContentTypes.TryGetValue(file.ContentType, out string fileType)
+                ? fileType
+                : "Invalid file type. Only images and videos are allowed.";
         }
-
     }
 }

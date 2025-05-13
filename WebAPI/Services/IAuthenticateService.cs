@@ -15,7 +15,7 @@ namespace WebAPI.Services
         /// <param name="email"></param>
         /// <param name="password"></param>
         /// <returns></returns>
-        User SocialMediaAuthenticate(string authToken, string email, string password);
+        User Authenticate(string authToken, string email, string password);
         
     }
 }

@@ -23,7 +23,7 @@ namespace DataLayer.DAL
         {
             this._context = context;
             _config = config;
-            _connectionString = _config.GetConnectionString("UnderGroundhoopersDB");
+            _connectionString = _config.GetConnectionString("HBDB_ConnectionString");
         }
 
         /// <summary>

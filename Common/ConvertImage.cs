@@ -1,49 +1,47 @@
 ﻿using Microsoft.AspNetCore.Http;
 using SkiaSharp;
+using System;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace Common
 {
     public static class ConvertImage
     {
+        // Define image dimensions constants
+        private static readonly Dictionary<string, (int width, int height)> _mediaDimensions = new Dictionary<string, (int, int)>
+        {
+            { "image", (640, 426) },
+            { "video", (800, 535) }
+        };
 
         /// <summary>
-        /// Convert Png To WebP
+        /// Convert image to optimized WebP format with appropriate dimensions
         /// </summary>
-        /// <param name="file"></param>
-        /// <returns></returns>
-        public static byte[] ConvertPngToWebP(string type, IFormFile file)
+        /// <param name="type">Media type: "image" or "video"</param>
+        /// <param name="file">The file to convert</param>
+        /// <returns>WebP encoded byte array</returns>
+        public static async Task<byte[]> ConvertToWebPAsync(string type, IFormFile file)
         {
-            using (var inputStream = file.OpenReadStream())
-            {
-                using (var originalImage = SKBitmap.Decode(inputStream))
-                {
-                    int x = 0;
-                    int y = 0;
-                    if (type == "image")
-                    {
-                        x = 640;
-                        y = 426;
-                    }
-                    if (type == "video")
-                    {
-                        x = 800;
-                        y = 535;
-                    }
+            if (file == null)
+                throw new ArgumentNullException(nameof(file));
 
-                    // Resize the image to 504x278
-                    using (var resizedImage = originalImage.Resize(new SKImageInfo(x, y), SKFilterQuality.High))
-                    {
-                        using (var outputStream = new MemoryStream())
-                        {
-                            // Encode the resized image as WebP
-                            resizedImage.Encode(outputStream, SKEncodedImageFormat.Webp, 75); // 75 is the quality (0-100)
+            if (!_mediaDimensions.TryGetValue(type, out var dimensions))
+                throw new ArgumentException($"Invalid media type: {type}", nameof(type));
 
-                            // Return the WebP file as a byte array
-                            return outputStream.ToArray();
-                        }
-                    }
-                }
-            }
+            using var inputStream = file.OpenReadStream();
+            using var originalImage = SKBitmap.Decode(inputStream);
+
+            // Resize the image to the appropriate dimensions
+            using var resizedImage = originalImage.Resize(
+                new SKImageInfo(dimensions.width, dimensions.height),
+                SKFilterQuality.High);
+
+            using var outputStream = new MemoryStream();
+            // Encode the resized image as WebP
+            resizedImage.Encode(outputStream, SKEncodedImageFormat.Webp, 75);
+
+            return outputStream.ToArray();
         }
     }
 }
