@@ -1,4 +1,5 @@
-﻿using DataLayer.Repositories;
+﻿using DataLayer;
+using DataLayer.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

@@ -1,66 +1,83 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json.Serialization;
 
 namespace Domain
 {
+    /// <summary>
+    /// Represents a user in the system
+    /// </summary>
     public class User
     {
+        /// <summary>
+        /// Gets or sets the user ID
+        /// </summary>
         [Key]
-        public string? UserId { get; set; }
-        public string? Token { get; set; }
-        public string? Email { get; set; }
-        public string? PasswordHash { get; set; }
-        public string? SecurityStamp { get; set; }
-        public string? PhoneNumber { get; set; }
-        public string? LockoutEnd { get; set; }
-        public string? LockoutEnabled { get; set; }
-        public string? AccessFailedCount { get; set; }
-        public string? Country { get; set; }
-        public string? FirstName { get; set; }
-        public string? LastName { get; set; }
-        public string? City { get; set; }
-        public string? State { get; set; }
-        public string? Zip { get; set; }
-        public string? SignUpDate { get; set; }
-        public string? LastLoginDate { get; set; }
-        public string? Role { get; set; }
-        public string? Password { get; set; }
-        public string? AccessLevel { get; set; }
-        public string? Type { get; set; }
-        public string? Location { get; set; }
-        public string? Subscription { get; set; }
-        public string? ResetCode { get; set; }
-        public string? ResetLink { get; set; }
-        public string? Address { get; set; }
-        public string? Status { get; set; }
-        public string? SegId { get; set; }
-        public string? SubId { get; set; }
-        [NotMapped]
-        public string? AuthToken { get; set; }
-        [NotMapped]
-        public List<User>? Followers { get; set; }
+        public string UserId { get; set; }
 
-        [NotMapped]
-        public string? UserName { get; set; }
+        /// <summary>
+        /// Gets or sets the email address
+        /// </summary>
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; }
 
-        [NotMapped]
-        public List<User>? Following { get; set; }
+        /// <summary>
+        /// Gets or sets the first name
+        /// </summary>
+        public string FirstName { get; set; }
 
-        [NotMapped]
-        [JsonIgnore]
-        public List<Post>? Posts { get; set; }
+        /// <summary>
+        /// Gets or sets the last name
+        /// </summary>
+        public string LastName { get; set; }
 
-        [NotMapped]
-        public Profile? Profile { get; set; }
+        /// <summary>
+        /// Gets or sets the password hash
+        /// </summary>
+        [Required]
+        public string PasswordHash { get; set; }
 
-        
-        [NotMapped]
-        [JsonIgnore]
-        public List<PrivateRun>? PrivateRun { get; set; }
+        /// <summary>
+        /// Gets or sets the access level (e.g., Admin, Staff, Standard)
+        /// </summary>
+        public string AccessLevel { get; set; }
 
+        /// <summary>
+        /// Gets or sets the status (e.g., Active, Inactive)
+        /// </summary>
+        public string Status { get; set; }
+
+        /// <summary>
+        /// Gets or sets the subscription ID
+        /// </summary>
+        public string SubId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the date of last login
+        /// </summary>
+        public string LastLoginDate { get; set; }
+
+        /// <summary>
+        /// Gets or sets the JWT token (not stored in database)
+        /// </summary>
         [NotMapped]
-        [JsonIgnore]
-        public List<PrivateRunInvite>? PrivateRunInvite { get; set; }
+        public string Token { get; set; }
+
+        /// <summary>
+        /// Gets or sets the associated profile
+        /// </summary>
+        public Profile Profile { get; set; }
+
+        /// <summary>
+        /// Gets or sets the creation date
+        /// </summary>
+        public DateTime CreatedDate { get; set; }
+
+        /// <summary>
+        /// Gets or sets the last modified date
+        /// </summary>
+        public DateTime? LastModifiedDate { get; set; }
     }
 }

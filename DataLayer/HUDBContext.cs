@@ -71,8 +71,18 @@ namespace DataLayer
             modelBuilder.Entity<Following>()
                 .HasKey(f => f.FollowingId);
 
+            modelBuilder.Entity<Following>()
+                .Property(f => f.FollowDate)
+                .HasMaxLength(50)
+                .IsRequired(false);
+
             modelBuilder.Entity<Follower>()
                 .HasKey(f => f.FollowerId);
+
+            modelBuilder.Entity<Follower>()
+                .Property(f => f.FollowDate)
+                .HasMaxLength(50)
+                .IsRequired(false);
 
             modelBuilder.Entity<Game>()
                 .HasKey(g => g.GameId);

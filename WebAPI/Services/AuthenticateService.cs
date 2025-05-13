@@ -4,8 +4,12 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using Domain;
-using Org.BouncyCastle.Crypto.Generators;
-
+using DataLayer.Repositories;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using BCrypt.Net;
 
 namespace WebAPI.Services
 {
@@ -87,7 +91,7 @@ namespace WebAPI.Services
                 }
 
                 // Get user by email
-                var user = await _userRepository.GetUserByEmail(emailClaim);
+                var user = await _userRepository.GetByEmailAsync(emailClaim);
                 if (user == null)
                 {
                     _logger.LogWarning("User not found for email: {Email}", emailClaim);
@@ -98,7 +102,7 @@ namespace WebAPI.Services
                 user.Token = GenerateJwtToken(user);
 
                 // Update last login date
-                await _userRepository.UpdateLastLoginDate(user.UserId);
+                await _userRepository.UpdateLastLoginDateAsync(user.UserId);
 
                 return user;
             }
@@ -122,7 +126,7 @@ namespace WebAPI.Services
             }
 
             // Get user by email
-            var user = await _userRepository.GetUserByEmail(email);
+            var user = await _userRepository.GetByEmailAsync(email);
             if (user == null)
             {
                 _logger.LogWarning("User not found for email: {Email}", email);
@@ -140,7 +144,7 @@ namespace WebAPI.Services
             user.Token = GenerateJwtToken(user);
 
             // Update last login date
-            await _userRepository.UpdateLastLoginDate(user.UserId);
+            await _userRepository.UpdateLastLoginDateAsync(user.UserId);
 
             return user;
         }
@@ -212,13 +216,4 @@ namespace WebAPI.Services
             return BCrypt.Net.BCrypt.HashPassword(password, 12);
         }
     }
-
-    /// <summary>
-    /// Interface for authentication service
-    /// </summary>
-    public interface IAuthenticateService
-    {
-        Task<User> Authenticate(string token, string email, string password);
-    }
 }
-

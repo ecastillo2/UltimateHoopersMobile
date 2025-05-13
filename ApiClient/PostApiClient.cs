@@ -5,11 +5,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using ApiClient.Configuration;
 using ApiClient.Core;
-using ApiClient.Interfaces;
 using Domain;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using WebAPI.ApiClients;
 
 namespace ApiClient.Services
 {

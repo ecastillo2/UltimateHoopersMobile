@@ -1,584 +1,129 @@
-﻿using ApiClient;
-using ApiClient.Interfaces;
-using Domain;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Domain;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace SocialMedia.Api.Client
+namespace WebAPI.ApiClients
 {
+    /// <summary>
+    /// Implementation of Post API client
+    /// </summary>
     public class PostApi : IPostApi
     {
         private readonly HttpClient _httpClient;
-        private readonly ILogger<PostApi> _logger;
+        private readonly string _baseUrl;
+        private readonly JsonSerializerOptions _jsonOptions;
 
-        public PostApi(HttpClient httpClient, ILogger<PostApi> logger,IConfiguration configuration)
+        public PostApi(HttpClient httpClient, IConfiguration configuration)
         {
-            _logger = logger;
+            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+            _baseUrl = configuration["ApiSettings:BaseUrl"] ?? "https://api.undergroundhoopers.com";
 
-            _httpClient = httpClient;
-
-            // Create an instance of WebApiService
-            var webApiService = new WebApiService(httpClient, configuration);
-
-            // Set the BaseAddress from WebApiService's HttpClient
-            _httpClient.BaseAddress = webApiService.GetClient().BaseAddress;
+            _jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
         }
 
         /// <summary>
-        /// Get Posts
+        /// Get all posts
         /// </summary>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public async Task<List<Post>> GetPosts(string timeZone, string token)
+        public async Task<List<Post>> GetPostsAsync(string accessToken, CancellationToken cancellationToken = default)
         {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            List<Post> modelList = new List<Post>();
+            var response = await _httpClient.GetAsync($"{_baseUrl}/api/Post/GetPosts", cancellationToken);
+            response.EnsureSuccessStatusCode();
 
-            try
-            {
-                string urlParameters = "?timeZone=" + timeZone;
-
-                _httpClient.DefaultRequestHeaders.Accept.Clear();
-                _httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                var response = await _httpClient.GetAsync("api/Post/GetPosts" + urlParameters);
-                var responseString = await response.Content.ReadAsStringAsync();
-
-                if (response.IsSuccessStatusCode)
-                {
-                    modelList = JsonConvert.DeserializeObject<List<Post>>(responseString);
-                }
-            }
-            catch (Exception ex)
-            {
-                // Log or handle the exception as needed
-                Console.WriteLine(ex.Message);
-                _logger.LogError($"Error occurred in Index method: {ex.Message}", ex);
-            }
-
-            return modelList;
-        }
-
-
-        public async Task<List<Post>> GetBlogs(string timeZone, string token)
-        {
-            List<Post> modelList = new List<Post>();
-
-            try
-            {
-                string urlParameters = "?timeZone=" + timeZone;
-
-                _httpClient.DefaultRequestHeaders.Accept.Clear();
-
-                // Remove existing Authorization header if it already exists
-                if (_httpClient.DefaultRequestHeaders.Contains("Authorization"))
-                {
-                    _httpClient.DefaultRequestHeaders.Remove("Authorization");
-                }
-
-                _httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                var response = await _httpClient.GetAsync("api/Post/GetBlogs" + urlParameters);
-                var responseString = await response.Content.ReadAsStringAsync();
-
-                if (response.IsSuccessStatusCode)
-                {
-                    modelList = JsonConvert.DeserializeObject<List<Post>>(responseString);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                _logger.LogError($"Error occurred in GetBlogs method: {ex.Message}", ex);
-            }
-
-            return modelList;
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            return JsonSerializer.Deserialize<List<Post>>(content, _jsonOptions);
         }
 
         /// <summary>
-        /// Get Posts
+        /// Get post by ID
         /// </summary>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public async Task<List<Post>> GetNews(string timeZone, string token)
+        public async Task<Post> GetPostByIdAsync(string postId, string accessToken, CancellationToken cancellationToken = default)
         {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            List<Post> modelList = new List<Post>();
+            var response = await _httpClient.GetAsync($"{_baseUrl}/api/Post/GetPostById?postId={postId}", cancellationToken);
+            response.EnsureSuccessStatusCode();
 
-            try
-            {
-                string urlParameters = "?timeZone=" + timeZone;
-
-                _httpClient.DefaultRequestHeaders.Accept.Clear();
-                _httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                var response = await _httpClient.GetAsync("api/Post/GetNews" + urlParameters);
-                var responseString = await response.Content.ReadAsStringAsync();
-
-                if (response.IsSuccessStatusCode)
-                {
-                    modelList = JsonConvert.DeserializeObject<List<Post>>(responseString);
-                }
-            }
-            catch (Exception ex)
-            {
-                // Log or handle the exception as needed
-                Console.WriteLine(ex.Message);
-                _logger.LogError($"Error occurred in Index method: {ex.Message}", ex);
-            }
-
-            return modelList;
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            return JsonSerializer.Deserialize<Post>(content, _jsonOptions);
         }
 
+        /// <summary>
+        /// Create a new post
+        /// </summary>
+        public async Task<Post> CreatePostAsync(Post post, string accessToken, CancellationToken cancellationToken = default)
+        {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            var jsonContent = new StringContent(
+                JsonSerializer.Serialize(post, _jsonOptions),
+                Encoding.UTF8,
+                "application/json");
+
+            var response = await _httpClient.PostAsync($"{_baseUrl}/api/Post/CreatePost", jsonContent, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            return JsonSerializer.Deserialize<Post>(content, _jsonOptions);
+        }
 
         /// <summary>
-        /// Get Posts
+        /// Update an existing post
         /// </summary>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task<List<Post>> GetPublicPosts(string token)
+        public async Task<bool> UpdatePostAsync(Post post, string accessToken, CancellationToken cancellationToken = default)
         {
-           
-            List<Post> modelList = new List<Post>();
-            
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-           
-            using (var client = new HttpClient())
+            var jsonContent = new StringContent(
+                JsonSerializer.Serialize(post, _jsonOptions),
+                Encoding.UTF8,
+                "application/json");
+
+            var response = await _httpClient.PostAsync($"{_baseUrl}/api/Post/UpdatePost", jsonContent, cancellationToken);
+            return response.IsSuccessStatusCode;
+        }
+
+        /// <summary>
+        /// Delete a post
+        /// </summary>
+        public async Task<bool> DeletePostAsync(string postId, string accessToken, CancellationToken cancellationToken = default)
+        {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            var response = await _httpClient.DeleteAsync($"{_baseUrl}/api/Post/DeletePost?postId={postId}", cancellationToken);
+            return response.IsSuccessStatusCode;
+        }
+
+        /// <summary>
+        /// Get blogs with optional filtering
+        /// </summary>
+        public async Task<List<Blog>> GetBlogsAsync(string accessToken, string filter = null, CancellationToken cancellationToken = default)
+        {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            string url = $"{_baseUrl}/api/Blog/GetBlogs";
+            if (!string.IsNullOrEmpty(filter))
             {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                try
-                {
-                    var response = await client.GetAsync("api/Post/GetPublicPosts");
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        modelList = JsonConvert.DeserializeObject<List<Post>>(responseString);
-
-                    }
-                }
-
-                catch (Exception ex)
-                {
-                    var x = ex;
-                }
-
+                url += $"?filter={Uri.EscapeDataString(filter)}";
             }
 
-            return modelList;
+            var response = await _httpClient.GetAsync(url, cancellationToken);
+            response.EnsureSuccessStatusCode();
 
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            return JsonSerializer.Deserialize<List<Blog>>(content, _jsonOptions);
         }
-
-        /// <summary>
-        /// Get Posts
-        /// </summary>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task<List<Post>> GetPostsByProfileId(string ProfileId, string timeZone, string token)
-        {
-           
-            List<Post> obj = new List<Post>();
-            string urlParameters = "?profileId=" + ProfileId;
-            string urlParameters2 = "&timeZone=" + timeZone;
-
-            
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();            
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                try
-                {
-                    var response = await client.GetAsync("api/Post/GetPostsByProfileId" + urlParameters + urlParameters2);
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                    if (response.IsSuccessStatusCode)
-                    {
-
-                        obj = JsonConvert.DeserializeObject<List<Post>>(responseString);
-
-
-                    }
-                }
-
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.ToString());
-
-                }
-
-            }
-            return obj;
-
-        }
-
-        /// <summary>
-        /// Get Posts
-        /// </summary>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task<List<Post>> GetSavedPostsByProfileId(string ProfileId, string timeZone, string token)
-        {
-            WebApi _api = new WebApi();
-            List<Post> obj = new List<Post>();
-            string urlParameters = "?profileId=" + ProfileId;
-            string urlParameters2 = "&timeZone=" + timeZone;
-
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                try
-                {
-                    var response = await client.GetAsync("api/Post/GetSavedPostsByProfileId" + urlParameters + urlParameters2);
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                    if (response.IsSuccessStatusCode)
-                    {
-
-                        obj = JsonConvert.DeserializeObject<List<Post>>(responseString);
-
-
-                    }
-                }
-
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.ToString());
-                    
-                }
-
-            }
-            return obj;
-
-        }
-
-
-        /// <summary>
-        /// Get Posts
-        /// </summary>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public async Task<List<Post>> GetPostsMentionProfileId(string ProfileId, string timeZone, string token)
-        {
-          
-            List<Post> obj = new List<Post>();
-            
-
-           
-            
-                string urlParameters = "?profileId=" + ProfileId;
-                string urlParameters2 = "&timeZone=" + timeZone;
-
-                _httpClient.DefaultRequestHeaders.Accept.Clear();
-                _httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                try
-                {
-                    var response = await _httpClient.GetAsync("api/Post/GetPostsMentionProfileId" + urlParameters + urlParameters2);
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                    if (response.IsSuccessStatusCode)
-                    {
-
-                        obj = JsonConvert.DeserializeObject<List<Post>>(responseString);
-
-
-                    }
-                }
-
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.ToString());
-                    _logger.LogError($"Error occurred in Index method: {ex.Message}", ex);
-                }
-
-            
-            return obj;
-
-        }
-
-        /// <summary>
-        /// Get Posts
-        /// </summary>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task<List<Post>> GetPostsWithTagByTagId(string TagId, string timeZone, string token)
-        {
-            WebApi _api = new WebApi();
-            List<Post> obj = new List<Post>();
-            string urlParameters = "?tagId=" + TagId;
-            string urlParameters2 = "&timeZone=" + timeZone;
-
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                try
-                {
-                    var response = await client.GetAsync("api/Post/GetPostsWithTagByTagId" + urlParameters + urlParameters2);
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                    if (response.IsSuccessStatusCode)
-                    {
-
-                        obj = JsonConvert.DeserializeObject<List<Post>>(responseString);
-
-
-                    }
-                }
-
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.ToString());
-
-                }
-
-            }
-            return obj;
-
-        }
-
-        /// <summary>
-        /// Create Post
-        /// </summary>
-        /// <param name="obj"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public  async Task<bool> CreatePost(Post obj, string token)
-        {
-
-
-            
-
-                var userJsonString = JsonConvert.SerializeObject(obj);
-
-                _httpClient.DefaultRequestHeaders.Accept.Clear();
-                _httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                HttpContent content = new StringContent(userJsonString, Encoding.UTF8, "application/json");
-               
-                try
-                {
-                    var response = await _httpClient.PostAsync("api/Post/CreatePost/", content);
-
-                }
-
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.ToString());
-                    _logger.LogError($"Error occurred in Index method: {ex.Message}", ex);
-                }
-
-            
-            return true;
-        }
-
-        /// <summary>
-        /// Get Post By Id
-        /// </summary>
-        /// <param name="postId"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public  async Task<Post> GetPostById(string postId, string timeZone, string token)
-        {
-
-            Post obj = new Post();
-            string urlParameters = "?postId=" + postId;
-            string urlParameters2 = "&timeZone=" + timeZone;
-
-           
-            
-
-                _httpClient.DefaultRequestHeaders.Accept.Clear();
-                _httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                try
-                {
-                    var response = await _httpClient.GetAsync("api/Post/GetPostById" + urlParameters + urlParameters2);
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                    if (response.IsSuccessStatusCode)
-                    {
-
-                        obj = JsonConvert.DeserializeObject<Post>(responseString);
-
-
-                    }
-                }
-
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.ToString());
-                    _logger.LogError($"Error occurred in Index method: {ex.Message}", ex);
-                }
-
-            
-            return obj;
-        }
-
-
-
-        /// <summary>
-        /// Update Post
-        /// </summary>
-        /// <param name="obj"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public  async Task<bool> UpdatePost(Post obj, string token)
-        {
-            
-            var userJsonString = JsonConvert.SerializeObject(obj);
-
-         
-            
-
-                
-                _httpClient.DefaultRequestHeaders.Accept.Clear();
-                _httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                HttpContent content = new StringContent(userJsonString, Encoding.UTF8, "application/json");
-                try
-                {
-                    var response = await _httpClient.PostAsync("api/Post/UpdatePost", content);
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                }
-
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.ToString());
-                    _logger.LogError($"Error occurred in Index method: {ex.Message}", ex);
-                }
-
-                return true;
-            
-
-        }
-
-
-        /// <summary>
-        /// Deletes a post and returns a JSON result indicating success or failure.
-        /// </summary>
-        /// <param name="postId">The ID of the post to delete.</param>
-        /// <param name="token">The authorization token.</param>
-        /// <returns>A JSON response indicating success or failure.</returns>
-        public static async Task<JsonResult> DeletePost(string postId, string token)
-        {
-         
-
-            string urlParameters = "?postId=" + postId;
-          
-
-            using (var client = new HttpClient())
-            {
-                client.DefaultRequestHeaders.Accept.Clear();
-                
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                try
-                {
-                    // Send the DELETE request
-                    var response = await client.DeleteAsync("api/Post/DeletePost" + urlParameters);
-
-                    // Check if the response is successful
-                    if (response.IsSuccessStatusCode)
-                    {
-                        // Return success response
-                        return new JsonResult(new { success = true, message = "Post deleted successfully." });
-                    }
-                    else
-                    {
-                        // Return failure response with error message
-                        string responseString = await response.Content.ReadAsStringAsync();
-                        return new JsonResult(new { success = false, message = "Failed to delete the post. " + responseString });
-                    }
-                }
-                catch (Exception ex)
-                {
-                    // Log the exception and return failure response
-                    Console.WriteLine($"Error deleting post: {ex.Message}");
-                    return new JsonResult(new { success = false, message = "An error occurred while deleting the post." });
-                }
-            }
-        }
-
-
-
-        /// <summary>
-        /// Delete Post
-        /// </summary>
-        /// <param name="postId"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task UpdatePostStatus(string postId, string status, string token)
-        {
-         
-
-            string urlParameters = "?postId=" + postId;
-            string urlParameters2 = "&status=" + status;
-
-            
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                try
-                {
-                    var response = await client.GetAsync("api/Post/UpdatePostStatus" + urlParameters + urlParameters2);
-                    var responseString = await response.Content.ReadAsStringAsync();
-                    string responseUri = response.RequestMessage.RequestUri.ToString();
-
-                    if (response.IsSuccessStatusCode)
-                    {
-
-                    }
-                }
-
-                catch (Exception ex)
-                {
-                    var x = ex;
-
-                }
-
-            }
-
-        }
-
-
     }
 }

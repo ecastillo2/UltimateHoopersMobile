@@ -63,7 +63,9 @@ namespace DataLayer.Repositories
                 FollowingId = Guid.NewGuid().ToString(),
                 ProfileId = profileId,
                 FollowingProfileId = followingProfileId,
-                FollowDate = DateTime.Now.ToString()
+                FollowDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                Status = "Active",
+                CreatedDate = DateTime.Now
             };
 
             await _dbSet.AddAsync(following);

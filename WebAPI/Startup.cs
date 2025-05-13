@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -182,6 +181,14 @@ namespace WebAPI
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+
+                // Enable Swagger in development only
+                app.UseSwagger();
+                app.UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Underground Hoopers API V1");
+                    c.RoutePrefix = "swagger";
+                });
             }
             else
             {
@@ -191,14 +198,6 @@ namespace WebAPI
 
             // Security headers
             app.UseSecurityHeaders();
-
-            // Enable Swagger
-            app.UseSwagger();
-            app.UseSwaggerUI(c =>
-            {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Underground Hoopers API V1");
-                c.RoutePrefix = "swagger";
-            });
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();

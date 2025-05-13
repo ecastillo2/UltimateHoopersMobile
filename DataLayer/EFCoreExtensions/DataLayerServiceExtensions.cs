@@ -1,23 +1,22 @@
-﻿using DataLayer.Repositories;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+using DataLayer.Repositories;
+using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace DataLayer
 {
     /// <summary>
-    /// Extension methods for setting up DataLayer services in an IServiceCollection
+    /// Extension methods for registering data layer services
     /// </summary>
-    public static class DependencyInjection
+    public static class DataLayerServiceExtensions
     {
         /// <summary>
         /// Adds DataLayer services to the specified IServiceCollection
         /// </summary>
         public static IServiceCollection AddDataLayer(
             this IServiceCollection services,
-            IConfiguration configuration,
-            ILoggerFactory loggerFactory = null)
+            IConfiguration configuration)
         {
             // Get connection string from configuration
             var connectionString = configuration.GetConnectionString("DefaultConnection");
@@ -26,38 +25,31 @@ namespace DataLayer
                 connectionString = configuration.GetConnectionString("UnderGroundhoopersDB");
             }
 
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                throw new InvalidOperationException(
+                    "Database connection string is not configured. Please provide either 'DefaultConnection' or 'UnderGroundhoopersDB' in your connection strings.");
+            }
+
             // Configure DbContext
             services.AddDbContext<ApplicationDbContext>(options =>
-            {
                 options.UseSqlServer(connectionString, sqlOptions =>
                 {
-                    // Enable connection resiliency
-                    sqlOptions.EnableRetryOnFailure(
-                        maxRetryCount: 5,
-                        maxRetryDelay: System.TimeSpan.FromSeconds(30),
-                        errorNumbersToAdd: null);
-
-                    // Optimize data loading with batching
-                    sqlOptions.MaxBatchSize(100);
-
-                    // Set command timeout
+                    // Configure options for better SQL Server performance
+                    sqlOptions.EnableRetryOnFailure(3);
                     sqlOptions.CommandTimeout(30);
-                });
+                }));
 
-                // Disable change tracking for read-only scenarios
-                options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
-
-                // Enable sensitive data logging only in development
-#if DEBUG
-                options.EnableSensitiveDataLogging();
-#endif
-
-                // Configure logging if provided
-                if (loggerFactory != null)
+            services.AddDbContext<HUDBContext>(options =>
+                options.UseSqlServer(connectionString, sqlOptions =>
                 {
-                    options.UseLoggerFactory(loggerFactory);
-                }
-            });
+                    // Configure options for better SQL Server performance
+                    sqlOptions.EnableRetryOnFailure(3);
+                    sqlOptions.CommandTimeout(30);
+                }));
+
+            services.AddDbContext<ErrorExceptionContext>(options =>
+                options.UseSqlServer(connectionString));
 
             // Register Unit of Work
             services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -77,8 +69,6 @@ namespace DataLayer
             services.AddScoped<ITagRepository, TagRepository>();
             services.AddScoped<IActivityRepository, ActivityRepository>();
             services.AddScoped<IErrorExceptionRepository, ErrorExceptionRepository>();
-
-            // Add more repositories as needed
 
             return services;
         }
