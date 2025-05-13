@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using SocialMedia.Api.Client.Helper;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;

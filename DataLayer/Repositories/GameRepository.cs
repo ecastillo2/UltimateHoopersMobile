@@ -4,232 +4,201 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Domain;
+using Common;
 
 namespace DataLayer.Repositories
 {
     /// <summary>
-    /// Repository for Profile entity operations
+    /// Repository for Game entity operations
     /// </summary>
-    public class ProfileRepository : GenericRepository<Profile>, IProfileRepository
+    public class GameRepository : GenericRepository<Game>, IGameRepository
     {
-        public ProfileRepository(ApplicationDbContext context) : base(context)
+        public GameRepository(ApplicationDbContext context) : base(context)
         {
         }
 
         /// <summary>
-        /// Get profile by ID with full details
+        /// Get game by ID with all related data
         /// </summary>
-        public override async Task<Profile> GetByIdAsync(object id)
+        public override async Task<Game> GetByIdAsync(object id)
         {
-            string profileId = id.ToString();
-            var profile = await _dbSet
-                .Include(p => p.Setting)
-                .Include(p => p.ScoutingReport)
-                .FirstOrDefaultAsync(p => p.ProfileId == profileId);
+            string gameId = id.ToString();
+            var game = await _dbSet
+                .FirstOrDefaultAsync(g => g.GameId == gameId);
 
-            if (profile == null)
+            if (game == null)
                 return null;
 
-            // Get user details
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.UserId == profile.UserId);
-
-            if (user != null)
+            // Load player lists (winners and losers)
+            if (!string.IsNullOrEmpty(game.WinProfileIdsStatusString))
             {
-                profile.FirstName = user.FirstName;
-                profile.LastName = user.LastName;
-                profile.Email = user.Email;
+                game.WinnersList = await LoadProfilesFromIdsAsync(game.WinProfileIdsStatusString);
             }
 
-            // Get follower/following counts
-            profile.FollowersCount = (await GetFollowerCountAsync(profileId)).ToString();
-            profile.FollowingCount = (await GetFollowingCountAsync(profileId)).ToString();
+            if (!string.IsNullOrEmpty(game.LoseProfileIdsStatusString))
+            {
+                game.LossersList = await LoadProfilesFromIdsAsync(game.LoseProfileIdsStatusString);
+            }
 
-            // Calculate game statistics
-            await CalculateGameStatisticsAsync(profile);
+            // Load private run information
+            if (!string.IsNullOrEmpty(game.PrivateRunId))
+            {
+                game.PrivateRun = await _context.PrivateRuns
+                    .FirstOrDefaultAsync(pr => pr.PrivateRunId == game.PrivateRunId);
+            }
 
-            return profile;
+            // Load court information
+            if (!string.IsNullOrEmpty(game.CourtId))
+            {
+                game.Court = await _context.Courts
+                    .FirstOrDefaultAsync(c => c.CourtId == game.CourtId);
+            }
+
+            return game;
         }
 
         /// <summary>
-        /// Get all profiles with basic info
+        /// Get all games with related data
         /// </summary>
-        public override async Task<List<Profile>> GetAllAsync()
+        public override async Task<List<Game>> GetAllAsync()
         {
-            var profiles = await _dbSet
-                .Where(p => p.UserId != null)
-                .ToListAsync();
+            var games = await _dbSet.ToListAsync();
 
-            // Get all user IDs
-            var userIds = profiles.Select(p => p.UserId).ToList();
+            // Get all game IDs
+            var gameIds = games.Select(g => g.GameId).ToList();
 
-            // Get all users in one query
-            var users = await _context.Users
-                .Where(u => userIds.Contains(u.UserId))
-                .ToDictionaryAsync(u => u.UserId);
+            // Load related data for all games at once
+            var privateRunIds = games.Where(g => !string.IsNullOrEmpty(g.PrivateRunId))
+                                     .Select(g => g.PrivateRunId)
+                                     .Distinct()
+                                     .ToList();
 
-            // Get all profile IDs
-            var profileIds = profiles.Select(p => p.ProfileId).ToList();
+            var courtIds = games.Where(g => !string.IsNullOrEmpty(g.CourtId))
+                                .Select(g => g.CourtId)
+                                .Distinct()
+                                .ToList();
 
-            // Get follower counts in one query
-            var followerCounts = await _context.Followers
-                .Where(f => profileIds.Contains(f.FollowerProfileId))
-                .GroupBy(f => f.FollowerProfileId)
-                .Select(g => new { ProfileId = g.Key, Count = g.Count() })
-                .ToDictionaryAsync(g => g.ProfileId, g => g.Count);
+            // Fetch related data in a single query for each type
+            var privateRuns = await _context.PrivateRuns
+                .Where(pr => privateRunIds.Contains(pr.PrivateRunId))
+                .ToDictionaryAsync(pr => pr.PrivateRunId);
 
-            // Get following counts in one query
-            var followingCounts = await _context.Following
-                .Where(f => profileIds.Contains(f.ProfileId))
-                .GroupBy(f => f.ProfileId)
-                .Select(g => new { ProfileId = g.Key, Count = g.Count() })
-                .ToDictionaryAsync(g => g.ProfileId, g => g.Count);
+            var courts = await _context.Courts
+                .Where(c => courtIds.Contains(c.CourtId))
+                .ToDictionaryAsync(c => c.CourtId);
 
-            // Apply user info and counts to profiles
-            foreach (var profile in profiles)
+            // Apply related data to games
+            foreach (var game in games)
             {
-                if (users.TryGetValue(profile.UserId, out var user))
+                // Set private run
+                if (!string.IsNullOrEmpty(game.PrivateRunId) && privateRuns.TryGetValue(game.PrivateRunId, out var privateRun))
                 {
-                    profile.FirstName = user.FirstName;
-                    profile.LastName = user.LastName;
-                    profile.FullName = $"{user.FirstName} {user.LastName}";
+                    game.PrivateRun = privateRun;
                 }
 
-                profile.FollowersCount = followerCounts.TryGetValue(profile.ProfileId, out var followerCount)
-                    ? followerCount.ToString() : "0";
-
-                profile.FollowingCount = followingCounts.TryGetValue(profile.ProfileId, out var followingCount)
-                    ? followingCount.ToString() : "0";
+                // Set court
+                if (!string.IsNullOrEmpty(game.CourtId) && courts.TryGetValue(game.CourtId, out var court))
+                {
+                    game.Court = court;
+                }
             }
 
-            return profiles;
+            return games;
         }
 
         /// <summary>
-        /// Get profiles following a user
+        /// Get games by profile ID
         /// </summary>
-        public async Task<List<Profile>> GetFollowingProfilesAsync(string profileId)
+        public async Task<List<Game>> GetGamesByProfileIdAsync(string profileId)
         {
-            return await _context.Following
-                .Where(f => f.ProfileId == profileId)
-                .Join(_dbSet,
-                    following => following.FollowingProfileId,
-                    profile => profile.ProfileId,
-                    (following, profile) => profile)
+            var games = await _dbSet
+                .Where(g => g.WinProfileIdsStatusString.Contains(profileId) ||
+                            g.LoseProfileIdsStatusString.Contains(profileId))
                 .ToListAsync();
-        }
 
-        /// <summary>
-        /// Get profiles that follow a user
-        /// </summary>
-        public async Task<List<Profile>> GetFollowerProfilesAsync(string profileId)
-        {
-            return await _context.Followers
-                .Where(f => f.ProfileId == profileId)
-                .Join(_dbSet,
-                    follower => follower.FollowerProfileId,
-                    profile => profile.ProfileId,
-                    (follower, profile) => profile)
-                .ToListAsync();
-        }
-
-        /// <summary>
-        /// Check if username is available
-        /// </summary>
-        public async Task<bool> IsUserNameAvailableAsync(string userName)
-        {
-            return !await _dbSet.AnyAsync(p => p.UserName == userName);
-        }
-
-        /// <summary>
-        /// Update profile settings
-        /// </summary>
-        public async Task UpdateSettingsAsync(Setting setting)
-        {
-            var existingSetting = await _context.Settings
-                .FirstOrDefaultAsync(s => s.ProfileId == setting.ProfileId);
-
-            if (existingSetting != null)
+            // Load related data for games
+            foreach (var game in games)
             {
-                existingSetting.AllowComments = setting.AllowComments;
-                existingSetting.ShowGameHistory = setting.ShowGameHistory;
-                existingSetting.AllowEmailNotification = setting.AllowEmailNotification;
+                // Set user win/lose status
+                if (game.WinProfileIdsStatusString.Contains(profileId))
+                {
+                    game.UserWinOrLose = "Win";
+                }
+                else if (game.LoseProfileIdsStatusString.Contains(profileId))
+                {
+                    game.UserWinOrLose = "Lose";
+                }
 
-                _context.Settings.Update(existingSetting);
-            }
-            else
-            {
-                setting.SettingId = Guid.NewGuid().ToString();
-                await _context.Settings.AddAsync(setting);
+                // Load private run information if available
+                if (!string.IsNullOrEmpty(game.PrivateRunId))
+                {
+                    game.PrivateRun = await _context.PrivateRuns
+                        .FirstOrDefaultAsync(pr => pr.PrivateRunId == game.PrivateRunId);
+                }
             }
 
+            return games;
+        }
+
+        /// <summary>
+        /// Insert game
+        /// </summary>
+        public override async Task AddAsync(Game game)
+        {
+            if (string.IsNullOrEmpty(game.GameId))
+                game.GameId = Guid.NewGuid().ToString();
+
+            game.CreatedDate = DateTime.Now.ToString();
+            game.GameNumber = UniqueIdNumber.Generate8Digits();
+
+            await base.AddAsync(game);
+        }
+
+        /// <summary>
+        /// Update game
+        /// </summary>
+        public async Task UpdateGameAsync(Game game)
+        {
+            var existingGame = await GetByIdAsync(game.GameId);
+            if (existingGame == null)
+                return;
+
+            // Update properties
+            existingGame.WinProfileIdsStatusString = game.WinProfileIdsStatusString;
+            existingGame.LoseProfileIdsStatusString = game.LoseProfileIdsStatusString;
+            existingGame.Status = game.Status;
+            existingGame.Location = game.Location;
+            existingGame.PrivateRunId = game.PrivateRunId;
+            existingGame.CourtId = game.CourtId;
+
+            _dbSet.Update(existingGame);
             await SaveAsync();
         }
 
         /// <summary>
-        /// Helper method to get follower count
+        /// Helper method to load profiles from comma-separated ID list
         /// </summary>
-        private async Task<int> GetFollowerCountAsync(string profileId)
+        private async Task<List<Profile>> LoadProfilesFromIdsAsync(string idsString)
         {
-            return await _context.Followers
-                .CountAsync(f => f.FollowerProfileId == profileId);
-        }
+            if (string.IsNullOrEmpty(idsString))
+                return new List<Profile>();
 
-        /// <summary>
-        /// Helper method to get following count
-        /// </summary>
-        private async Task<int> GetFollowingCountAsync(string profileId)
-        {
-            return await _context.Following
-                .CountAsync(f => f.ProfileId == profileId);
-        }
+            var ids = idsString.Split(',', StringSplitOptions.RemoveEmptyEntries);
+            if (!ids.Any())
+                return new List<Profile>();
 
-        /// <summary>
-        /// Helper method to calculate game statistics
-        /// </summary>
-        private async Task CalculateGameStatisticsAsync(Profile profile)
-        {
-            var games = await _context.Games.ToListAsync();
-
-            // Count wins and losses
-            int wins = 0;
-            int losses = 0;
-
-            foreach (var game in games)
-            {
-                if (string.IsNullOrEmpty(game.WinProfileIdsStatusString))
-                    continue;
-
-                // Check if profile is in win list
-                if (game.WinProfileIdsStatusString.Contains(profile.ProfileId))
-                    wins++;
-                // Check if profile is in lose list
-                else if (game.LoseProfileIdsStatusString?.Contains(profile.ProfileId) == true)
-                    losses++;
-            }
-
-            // Set statistics
-            profile.TotalGames = (wins + losses).ToString();
-            profile.TotalWins = wins;
-            profile.TotalLosses = losses;
-
-            // Calculate win percentage
-            double winPercentage = (wins + losses) > 0
-                ? (double)wins / (wins + losses) * 100
-                : 0;
-
-            profile.WinPercentage = winPercentage.ToString("F2");
+            return await _context.Profiles
+                .Where(p => ids.Contains(p.ProfileId))
+                .ToListAsync();
         }
     }
 
     /// <summary>
-    /// Interface for Profile repository
+    /// Interface for Game repository
     /// </summary>
-    public interface IProfileRepository : IGenericRepository<Profile>
+    public interface IGameRepository : IGenericRepository<Game>
     {
-        Task<List<Profile>> GetFollowingProfilesAsync(string profileId);
-        Task<List<Profile>> GetFollowerProfilesAsync(string profileId);
-        Task<bool> IsUserNameAvailableAsync(string userName);
-        Task UpdateSettingsAsync(Setting setting);
+        Task<List<Game>> GetGamesByProfileIdAsync(string profileId);
+        Task UpdateGameAsync(Game game);
     }
 }
