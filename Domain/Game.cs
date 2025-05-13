@@ -15,6 +15,8 @@ namespace Domain
         public string? PrivateRunNumber { get; set; }
         public string? Location { get; set; }
         public string? GameNumber { get; set; }
+        public string? Status { get; set; }
+
         [NotMapped]
         public string? UserWinOrLose { get; set; }
         [NotMapped]
@@ -25,5 +27,7 @@ namespace Domain
         public List<Profile>? LossersList { get; set; }
         [NotMapped]
         public PrivateRun? PrivateRun { get; set; }
+        [NotMapped]
+        public Court? Court { get; set; }
     }
 }

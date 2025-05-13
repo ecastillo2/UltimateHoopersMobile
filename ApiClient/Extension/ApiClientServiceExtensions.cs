@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using ApiClient.Authentication;
 using System.Net.Http.Headers;
+using ApiClient.Authentication; // Make sure this namespace is imported
 
 namespace ApiClient
 {
