@@ -7,6 +7,7 @@ using System.Diagnostics;
 
 namespace UltimateHoopers.Pages
 {
+    [XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class VideoPlayerPage : ContentPage
     {
         private bool _isUserSeeking = false;
