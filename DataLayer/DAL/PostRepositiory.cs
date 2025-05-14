@@ -286,15 +286,15 @@ namespace DataLayer.DAL
         {
             try
             {
-                // Fetch posts using EF Core
+                // Fetch posts using EF Core, filtering for PostType = "User"
                 var posts = await _context.Post
                     .AsNoTracking()
+                    .Where(p => p.Type == "User")  // Filter for posts with Type = "User"
                     .OrderByDescending(p => p.PostedDate)
                     .ToListAsync();
 
                 // Process common data for posts
                 await ProcessPostsCommonData(posts, timeZone);
-
                 return posts;
             }
             catch (Exception ex)

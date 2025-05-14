@@ -1,4 +1,6 @@
-﻿// MauiProgram.cs
+﻿
+// In MauiProgram.cs, update the CreateMauiApp method to register the PostsViewModel
+
 using ApiClient.Authentication;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -7,6 +9,7 @@ using System.Net.Http;
 using Microsoft.Extensions.Configuration;
 using UltimateHoopers.Pages;
 using UltimateHoopers.Services;
+using UltimateHoopers.ViewModels;
 
 namespace UltimateHoopers
 {
@@ -40,6 +43,9 @@ namespace UltimateHoopers
             builder.Services.AddSingleton<IPostService, PostService>();
             builder.Services.AddSingleton<IAuthenticateUser, AuthenticateUser>();
             builder.Services.AddSingleton<IAuthService, AuthService>();
+
+            // Register ViewModels
+            builder.Services.AddTransient<PostsViewModel>();
 
             // Register shell
             builder.Services.AddTransient<AppShell>();

@@ -4,80 +4,77 @@ using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using UltimateHoopers.Services;
+using UltimateHoopers.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace UltimateHoopers.Pages
 {
     public partial class PostsPage : ContentPage
     {
-        private readonly ObservableCollection<Post> _posts = new ObservableCollection<Post>();
-        private readonly PostService _postService;
+        private readonly PostsViewModel _viewModel;
 
+        // Default constructor for XAML preview
         public PostsPage()
         {
-            try
+            InitializeComponent();
+
+            // Try to get view model from DI
+            var serviceProvider = MauiProgram.CreateMauiApp().Services;
+            var postService = serviceProvider.GetService<IPostService>();
+
+            if (postService != null)
             {
-                InitializeComponent();
-                _postService = new PostService();
+                _viewModel = new PostsViewModel(postService);
             }
-            catch (Exception ex)
+            else
             {
-                System.Diagnostics.Debug.WriteLine($"Exception in PostsPage constructor: {ex.Message}");
-                // Don't rethrow here, as it might crash the app during initialization
+                // Fallback if service is not available through DI
+                _viewModel = new PostsViewModel(new PostService());
             }
+
+            // Set the binding context
+            BindingContext = _viewModel;
+        }
+
+        // Constructor with dependency injection
+        public PostsPage(IPostService postService)
+        {
+            InitializeComponent();
+
+            // Create view model with injected service
+            _viewModel = new PostsViewModel(postService ?? throw new ArgumentNullException(nameof(postService)));
+
+            // Set the binding context
+            BindingContext = _viewModel;
         }
 
         protected override async void OnAppearing()
         {
             base.OnAppearing();
-            await LoadPostsAsync();
+
+            // Load posts when page appears
+            await _viewModel.LoadPostsAsync();
         }
 
-        private async Task LoadPostsAsync()
+        // Navigation handlers
+        private async void OnHomeClicked(object sender, EventArgs e)
         {
-            try
-            {
-                // Check if we have a valid post service
-                if (_postService == null)
-                {
-                    await DisplayAlert("Error", "Post service is not available", "OK");
-                    return;
-                }
-
-                // Try to get posts
-                var posts = await _postService.GetPostsAsync();
-
-                if (posts != null && posts.Count > 0)
-                {
-                    _posts.Clear();
-                    foreach (var post in posts)
-                    {
-                        _posts.Add(post);
-                    }
-
-                    // If you had a ListView or CollectionView, you would set its ItemsSource here
-                    // PostsList.ItemsSource = _posts;
-
-                    await DisplayAlert("Posts Loaded", $"Successfully loaded {posts.Count} posts", "OK");
-                }
-                else
-                {
-                    await DisplayAlert("No Posts", "No posts were found", "OK");
-                }
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                // Handle specifically the unauthorized access exception (no token)
-                await DisplayAlert("Authentication Error", "Please log in to view posts", "OK");
-
-                // Optionally, navigate to login page
-                // await Shell.Current.GoToAsync("//LoginPage");
-            }
-            catch (Exception ex)
-            {
-                await DisplayAlert("Error", $"An error occurred: {ex.Message}", "OK");
-            }
+            await Shell.Current.GoToAsync("//HomePage");
         }
 
-        // Rest of the event handlers...
+        private async void OnCreatePostClicked(object sender, EventArgs e)
+        {
+            await DisplayAlert("Create Post", "Create Post feature coming soon!", "OK");
+        }
+
+        private async void OnActivityClicked(object sender, EventArgs e)
+        {
+            await DisplayAlert("Activity", "Activity feature coming soon!", "OK");
+        }
+
+        private async void OnProfileClicked(object sender, EventArgs e)
+        {
+            await DisplayAlert("Profile", "Profile feature coming soon!", "OK");
+        }
     }
 }

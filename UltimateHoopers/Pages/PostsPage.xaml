@@ -2,12 +2,18 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="UltimateHoopers.Pages.PostsPage"
+             xmlns:viewmodels="clr-namespace:UltimateHoopers.ViewModels"
+             xmlns:converters="clr-namespace:UltimateHoopers.Converters"
              Title="Posts"
              BackgroundColor="{StaticResource PageBackgroundColor}">
 
+    <ContentPage.Resources>
+        <converters:StringNotEmptyConverter x:Key="StringNotEmptyConverter" />
+        <converters:PostTypeToVisibilityConverter x:Key="PostTypeToVisibilityConverter" />
+    </ContentPage.Resources>
+
     <Grid RowDefinitions="Auto,*,Auto"
           Padding="0">
-        <!-- Reduced padding for Instagram-like full width -->
 
         <!-- Header - Instagram-style -->
         <Grid Grid.Row="0" 
@@ -34,387 +40,251 @@
         </Grid>
 
         <!-- Content - Instagram-style Feed -->
-        <ScrollView Grid.Row="1">
-            <VerticalStackLayout Spacing="0">
-
-                <!-- Story Circles -->
-                <ScrollView Orientation="Horizontal" 
-                            Margin="0,10,0,10"
-                            HorizontalScrollBarVisibility="Never">
-                    <HorizontalStackLayout Spacing="15" Padding="10,0">
-                        <!-- Your Story -->
-                        <VerticalStackLayout HorizontalOptions="Center">
-                            <Frame CornerRadius="35" 
-                                   HeightRequest="70" 
-                                   WidthRequest="70"
-                                   Padding="0"
-                                   BorderColor="{StaticResource PrimaryColor}"
-                                   HasShadow="False">
-                                <Frame CornerRadius="32"
-                                       HeightRequest="64"
-                                       WidthRequest="64"
-                                       Margin="3"
-                                       Padding="0"
-                                       BorderColor="Transparent"
-                                       HasShadow="False">
-                                    <Label Text="👤" 
-                                           FontSize="34" 
-                                           HorizontalOptions="Center" 
-                                           VerticalOptions="Center" />
-                                </Frame>
-                            </Frame>
-                            <Label Text="Your Story" 
-                                   FontSize="12" 
-                                   HorizontalOptions="Center"
-                                   Margin="0,5,0,0" />
-                        </VerticalStackLayout>
-
-                        <!-- Other Stories -->
-                        <VerticalStackLayout HorizontalOptions="Center">
-                            <Frame CornerRadius="35" 
-                                   HeightRequest="70" 
-                                   WidthRequest="70"
-                                   Padding="0"
-                                   BorderColor="{StaticResource PrimaryColor}"
-                                   HasShadow="False">
-                                <Frame CornerRadius="32"
-                                       HeightRequest="64"
-                                       WidthRequest="64"
-                                       Margin="3"
-                                       Padding="0"
-                                       BorderColor="Transparent"
-                                       HasShadow="False">
-                                    <Label Text="🏀" 
-                                           FontSize="34" 
-                                           HorizontalOptions="Center" 
-                                           VerticalOptions="Center" />
-                                </Frame>
-                            </Frame>
-                            <Label Text="Michael J." 
-                                   FontSize="12" 
-                                   HorizontalOptions="Center"
-                                   Margin="0,5,0,0" />
-                        </VerticalStackLayout>
-
-                        <VerticalStackLayout HorizontalOptions="Center">
-                            <Frame CornerRadius="35" 
-                                   HeightRequest="70" 
-                                   WidthRequest="70"
-                                   Padding="0"
-                                   BorderColor="{StaticResource PrimaryColor}"
-                                   HasShadow="False">
-                                <Frame CornerRadius="32"
-                                       HeightRequest="64"
-                                       WidthRequest="64"
-                                       Margin="3"
-                                       Padding="0"
-                                       BorderColor="Transparent"
-                                       HasShadow="False">
-                                    <Label Text="🏀" 
-                                           FontSize="34" 
-                                           HorizontalOptions="Center" 
-                                           VerticalOptions="Center" />
-                                </Frame>
-                            </Frame>
-                            <Label Text="Sarah T." 
-                                   FontSize="12" 
-                                   HorizontalOptions="Center"
-                                   Margin="0,5,0,0" />
-                        </VerticalStackLayout>
-
-                        <VerticalStackLayout HorizontalOptions="Center">
-                            <Frame CornerRadius="35" 
-                                   HeightRequest="70" 
-                                   WidthRequest="70"
-                                   Padding="0"
-                                   BorderColor="{StaticResource PrimaryColor}"
-                                   HasShadow="False">
-                                <Frame CornerRadius="32"
-                                       HeightRequest="64"
-                                       WidthRequest="64"
-                                       Margin="3"
-                                       Padding="0"
-                                       BorderColor="Transparent"
-                                       HasShadow="False">
-                                    <Label Text="🏀" 
-                                           FontSize="34" 
-                                           HorizontalOptions="Center" 
-                                           VerticalOptions="Center" />
-                                </Frame>
-                            </Frame>
-                            <Label Text="Jamal K." 
-                                   FontSize="12" 
-                                   HorizontalOptions="Center"
-                                   Margin="0,5,0,0" />
-                        </VerticalStackLayout>
-
-                        <VerticalStackLayout HorizontalOptions="Center">
-                            <Frame CornerRadius="35" 
-                                   HeightRequest="70" 
-                                   WidthRequest="70"
-                                   Padding="0"
-                                   BorderColor="{StaticResource PrimaryColor}"
-                                   HasShadow="False">
-                                <Frame CornerRadius="32"
-                                       HeightRequest="64"
-                                       WidthRequest="64"
-                                       Margin="3"
-                                       Padding="0"
-                                       BorderColor="Transparent"
-                                       HasShadow="False">
-                                    <Label Text="🏀" 
-                                           FontSize="34" 
-                                           HorizontalOptions="Center" 
-                                           VerticalOptions="Center" />
-                                </Frame>
-                            </Frame>
-                            <Label Text="Lisa W." 
-                                   FontSize="12" 
-                                   HorizontalOptions="Center"
-                                   Margin="0,5,0,0" />
-                        </VerticalStackLayout>
-
-                        <VerticalStackLayout HorizontalOptions="Center">
-                            <Frame CornerRadius="35" 
-                                   HeightRequest="70" 
-                                   WidthRequest="70"
-                                   Padding="0"
-                                   BorderColor="{StaticResource PrimaryColor}"
-                                   HasShadow="False">
-                                <Frame CornerRadius="32"
-                                       HeightRequest="64"
-                                       WidthRequest="64"
-                                       Margin="3"
-                                       Padding="0"
-                                       BorderColor="Transparent"
-                                       HasShadow="False">
-                                    <Label Text="🏀" 
-                                           FontSize="34" 
-                                           HorizontalOptions="Center" 
-                                           VerticalOptions="Center" />
-                                </Frame>
-                            </Frame>
-                            <Label Text="Carlos R." 
-                                   FontSize="12" 
-                                   HorizontalOptions="Center"
-                                   Margin="0,5,0,0" />
-                        </VerticalStackLayout>
-                    </HorizontalStackLayout>
-                </ScrollView>
-
-                <!-- Separator -->
-                <BoxView Color="{StaticResource BorderColor}" 
-                         HeightRequest="1" 
-                         HorizontalOptions="Fill" />
-
-                <!-- Post 1 -->
+        <RefreshView Grid.Row="1" 
+                    IsRefreshing="{Binding IsRefreshing}" 
+                    Command="{Binding RefreshCommand}">
+            <ScrollView>
                 <VerticalStackLayout Spacing="0">
-                    <!-- Post Header -->
-                    <Grid ColumnDefinitions="Auto,*,Auto" 
-                          Padding="10" 
-                          BackgroundColor="{StaticResource CardBackgroundColor}">
-                        <Frame Grid.Column="0" 
-                               CornerRadius="20" 
-                               HeightRequest="40" 
-                               WidthRequest="40" 
-                               Padding="0" 
-                               HasShadow="False"
-                               BorderColor="{StaticResource BorderColor}">
-                            <Label Text="👤" 
-                                   FontSize="24" 
-                                   HorizontalOptions="Center" 
-                                   VerticalOptions="Center" />
-                        </Frame>
 
-                        <VerticalStackLayout Grid.Column="1" 
-                                             Margin="10,0,0,0" 
-                                             VerticalOptions="Center">
-                            <Label Text="michael_johnson" 
-                                   FontAttributes="Bold" 
-                                   FontSize="14" 
-                                   TextColor="{StaticResource PrimaryTextColor}" />
-                            <Label Text="Downtown Court" 
-                                   FontSize="12" 
-                                   TextColor="{StaticResource SecondaryTextColor}" />
-                        </VerticalStackLayout>
+                    <!-- Story Circles -->
+                    <ScrollView Orientation="Horizontal" 
+                                Margin="0,10,0,10"
+                                HorizontalScrollBarVisibility="Never">
+                        <HorizontalStackLayout Spacing="15" Padding="10,0">
+                            <!-- Your Story -->
+                            <VerticalStackLayout HorizontalOptions="Center">
+                                <Frame CornerRadius="35" 
+                                       HeightRequest="70" 
+                                       WidthRequest="70"
+                                       Padding="0"
+                                       BorderColor="{StaticResource PrimaryColor}"
+                                       HasShadow="False">
+                                    <Frame CornerRadius="32"
+                                           HeightRequest="64"
+                                           WidthRequest="64"
+                                           Margin="3"
+                                           Padding="0"
+                                           BorderColor="Transparent"
+                                           HasShadow="False">
+                                        <Label Text="👤" 
+                                               FontSize="34" 
+                                               HorizontalOptions="Center" 
+                                               VerticalOptions="Center" />
+                                    </Frame>
+                                </Frame>
+                                <Label Text="Your Story" 
+                                       FontSize="12" 
+                                       HorizontalOptions="Center"
+                                       Margin="0,5,0,0" />
+                            </VerticalStackLayout>
 
-                        <Label Grid.Column="2" 
-                               Text="⋮" 
-                               FontSize="20" 
-                               HorizontalOptions="End" 
-                               VerticalOptions="Center" />
-                    </Grid>
+                            <!-- Other Stories will be added dynamically -->
+                        </HorizontalStackLayout>
+                    </ScrollView>
 
-                    <!-- Post Image -->
-                    <Grid HeightRequest="400" BackgroundColor="LightGray">
-                        <Label Text="🏀" 
-                               FontSize="100" 
-                               HorizontalOptions="Center" 
-                               VerticalOptions="Center" />
-                        <Label Text="[Basketball Court Photo]" 
-                               HorizontalOptions="Center" 
-                               VerticalOptions="Center" 
-                               Margin="0,80,0,0" />
-                    </Grid>
+                    <!-- Separator -->
+                    <BoxView Color="{StaticResource BorderColor}" 
+                             HeightRequest="1" 
+                             HorizontalOptions="Fill" />
 
-                    <!-- Post Actions -->
-                    <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto" 
-                          Padding="10" 
-                          BackgroundColor="{StaticResource CardBackgroundColor}">
-                        <Label Grid.Column="0" 
-                               Text="❤️" 
-                               FontSize="24" 
-                               Margin="0,0,15,0" />
-                        <Label Grid.Column="1" 
-                               Text="💬" 
-                               FontSize="24" 
-                               Margin="0,0,15,0" />
-                        <Label Grid.Column="2" 
-                               Text="📩" 
-                               FontSize="24" />
-                        <Label Grid.Column="4" 
-                               Text="🔖" 
-                               FontSize="24" 
-                               HorizontalOptions="End" />
-                    </Grid>
+                    <!-- Posts List -->
+                    <CollectionView ItemsSource="{Binding Posts}" 
+                                   SelectionMode="None"
+                                   EmptyView="No posts available. Pull to refresh.">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <VerticalStackLayout Spacing="0">
+                                    <!-- Post Header -->
+                                    <Grid ColumnDefinitions="Auto,*,Auto" 
+                                          Padding="10" 
+                                          BackgroundColor="{StaticResource CardBackgroundColor}">
+                                        <Frame Grid.Column="0" 
+                                               CornerRadius="20" 
+                                               HeightRequest="40" 
+                                               WidthRequest="40" 
+                                               Padding="0" 
+                                               HasShadow="False"
+                                               BorderColor="{StaticResource BorderColor}">
+                                            <Image Source="{Binding ProfileImageURL}" 
+                                                  HeightRequest="40"
+                                                  WidthRequest="40"
+                                                  Aspect="AspectFill"
+                                                  IsVisible="{Binding ProfileImageURL, Converter={StaticResource StringNotEmptyConverter}}">
+                                                <Image.Clip>
+                                                    <EllipseGeometry Center="20,20" RadiusX="20" RadiusY="20" />
+                                                </Image.Clip>
+                                            </Image>
+                                            <Frame.Triggers>
+                                                <DataTrigger TargetType="Frame" Binding="{Binding ProfileImageURL, Converter={StaticResource StringNotEmptyConverter}}" Value="False">
+                                                    <Setter Property="Content">
+                                                        <Setter.Value>
+                                                            <Label Text="👤" 
+                                                                   FontSize="24" 
+                                                                   HorizontalOptions="Center" 
+                                                                   VerticalOptions="Center" />
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </DataTrigger>
+                                            </Frame.Triggers>
+                                        </Frame>
 
-                    <!-- Likes -->
-                    <Label Text="32 likes" 
-                           FontAttributes="Bold" 
-                           Margin="10,5,10,0" 
-                           BackgroundColor="{StaticResource CardBackgroundColor}"
-                           TextColor="{StaticResource PrimaryTextColor}" />
+                                        <VerticalStackLayout Grid.Column="1" 
+                                                             Margin="10,0,0,0" 
+                                                             VerticalOptions="Center">
+                                            <Label Text="{Binding UserName}" 
+                                                   FontAttributes="Bold" 
+                                                   FontSize="14" 
+                                                   TextColor="{StaticResource PrimaryTextColor}" />
+                                            <Label Text="{Binding RelativeTime}" 
+                                                   FontSize="12" 
+                                                   TextColor="{StaticResource SecondaryTextColor}" />
+                                        </VerticalStackLayout>
 
-                    <!-- Caption -->
-                    <VerticalStackLayout Padding="10,5,10,10" 
-                                         BackgroundColor="{StaticResource CardBackgroundColor}">
-                        <Label TextColor="{StaticResource PrimaryTextColor}">
-                            <Label.FormattedText>
-                                <FormattedString>
-                                    <Span Text="michael_johnson " FontAttributes="Bold" />
-                                    <Span Text="Looking for players to join our game this Sunday at Downtown Court. We need 2-3 more players. All skill levels welcome! #basketball #pickup #sunday" />
-                                </FormattedString>
-                            </Label.FormattedText>
-                        </Label>
+                                        <Label Grid.Column="2" 
+                                               Text="⋮" 
+                                               FontSize="20" 
+                                               HorizontalOptions="End" 
+                                               VerticalOptions="Center">
+                                            <Label.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:PostsViewModel}}, Path=PostOptionsCommand}"
+                                                                       CommandParameter="{Binding .}" />
+                                            </Label.GestureRecognizers>
+                                        </Label>
+                                    </Grid>
 
-                        <Label Text="View all 12 comments" 
-                               TextColor="{StaticResource SecondaryTextColor}" 
-                               Margin="0,5,0,0" />
+                                    <!-- Post Content -->
+                                    <Grid HeightRequest="400" BackgroundColor="LightGray">
+                                        <!-- Image Post -->
+                                        <Image Source="{Binding PostFileURL}"
+                                               IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='image'}"
+                                               Aspect="AspectFill"
+                                               HorizontalOptions="FillAndExpand"
+                                               VerticalOptions="FillAndExpand" />
 
-                        <Label Text="2 hours ago" 
-                               FontSize="12" 
-                               TextColor="{StaticResource SecondaryTextColor}" 
-                               Margin="0,5,0,0" />
-                    </VerticalStackLayout>
+                                        <!-- Video Post -->
+                                        <VerticalStackLayout IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='video'}"
+                                                             VerticalOptions="Center"
+                                                             HorizontalOptions="Center">
+                                            <Image Source="{Binding ThumbnailUrl}"
+                                                   HeightRequest="360"
+                                                   WidthRequest="360"
+                                                   Aspect="AspectFill"
+                                                   Opacity="0.8" />
+                                            <Frame BackgroundColor="#80000000"
+                                                   CornerRadius="30"
+                                                   HeightRequest="60"
+                                                   WidthRequest="60"
+                                                   HorizontalOptions="Center"
+                                                   VerticalOptions="Center"
+                                                   HasShadow="False"
+                                                   Margin="0,-210,0,0">
+                                                <Label Text="▶️"
+                                                       FontSize="32"
+                                                       HorizontalOptions="Center"
+                                                       VerticalOptions="Center"
+                                                       TextColor="White" />
+                                            </Frame>
+
+                                            <VerticalStackLayout.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:PostsViewModel}}, Path=PlayVideoCommand}"
+                                                                      CommandParameter="{Binding .}" />
+                                            </VerticalStackLayout.GestureRecognizers>
+                                        </VerticalStackLayout>
+
+                                        <!-- Fallback for no media -->
+                                        <VerticalStackLayout IsVisible="{Binding PostFileURL, Converter={StaticResource StringNotEmptyConverter}, ConverterParameter='negate'}"
+                                                   HorizontalOptions="Center"
+                                                   VerticalOptions="Center">
+                                            <Label Text="🏀" 
+                                                   FontSize="100" 
+                                                   HorizontalOptions="Center" 
+                                                   VerticalOptions="Center" />
+                                        </VerticalStackLayout>
+                                    </Grid>
+
+                                    <!-- Post Actions -->
+                                    <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto" 
+                                          Padding="10" 
+                                          BackgroundColor="{StaticResource CardBackgroundColor}">
+                                        <Label Grid.Column="0" 
+                                               Text="{Binding LikedPost, Converter={StaticResource LikedPostToHeartConverter}}" 
+                                               FontSize="24" 
+                                               Margin="0,0,15,0">
+                                            <Label.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:PostsViewModel}}, Path=LikePostCommand}"
+                                                                       CommandParameter="{Binding .}" />
+                                            </Label.GestureRecognizers>
+                                        </Label>
+                                        <Label Grid.Column="1" 
+                                               Text="💬" 
+                                               FontSize="24" 
+                                               Margin="0,0,15,0">
+                                            <Label.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:PostsViewModel}}, Path=CommentPostCommand}"
+                                                                       CommandParameter="{Binding .}" />
+                                            </Label.GestureRecognizers>
+                                        </Label>
+                                        <Label Grid.Column="2" 
+                                               Text="📩" 
+                                               FontSize="24">
+                                            <Label.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:PostsViewModel}}, Path=SharePostCommand}"
+                                                                       CommandParameter="{Binding .}" />
+                                            </Label.GestureRecognizers>
+                                        </Label>
+                                        <Label Grid.Column="4" 
+                                               Text="{Binding SavedPost, Converter={StaticResource SavedPostToBookmarkConverter}}" 
+                                               FontSize="24" 
+                                               HorizontalOptions="End">
+                                            <Label.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:PostsViewModel}}, Path=SavePostCommand}"
+                                                                       CommandParameter="{Binding .}" />
+                                            </Label.GestureRecognizers>
+                                        </Label>
+                                    </Grid>
+
+                                    <!-- Likes -->
+                                    <Label Text="{Binding Likes, StringFormat='{0} likes'}" 
+                                           FontAttributes="Bold" 
+                                           Margin="10,5,10,0" 
+                                           BackgroundColor="{StaticResource CardBackgroundColor}"
+                                           TextColor="{StaticResource PrimaryTextColor}" />
+
+                                    <!-- Caption -->
+                                    <VerticalStackLayout Padding="10,5,10,10" 
+                                                         BackgroundColor="{StaticResource CardBackgroundColor}">
+                                        <Label TextColor="{StaticResource PrimaryTextColor}">
+                                            <Label.FormattedText>
+                                                <FormattedString>
+                                                    <Span Text="{Binding UserName}" FontAttributes="Bold" />
+                                                    <Span Text=" " />
+                                                    <Span Text="{Binding Caption}" />
+                                                </FormattedString>
+                                            </Label.FormattedText>
+                                        </Label>
+
+                                        <Label Text="{Binding PostCommentCount, StringFormat='View all {0} comments'}" 
+                                               IsVisible="{Binding PostCommentCount, Converter={StaticResource GreaterThanZeroConverter}}"
+                                               TextColor="{StaticResource SecondaryTextColor}" 
+                                               Margin="0,5,0,0">
+                                            <Label.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:PostsViewModel}}, Path=ViewCommentsCommand}"
+                                                                       CommandParameter="{Binding .}" />
+                                            </Label.GestureRecognizers>
+                                        </Label>
+                                    </VerticalStackLayout>
+
+                                    <!-- Separator -->
+                                    <BoxView Color="{StaticResource BorderColor}" 
+                                             HeightRequest="10" 
+                                             HorizontalOptions="Fill" />
+                                </VerticalStackLayout>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
                 </VerticalStackLayout>
-
-                <!-- Separator -->
-                <BoxView Color="{StaticResource BorderColor}" 
-                         HeightRequest="10" 
-                         HorizontalOptions="Fill" />
-
-                <!-- Post 2 -->
-                <VerticalStackLayout Spacing="0">
-                    <!-- Post Header -->
-                    <Grid ColumnDefinitions="Auto,*,Auto" 
-                          Padding="10" 
-                          BackgroundColor="{StaticResource CardBackgroundColor}">
-                        <Frame Grid.Column="0" 
-                               CornerRadius="20" 
-                               HeightRequest="40" 
-                               WidthRequest="40" 
-                               Padding="0" 
-                               HasShadow="False"
-                               BorderColor="{StaticResource BorderColor}">
-                            <Label Text="👤" 
-                                   FontSize="24" 
-                                   HorizontalOptions="Center" 
-                                   VerticalOptions="Center" />
-                        </Frame>
-
-                        <VerticalStackLayout Grid.Column="1" 
-                                             Margin="10,0,0,0" 
-                                             VerticalOptions="Center">
-                            <Label Text="sarah_thompson" 
-                                   FontAttributes="Bold" 
-                                   FontSize="14" 
-                                   TextColor="{StaticResource PrimaryTextColor}" />
-                            <Label Text="Elite Training Center" 
-                                   FontSize="12" 
-                                   TextColor="{StaticResource SecondaryTextColor}" />
-                        </VerticalStackLayout>
-
-                        <Label Grid.Column="2" 
-                               Text="⋮" 
-                               FontSize="20" 
-                               HorizontalOptions="End" 
-                               VerticalOptions="Center" />
-                    </Grid>
-
-                    <!-- Post Image -->
-                    <Grid HeightRequest="400" BackgroundColor="LightGray">
-                        <Label Text="🏀" 
-                               FontSize="100" 
-                               HorizontalOptions="Center" 
-                               VerticalOptions="Center" />
-                        <Label Text="[Basketball Training Photo]" 
-                               HorizontalOptions="Center" 
-                               VerticalOptions="Center" 
-                               Margin="0,80,0,0" />
-                    </Grid>
-
-                    <!-- Post Actions -->
-                    <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto" 
-                          Padding="10" 
-                          BackgroundColor="{StaticResource CardBackgroundColor}">
-                        <Label Grid.Column="0" 
-                               Text="❤️" 
-                               FontSize="24" 
-                               Margin="0,0,15,0" />
-                        <Label Grid.Column="1" 
-                               Text="💬" 
-                               FontSize="24" 
-                               Margin="0,0,15,0" />
-                        <Label Grid.Column="2" 
-                               Text="📩" 
-                               FontSize="24" />
-                        <Label Grid.Column="4" 
-                               Text="🔖" 
-                               FontSize="24" 
-                               HorizontalOptions="End" />
-                    </Grid>
-
-                    <!-- Likes -->
-                    <Label Text="55 likes" 
-                           FontAttributes="Bold" 
-                           Margin="10,5,10,0" 
-                           BackgroundColor="{StaticResource CardBackgroundColor}"
-                           TextColor="{StaticResource PrimaryTextColor}" />
-
-                    <!-- Caption -->
-                    <VerticalStackLayout Padding="10,5,10,10" 
-                                         BackgroundColor="{StaticResource CardBackgroundColor}">
-                        <Label TextColor="{StaticResource PrimaryTextColor}">
-                            <Label.FormattedText>
-                                <FormattedString>
-                                    <Span Text="sarah_thompson " FontAttributes="Bold" />
-                                    <Span Text="Just finished my first training session with Coach Williams. His shooting drills are incredible! My three-point percentage has already improved. #basketball #training #threepointer" />
-                                </FormattedString>
-                            </Label.FormattedText>
-                        </Label>
-
-                        <Label Text="View all 8 comments" 
-                               TextColor="{StaticResource SecondaryTextColor}" 
-                               Margin="0,5,0,0" />
-
-                        <Label Text="5 hours ago" 
-                               FontSize="12" 
-                               TextColor="{StaticResource SecondaryTextColor}" 
-                               Margin="0,5,0,0" />
-                    </VerticalStackLayout>
-                </VerticalStackLayout>
-            </VerticalStackLayout>
-        </ScrollView>
+            </ScrollView>
+        </RefreshView>
 
         <!-- Navigation Footer -->
         <Grid Grid.Row="2"
@@ -440,11 +310,8 @@
                                  Spacing="2">
                 <Label Text="🔍"
                        FontSize="24"
-                       HorizontalOptions="Center" />
-
-                <VerticalStackLayout.GestureRecognizers>
-                    <TapGestureRecognizer Tapped="OnExploreClicked" />
-                </VerticalStackLayout.GestureRecognizers>
+                       HorizontalOptions="Center"
+                       TextColor="{StaticResource PrimaryColor}" />
             </VerticalStackLayout>
 
             <VerticalStackLayout Grid.Column="2"
