@@ -27,7 +27,7 @@ namespace UltimateHoopers
 
                 builder
                     .UseMauiApp<App>()
-                    .UseMauiCommunityToolkit() // Add Community Toolkit - but NOT MediaElement
+                    .UseMauiCommunityToolkit() // Keep this for existing Community Toolkit features
                     .ConfigureFonts(fonts =>
                     {
                         fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");

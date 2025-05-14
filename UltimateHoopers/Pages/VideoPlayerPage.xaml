@@ -29,19 +29,42 @@
                     HorizontalOptions="Start"
                     VerticalOptions="Center"
                     Clicked="OnCloseClicked" />
+
+            <Button Text="Browser"
+                    BackgroundColor="Transparent"
+                    TextColor="White"
+                    FontSize="14"
+                    WidthRequest="80"
+                    HeightRequest="40"
+                    CornerRadius="20"
+                    HorizontalOptions="End"
+                    VerticalOptions="Center"
+                    Clicked="OnOpenInBrowserClicked" />
         </Grid>
 
-        <!-- Video Content - Using WebView as alternative to MediaElement -->
+        <!-- Video Content - Using WebView -->
         <WebView x:Name="videoWebView" 
                  Grid.Row="1"
                  HorizontalOptions="FillAndExpand"
-                 VerticalOptions="FillAndExpand" />
+                 VerticalOptions="FillAndExpand"
+                 Navigated="VideoWebView_Navigated"
+                 Navigating="VideoWebView_Navigating" />
 
         <!-- Fallback for when WebView is not showing -->
         <Grid x:Name="fallbackGrid" 
               Grid.Row="1" 
               BackgroundColor="#111111" 
               IsVisible="True">
+
+            <!-- Loading Indicator -->
+            <ActivityIndicator x:Name="loadingIndicator"
+                              IsRunning="True"
+                              Color="White"
+                              Scale="1.5"
+                              IsVisible="False"
+                              HorizontalOptions="Center"
+                              VerticalOptions="Center" />
+
             <Image x:Name="thumbnailImage"
                    Aspect="AspectFit"
                    HorizontalOptions="FillAndExpand"

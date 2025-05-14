@@ -2,8 +2,6 @@
 using Microsoft.Maui.Controls;
 using System;
 using System.Diagnostics;
-using System.Threading.Tasks;
-using System.Net.Http;
 
 namespace UltimateHoopers.Pages
 {
@@ -11,7 +9,7 @@ namespace UltimateHoopers.Pages
     public partial class VideoPlayerPage : ContentPage
     {
         private readonly Post _post;
-        private readonly HttpClient _httpClient = new HttpClient();
+        private bool _isVideoLoaded = false;
 
         // Default constructor for design time and XAML previews
         public VideoPlayerPage()
@@ -32,265 +30,278 @@ namespace UltimateHoopers.Pages
                 {
                     captionLabel.Text = _post.Caption;
                 }
+                else if (!string.IsNullOrWhiteSpace(_post.UserName))
+                {
+                    captionLabel.Text = $"Video by {_post.UserName}";
+                }
                 else
                 {
-                    captionLabel.Text = $"Video by ";
+                    captionLabel.Text = "Video";
                 }
 
                 // Set thumbnail image
-                string thumbnailUrl = null;
-                if (!string.IsNullOrWhiteSpace(_post.ThumbnailUrl))
-                {
-                    thumbnailUrl = _post.ThumbnailUrl;
-                    Console.WriteLine($"Using thumbnail URL: {thumbnailUrl}");
-                }
-                else if (!string.IsNullOrWhiteSpace(_post.PostFileURL))
-                {
-                    // If no thumbnail, try to use the post image as fallback
-                    thumbnailUrl = _post.PostFileURL;
-                    Console.WriteLine($"Using PostFileURL as thumbnail: {thumbnailUrl}");
-                }
+                string thumbnailUrl = !string.IsNullOrWhiteSpace(_post.ThumbnailUrl) ?
+                    _post.ThumbnailUrl : _post.PostFileURL;
 
                 if (!string.IsNullOrWhiteSpace(thumbnailUrl))
                 {
-                    // Test the URL
-                    TestUrlAccessAsync(thumbnailUrl);
-                    
-                    // Set the thumbnail source directly
+                    Debug.WriteLine($"Setting thumbnail: {thumbnailUrl}");
                     thumbnailImage.Source = ImageSource.FromUri(new Uri(thumbnailUrl));
-                }
-                else
-                {
-                    Console.WriteLine("No thumbnail URL available");
                 }
 
                 // Initially show the fallback grid with thumbnail and play button
                 fallbackGrid.IsVisible = true;
                 videoWebView.IsVisible = false;
+                loadingIndicator.IsVisible = false;
 
                 // Debug output
-                if (_post != null)
-                {
-                    Console.WriteLine($"VideoPlayerPage created for post: {_post.PostId}");
-                    Console.WriteLine($"PostFileURL: {_post.PostFileURL}");
-                    Console.WriteLine($"ThumbnailUrl: {_post.ThumbnailUrl}");
-                    Console.WriteLine($"PostType: {_post.PostType}");
-                }
-                else
-                {
-                    Console.WriteLine("VideoPlayerPage created with null post");
-                }
+                Debug.WriteLine($"VideoPlayerPage created for post: {_post.PostId}");
+                Debug.WriteLine($"PostFileURL: {_post.PostFileURL}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error in VideoPlayerPage constructor: {ex.Message}");
+                Debug.WriteLine($"Error in VideoPlayerPage constructor: {ex.Message}");
                 DisplayAlert("Error", $"Error loading video: {ex.Message}", "OK");
             }
         }
 
-        // Helper method to test URL access
-        private async void TestUrlAccessAsync(string url)
-        {
-            try
-            {
-                Console.WriteLine($"Testing URL access in VideoPlayerPage: {url}");
-                
-                // Use HttpClient to test the URL
-                using (var request = new HttpRequestMessage(HttpMethod.Head, url))
-                {
-                    var response = await _httpClient.SendAsync(request);
-                    
-                    if (response.IsSuccessStatusCode)
-                    {
-                        Console.WriteLine($"Successfully accessed URL: {url}. Status: {response.StatusCode}");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Failed to access URL: {url}. Status: {response.StatusCode}");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error accessing URL: {url}. Error: {ex.Message}");
-            }
-        }
-
         // Handle the play button tap event
-        private async void OnPlayButtonTapped(object sender, EventArgs e)
+        private void OnPlayButtonTapped(object sender, EventArgs e)
         {
             try
             {
-                Console.WriteLine("Play button tapped");
-                
+                Debug.WriteLine("Play button tapped");
+
                 // Only proceed if we have a valid video URL
-                if (string.IsNullOrWhiteSpace(_post.PostFileURL))
+                if (string.IsNullOrWhiteSpace(_post?.PostFileURL))
                 {
-                    Console.WriteLine("PostFileURL is empty");
-                    await DisplayAlert("Error", "Video URL is not available", "OK");
+                    Debug.WriteLine("PostFileURL is empty");
+                    DisplayAlert("Error", "Video URL is not available", "OK");
                     return;
                 }
 
+                // Show loading indicator, hide play button
+                playButtonFrame.IsVisible = false;
+                loadingIndicator.IsVisible = true;
+
                 string videoUrl = _post.PostFileURL;
-                Console.WriteLine($"Playing video URL: {videoUrl}");
+                Debug.WriteLine($"Loading video URL: {videoUrl}");
 
-                // Test the URL
-                TestUrlAccessAsync(videoUrl);
+                // Create an enhanced HTML wrapper for the video
+                string videoHtml = GetVideoHtml(videoUrl);
 
-                // Try to play the video directly using a direct link approach
-                try
+                // Load the HTML into the WebView
+                videoWebView.Source = new HtmlWebViewSource
                 {
-                    // Create an action sheet to let the user choose how to view the video
-                    string action = await DisplayActionSheet(
-                        "View Video", 
-                        "Cancel", 
-                        null, 
-                        "Play in WebView", 
-                        "Play in Browser");
+                    Html = videoHtml
+                };
 
-                    switch (action)
-                    {
-                        case "Play in WebView":
-                            // Create an HTML wrapper for the video that will make it responsive and centered
-                            string videoHtml = CreateVideoHtml(videoUrl);
-                            
-                            // Log the HTML for debugging
-                            Console.WriteLine($"Video HTML: {videoHtml.Substring(0, Math.Min(200, videoHtml.Length))}...");
-                            
-                            // Load the HTML into the WebView
-                            videoWebView.Source = new HtmlWebViewSource
-                            {
-                                Html = videoHtml
-                            };
-
-                            // Hide the fallback and show the WebView
-                            fallbackGrid.IsVisible = false;
-                            videoWebView.IsVisible = true;
-                            break;
-                            
-                        case "Play in Browser":
-                            await Launcher.OpenAsync(new Uri(videoUrl));
-                            break;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error playing video: {ex.Message}");
-                    await DisplayAlert("Error", $"Could not play video: {ex.Message}", "OK");
-                    
-                    // Show the play button again if there was an error
-                    playButtonFrame.IsVisible = true;
-                }
+                // Show the WebView
+                videoWebView.IsVisible = true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error in OnPlayButtonTapped: {ex.Message}");
-                await DisplayAlert("Error", $"Could not play video: {ex.Message}", "OK");
-                
-                // Show the play button again if there was an error
+                Debug.WriteLine($"Error playing video: {ex.Message}");
+                DisplayAlert("Error", $"Could not play video: {ex.Message}", "OK");
+
+                // Reset UI states
                 playButtonFrame.IsVisible = true;
+                loadingIndicator.IsVisible = false;
             }
         }
 
-        private string CreateVideoHtml(string videoUrl)
+        private string GetVideoHtml(string videoUrl)
         {
-            // Create an HTML document with a video element
-            // Add cache-busting query parameter to prevent caching issues
-            string urlWithCacheBusting = videoUrl + "?t=" + DateTime.Now.Ticks;
+            string cacheBustParam = DateTime.Now.Ticks.ToString();
+            string urlWithCacheBusting = videoUrl.Contains("?")
+                ? $"{videoUrl}&cb={cacheBustParam}"
+                : $"{videoUrl}?cb={cacheBustParam}";
+
+            return @"<!DOCTYPE html>
+<html>
+<head>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        .video-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        video {
+            width: 100%;
+            height: 100%;
+            max-height: 100vh;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+    <div class='video-container'>
+        <video id='videoPlayer' controls autoplay playsinline>
+            <source src='" + urlWithCacheBusting + @"' type='video/mp4'>
+            Your browser does not support HTML5 video.
+        </video>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Video player loaded');
+            var video = document.getElementById('videoPlayer');
             
-            return @"
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />
-                <style>
-                    body {
-                        margin: 0;
-                        padding: 0;
-                        background-color: #000;
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                        height: 100vh;
-                        overflow: hidden;
-                    }
-                    .video-container {
-                        width: 100%;
-                        max-width: 100%;
-                        height: 100%;
-                        max-height: 100%;
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                    }
-                    video {
-                        max-width: 100%;
-                        max-height: 100%;
-                        width: auto;
-                        height: auto;
-                    }
-                    .error-message {
-                        color: white;
-                        text-align: center;
-                        padding: 20px;
-                        display: none;
-                    }
-                    .open-in-browser {
-                        background-color: #512BD4;
-                        color: white;
-                        border: none;
-                        padding: 10px 20px;
-                        border-radius: 5px;
-                        margin-top: 20px;
-                        cursor: pointer;
-                    }
-                </style>
-            </head>
-            <body>
-                <div class='video-container'>
-                    <video id='video-player' controls autoplay>
-                        <source src='" + urlWithCacheBusting + @"' type='video/mp4'>
-                        Your browser does not support the video tag.
-                    </video>
-                    <div id='error-message' class='error-message'>
-                        <p>Unable to play the video in the app.</p>
-                        <p>This may be due to security restrictions.</p>
-                    </div>
-                </div>
-                <script>
-                    // Log when video starts loading
-                    document.addEventListener('DOMContentLoaded', function() {
-                        var video = document.getElementById('video-player');
-                        var errorMessage = document.getElementById('error-message');
-                        
-                        console.log('Video element created for: " + urlWithCacheBusting + @"');
-                        
-                        video.addEventListener('loadstart', function() {
-                            console.log('Video load started');
-                        });
-                        
-                        video.addEventListener('loadeddata', function() {
-                            console.log('Video data loaded');
-                        });
-                        
-                        video.addEventListener('error', function(e) {
-                            console.log('Video error: ' + (video.error ? video.error.code : 'unknown'));
-                            video.style.display = 'none';
-                            errorMessage.style.display = 'block';
-                        });
-                        
-                        // Force reload
-                        video.load();
+            video.addEventListener('canplay', function() {
+                console.log('Video can play');
+                window.location.href = 'maui-callback://videoCanPlay';
+            });
+            
+            video.addEventListener('error', function() {
+                console.log('Video error');
+                window.location.href = 'maui-callback://videoError';
+            });
+            
+            video.addEventListener('playing', function() {
+                console.log('Video playing');
+                window.location.href = 'maui-callback://videoPlaying';
+            });
+            
+            // Force load
+            video.load();
+            
+            // Try autoplay
+            setTimeout(function() {
+                var playPromise = video.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(function(error) {
+                        console.log('Autoplay prevented:', error);
                     });
-                </script>
-            </body>
-            </html>";
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>";
+        }
+
+        // WebView navigation event handlers
+        private void VideoWebView_Navigating(object sender, WebNavigatingEventArgs e)
+        {
+            if (e.Url.StartsWith("maui-callback://"))
+            {
+                e.Cancel = true; // Cancel the navigation
+
+                if (e.Url == "maui-callback://videoCanPlay")
+                {
+                    Debug.WriteLine("Video can play callback received");
+                }
+                else if (e.Url == "maui-callback://videoError")
+                {
+                    Debug.WriteLine("Video error callback received");
+                    MainThread.BeginInvokeOnMainThread(async () =>
+                    {
+                        bool openExternal = await DisplayAlert(
+                            "Playback Issue",
+                            "The video couldn't be played in the app. Would you like to open it in your browser?",
+                            "Open in Browser",
+                            "Cancel");
+
+                        if (openExternal && _post != null && !string.IsNullOrWhiteSpace(_post.PostFileURL))
+                        {
+                            await Launcher.OpenAsync(new Uri(_post.PostFileURL));
+                        }
+                        else
+                        {
+                            // Reset UI if user cancels
+                            fallbackGrid.IsVisible = true;
+                            playButtonFrame.IsVisible = true;
+                            loadingIndicator.IsVisible = false;
+                        }
+                    });
+                }
+                else if (e.Url == "maui-callback://videoPlaying")
+                {
+                    Debug.WriteLine("Video playing callback received");
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        // Hide fallback once playing
+                        fallbackGrid.IsVisible = false;
+                        loadingIndicator.IsVisible = false;
+                    });
+                }
+            }
+        }
+
+        private void VideoWebView_Navigated(object sender, WebNavigatedEventArgs e)
+        {
+            if (e.Result == WebNavigationResult.Success)
+            {
+                Debug.WriteLine("WebView loaded successfully");
+                _isVideoLoaded = true;
+
+                // Add a delay before hiding the loading indicator
+                // This gives the video player time to initialize
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    Device.StartTimer(TimeSpan.FromSeconds(3), () =>
+                    {
+                        // If the fallback is still visible, hide it
+                        if (fallbackGrid.IsVisible)
+                        {
+                            fallbackGrid.IsVisible = false;
+                            loadingIndicator.IsVisible = false;
+                        }
+                        return false; // Don't repeat
+                    });
+                });
+            }
+            else
+            {
+                Debug.WriteLine($"WebView navigation failed: {e.Result}");
+                _isVideoLoaded = false;
+
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    // Show fallback on error
+                    fallbackGrid.IsVisible = true;
+                    playButtonFrame.IsVisible = true;
+                    loadingIndicator.IsVisible = false;
+                });
+            }
         }
 
         private void OnCloseClicked(object sender, EventArgs e)
         {
-            // Close the video page
             Navigation.PopModalAsync();
+        }
+
+        private async void OnOpenInBrowserClicked(object sender, EventArgs e)
+        {
+            try
+            {
+                if (_post != null && !string.IsNullOrWhiteSpace(_post.PostFileURL))
+                {
+                    await Launcher.OpenAsync(new Uri(_post.PostFileURL));
+                }
+                else
+                {
+                    await DisplayAlert("Error", "Video URL is not available", "OK");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error opening in browser: {ex.Message}");
+                await DisplayAlert("Error", $"Could not open browser: {ex.Message}", "OK");
+            }
         }
     }
 }

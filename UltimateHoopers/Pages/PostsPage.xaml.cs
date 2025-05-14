@@ -104,21 +104,38 @@ namespace UltimateHoopers.Pages
                 {
                     Console.WriteLine($"Tapped video post: {post.PostId}, URL: {post.PostFileURL}");
 
-                    if (!string.IsNullOrWhiteSpace(post.PostType) &&
-                        post.PostType.Equals("video", StringComparison.OrdinalIgnoreCase))
+                    if (string.IsNullOrWhiteSpace(post.PostFileURL))
                     {
-                        // Display options for video
-                        await DisplayInlineVideo(post);
+                        await DisplayAlert("Error", "Video URL is not available", "OK");
+                        return;
                     }
-                    else
+
+                    // Display options for video
+                    string action = await DisplayActionSheet(
+                        "View Video",
+                        "Cancel",
+                        null,
+                        "Play in App",
+                        "Open in Browser");
+
+                    switch (action)
                     {
-                        Console.WriteLine($"Post type is not video: {post.PostType}");
+                        case "Play in App":
+                            // Navigate to video player
+                            await Navigation.PushModalAsync(new VideoPlayerPage(post));
+                            break;
+
+                        case "Open in Browser":
+                            // Open in external browser
+                            await Launcher.OpenAsync(new Uri(post.PostFileURL));
+                            break;
                     }
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in OnVideoPostTapped: {ex.Message}");
+                await DisplayAlert("Error", $"Could not play video: {ex.Message}", "OK");
             }
         }
 
