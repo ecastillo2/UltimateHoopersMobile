@@ -5,6 +5,9 @@ namespace UltimateHoopers
 {
     public partial class App : Application
     {
+        // Add a static property to store the auth token
+        public static string AuthToken { get; set; }
+
         public App()
         {
             InitializeComponent();

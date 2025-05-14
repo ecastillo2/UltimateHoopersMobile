@@ -88,7 +88,7 @@
                         </Frame.GestureRecognizers>
                     </Frame>
 
-                    <!-- Find Games Card -->
+                    <!-- Find Runs Card -->
                     <Frame Grid.Row="0" Grid.Column="1"
                            BorderColor="{StaticResource BorderColor}"
                            BackgroundColor="{StaticResource CardBackgroundColor}"
@@ -98,7 +98,7 @@
 
                         <VerticalStackLayout Spacing="10">
                             <Label Text="🏀" FontSize="32" HorizontalOptions="Start" />
-                            <Label Text="Find Games" 
+                            <Label Text="Find Runs" 
                                    FontSize="18" 
                                    FontAttributes="Bold"
                                    TextColor="{StaticResource PrimaryTextColor}" />
@@ -136,7 +136,7 @@
                         </Frame.GestureRecognizers>
                     </Frame>
 
-                    <!-- Teams Card -->
+                    <!-- Squad Card -->
                     <Frame Grid.Row="1" Grid.Column="1"
                            BorderColor="{StaticResource BorderColor}"
                            BackgroundColor="{StaticResource CardBackgroundColor}"
@@ -146,7 +146,7 @@
 
                         <VerticalStackLayout Spacing="10">
                             <Label Text="👥" FontSize="32" HorizontalOptions="Start" />
-                            <Label Text="Teams" 
+                            <Label Text="Squads" 
                                    FontSize="18" 
                                    FontAttributes="Bold"
                                    TextColor="{StaticResource PrimaryTextColor}" />

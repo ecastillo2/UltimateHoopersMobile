@@ -33,6 +33,10 @@ namespace UltimateHoopers.Pages
 
             await Task.Delay(1000);
 
+            // In a real app, you would make an API call to get the token
+            // For now, let's set a dummy token
+            App.AuthToken = "sample-jwt-token-here";
+
             // Set the main page to AppShell
             Application.Current.MainPage = new AppShell();
 
