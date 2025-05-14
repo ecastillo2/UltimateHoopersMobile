@@ -10,6 +10,7 @@ using ApiClient.Authentication;
 using CommunityToolkit.Maui;
 using UltimateHoopers.Helpers;
 using System;
+using CommunityToolkit.Maui.Core;
 
 namespace UltimateHoopers
 {
@@ -65,9 +66,11 @@ namespace UltimateHoopers
                 DiagnosticHelper.Log("AppShell registered");
 
                 // Register pages
+                // Register pages
                 builder.Services.AddTransient<HomePage>();
                 builder.Services.AddTransient<PostsPage>();
                 builder.Services.AddTransient<LoginPage>();
+                builder.Services.AddTransient<VideoPlayerPage>();
                 DiagnosticHelper.Log("Pages registered");
 
 #if DEBUG

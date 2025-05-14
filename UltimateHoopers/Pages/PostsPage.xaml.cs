@@ -79,19 +79,14 @@ namespace UltimateHoopers.Pages
         }
 
         // Video post tap handler
-        private void OnVideoPostTapped(object sender, EventArgs e)
+        private async void OnVideoPostTapped(object sender, EventArgs e)
         {
             if (sender is Microsoft.Maui.Controls.Grid videoGrid && videoGrid.BindingContext is Post post)
             {
                 if (post.PostType?.Equals("video", StringComparison.OrdinalIgnoreCase) == true)
                 {
-                    // We can't use the video player yet, so show a message
-                    ShowFullscreenImage(post); // Fallback to showing image
-
-                    // Show a message about video
-                    MainThread.BeginInvokeOnMainThread(async () => {
-                        await DisplayAlert("Video", "Video player is currently under maintenance. Coming soon!", "OK");
-                    });
+                    // Navigate to the video player page
+                    await Navigation.PushModalAsync(new VideoPlayerPage(post));
                 }
             }
         }
