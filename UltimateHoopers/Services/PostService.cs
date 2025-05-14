@@ -208,7 +208,7 @@ namespace UltimateHoopers.Services
                     PostId = "2",
                     UserName = "sarah_thompson",
                     Caption = "Just finished my first training session with Coach Williams. His shooting drills are incredible! My three-point percentage has already improved. #basketball #training #threepointer",
-                    PostFileURL = "https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=1000&auto=format&fit=crop",
+                    PostFileURL = "https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=1000&fmt=webp",
                     PostType = "image",
                     Likes = 55,
                     ProfileImageURL = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1000&auto=format&fit=crop",
@@ -222,8 +222,8 @@ namespace UltimateHoopers.Services
                     PostId = "3",
                     UserName = "basketball_highlights",
                     Caption = "Check out this amazing dunk from last night's game! Who says white men can't jump? 🏀🔥 #basketball #dunk #highlights",
-                    PostFileURL = "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4",
-                    ThumbnailUrl = "https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=1000&auto=format&fit=crop",
+                    PostFileURL = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                    ThumbnailUrl = "https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?q=80&w=1000&auto=format&fit=crop",
                     PostType = "video",
                     Likes = 128,
                     ProfileImageURL = "https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?q=80&w=1000&auto=format&fit=crop",
@@ -231,6 +231,20 @@ namespace UltimateHoopers.Services
                     PostCommentCount = 24,
                     LikedPost = false,
                     SavedPost = true
+                },
+                new Post
+                {
+                    PostId = "4",
+                    UserName = "webp_tester",
+                    Caption = "Testing WEBP image format - this is a high quality but smaller file size format! #webp #basketball",
+                    PostFileURL = "https://www.gstatic.com/webp/gallery/4.webp",
+                    PostType = "image",
+                    Likes = 19,
+                    ProfileImageURL = "https://www.gstatic.com/webp/gallery/5.webp",
+                    RelativeTime = "3 hours ago",
+                    PostCommentCount = 2,
+                    LikedPost = false,
+                    SavedPost = false
                 }
             };
         }

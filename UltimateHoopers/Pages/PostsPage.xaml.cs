@@ -1,14 +1,13 @@
 ﻿using Domain;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui.Controls;
-using Microsoft.Maui.Controls.Compatibility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using UltimateHoopers.Services;
 using UltimateHoopers.ViewModels;
-using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.ApplicationModel; // For MainThread
 using Grid = Microsoft.Maui.Controls.Grid; // Explicitly specify which Grid to use
 
 namespace UltimateHoopers.Pages

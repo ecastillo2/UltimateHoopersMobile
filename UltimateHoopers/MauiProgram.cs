@@ -11,6 +11,7 @@ using CommunityToolkit.Maui;
 using UltimateHoopers.Helpers;
 using System;
 using CommunityToolkit.Maui.Core;
+using Domain;
 
 namespace UltimateHoopers
 {
@@ -28,6 +29,7 @@ namespace UltimateHoopers
                 builder
                     .UseMauiApp<App>()
                     .UseMauiCommunityToolkit() // Add Community Toolkit
+                    .UseMauiCommunityToolkitMediaElement() // Add Media Element
                     .ConfigureFonts(fonts =>
                     {
                         fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -65,7 +67,6 @@ namespace UltimateHoopers
                 builder.Services.AddTransient<AppShell>();
                 DiagnosticHelper.Log("AppShell registered");
 
-                // Register pages
                 // Register pages
                 builder.Services.AddTransient<HomePage>();
                 builder.Services.AddTransient<PostsPage>();

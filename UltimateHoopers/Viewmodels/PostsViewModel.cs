@@ -86,8 +86,15 @@ namespace UltimateHoopers.ViewModels
                             {
                                 post.PostType = "video";
                             }
+                            else if (fileUrl.EndsWith(".webp") || fileUrl.EndsWith(".jpg") ||
+                                     fileUrl.EndsWith(".jpeg") || fileUrl.EndsWith(".png") ||
+                                     fileUrl.EndsWith(".gif"))
+                            {
+                                post.PostType = "image";
+                            }
                             else
                             {
+                                // Default to image for unknown formats
                                 post.PostType = "image";
                             }
                         }
