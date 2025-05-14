@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Domain;
 using Microsoft.Maui.Controls;
-using UltimateHoopers.Pages;
 using UltimateHoopers.Services;
 
 namespace UltimateHoopers.ViewModels
@@ -59,71 +59,161 @@ namespace UltimateHoopers.ViewModels
             try
             {
                 IsRefreshing = true;
+                Console.WriteLine("Loading posts...");
 
                 // Clear current posts
                 Posts.Clear();
 
                 // Get posts from API
                 var posts = await _postService.GetPostsAsync();
+                Console.WriteLine($"Received {posts?.Count ?? 0} posts from service");
 
-                // Add posts to collection
+                // Add posts to collection with super-robust null handling
                 if (posts != null)
                 {
+                    int validPostCount = 0;
+                    int skippedPostCount = 0;
+
                     // Process the posts to add missing data if needed
                     foreach (var post in posts)
                     {
-                        // Format relative time if it's not set
-                        if (string.IsNullOrEmpty(post.RelativeTime) && !string.IsNullOrEmpty(post.PostedDate))
+                        try
                         {
-                            post.RelativeTime = FormatRelativeTime(post.PostedDate);
-                        }
+                            // Debug log the raw post
+                            LogPostDetails(post);
 
-                        // Set default PostType if not specified
-                        if (string.IsNullOrEmpty(post.PostType) && !string.IsNullOrEmpty(post.PostFileURL))
+                            // Skip completely invalid posts (null or missing required field)
+                            if (post == null)
+                            {
+                                Console.WriteLine("Skipping null post");
+                                skippedPostCount++;
+                                continue;
+                            }
+
+                            if (string.IsNullOrWhiteSpace(post.PostFileURL))
+                            {
+                                Console.WriteLine($"Skipping post {post.PostId}: Missing PostFileURL");
+                                skippedPostCount++;
+                                continue;
+                            }
+
+                            // Sanitize the post by ensuring all fields have valid values
+                            SanitizePost(post);
+
+                            // Log the post after sanitization
+                            Console.WriteLine($"Adding sanitized post: {post.PostId}, Type: {post.PostType}, URL: {post.PostFileURL}");
+
+                            // Add to the collection
+                            Posts.Add(post);
+                            validPostCount++;
+                        }
+                        catch (Exception ex)
                         {
-                            // Determine type based on file extension
-                            var fileUrl = post.PostFileURL.ToLower();
-                            if (fileUrl.EndsWith(".mp4") || fileUrl.EndsWith(".mov") || fileUrl.EndsWith(".avi"))
-                            {
-                                post.PostType = "video";
-                            }
-                            else if (fileUrl.EndsWith(".webp") || fileUrl.EndsWith(".jpg") ||
-                                     fileUrl.EndsWith(".jpeg") || fileUrl.EndsWith(".png") ||
-                                     fileUrl.EndsWith(".gif"))
-                            {
-                                post.PostType = "image";
-                            }
-                            else
-                            {
-                                // Default to image for unknown formats
-                                post.PostType = "image";
-                            }
+                            Console.WriteLine($"Error processing post: {ex.Message}");
+                            skippedPostCount++;
                         }
-
-                        // Ensure UserName is set
-                        if (string.IsNullOrEmpty(post.UserName) && (!string.IsNullOrEmpty(post.FirstName) || !string.IsNullOrEmpty(post.LastName)))
-                        {
-                            post.UserName = $"{post.FirstName} {post.LastName}".Trim();
-                        }
-
-                        // Add to the collection
-                        Posts.Add(post);
                     }
+
+                    Console.WriteLine($"Added {validPostCount} valid posts, skipped {skippedPostCount} invalid posts");
+                }
+                else
+                {
+                    Console.WriteLine("No posts were returned from the service");
                 }
             }
             catch (UnauthorizedAccessException ex)
             {
+                Console.WriteLine($"Authentication error: {ex.Message}");
                 await Shell.Current.DisplayAlert("Authentication Error", "Please log in to view posts", "OK");
-                // Could navigate to login page here
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error loading posts: {ex.Message}");
                 await Shell.Current.DisplayAlert("Error", $"An error occurred: {ex.Message}", "OK");
             }
             finally
             {
                 IsRefreshing = false;
             }
+        }
+
+        // Helper to log all details of a post for debugging
+        private void LogPostDetails(Post post)
+        {
+            if (post == null)
+            {
+                Console.WriteLine("Post is null");
+                return;
+            }
+
+            Console.WriteLine("=== Raw Post Details ===");
+            Console.WriteLine($"PostId: {post.PostId ?? "null"}");
+            Console.WriteLine($"UserName: {post.UserName ?? "null"}");
+            Console.WriteLine($"FirstName: {post.FirstName ?? "null"}");
+            Console.WriteLine($"LastName: {post.LastName ?? "null"}");
+            Console.WriteLine($"Caption: {post.Caption ?? "null"}");
+            Console.WriteLine($"PostFileURL: {post.PostFileURL ?? "null"}");
+            Console.WriteLine($"ThumbnailUrl: {post.ThumbnailUrl ?? "null"}");
+            Console.WriteLine($"ProfileImageURL: {post.ProfileImageURL ?? "null"}");
+            Console.WriteLine($"PostType: {post.PostType ?? "null"}");
+            Console.WriteLine($"Likes: {post.Likes?.ToString() ?? "null"}");
+            Console.WriteLine($"LikedPost: {post.LikedPost?.ToString() ?? "null"}");
+            Console.WriteLine($"SavedPost: {post.SavedPost?.ToString() ?? "null"}");
+            Console.WriteLine($"PostCommentCount: {post.PostCommentCount?.ToString() ?? "null"}");
+            Console.WriteLine($"RelativeTime: {post.RelativeTime ?? "null"}");
+            Console.WriteLine($"PostedDate: {post.PostedDate ?? "null"}");
+            Console.WriteLine("=======================");
+        }
+
+        // Helper to ensure all post fields have valid values
+        private void SanitizePost(Post post)
+        {
+            // Required fields
+            post.PostId = string.IsNullOrWhiteSpace(post.PostId) ? Guid.NewGuid().ToString() : post.PostId;
+
+            // PostFileURL is already checked before this method is called
+
+            // Set PostType based on file extension if not provided
+            if (string.IsNullOrWhiteSpace(post.PostType))
+            {
+                var fileUrl = post.PostFileURL.ToLower();
+                if (fileUrl.EndsWith(".mp4") || fileUrl.EndsWith(".mov") || fileUrl.EndsWith(".avi"))
+                {
+                    post.PostType = "video";
+                }
+                else if (fileUrl.EndsWith(".webp") || fileUrl.EndsWith(".jpg") ||
+                         fileUrl.EndsWith(".jpeg") || fileUrl.EndsWith(".png") ||
+                         fileUrl.EndsWith(".gif"))
+                {
+                    post.PostType = "image";
+                }
+                else
+                {
+                    // Default to image for unknown formats
+                    post.PostType = "image";
+                }
+                Console.WriteLine($"Auto-detected post type: {post.PostType} for URL: {post.PostFileURL}");
+            }
+
+            // Optional fields with defaults
+            post.UserName = string.IsNullOrWhiteSpace(post.UserName) ?
+                (string.IsNullOrWhiteSpace(post.FirstName) && string.IsNullOrWhiteSpace(post.LastName) ?
+                    "Anonymous User" :
+                    $"{post.FirstName ?? ""} {post.LastName ?? ""}".Trim()) :
+                post.UserName;
+
+            post.Caption = post.Caption ?? ""; // Empty string instead of null
+            post.RelativeTime = string.IsNullOrWhiteSpace(post.RelativeTime) ?
+                (string.IsNullOrWhiteSpace(post.PostedDate) ?
+                    "Recently" :
+                    FormatRelativeTime(post.PostedDate)) :
+                post.RelativeTime;
+
+            // Numeric fields
+            post.Likes = post.Likes ?? 0;
+            post.LikedPost = post.LikedPost ?? false;
+            post.SavedPost = post.SavedPost ?? false;
+            post.PostCommentCount = post.PostCommentCount ?? 0;
         }
 
         private string FormatRelativeTime(string postedDateStr)
@@ -296,7 +386,7 @@ namespace UltimateHoopers.ViewModels
                 }
 
                 // Navigate to the video player page
-                await Shell.Current.Navigation.PushModalAsync(new VideoPlayerPage(post));
+                await Shell.Current.Navigation.PushModalAsync(new Pages.VideoPlayerPage(post));
             }
             catch (Exception ex)
             {

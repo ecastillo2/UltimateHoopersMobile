@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui.Controls;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using UltimateHoopers.Services;
 using UltimateHoopers.ViewModels;
@@ -59,8 +58,17 @@ namespace UltimateHoopers.Pages
         {
             base.OnAppearing();
 
-            // Load posts when page appears
-            await _viewModel.LoadPostsAsync();
+            try
+            {
+                // Load posts when page appears
+                await _viewModel.LoadPostsAsync();
+                Console.WriteLine($"PostsPage loaded {_viewModel.Posts.Count} posts");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in PostsPage.OnAppearing: {ex.Message}");
+                await DisplayAlert("Error", $"Could not load posts: {ex.Message}", "OK");
+            }
         }
 
         protected override void OnDisappearing()
@@ -71,26 +79,46 @@ namespace UltimateHoopers.Pages
         // Image post tap handler
         private void OnImagePostTapped(object sender, EventArgs e)
         {
-            if (sender is Image image && image.BindingContext is Post post)
+            try
             {
-                // Check if it's a WebP image
-                bool isWebP = post.PostFileURL?.EndsWith(".webp", StringComparison.OrdinalIgnoreCase) == true;
+                if (sender is Image image && image.BindingContext is Post post)
+                {
+                    Console.WriteLine($"Tapped image post: {post.PostId}, URL: {post.PostFileURL}");
 
-                // Show full screen image viewer
-                ShowFullscreenImage(post);
+                    // Show full screen image viewer
+                    ShowFullscreenImage(post);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in OnImagePostTapped: {ex.Message}");
             }
         }
 
         // Video post tap handler
         private async void OnVideoPostTapped(object sender, EventArgs e)
         {
-            if (sender is Grid videoGrid && videoGrid.BindingContext is Post post)
+            try
             {
-                if (post.PostType?.Equals("video", StringComparison.OrdinalIgnoreCase) == true)
+                if (sender is Grid videoGrid && videoGrid.BindingContext is Post post)
                 {
-                    // Display options for video
-                    await DisplayInlineVideo(post);
+                    Console.WriteLine($"Tapped video post: {post.PostId}, URL: {post.PostFileURL}");
+
+                    if (!string.IsNullOrWhiteSpace(post.PostType) &&
+                        post.PostType.Equals("video", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Display options for video
+                        await DisplayInlineVideo(post);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Post type is not video: {post.PostType}");
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in OnVideoPostTapped: {ex.Message}");
             }
         }
 
@@ -100,11 +128,13 @@ namespace UltimateHoopers.Pages
             try
             {
                 string videoUrl = post.PostFileURL;
-                if (string.IsNullOrEmpty(videoUrl))
+                if (string.IsNullOrWhiteSpace(videoUrl))
                 {
                     await DisplayAlert("Error", "Video URL is not available", "OK");
                     return;
                 }
+
+                Console.WriteLine($"Displaying video options for URL: {videoUrl}");
 
                 // Create an action sheet to let the user choose how to view the video
                 string action = await DisplayActionSheet(
@@ -117,11 +147,13 @@ namespace UltimateHoopers.Pages
                 switch (action)
                 {
                     case "Play Video":
+                        Console.WriteLine("User chose to play video");
                         // Navigate to simplified video player
                         await Navigation.PushModalAsync(new VideoPlayerPage(post));
                         break;
 
                     case "Open in Browser":
+                        Console.WriteLine("User chose to open in browser");
                         // Open in browser using the device's default browser
                         await OpenVideoInBrowser(post);
                         break;
@@ -129,6 +161,7 @@ namespace UltimateHoopers.Pages
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error displaying video: {ex.Message}");
                 await DisplayAlert("Error", $"Could not play video: {ex.Message}", "OK");
             }
         }
@@ -138,17 +171,20 @@ namespace UltimateHoopers.Pages
         {
             try
             {
-                if (string.IsNullOrEmpty(post.PostFileURL))
+                if (string.IsNullOrWhiteSpace(post.PostFileURL))
                 {
                     await DisplayAlert("Error", "Video URL is not available", "OK");
                     return;
                 }
+
+                Console.WriteLine($"Opening in browser: {post.PostFileURL}");
 
                 // Use the device's browser to open the video
                 await Launcher.OpenAsync(new Uri(post.PostFileURL));
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error opening browser: {ex.Message}");
                 await DisplayAlert("Error", $"Could not open browser: {ex.Message}", "OK");
             }
         }
@@ -156,20 +192,30 @@ namespace UltimateHoopers.Pages
         // Show fullscreen image viewer
         private void ShowFullscreenImage(Post post)
         {
-            _currentMediaPost = post;
+            try
+            {
+                _currentMediaPost = post;
 
-            // Reset scale and transform
-            _currentScale = 1;
-            fullscreenImage.Scale = 1;
-            fullscreenImage.TranslationX = 0;
-            fullscreenImage.TranslationY = 0;
+                // Reset scale and transform
+                _currentScale = 1;
+                fullscreenImage.Scale = 1;
+                fullscreenImage.TranslationX = 0;
+                fullscreenImage.TranslationY = 0;
 
-            // Set image source
-            fullscreenImage.Source = post.PostFileURL;
+                Console.WriteLine($"Setting fullscreen image source: {post.PostFileURL}");
 
-            // Show the fullscreen viewer with image
-            fullscreenViewer.IsVisible = true;
-            fullscreenImage.IsVisible = true;
+                // Set image source
+                fullscreenImage.Source = post.PostFileURL;
+
+                // Show the fullscreen viewer with image
+                fullscreenViewer.IsVisible = true;
+                fullscreenImage.IsVisible = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error showing fullscreen image: {ex.Message}");
+                DisplayAlert("Error", $"Could not display image: {ex.Message}", "OK");
+            }
         }
 
         // Close fullscreen viewer

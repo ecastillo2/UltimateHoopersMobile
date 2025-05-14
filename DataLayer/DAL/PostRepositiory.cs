@@ -289,7 +289,7 @@ namespace DataLayer.DAL
                 // Fetch posts using EF Core, filtering for PostType = "User"
                 var posts = await _context.Post
                     .AsNoTracking()
-                    .Where(p => p.Type == "User")  // Filter for posts with Type = "User"
+                    .Where(p => p.PostType == "User")  // Filter for posts with Type = "User"
                     .OrderByDescending(p => p.PostedDate)
                     .ToListAsync();
 

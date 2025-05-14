@@ -212,104 +212,104 @@ namespace Messages
         /// Sends a sign-up confirmation email to the user.
         /// </summary>
         /// <param name="user">The user object containing email, username, and other details.</param>
-        public async Task PostCommentNotification(Post post)
-        {
+        //public async Task PostCommentNotification(Post post)
+        //{
 
-            foreach (var item in post.ProfileMentions)
-            {
-                if (item.Setting.AllowEmailNotification)
-                {
-                    // Ensure sensitive data like sender credentials is securely stored
-                    string senderEmail = SenderEmail;
-                    string senderPassword = SenderPassword;
+        //    foreach (var item in post.ProfileMentions)
+        //    {
+        //        if (item.Setting.AllowEmailNotification)
+        //        {
+        //            // Ensure sensitive data like sender credentials is securely stored
+        //            string senderEmail = SenderEmail;
+        //            string senderPassword = SenderPassword;
 
-                    // Email subject and receiver's address
-                    const string subject = "A post that you was mentioned in was commented";
-                    string receiverEmail = item.Email;
-                    string postTitle = post.Title;
+        //            // Email subject and receiver's address
+        //            const string subject = "A post that you was mentioned in was commented";
+        //            string receiverEmail = item.Email;
+        //            string postTitle = post.Title;
 
-                    // Current date for the email
-                    string ticketDate = DateTime.Now.ToString("MMMM dd, yyyy");
+        //            // Current date for the email
+        //            string ticketDate = DateTime.Now.ToString("MMMM dd, yyyy");
 
-                    // Construct the email's HTML body
-                    string htmlBody = $@"
-        <html>
-        <head>
-            <style>
-                body {{
-                    font-family: Arial, sans-serif;
-                    line-height: 1.6;
-                    color: #333;
-                }}
-                h1 {{
-                    color: #4CAF50;
-                }}
-                .button {{
-                    background-color: #4CAF50;
-                    border: none;
-                    color: white;
-                    padding: 15px 32px;
-                    text-align: center;
-                    text-decoration: none;
-                    display: inline-block;
-                    font-size: 16px;
-                    margin: 4px 2px;
-                    cursor: pointer;
-                }}
-            </style>
-        </head>
-        <body>
-            <h1>{System.Web.HttpUtility.HtmlEncode(subject)}</h1>
-           <img src='https://uhblobstorageaccount.blob.core.windows.net/defaultimage/notificationlogo.png' alt='Notification Image' style='max-width: 100%; height: auto;' />
-            <p>Login and view <a href='https://ultimatehooperapp.azurewebsites.net/'>ultimatehooper.com</a>. We’re here to help you ball out. See you on the court!</p>
-            <p>Stay legendary,<br/>The Ultimate Hooper Team</p>
-            <p>Created Date: {System.Web.HttpUtility.HtmlEncode(ticketDate)}</p>
-        </body>
-        </html>";
+        //            // Construct the email's HTML body
+        //            string htmlBody = $@"
+        //<html>
+        //<head>
+        //    <style>
+        //        body {{
+        //            font-family: Arial, sans-serif;
+        //            line-height: 1.6;
+        //            color: #333;
+        //        }}
+        //        h1 {{
+        //            color: #4CAF50;
+        //        }}
+        //        .button {{
+        //            background-color: #4CAF50;
+        //            border: none;
+        //            color: white;
+        //            padding: 15px 32px;
+        //            text-align: center;
+        //            text-decoration: none;
+        //            display: inline-block;
+        //            font-size: 16px;
+        //            margin: 4px 2px;
+        //            cursor: pointer;
+        //        }}
+        //    </style>
+        //</head>
+        //<body>
+        //    <h1>{System.Web.HttpUtility.HtmlEncode(subject)}</h1>
+        //   <img src='https://uhblobstorageaccount.blob.core.windows.net/defaultimage/notificationlogo.png' alt='Notification Image' style='max-width: 100%; height: auto;' />
+        //    <p>Login and view <a href='https://ultimatehooperapp.azurewebsites.net/'>ultimatehooper.com</a>. We’re here to help you ball out. See you on the court!</p>
+        //    <p>Stay legendary,<br/>The Ultimate Hooper Team</p>
+        //    <p>Created Date: {System.Web.HttpUtility.HtmlEncode(ticketDate)}</p>
+        //</body>
+        //</html>";
 
-                    try
-                    {
-                        using (var smtpClient = new SmtpClient("smtp.office365.com"))
-                        {
-                            smtpClient.Port = 587;
-                            smtpClient.EnableSsl = true;
-                            smtpClient.UseDefaultCredentials = false;
-                            smtpClient.Credentials = new NetworkCredential(senderEmail, senderPassword);
+        //            try
+        //            {
+        //                using (var smtpClient = new SmtpClient("smtp.office365.com"))
+        //                {
+        //                    smtpClient.Port = 587;
+        //                    smtpClient.EnableSsl = true;
+        //                    smtpClient.UseDefaultCredentials = false;
+        //                    smtpClient.Credentials = new NetworkCredential(senderEmail, senderPassword);
 
-                            using (var message = new MailMessage(senderEmail, receiverEmail))
-                            {
-                                message.Subject = subject;
-                                message.Body = htmlBody;
-                                message.IsBodyHtml = true;
+        //                    using (var message = new MailMessage(senderEmail, receiverEmail))
+        //                    {
+        //                        message.Subject = subject;
+        //                        message.Body = htmlBody;
+        //                        message.IsBodyHtml = true;
 
-                                //// Add BCC recipients if available
-                                //if (BccEmailList != null)
-                                //{
-                                //    foreach (var item in BccEmailList)
-                                //    {
-                                //        message.Bcc.Add(new MailAddress(item));
-                                //    }
-                                //}
+        //                        //// Add BCC recipients if available
+        //                        //if (BccEmailList != null)
+        //                        //{
+        //                        //    foreach (var item in BccEmailList)
+        //                        //    {
+        //                        //        message.Bcc.Add(new MailAddress(item));
+        //                        //    }
+        //                        //}
 
-                                // Send the email asynchronously
-                                await smtpClient.SendMailAsync(message);
-                                Console.WriteLine("Sign-up confirmation email sent successfully.");
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        // Log the error with detailed information for debugging
-                        Console.WriteLine($"Failed to send email. Error: {ex.Message}");
-                        Console.WriteLine($"Stack Trace: {ex.StackTrace}");
-                    }
-                }
-                ;
-            }
+        //                        // Send the email asynchronously
+        //                        await smtpClient.SendMailAsync(message);
+        //                        Console.WriteLine("Sign-up confirmation email sent successfully.");
+        //                    }
+        //                }
+        //            }
+        //            catch (Exception ex)
+        //            {
+        //                // Log the error with detailed information for debugging
+        //                Console.WriteLine($"Failed to send email. Error: {ex.Message}");
+        //                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+        //            }
+        //        }
+        //        ;
+        //    }
 
 
 
-        }
+        //}
 
 
         /// <summary>
