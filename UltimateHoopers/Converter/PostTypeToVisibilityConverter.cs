@@ -62,13 +62,16 @@ namespace UltimateHoopers.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
+            // Check for non-nullable int
             if (value is int count)
             {
                 return count > 0;
             }
 
-            if (value is int? nullableCount)
+            // Check for nullable int properly
+            if (value is int?)
             {
+                int? nullableCount = (int?)value;
                 return nullableCount.HasValue && nullableCount.Value > 0;
             }
 

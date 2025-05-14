@@ -1,15 +1,17 @@
-﻿
-// In MauiProgram.cs, update the CreateMauiApp method to register the PostsViewModel
+﻿// Add this to UltimateHoopers/MauiProgram.cs
+// Make sure to register the correct namespaces and handlers for MediaElement
 
-using ApiClient.Authentication;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
-using System.Net.Http;
-using Microsoft.Extensions.Configuration;
 using UltimateHoopers.Pages;
 using UltimateHoopers.Services;
 using UltimateHoopers.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
+using System.Collections.Generic;
+using Microsoft.Extensions.Configuration;
+using System.Net.Http;
+using ApiClient.Authentication;
+using CommunityToolkit.Maui;
+using CommunityToolkit.Maui.MediaElement;
 
 namespace UltimateHoopers
 {
@@ -20,6 +22,8 @@ namespace UltimateHoopers
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
+                .UseMauiCommunityToolkitMediaElement() // Add MediaElement support
+                .UseMauiCommunityToolkit() // Add Community Toolkit
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");

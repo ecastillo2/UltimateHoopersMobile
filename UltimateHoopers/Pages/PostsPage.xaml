@@ -4,12 +4,16 @@
              x:Class="UltimateHoopers.Pages.PostsPage"
              xmlns:viewmodels="clr-namespace:UltimateHoopers.ViewModels"
              xmlns:converters="clr-namespace:UltimateHoopers.Converters"
+             xmlns:controls="clr-namespace:UltimateHoopers.Controls"
              Title="Posts"
              BackgroundColor="{StaticResource PageBackgroundColor}">
 
     <ContentPage.Resources>
         <converters:StringNotEmptyConverter x:Key="StringNotEmptyConverter" />
         <converters:PostTypeToVisibilityConverter x:Key="PostTypeToVisibilityConverter" />
+        <converters:LikedPostToHeartConverter x:Key="LikedPostToHeartConverter" />
+        <converters:SavedPostToBookmarkConverter x:Key="SavedPostToBookmarkConverter" />
+        <converters:GreaterThanZeroConverter x:Key="GreaterThanZeroConverter" />
     </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,*,Auto"
@@ -93,7 +97,7 @@
                                    EmptyView="No posts available. Pull to refresh.">
                         <CollectionView.ItemTemplate>
                             <DataTemplate>
-                                <VerticalStackLayout Spacing="0">
+                                <VerticalStackLayout Spacing="0" x:Name="postContainer">
                                     <!-- Post Header -->
                                     <Grid ColumnDefinitions="Auto,*,Auto" 
                                           Padding="10" 
@@ -153,31 +157,34 @@
                                     </Grid>
 
                                     <!-- Post Content -->
-                                    <Grid HeightRequest="400" BackgroundColor="LightGray">
+                                    <Grid BackgroundColor="LightGray" HeightRequest="400">
                                         <!-- Image Post -->
                                         <Image Source="{Binding PostFileURL}"
                                                IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='image'}"
                                                Aspect="AspectFill"
                                                HorizontalOptions="FillAndExpand"
-                                               VerticalOptions="FillAndExpand" />
+                                               VerticalOptions="FillAndExpand">
+                                            <Image.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnImagePostTapped" />
+                                            </Image.GestureRecognizers>
+                                        </Image>
 
                                         <!-- Video Post -->
-                                        <VerticalStackLayout IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='video'}"
-                                                             VerticalOptions="Center"
-                                                             HorizontalOptions="Center">
-                                            <Image Source="{Binding ThumbnailUrl}"
-                                                   HeightRequest="360"
-                                                   WidthRequest="360"
+                                        <Grid IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='video'}">
+                                            <!-- Video Thumbnail -->
+                                            <Image Source="{Binding ThumbnailUrl, TargetNullValue={Binding PostFileURL}}"
                                                    Aspect="AspectFill"
-                                                   Opacity="0.8" />
+                                                   HorizontalOptions="FillAndExpand"
+                                                   VerticalOptions="FillAndExpand" />
+
+                                            <!-- Play Button Overlay -->
                                             <Frame BackgroundColor="#80000000"
                                                    CornerRadius="30"
                                                    HeightRequest="60"
                                                    WidthRequest="60"
                                                    HorizontalOptions="Center"
                                                    VerticalOptions="Center"
-                                                   HasShadow="False"
-                                                   Margin="0,-210,0,0">
+                                                   HasShadow="False">
                                                 <Label Text="▶️"
                                                        FontSize="32"
                                                        HorizontalOptions="Center"
@@ -185,11 +192,22 @@
                                                        TextColor="White" />
                                             </Frame>
 
-                                            <VerticalStackLayout.GestureRecognizers>
-                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:PostsViewModel}}, Path=PlayVideoCommand}"
-                                                                      CommandParameter="{Binding .}" />
-                                            </VerticalStackLayout.GestureRecognizers>
-                                        </VerticalStackLayout>
+                                            <Grid.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnVideoPostTapped" />
+                                            </Grid.GestureRecognizers>
+                                        </Grid>
+
+                                        <!-- In-Line Video Player (Initially Hidden) -->
+                                        <Grid x:Name="videoPlayerContainer" 
+                                              IsVisible="False"
+                                              BackgroundColor="Black">
+                                            <MediaElement x:Name="inlineVideoPlayer"
+                                                          IsVisible="False"
+                                                          Aspect="AspectFit"
+                                                          HorizontalOptions="FillAndExpand"
+                                                          VerticalOptions="FillAndExpand"
+                                                          ShowsPlaybackControls="True" />
+                                        </Grid>
 
                                         <!-- Fallback for no media -->
                                         <VerticalStackLayout IsVisible="{Binding PostFileURL, Converter={StaticResource StringNotEmptyConverter}, ConverterParameter='negate'}"
@@ -367,6 +385,48 @@
                     <TapGestureRecognizer Tapped="OnProfileClicked" />
                 </VerticalStackLayout.GestureRecognizers>
             </VerticalStackLayout>
+        </Grid>
+
+        <!-- Fullscreen Media Viewer (initially hidden) -->
+        <Grid x:Name="fullscreenViewer" 
+              IsVisible="false"
+              BackgroundColor="Black"
+              Grid.RowSpan="3">
+
+            <!-- Image Viewer -->
+            <Image x:Name="fullscreenImage"
+                   IsVisible="false"
+                   Aspect="AspectFit"
+                   HorizontalOptions="FillAndExpand"
+                   VerticalOptions="FillAndExpand">
+                <Image.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnFullscreenImageTapped" />
+                    <PinchGestureRecognizer PinchUpdated="OnPinchUpdated" />
+                    <PanGestureRecognizer PanUpdated="OnPanUpdated" />
+                </Image.GestureRecognizers>
+            </Image>
+
+            <!-- Video Player -->
+            <MediaElement x:Name="fullscreenVideoPlayer"
+                          IsVisible="false"
+                          Aspect="AspectFit"
+                          HorizontalOptions="FillAndExpand" 
+                          VerticalOptions="FillAndExpand"
+                          ShowsPlaybackControls="True" />
+
+            <!-- Close Button -->
+            <Button Text="✕"
+                    Clicked="CloseFullscreenViewer"
+                    BackgroundColor="#80000000"
+                    TextColor="White"
+                    BorderColor="Transparent"
+                    FontSize="20"
+                    WidthRequest="40"
+                    HeightRequest="40"
+                    CornerRadius="20"
+                    Margin="20"
+                    HorizontalOptions="End"
+                    VerticalOptions="Start" />
         </Grid>
     </Grid>
 </ContentPage>
