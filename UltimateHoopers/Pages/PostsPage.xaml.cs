@@ -18,7 +18,15 @@ namespace UltimateHoopers.Pages
 
         public PostsPage()
         {
-            InitializeComponent();
+            try
+            {
+                InitializeComponent();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Exception in InitializeComponent: {ex.Message}");
+                throw; // Re-throw to see the actual error
+            }
         }
 
         protected override async void OnAppearing()

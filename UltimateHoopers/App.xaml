@@ -5,28 +5,23 @@
              xmlns:converters="clr-namespace:UltimateHoopers.Converters"
              x:Class="UltimateHoopers.App">
     <Application.Resources>
-        <!-- Converters -->
-        <converters:StringNotEmptyConverter x:Key="StringNotEmptyConverter" />
-
         <ResourceDictionary>
+            <!-- Converters -->
+            <converters:StringNotEmptyConverter x:Key="StringNotEmptyConverter" />
+
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            
-            
             <!-- Additional Colors for our app -->
             <Color x:Key="PrimaryColor">#512BD4</Color>
             <Color x:Key="SecondaryColor">#DFD8F7</Color>
             <Color x:Key="TertiaryColor">#2B0B98</Color>
-
             <Color x:Key="PageBackgroundColor">#F9F9F9</Color>
             <Color x:Key="CardBackgroundColor">White</Color>
-
             <Color x:Key="PrimaryTextColor">#333333</Color>
             <Color x:Key="SecondaryTextColor">#666666</Color>
-
             <Color x:Key="BorderColor">#DDDDDD</Color>
         </ResourceDictionary>
     </Application.Resources>
