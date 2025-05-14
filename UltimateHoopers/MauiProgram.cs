@@ -10,9 +10,7 @@ using ApiClient.Authentication;
 using CommunityToolkit.Maui;
 using UltimateHoopers.Helpers;
 using System;
-using CommunityToolkit.Maui.Core;
 using Domain;
-using CommunityToolkit.Maui.MediaElement;
 
 namespace UltimateHoopers
 {
@@ -29,8 +27,7 @@ namespace UltimateHoopers
 
                 builder
                     .UseMauiApp<App>()
-                    .UseMauiCommunityToolkit() // Add Community Toolkit
-                    .UseMauiCommunityToolkitMediaElement() // Add Media Element
+                    .UseMauiCommunityToolkit() // Add Community Toolkit - but NOT MediaElement
                     .ConfigureFonts(fonts =>
                     {
                         fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");

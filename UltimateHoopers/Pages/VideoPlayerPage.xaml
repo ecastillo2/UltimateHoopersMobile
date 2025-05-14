@@ -1,10 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
-             xmlns:mediaElement="clr-namespace:CommunityToolkit.Maui.Views;assembly=CommunityToolkit.Maui.MediaElement"
              x:Class="UltimateHoopers.Pages.VideoPlayerPage"
-             xmlns:viewmodels="clr-namespace:UltimateHoopers.ViewModels"
              Title="Video"
              BackgroundColor="Black">
 
@@ -34,58 +31,45 @@
                     Clicked="OnCloseClicked" />
         </Grid>
 
-        <!-- Video Content -->
-        <mediaElement:MediaElement
-            x:Name="mediaElement"
-            Grid.Row="1"
-            ShouldShowPlaybackControls="True"
-            ShouldLoopPlayback="False"
-            ShouldMute="False"
-            ShouldKeepScreenOn="True"
-            MediaOpened="OnMediaOpened"
-            MediaEnded="OnMediaEnded"
-            MediaFailed="OnMediaFailed"
-            PositionChanged="OnPositionChanged"
-            HorizontalOptions="FillAndExpand"
-            VerticalOptions="FillAndExpand" />
+        <!-- Video Content placeholder -->
+        <Grid Grid.Row="1" BackgroundColor="#111111">
+            <Image x:Name="thumbnailImage"
+                   Aspect="AspectFit"
+                   HorizontalOptions="FillAndExpand"
+                   VerticalOptions="FillAndExpand" />
 
-        <!-- Player Controls -->
+            <!-- Play Button -->
+            <Frame BackgroundColor="#80000000"
+                   CornerRadius="30"
+                   HeightRequest="60"
+                   WidthRequest="60"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center"
+                   HasShadow="False">
+                <Label Text="▶️"
+                       FontSize="32"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       TextColor="White" />
+            </Frame>
+
+            <Label x:Name="placeholderLabel"
+                   Text="Video player is temporarily unavailable"
+                   TextColor="White"
+                   FontSize="16"
+                   HorizontalOptions="Center"
+                   VerticalOptions="End"
+                   Margin="0,0,0,40" />
+        </Grid>
+
+        <!-- Caption -->
         <Grid Grid.Row="2"
               Padding="20,10"
-              BackgroundColor="#222222"
-              RowDefinitions="Auto,Auto"
-              RowSpacing="10">
-
-            <!-- Caption -->
-            <Label Grid.Row="0"
-                   x:Name="captionLabel"
+              BackgroundColor="#222222">
+            <Label x:Name="captionLabel"
                    TextColor="White"
                    LineBreakMode="TailTruncation"
                    MaxLines="2" />
-
-            <!-- Progress Bar -->
-            <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
-                <Label Grid.Column="0"
-                       x:Name="currentTimeLabel"
-                       Text="0:00"
-                       TextColor="White"
-                       FontSize="12" />
-
-                <Slider Grid.Column="1"
-                        x:Name="progressSlider"
-                        Minimum="0"
-                        Maximum="100"
-                        ValueChanged="OnSliderValueChanged"
-                        MinimumTrackColor="{StaticResource PrimaryColor}"
-                        MaximumTrackColor="Gray"
-                        ThumbColor="{StaticResource PrimaryColor}" />
-
-                <Label Grid.Column="2"
-                       x:Name="totalTimeLabel"
-                       Text="0:00"
-                       TextColor="White"
-                       FontSize="12" />
-            </Grid>
         </Grid>
     </Grid>
 </ContentPage>
