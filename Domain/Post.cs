@@ -25,6 +25,7 @@ namespace Domain
         public string? Title { get; set; }
         public string? Category { get; set; }
         public string? Mention { get; set; }
+        public string? TagId { get; set; }
         public string? MentionUserNames { get; set; }
         [NotMapped]
         public List<Profile>? ProfileMentions { get; set; }

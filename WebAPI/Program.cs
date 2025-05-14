@@ -26,8 +26,8 @@ namespace WebAPI
 
                     // Set base path and add custom appsettings file
                     config.SetBasePath(Directory.GetCurrentDirectory())
-                          .AddJsonFile("appsettings.API.json", optional: false, reloadOnChange: true)
-                          .AddJsonFile($"appsettings.{context.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+                          .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                          
                           .AddEnvironmentVariables();
                 })
                 .ConfigureWebHostDefaults(webBuilder =>

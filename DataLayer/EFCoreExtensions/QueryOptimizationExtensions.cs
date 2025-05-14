@@ -30,6 +30,7 @@ namespace DataLayer.EFCoreExtensions
             int pageSize,
             Expression<Func<T, TKey>> orderBy,
             bool ascending = true)
+            where T : class  // Added constraint: T must be a reference type
         {
             // Validate parameters
             if (page < 1) page = 1;
@@ -71,7 +72,7 @@ namespace DataLayer.EFCoreExtensions
             TKey id,
             IMemoryCache cache,
             TimeSpan? cacheExpiration = null)
-            where T : class
+            where T : class  // This constraint was already present
         {
             // Create cache key
             var cacheKey = $"{typeof(T).Name}_{id}";
@@ -115,7 +116,7 @@ namespace DataLayer.EFCoreExtensions
             this DbContext context,
             T entity,
             params Expression<Func<T, object>>[] properties)
-            where T : class
+            where T : class  // This constraint was already present
         {
             // Attach entity to context
             var entry = context.Attach(entity);
@@ -136,7 +137,7 @@ namespace DataLayer.EFCoreExtensions
             this DbContext context,
             IEnumerable<T> entities,
             int batchSize = 100)
-            where T : class
+            where T : class  // This constraint was already present
         {
             var totalCount = 0;
             var items = entities.ToList();
@@ -163,7 +164,7 @@ namespace DataLayer.EFCoreExtensions
         public static async Task<List<T>> GetWithSelectiveIncludesAsync<T>(
             this IQueryable<T> query,
             Func<IQueryable<T>, IQueryable<T>> includeFunc = null)
-            where T : class
+            where T : class  // This constraint was already present
         {
             // Apply includes if provided
             if (includeFunc != null)

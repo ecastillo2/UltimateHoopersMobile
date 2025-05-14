@@ -12,6 +12,9 @@ namespace Domain
         /// </summary>
         public string FollowerId { get; set; }
 
+        public string FollowerUserId { get; set; }
+
+        public string UserId { get; set; }
         /// <summary>
         /// Gets or sets the profile ID being followed
         /// </summary>

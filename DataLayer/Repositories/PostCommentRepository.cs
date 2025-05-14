@@ -46,8 +46,9 @@ namespace DataLayer.Repositories
                 }
 
                 // Calculate relative time
-                if (DateTime.TryParse(comment.PostCommentDate, out var commentDate))
+                if (DateTime.TryParse(comment.PostCommentDate.ToString(), out var commentDate))
                 {
+                    // Convert DateTime to string before passing it to GetRelativeTime
                     comment.RelativeTime = RelativeTime.GetRelativeTime(commentDate, timeZone);
                 }
                 else
@@ -76,7 +77,6 @@ namespace DataLayer.Repositories
                 comment.PostCommentId = Guid.NewGuid().ToString();
 
             comment.PostCommentDate = DateTime.Now;
-
             await base.AddAsync(comment);
         }
     }
