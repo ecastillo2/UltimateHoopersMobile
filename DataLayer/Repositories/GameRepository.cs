@@ -43,7 +43,7 @@ namespace DataLayer.Repositories
             // Load private run information
             if (!string.IsNullOrEmpty(game.PrivateRunId))
             {
-                game.PrivateRun = await _context.PrivateRuns
+                game.PrivateRun = await _context.PrivateRun
                     .FirstOrDefaultAsync(pr => pr.PrivateRunId == game.PrivateRunId);
             }
 
@@ -79,7 +79,7 @@ namespace DataLayer.Repositories
                                 .ToList();
 
             // Fetch related data in a single query for each type
-            var privateRuns = await _context.PrivateRuns
+            var privateRuns = await _context.PrivateRun
                 .Where(pr => privateRunIds.Contains(pr.PrivateRunId))
                 .ToDictionaryAsync(pr => pr.PrivateRunId);
 
@@ -132,7 +132,7 @@ namespace DataLayer.Repositories
                 // Load private run information if available
                 if (!string.IsNullOrEmpty(game.PrivateRunId))
                 {
-                    game.PrivateRun = await _context.PrivateRuns
+                    game.PrivateRun = await _context.PrivateRun
                         .FirstOrDefaultAsync(pr => pr.PrivateRunId == game.PrivateRunId);
                 }
             }
@@ -187,7 +187,7 @@ namespace DataLayer.Repositories
             if (!ids.Any())
                 return new List<Profile>();
 
-            return await _context.Profiles
+            return await _context.Profile
                 .Where(p => ids.Contains(p.ProfileId))
                 .ToListAsync();
         }

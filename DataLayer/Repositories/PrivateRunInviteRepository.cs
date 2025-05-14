@@ -62,7 +62,7 @@ namespace DataLayer.Repositories
             await SaveAsync();
 
             // Update related order if it exists
-            var order = await _context.Orders
+            var order = await _context.Order
                 .FirstOrDefaultAsync(o => o.ProfileId == profileId && o.PrivateRunInviteId == privateRunInviteId);
 
             if (order != null)
@@ -80,7 +80,7 @@ namespace DataLayer.Repositories
                         break;
                 }
 
-                _context.Orders.Update(order);
+                _context.Order.Update(order);
                 await SaveAsync();
             }
         }

@@ -117,7 +117,7 @@ namespace DataLayer.Repositories
         {
             return await _context.Followers
                 .Where(f => f.UserId == userId)
-                .Join(_context.Users,
+                .Join(_context.User,
                     follower => follower.FollowerUserId,
                     user => user.UserId,
                     (follower, user) => user)
@@ -131,7 +131,7 @@ namespace DataLayer.Repositories
         {
             return await _context.Following
                 .Where(f => f.UserId == userId)
-                .Join(_context.Users,
+                .Join(_context.User,
                     following => following.FollowingUserId,
                     user => user.UserId,
                     (following, user) => user)

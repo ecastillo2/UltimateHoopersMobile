@@ -18,22 +18,22 @@ namespace WebAPI
         /// <param name="args"></param>
         /// <returns></returns>
         public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureAppConfiguration((context, config) =>
-                {
-                    // Clear default configuration sources
-                    config.Sources.Clear();
+     Host.CreateDefaultBuilder(args)
+         .ConfigureAppConfiguration((context, config) =>
+         {
+             // Clear default configuration sources
+             config.Sources.Clear();
 
-                    // Set base path and add custom appsettings file
-                    config.SetBasePath(Directory.GetCurrentDirectory())
-                          .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                          
-                          .AddEnvironmentVariables();
-                })
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseStartup<Startup>();
-                });
+             // Set base path and add standard appsettings file
+             config.SetBasePath(Directory.GetCurrentDirectory())
+                   .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                   .AddJsonFile($"appsettings.{context.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+                   .AddEnvironmentVariables();
+         })
+         .ConfigureWebHostDefaults(webBuilder =>
+         {
+             webBuilder.UseStartup<Startup>();
+         });
 
 
     }

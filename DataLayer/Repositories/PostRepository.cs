@@ -31,7 +31,7 @@ namespace DataLayer.Repositories
                 return null;
 
             // Get user/profile info
-            post.UserName = await _context.Profiles
+            post.UserName = await _context.Profile
                 .Where(p => p.ProfileId == post.ProfileId)
                 .Select(p => p.UserName)
                 .FirstOrDefaultAsync();
@@ -43,7 +43,7 @@ namespace DataLayer.Repositories
             }
 
             // Count likes
-            post.Likes = await _context.LikedPosts
+            post.Likes = await _context.LikedPost
                 .CountAsync(lp => lp.PostId == postId);
 
             return post;
@@ -96,7 +96,7 @@ namespace DataLayer.Repositories
         /// </summary>
         public async Task<bool> IsPostLikedByProfileAsync(string postId, string profileId)
         {
-            return await _context.LikedPosts
+            return await _context.LikedPost
                 .AnyAsync(lp => lp.PostId == postId && lp.LikedByProfileId == profileId);
         }
 
@@ -115,7 +115,7 @@ namespace DataLayer.Repositories
                     LikedDate = DateTime.Now.ToString()
                 };
 
-                await _context.LikedPosts.AddAsync(likedPost);
+                await _context.LikedPost.AddAsync(likedPost);
                 await SaveAsync();
             }
         }
@@ -125,12 +125,12 @@ namespace DataLayer.Repositories
         /// </summary>
         public async Task UnlikePostAsync(string postId, string profileId)
         {
-            var likedPost = await _context.LikedPosts
+            var likedPost = await _context.LikedPost
                 .FirstOrDefaultAsync(lp => lp.PostId == postId && lp.LikedByProfileId == profileId);
 
             if (likedPost != null)
             {
-                _context.LikedPosts.Remove(likedPost);
+                _context.LikedPost.Remove(likedPost);
                 await SaveAsync();
             }
         }
@@ -147,7 +147,7 @@ namespace DataLayer.Repositories
             var profileIds = posts.Select(p => p.ProfileId).Distinct().ToList();
 
             // Get profiles info in a single query
-            var profiles = await _context.Profiles
+            var profiles = await _context.Profile
                 .Where(p => profileIds.Contains(p.ProfileId))
                 .Select(p => new { p.ProfileId, p.UserName, p.ImageURL })
                 .ToDictionaryAsync(p => p.ProfileId);
@@ -156,14 +156,14 @@ namespace DataLayer.Repositories
             var postIds = posts.Select(p => p.PostId).ToList();
 
             // Get comment counts in a single query
-            var commentCounts = await _context.PostComments
+            var commentCounts = await _context.PostComment
                 .Where(pc => postIds.Contains(pc.PostId))
                 .GroupBy(pc => pc.PostId)
                 .Select(g => new { PostId = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(g => g.PostId, g => g.Count);
 
             // Get like counts in a single query
-            var likeCounts = await _context.LikedPosts
+            var likeCounts = await _context.LikedPost
                 .Where(lp => postIds.Contains(lp.PostId))
                 .GroupBy(lp => lp.PostId)
                 .Select(g => new { PostId = g.Key, Count = g.Count() })
@@ -192,6 +192,8 @@ namespace DataLayer.Repositories
                 }
             }
         }
+
+
     }
 
     /// <summary>

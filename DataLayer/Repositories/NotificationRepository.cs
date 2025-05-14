@@ -32,7 +32,7 @@ namespace DataLayer.Repositories
                 .ToList();
 
             // Get profiles in one query
-            var profiles = await _context.Profiles
+            var profiles = await _context.Profile
                 .Where(p => profileIds.Contains(p.ProfileId))
                 .ToDictionaryAsync(p => p.ProfileId);
 

@@ -13,9 +13,9 @@ namespace DataLayer
         }
 
         // Entity sets
-        public DbSet<Activity> Activities { get; set; }
+        public DbSet<Activity> Activity { get; set; }
         public DbSet<Comment> Comments { get; set; }
-        public DbSet<Contact> Contacts { get; set; }
+        public DbSet<Contact> Contact { get; set; }
         public DbSet<Court> Courts { get; set; }
         public DbSet<Criteria> Criteria { get; set; }
         public DbSet<ErrorException> ErrorExceptions { get; set; }
@@ -23,31 +23,31 @@ namespace DataLayer
         public DbSet<Following> Following { get; set; }
         public DbSet<Game> Games { get; set; }
         public DbSet<History> History { get; set; }
-        public DbSet<LikedPost> LikedPosts { get; set; }
-        public DbSet<Notification> Notifications { get; set; }
-        public DbSet<Order> Orders { get; set; }
-        public DbSet<Organization> Organizations { get; set; }
-        public DbSet<PlayerComment> PlayerComments { get; set; }
-        public DbSet<Post> Posts { get; set; }
-        public DbSet<PostComment> PostComments { get; set; }
-        public DbSet<PostUpdateTime> PostUpdateTimes { get; set; }
-        public DbSet<PrivateRun> PrivateRuns { get; set; }
-        public DbSet<PrivateRunInvite> PrivateRunInvites { get; set; }
-        public DbSet<Product> Products { get; set; }
-        public DbSet<Profile> Profiles { get; set; }
+        public DbSet<LikedPost> LikedPost { get; set; }
+        public DbSet<Notification> Notification { get; set; }
+        public DbSet<Order> Order { get; set; }
+        public DbSet<Organization> Organization { get; set; }
+        public DbSet<PlayerComment> PlayerComment { get; set; }
+        public DbSet<Post> Post { get; set; }
+        public DbSet<PostComment> PostComment { get; set; }
+        public DbSet<PostUpdateTime> PostUpdateTime { get; set; }
+        public DbSet<PrivateRun> PrivateRun { get; set; }
+        public DbSet<PrivateRunInvite> PrivateRunInvites{ get; set; }
+        public DbSet<Product> Product { get; set; }
+        public DbSet<Profile> Profile { get; set; }
         public DbSet<ProjectManagement> ProjectManagement { get; set; }
-        public DbSet<PushSubscription> PushSubscriptions { get; set; }
-        public DbSet<Rating> Ratings { get; set; }
-        public DbSet<SavedPost> SavedPosts { get; set; }
-        public DbSet<ScoutingReport> ScoutingReports { get; set; }
-        public DbSet<Setting> Settings { get; set; }
-        public DbSet<Squad> Squads { get; set; }
-        public DbSet<SquadTeam> SquadTeams { get; set; }
-        public DbSet<SquadRequest> SquadRequests { get; set; }
-        public DbSet<StatusUpdateTime> StatusUpdateTimes { get; set; }
-        public DbSet<Tag> Tags { get; set; }
-        public DbSet<ThirdPartyService> ThirdPartyServices { get; set; }
-        public DbSet<User> Users { get; set; }
+        public DbSet<PushSubscription> PushSubscription { get; set; }
+        public DbSet<Rating> Rating { get; set; }
+        public DbSet<SavedPost> SavedPost { get; set; }
+        public DbSet<ScoutingReport> ScoutingReport { get; set; }
+        public DbSet<Setting> Setting { get; set; }
+        public DbSet<Squad> Squad { get; set; }
+        public DbSet<SquadTeam> SquadTeam { get; set; }
+        public DbSet<SquadRequest> SquadRequest { get; set; }
+        public DbSet<StatusUpdateTime> StatusUpdateTime { get; set; }
+        public DbSet<Tag> Tag { get; set; }
+        public DbSet<ThirdPartyService> ThirdPartyService { get; set; }
+        public DbSet<User> User { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

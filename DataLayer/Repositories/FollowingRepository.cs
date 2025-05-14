@@ -41,7 +41,7 @@ namespace DataLayer.Repositories
         {
             return await _dbSet
                 .Where(f => f.ProfileId == profileId)
-                .Join(_context.Profiles,
+                .Join(_context.Profile,
                     following => following.FollowingProfileId,
                     profile => profile.ProfileId,
                     (following, profile) => profile)

@@ -38,7 +38,7 @@ namespace DataLayer.Repositories
             privateRun.PrivateRunInviteList = await _context.PrivateRunInvites
                 .Where(i => i.PrivateRunId == privateRunId &&
                            (i.AcceptedInvite == "Accepted" || i.AcceptedInvite == "Accepted / Pending"))
-                .Join(_context.Profiles,
+                .Join(_context.Profile,
                     invite => invite.ProfileId,
                     profile => profile.ProfileId,
                     (invite, profile) => new PrivateRunInvite
@@ -57,8 +57,8 @@ namespace DataLayer.Repositories
             if (privateRun.PrivateRunInviteList?.Any() == true)
             {
                 var profileIds = privateRun.PrivateRunInviteList.Select(i => i.ProfileId).ToList();
-                var users = await _context.Users
-                    .Join(_context.Profiles,
+                var users = await _context.User
+                    .Join(_context.Profile,
                         user => user.UserId,
                         profile => profile.UserId,
                         (user, profile) => new {
@@ -93,7 +93,7 @@ namespace DataLayer.Repositories
         public override async Task<List<PrivateRun>> GetAllAsync()
         {
             var privateRuns = await _dbSet
-                .Join(_context.Profiles,
+                .Join(_context.Profile,
                     pr => pr.ProfileId,
                     profile => profile.ProfileId,
                     (pr, profile) => new PrivateRun
@@ -194,7 +194,7 @@ namespace DataLayer.Repositories
         {
             return await _dbSet
                 .Where(pr => pr.ProfileId == profileId)
-                .Join(_context.Profiles,
+                .Join(_context.Profile,
                     pr => pr.ProfileId,
                     profile => profile.ProfileId,
                     (pr, profile) => new PrivateRun
@@ -262,7 +262,7 @@ namespace DataLayer.Repositories
         {
             return await _context.PrivateRunInvites
                 .Where(pri => pri.PrivateRunId == privateRunId)
-                .Join(_context.Profiles,
+                .Join(_context.Profile,
                     pri => pri.ProfileId,
                     profile => profile.ProfileId,
                     (pri, profile) => new Profile

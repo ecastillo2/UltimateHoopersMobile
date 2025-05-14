@@ -32,7 +32,7 @@ namespace DataLayer.Repositories
                 return null;
 
             // Get user details
-            var user = await _context.Users
+            var user = await _context.User
                 .FirstOrDefaultAsync(u => u.UserId == profile.UserId);
 
             if (user != null)
@@ -65,7 +65,7 @@ namespace DataLayer.Repositories
             var userIds = profiles.Select(p => p.UserId).ToList();
 
             // Get all users in one query
-            var users = await _context.Users
+            var users = await _context.User
                 .Where(u => userIds.Contains(u.UserId))
                 .ToDictionaryAsync(u => u.UserId);
 
@@ -147,7 +147,7 @@ namespace DataLayer.Repositories
         /// </summary>
         public async Task UpdateSettingsAsync(Setting setting)
         {
-            var existingSetting = await _context.Settings
+            var existingSetting = await _context.Setting
                 .FirstOrDefaultAsync(s => s.ProfileId == setting.ProfileId);
 
             if (existingSetting != null)
@@ -156,12 +156,12 @@ namespace DataLayer.Repositories
                 existingSetting.ShowGameHistory = setting.ShowGameHistory;
                 existingSetting.AllowEmailNotification = setting.AllowEmailNotification;
 
-                _context.Settings.Update(existingSetting);
+                _context.Setting.Update(existingSetting);
             }
             else
             {
                 setting.SettingId = Guid.NewGuid().ToString();
-                await _context.Settings.AddAsync(setting);
+                await _context.Setting.AddAsync(setting);
             }
 
             await SaveAsync();

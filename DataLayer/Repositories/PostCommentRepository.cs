@@ -31,7 +31,7 @@ namespace DataLayer.Repositories
             var profileIds = comments.Select(c => c.PostCommentByProfileId).Distinct().ToList();
 
             // Get profiles in one query
-            var profiles = await _context.Profiles
+            var profiles = await _context.Profile
                 .Where(p => profileIds.Contains(p.ProfileId))
                 .Select(p => new { p.ProfileId, p.UserName, p.ImageURL })
                 .ToDictionaryAsync(p => p.ProfileId);

@@ -45,7 +45,7 @@ namespace DataLayer.Repositories
         {
             // This assumes a relationship exists between posts and tags
             // Modify this query based on your actual data model
-            return await _context.Posts
+            return await _context.Post
                 .Where(p => p.Category == tagId || p.TagId == tagId)
                 .ToListAsync();
         }
