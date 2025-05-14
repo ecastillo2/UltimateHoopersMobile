@@ -149,7 +149,7 @@ namespace DataLayer.Repositories
                 game.GameId = Guid.NewGuid().ToString();
 
             game.CreatedDate = DateTime.Now.ToString();
-            game.GameNumber = UniqueIdNumber.Generate8Digits();
+            game.GameNumber = UniqueIdNumber.Get8Digits();
 
             await base.AddAsync(game);
         }

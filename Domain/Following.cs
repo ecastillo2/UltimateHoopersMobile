@@ -7,10 +7,16 @@ namespace Domain
     /// </summary>
     public class Following
     {
+
         /// <summary>
         /// Gets or sets the following ID
         /// </summary>
         public string FollowingId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the following ID
+        /// </summary>
+        public string UserId { get; set; }
 
         /// <summary>
         /// Gets or sets the profile ID of the follower
@@ -31,6 +37,8 @@ namespace Domain
         /// Gets or sets the status of the following relationship
         /// </summary>
         public string Status { get; set; }
+
+        public string FollowingUserId { get; set; }
 
         /// <summary>
         /// Gets or sets the creation date of the following relationship

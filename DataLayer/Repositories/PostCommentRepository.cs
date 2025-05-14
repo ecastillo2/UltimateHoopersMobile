@@ -75,7 +75,7 @@ namespace DataLayer.Repositories
             if (string.IsNullOrEmpty(comment.PostCommentId))
                 comment.PostCommentId = Guid.NewGuid().ToString();
 
-            comment.PostCommentDate = DateTime.Now.ToString();
+            comment.PostCommentDate = DateTime.Now;
 
             await base.AddAsync(comment);
         }

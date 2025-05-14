@@ -58,7 +58,7 @@ namespace DataLayer.Repositories
             if (string.IsNullOrEmpty(tag.TagId))
                 tag.TagId = Guid.NewGuid().ToString();
 
-            tag.CreatedDate = DateTime.Now.ToString();
+            tag.CreatedDate = DateTime.Now;
 
             await base.AddAsync(tag);
         }

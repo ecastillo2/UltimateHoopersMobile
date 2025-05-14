@@ -67,13 +67,7 @@ namespace WebAPI.Extensions
             this IServiceCollection services,
             IConfiguration configuration)
         {
-            // Register common utility services
-            services.AddScoped<Common.VideoProcessing.VideoConverter>(sp =>
-            {
-                var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Common.VideoProcessing.VideoConverter>>();
-                var ffmpegPath = configuration["FFmpegPath"];
-                return new Common.VideoProcessing.VideoConverter(logger, ffmpegPath);
-            });
+          
 
             // Add memory caching
             services.AddMemoryCache();
