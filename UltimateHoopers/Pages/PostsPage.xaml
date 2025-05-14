@@ -163,7 +163,6 @@
                                         <Image Source="{Binding PostFileURL}"
                                                IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='image'}"
                                                Aspect="AspectFill"
-                                               LoadingPlaceholder="loading_placeholder.png"
                                                HorizontalOptions="FillAndExpand"
                                                VerticalOptions="FillAndExpand">
                                             <Image.GestureRecognizers>
