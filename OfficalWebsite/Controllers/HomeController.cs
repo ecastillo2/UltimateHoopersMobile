@@ -1,3 +1,4 @@
+
 using Microsoft.AspNetCore.Mvc;
 using OfficalWebsite.Models;
 using System.Diagnostics;
@@ -14,6 +15,16 @@ namespace OfficalWebsite.Controllers
         }
 
         public IActionResult Index()
+        {
+            return View();
+        }
+
+        public IActionResult Features()
+        {
+            return View();
+        }
+
+        public IActionResult Pricing()
         {
             return View();
         }

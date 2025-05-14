@@ -1,0 +1,183 @@
+﻿```cshtml
+@{
+    ViewData["Title"] = "Pricing";
+}
+
+<div class="pricing-header py-5 text-center bg-light">
+    <div class="container">
+        <h1 class="display-4 fw-bold">Simple, Transparent Pricing</h1>
+        <p class="lead">Choose the plan that works best for you.</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row g-4 justify-content-center">
+        <!-- Free Plan -->
+        <div class="col-md-4">
+            <div class="card pricing-card h-100 shadow-sm">
+                <div class="card-header bg-white py-4 text-center">
+                    <h4 class="my-0 fw-normal">Free</h4>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <div class="price-value text-center mb-4">
+                        <h1 class="display-5 fw-bold">$0</h1>
+                        <span class="text-muted">/ month</span>
+                    </div>
+                    <ul class="list-unstyled mb-4">
+                        <li class="d-flex align-items-center mb-3">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            <span>Basic features</span>
+                        </li>
+                        <li class="d-flex align-items-center mb-3">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            <span>1 device sync</span>
+                        </li>
+                        <li class="d-flex align-items-center mb-3">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            <span>Standard notifications</span>
+                        </li>
+                        <li class="d-flex align-items-center mb-3 text-muted">
+                            <i class="bi bi-x-circle-fill text-muted me-2"></i>
+                            <span>Cloud backup</span>
+                        </li>
+                        <li class="d-flex align-items-center mb-3 text-muted">
+                            <i class="bi bi-x-circle-fill text-muted me-2"></i>
+                            <span>Advanced features</span>
+                        </li>
+                    </ul>
+                    <div class="mt-auto text-center">
+                        <a href="#" class="btn btn-outline-primary w-100">Get Started</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pro Plan -->
+        <div class="col-md-4">
+            <div class="card pricing-card h-100 shadow border-primary">
+                <div class="card-header bg-primary text-white py-4 text-center">
+                    <h4 class="my-0 fw-normal">Pro</h4>
+                    <span class="badge bg-white text-primary mt-2">Most Popular</span>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <div class="price-value text-center mb-4">
+                        <h1 class="display-5 fw-bold">$9.99</h1>
+                        <span class="text-muted">/ month</span>
+                    </div>
+                    <ul class="list-unstyled mb-4">
+                        <li class="d-flex align-items-center mb-3">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            <span>All basic features</span>
+                        </li>
+                        <li class="d-flex align-items-center mb-3">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            <span>Unlimited device sync</span>
+                        </li>
+                        <li class="d-flex align-items-center mb-3">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            <span>Smart notifications</span>
+                        </li>
+                        <li class="d-flex align-items-center mb-3">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            <span>Cloud backup</span>
+                        </li>
+                        <li class="d-flex align-items-center mb-3 text-muted">
+                            <i class="bi bi-x-circle-fill text-muted me-2"></i>
+                            <span>API access</span>
+                        </li>
+                    </ul>
+                    <div class="mt-auto text-center">
+                        <a href="#" class="btn btn-primary w-100">Subscribe Now</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enterprise Plan -->
+        <div class="col-md-4">
+            <div class="card pricing-card h-100 shadow-sm">
+                <div class="card-header bg-white py-4 text-center">
+                    <h4 class="my-0 fw-normal">Enterprise</h4>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <div class="price-value text-center mb-4">
+                        <h1 class="display-5 fw-bold">$24.99</h1>
+                        <span class="text-muted">/ month</span>
+                    </div>
+                    <ul class="list-unstyled mb-4">
+                        <li class="d-flex align-items-center mb-3">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            <span>Everything in Pro</span>
+                        </li>
+                        <li class="d-flex align-items-center mb-3">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            <span>Advanced analytics</span>
+                        </li>
+                        <li class="d-flex align-items-center mb-3">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            <span>Priority support</span>
+                        </li>
+                        <li class="d-flex align-items-center mb-3">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            <span>Team collaboration</span>
+                        </li>
+                        <li class="d-flex align-items-center mb-3">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            <span>API access</span>
+                        </li>
+                    </ul>
+                    <div class="mt-auto text-center">
+                        <a href="#" class="btn btn-outline-primary w-100">Contact Sales</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="faq-section mt-5 pt-5">
+        <h2 class="text-center mb-5">Frequently Asked Questions</h2>
+        <div class="row">
+            <div class="col-lg-6 mb-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Can I switch plans later?</h5>
+                        <p class="card-text text-muted">Yes, you can upgrade or downgrade your plan at any time. Changes will be applied at the start of your next billing cycle.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 mb-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Is there a free trial?</h5>
+                        <p class="card-text text-muted">Yes, all paid plans come with a 14-day free trial. No credit card required until you decide to continue.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 mb-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">How does billing work?</h5>
+                        <p class="card-text text-muted">We offer monthly and annual billing options. Annual subscriptions come with a 20% discount compared to monthly billing.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 mb-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">What payment methods do you accept?</h5>
+                        <p class="card-text text-muted">We accept all major credit cards, PayPal, and Apple Pay. Enterprise customers can also pay via invoice.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="cta-section py-5">
+    <div class="container text-center">
+        <h2 class="mb-4">Still have questions?</h2>
+        <p class="lead mb-4">Our support team is here to help you find the perfect plan for your needs.</p>
+        <a href="#" class="btn btn-primary btn-lg">Contact Support</a>
+    </div>
+</div>
+```
