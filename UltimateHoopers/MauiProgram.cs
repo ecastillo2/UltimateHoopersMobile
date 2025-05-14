@@ -8,6 +8,8 @@ using Microsoft.Extensions.Configuration;
 using System.Net.Http;
 using ApiClient.Authentication;
 using CommunityToolkit.Maui;
+using UltimateHoopers.Helpers;
+using System;
 
 namespace UltimateHoopers
 {
@@ -15,50 +17,73 @@ namespace UltimateHoopers
     {
         public static MauiApp CreateMauiApp()
         {
-            var builder = MauiApp.CreateBuilder();
-            builder
-                .UseMauiApp<App>()
-                .UseMauiCommunityToolkit() // Add Community Toolkit
-                .ConfigureFonts(fonts =>
-                {
-                    fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-                    fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
-                });
+            try
+            {
+                DiagnosticHelper.Log("CreateMauiApp starting");
 
-            // Create a configuration object for API client settings
-            var configuration = new ConfigurationBuilder()
-                .AddInMemoryCollection(new Dictionary<string, string>
-                {
-                    ["ApiSettings:BaseUrl"] = "https://ultimatehoopersapi.azurewebsites.net/"
-                })
-                .Build();
+                var builder = MauiApp.CreateBuilder();
+                DiagnosticHelper.Log("MauiApp builder created");
 
-            builder.Services.AddSingleton<IConfiguration>(configuration);
+                builder
+                    .UseMauiApp<App>()
+                    .UseMauiCommunityToolkit() // Add Community Toolkit
+                    .ConfigureFonts(fonts =>
+                    {
+                        fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+                        fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                    });
 
-            // Register HTTP client
-            builder.Services.AddSingleton<HttpClient>();
+                DiagnosticHelper.Log("Basic MAUI app configuration completed");
 
-            // Register services
-            builder.Services.AddSingleton<IPostService, PostService>();
-            builder.Services.AddSingleton<IAuthenticateUser, AuthenticateUser>();
-            builder.Services.AddSingleton<IAuthService, AuthService>();
+                // Create a configuration object for API client settings
+                var configuration = new ConfigurationBuilder()
+                    .AddInMemoryCollection(new Dictionary<string, string>
+                    {
+                        ["ApiSettings:BaseUrl"] = "https://ultimatehoopersapi.azurewebsites.net/"
+                    })
+                    .Build();
 
-            // Register ViewModels
-            builder.Services.AddTransient<PostsViewModel>();
+                builder.Services.AddSingleton<IConfiguration>(configuration);
+                DiagnosticHelper.Log("Configuration added");
 
-            // Register shell
-            builder.Services.AddTransient<AppShell>();
+                // Register HTTP client
+                builder.Services.AddSingleton<HttpClient>();
+                DiagnosticHelper.Log("HttpClient registered");
 
-            // Register pages
-            builder.Services.AddTransient<HomePage>();
-            builder.Services.AddTransient<PostsPage>();
-            builder.Services.AddTransient<LoginPage>();
+                // Register services
+                builder.Services.AddSingleton<IPostService, PostService>();
+                builder.Services.AddSingleton<IAuthenticateUser, AuthenticateUser>();
+                builder.Services.AddSingleton<IAuthService, AuthService>();
+                DiagnosticHelper.Log("Services registered");
+
+                // Register ViewModels
+                builder.Services.AddTransient<PostsViewModel>();
+                DiagnosticHelper.Log("ViewModels registered");
+
+                // Register shell
+                builder.Services.AddTransient<AppShell>();
+                DiagnosticHelper.Log("AppShell registered");
+
+                // Register pages
+                builder.Services.AddTransient<HomePage>();
+                builder.Services.AddTransient<PostsPage>();
+                builder.Services.AddTransient<LoginPage>();
+                DiagnosticHelper.Log("Pages registered");
 
 #if DEBUG
-            builder.Logging.AddDebug();
+                builder.Logging.AddDebug();
+                DiagnosticHelper.Log("Debug logging added");
 #endif
 
-            return builder.Build();
+                var app = builder.Build();
+                DiagnosticHelper.Log("MauiApp built successfully");
+                return app;
+            }
+            catch (Exception ex)
+            {
+                DiagnosticHelper.LogException(ex, "CreateMauiApp");
+                throw; // Rethrow as we need to fail the app creation if this fails
+            }
         }
     }
 }

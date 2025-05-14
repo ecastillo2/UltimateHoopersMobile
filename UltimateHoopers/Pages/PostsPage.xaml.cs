@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using UltimateHoopers.Services;
 using UltimateHoopers.ViewModels;
+using Microsoft.Maui.ApplicationModel;
 
 namespace UltimateHoopers.Pages
 {
@@ -79,7 +80,7 @@ namespace UltimateHoopers.Pages
         // Video post tap handler
         private void OnVideoPostTapped(object sender, EventArgs e)
         {
-            if (sender is Microsoft.Maui.Controls.Grid videoGrid && videoGrid.BindingContext is Post post)
+            if (sender is Grid videoGrid && videoGrid.BindingContext is Post post)
             {
                 if (post.PostType?.Equals("video", StringComparison.OrdinalIgnoreCase) == true)
                 {
