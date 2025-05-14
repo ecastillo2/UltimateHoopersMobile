@@ -364,29 +364,35 @@ namespace UltimateHoopers.ViewModels
             }
         }
 
-        private async Task PlayVideo(Post post)
+        public async Task PlayVideo(Post post)
         {
             try
             {
                 if (post == null || string.IsNullOrEmpty(post.PostFileURL))
                 {
-                    await Shell.Current.DisplayAlert("Error", "Video is not available", "OK");
+                    await Shell.Current.DisplayAlert("Error", "Video URL is not available", "OK");
                     return;
                 }
 
-                // Check if the video type is valid
-                bool isVideoFile = post.PostFileURL.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase) ||
-                                post.PostFileURL.EndsWith(".mov", StringComparison.OrdinalIgnoreCase) ||
-                                post.PostFileURL.EndsWith(".webm", StringComparison.OrdinalIgnoreCase);
+                // Let the user choose how to play the video
+                string action = await Shell.Current.DisplayActionSheet(
+                    "Play Video",
+                    "Cancel",
+                    null,
+                    "Play in App",
+                    "Open in Browser");
 
-                if (!isVideoFile && post.PostType?.Equals("video", StringComparison.OrdinalIgnoreCase) != true)
+                switch (action)
                 {
-                    await Shell.Current.DisplayAlert("Error", "This is not a valid video file", "OK");
-                    return;
-                }
+                    case "Play in App":
+                        // Navigate to the video player page
+                        await Shell.Current.Navigation.PushModalAsync(new Pages.VideoPlayerPage(post));
+                        break;
 
-                // Navigate to the video player page
-                await Shell.Current.Navigation.PushModalAsync(new Pages.VideoPlayerPage(post));
+                    case "Open in Browser":
+                        await Launcher.OpenAsync(new Uri(post.PostFileURL));
+                        break;
+                }
             }
             catch (Exception ex)
             {

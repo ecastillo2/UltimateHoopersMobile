@@ -56,6 +56,16 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <MauiXaml Remove="Controls\InlineVideoPlayer.xaml" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <EmbeddedResource Include="Controls\InlineVideoPlayer.xaml">
+	    <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
+	  </EmbeddedResource>
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.Maui.Core" Version="11.2.0" />
 		<PackageReference Include="CommunityToolkit.Maui.MediaElement" Version="6.0.2" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.5" />

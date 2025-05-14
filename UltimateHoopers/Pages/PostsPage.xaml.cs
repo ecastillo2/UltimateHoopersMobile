@@ -7,12 +7,14 @@ using System.Threading.Tasks;
 using UltimateHoopers.Services;
 using UltimateHoopers.ViewModels;
 using Microsoft.Maui.ApplicationModel; // For MainThread
-using Grid = Microsoft.Maui.Controls.Grid; // Explicitly specify which Grid to use
+using Grid = Microsoft.Maui.Controls.Grid;
+using UltimateHoopers.Controls; // Explicitly specify which Grid to use
 
 namespace UltimateHoopers.Pages
 {
     public partial class PostsPage : ContentPage
     {
+        private List<InlineVideoPlayer> _activePlayers = new List<InlineVideoPlayer>();
         private readonly PostsViewModel _viewModel;
         private Post _currentMediaPost;
         private double _currentScale = 1;
@@ -96,45 +98,97 @@ namespace UltimateHoopers.Pages
         }
 
         // Video post tap handler
-        private async void OnVideoPostTapped(object sender, EventArgs e)
+        private void OnVideoPostTapped(object sender, EventArgs e)
         {
             try
             {
+                // Find the InlineVideoPlayer in the visual tree
                 if (sender is Grid videoGrid && videoGrid.BindingContext is Post post)
                 {
-                    Console.WriteLine($"Tapped video post: {post.PostId}, URL: {post.PostFileURL}");
+                    // Look for the InlineVideoPlayer within this grid's children
+                    var videoPlayer = FindVideoPlayer(videoGrid);
 
-                    if (string.IsNullOrWhiteSpace(post.PostFileURL))
+                    if (videoPlayer != null)
                     {
-                        await DisplayAlert("Error", "Video URL is not available", "OK");
-                        return;
+                        // The video player will handle the playback automatically
+                        // due to the tap gesture we set up in the control
+                        Debug.WriteLine($"Found video player for post: {post.PostId}");
                     }
-
-                    // Display options for video
-                    string action = await DisplayActionSheet(
-                        "View Video",
-                        "Cancel",
-                        null,
-                        "Play in App",
-                        "Open in Browser");
-
-                    switch (action)
+                    else
                     {
-                        case "Play in App":
-                            // Navigate to video player
-                            await Navigation.PushModalAsync(new VideoPlayerPage(post));
-                            break;
-
-                        case "Open in Browser":
-                            // Open in external browser
-                            await Launcher.OpenAsync(new Uri(post.PostFileURL));
-                            break;
+                        // Fallback if we can't find the player for some reason
+                        Debug.WriteLine("Video player not found, falling back to external player");
+                        NavigateToVideoPlayer(post);
                     }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error in OnVideoPostTapped: {ex.Message}");
+                Debug.WriteLine($"Error in OnVideoPostTapped: {ex.Message}");
+            }
+        }
+
+        // Helper to find the InlineVideoPlayer in the visual tree
+        private InlineVideoPlayer FindVideoPlayer(Element element)
+        {
+            // First, check if this element is an InlineVideoPlayer
+            if (element is InlineVideoPlayer player)
+            {
+                return player;
+            }
+
+            // If not, search through its children
+            if (element is Layout layout)
+            {
+                foreach (var child in layout.Children)
+                {
+                    var found = FindVideoPlayer(child);
+                    if (found != null)
+                    {
+                        return found;
+                    }
+                }
+            }
+
+            // If we reach here, no InlineVideoPlayer was found
+            return null;
+        }
+
+        // Fallback method to navigate to dedicated video player page
+        private async void NavigateToVideoPlayer(Post post)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(post.PostFileURL))
+                {
+                    await DisplayAlert("Error", "Video URL is not available", "OK");
+                    return;
+                }
+
+                // Display options for video
+                string action = await DisplayActionSheet(
+                    "View Video",
+                    "Cancel",
+                    null,
+                    "Play in App",
+                    "Open in Browser");
+
+                switch (action)
+                {
+                    case "Play in App":
+                        // Navigate to video player
+                        await Navigation.PushModalAsync(new VideoPlayerPage(post));
+                        break;
+
+                    case "Open in Browser":
+                        // Open in external browser
+                        await Launcher.OpenAsync(new Uri(post.PostFileURL));
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error navigating to video player: {ex.Message}");
                 await DisplayAlert("Error", $"Could not play video: {ex.Message}", "OK");
             }
         }
@@ -294,6 +348,34 @@ namespace UltimateHoopers.Pages
                     fullscreenImage.TranslationX += e.TotalX;
                     fullscreenImage.TranslationY += e.TotalY;
                     break;
+            }
+        }
+
+        
+
+        protected override void OnDisappearing()
+        {
+            base.OnDisappearing();
+
+            // Stop all videos when page disappears
+            StopAllVideos();
+        }
+
+        private void StopAllVideos()
+        {
+            foreach (var player in _activePlayers)
+            {
+                player.StopVideo();
+            }
+            _activePlayers.Clear();
+        }
+
+        // Add this to track active players
+        private void OnVideoStarted(object sender, EventArgs e)
+        {
+            if (sender is InlineVideoPlayer player && !_activePlayers.Contains(player))
+            {
+                _activePlayers.Add(player);
             }
         }
 
