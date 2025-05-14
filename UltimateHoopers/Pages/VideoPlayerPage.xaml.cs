@@ -2,6 +2,7 @@
 using Microsoft.Maui.Controls;
 using System;
 using System.Diagnostics;
+using Microsoft.Maui.Controls.Xaml;
 
 namespace UltimateHoopers.Pages
 {
@@ -63,6 +64,22 @@ namespace UltimateHoopers.Pages
                 Debug.WriteLine($"Error in VideoPlayerPage constructor: {ex.Message}");
                 DisplayAlert("Error", $"Error loading video: {ex.Message}", "OK");
             }
+        }
+
+        protected override void OnAppearing()
+        {
+            base.OnAppearing();
+
+            // Automatically start playing when the page appears
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                // Small delay to ensure the UI is ready
+                Device.StartTimer(TimeSpan.FromMilliseconds(500), () =>
+                {
+                    OnPlayButtonTapped(this, EventArgs.Empty);
+                    return false; // Don't repeat
+                });
+            });
         }
 
         // Handle the play button tap event
@@ -279,29 +296,10 @@ namespace UltimateHoopers.Pages
             }
         }
 
+        // Close button handler
         private void OnCloseClicked(object sender, EventArgs e)
         {
             Navigation.PopModalAsync();
-        }
-
-        private async void OnOpenInBrowserClicked(object sender, EventArgs e)
-        {
-            try
-            {
-                if (_post != null && !string.IsNullOrWhiteSpace(_post.PostFileURL))
-                {
-                    await Launcher.OpenAsync(new Uri(_post.PostFileURL));
-                }
-                else
-                {
-                    await DisplayAlert("Error", "Video URL is not available", "OK");
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error opening in browser: {ex.Message}");
-                await DisplayAlert("Error", $"Could not open browser: {ex.Message}", "OK");
-            }
         }
     }
 }

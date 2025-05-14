@@ -3,102 +3,102 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="UltimateHoopers.Pages.VideoPlayerPage"
              Title="Video"
-             BackgroundColor="Black">
+             BackgroundColor="#CC000000">
 
-    <Grid RowDefinitions="Auto,*,Auto">
-        <!-- Header -->
-        <Grid Grid.Row="0" 
-              Padding="10"
-              HeightRequest="60"
-              BackgroundColor="#222222">
+    <ContentPage.Content>
+        <Frame Margin="20"
+               CornerRadius="12"
+               BackgroundColor="Black"
+               Padding="0"
+               HasShadow="True">
 
-            <Label Text="Video"
-                   FontSize="18"
-                   FontAttributes="Bold"
-                   TextColor="White"
-                   HorizontalOptions="Center"
-                   VerticalOptions="Center" />
+            <Grid RowDefinitions="Auto,*,Auto">
+                <!-- Header -->
+                <Grid Grid.Row="0" 
+                      Padding="10"
+                      HeightRequest="50"
+                      BackgroundColor="#222222">
 
-            <Button Text="✕"
-                    BackgroundColor="Transparent"
-                    TextColor="White"
-                    FontSize="20"
-                    WidthRequest="40"
-                    HeightRequest="40"
-                    CornerRadius="20"
-                    HorizontalOptions="Start"
-                    VerticalOptions="Center"
-                    Clicked="OnCloseClicked" />
+                    <Label Text="Video"
+                           FontSize="16"
+                           FontAttributes="Bold"
+                           TextColor="White"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center" />
 
-            <Button Text="Browser"
-                    BackgroundColor="Transparent"
-                    TextColor="White"
-                    FontSize="14"
-                    WidthRequest="80"
-                    HeightRequest="40"
-                    CornerRadius="20"
-                    HorizontalOptions="End"
-                    VerticalOptions="Center"
-                    Clicked="OnOpenInBrowserClicked" />
-        </Grid>
+                    <Button Text="✕"
+                            BackgroundColor="Transparent"
+                            TextColor="White"
+                            FontSize="18"
+                            WidthRequest="40"
+                            HeightRequest="40"
+                            CornerRadius="20"
+                            HorizontalOptions="End"
+                            VerticalOptions="Center"
+                            Clicked="OnCloseClicked" />
+                </Grid>
 
-        <!-- Video Content - Using WebView -->
-        <WebView x:Name="videoWebView" 
-                 Grid.Row="1"
-                 HorizontalOptions="FillAndExpand"
-                 VerticalOptions="FillAndExpand"
-                 Navigated="VideoWebView_Navigated"
-                 Navigating="VideoWebView_Navigating" />
+                <!-- Video Content - Using WebView -->
+                <WebView x:Name="videoWebView" 
+                         Grid.Row="1"
+                         HeightRequest="300"
+                         HorizontalOptions="FillAndExpand"
+                         VerticalOptions="FillAndExpand"
+                         Navigated="VideoWebView_Navigated"
+                         Navigating="VideoWebView_Navigating" />
 
-        <!-- Fallback for when WebView is not showing -->
-        <Grid x:Name="fallbackGrid" 
-              Grid.Row="1" 
-              BackgroundColor="#111111" 
-              IsVisible="True">
+                <!-- Fallback for when WebView is not showing -->
+                <Grid x:Name="fallbackGrid" 
+                      Grid.Row="1" 
+                      BackgroundColor="#111111" 
+                      IsVisible="True">
 
-            <!-- Loading Indicator -->
-            <ActivityIndicator x:Name="loadingIndicator"
-                              IsRunning="True"
-                              Color="White"
-                              Scale="1.5"
-                              IsVisible="False"
-                              HorizontalOptions="Center"
-                              VerticalOptions="Center" />
+                    <!-- Loading Indicator -->
+                    <ActivityIndicator x:Name="loadingIndicator"
+                                      IsRunning="True"
+                                      Color="White"
+                                      Scale="1.5"
+                                      IsVisible="False"
+                                      HorizontalOptions="Center"
+                                      VerticalOptions="Center" />
 
-            <Image x:Name="thumbnailImage"
-                   Aspect="AspectFit"
-                   HorizontalOptions="FillAndExpand"
-                   VerticalOptions="FillAndExpand" />
+                    <Image x:Name="thumbnailImage"
+                           Aspect="AspectFit"
+                           HorizontalOptions="FillAndExpand"
+                           VerticalOptions="FillAndExpand" />
 
-            <!-- Play Button -->
-            <Frame x:Name="playButtonFrame"
-                   BackgroundColor="#80000000"
-                   CornerRadius="30"
-                   HeightRequest="60"
-                   WidthRequest="60"
-                   HorizontalOptions="Center"
-                   VerticalOptions="Center"
-                   HasShadow="False">
-                <Label Text="▶️"
-                       FontSize="32"
-                       HorizontalOptions="Center"
-                       VerticalOptions="Center"
-                       TextColor="White" />
+                    <!-- Play Button -->
+                    <Frame x:Name="playButtonFrame"
+                           BackgroundColor="#80000000"
+                           CornerRadius="30"
+                           HeightRequest="60"
+                           WidthRequest="60"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"
+                           HasShadow="False">
+                        <Label Text="▶️"
+                               FontSize="32"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"
+                               TextColor="White" />
 
-                <Frame.GestureRecognizers>
-                    <TapGestureRecognizer Tapped="OnPlayButtonTapped" />
-                </Frame.GestureRecognizers>
-            </Frame>
-        </Grid>
+                        <Frame.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnPlayButtonTapped" />
+                        </Frame.GestureRecognizers>
+                    </Frame>
+                </Grid>
 
-        <!-- Caption -->
-        <Grid Grid.Row="2"
-              Padding="20,10"
-              BackgroundColor="#222222">
-            <Label x:Name="captionLabel"
-                   TextColor="White"
-                   LineBreakMode="TailTruncation"
-                   MaxLines="2" />
-        </Grid>
-    </Grid>
+                <!-- Caption -->
+                <Grid Grid.Row="2"
+                      Padding="10,8"
+                      BackgroundColor="#222222">
+                    <Label x:Name="captionLabel"
+                           TextColor="White"
+                           LineBreakMode="TailTruncation"
+                           MaxLines="2"
+                           FontSize="14" />
+                </Grid>
+            </Grid>
+        </Frame>
+    </ContentPage.Content>
 </ContentPage>

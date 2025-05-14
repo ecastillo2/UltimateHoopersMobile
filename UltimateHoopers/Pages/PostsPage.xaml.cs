@@ -1,15 +1,13 @@
 ﻿using Domain;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Maui.Controls;
 using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Diagnostics;
+using Microsoft.Maui.Controls;
 using UltimateHoopers.Services;
 using UltimateHoopers.ViewModels;
 using Microsoft.Maui.ApplicationModel; // For MainThread
-using Grid = Microsoft.Maui.Controls.Grid;
-using UltimateHoopers.Controls; // Explicitly specify which Grid to use
+using System.Diagnostics; // Add this for Debug
 
+using Grid = Microsoft.Maui.Controls.Grid; // Explicitly specify which Grid to use
 namespace UltimateHoopers.Pages
 {
     public partial class PostsPage : ContentPage
@@ -98,33 +96,28 @@ namespace UltimateHoopers.Pages
         }
 
         // Video post tap handler
-        private void OnVideoPostTapped(object sender, EventArgs e)
+        private async void OnVideoPostTapped(object sender, EventArgs e)
         {
             try
             {
-                // Find the InlineVideoPlayer in the visual tree
                 if (sender is Grid videoGrid && videoGrid.BindingContext is Post post)
                 {
-                    // Look for the InlineVideoPlayer within this grid's children
-                    var videoPlayer = FindVideoPlayer(videoGrid);
+                    Debug.WriteLine($"Tapped video post: {post.PostId}, URL: {post.PostFileURL}");
 
-                    if (videoPlayer != null)
+                    if (string.IsNullOrWhiteSpace(post.PostFileURL))
                     {
-                        // The video player will handle the playback automatically
-                        // due to the tap gesture we set up in the control
-                        Debug.WriteLine($"Found video player for post: {post.PostId}");
+                        await DisplayAlert("Error", "Video URL is not available", "OK");
+                        return;
                     }
-                    else
-                    {
-                        // Fallback if we can't find the player for some reason
-                        Debug.WriteLine("Video player not found, falling back to external player");
-                        NavigateToVideoPlayer(post);
-                    }
+
+                    // Simply open the video player as a modal page
+                    await Navigation.PushModalAsync(new VideoPlayerPage(post));
                 }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error in OnVideoPostTapped: {ex.Message}");
+                await DisplayAlert("Error", $"Could not play video: {ex.Message}", "OK");
             }
         }
 

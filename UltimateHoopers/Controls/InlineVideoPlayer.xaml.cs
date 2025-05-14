@@ -1,9 +1,11 @@
 ﻿using Microsoft.Maui.Controls;
 using System;
-using System.Diagnostics;
+using System.Diagnostics; // Add this for Debug
+using Microsoft.Maui.Controls.Xaml; // Add this for XamlCompilation
 
 namespace UltimateHoopers.Controls
 {
+    [XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class InlineVideoPlayer : ContentView
     {
         // Bindable properties
