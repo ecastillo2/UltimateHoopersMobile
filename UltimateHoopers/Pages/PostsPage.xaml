@@ -158,7 +158,7 @@
                                     </Grid>
 
                                     <!-- Post Content -->
-                                    <Microsoft.Maui.Controls.Grid BackgroundColor="LightGray" HeightRequest="400">
+                                    <Grid BackgroundColor="LightGray" HeightRequest="400">
                                         <!-- Image Post -->
                                         <Image Source="{Binding PostFileURL}"
                                                IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='image'}"
@@ -171,7 +171,7 @@
                                         </Image>
 
                                         <!-- Video Post -->
-                                        <Microsoft.Maui.Controls.Grid IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='video'}">
+                                        <Grid IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='video'}">
                                             <!-- Video Thumbnail -->
                                             <Image Source="{Binding ThumbnailUrl, TargetNullValue={Binding PostFileURL}}"
                                                    Aspect="AspectFill"
@@ -193,10 +193,10 @@
                                                        TextColor="White" />
                                             </Frame>
 
-                                            <Microsoft.Maui.Controls.Grid.GestureRecognizers>
+                                            <Grid.GestureRecognizers>
                                                 <TapGestureRecognizer Tapped="OnVideoPostTapped" />
-                                            </Microsoft.Maui.Controls.Grid.GestureRecognizers>
-                                        </Microsoft.Maui.Controls.Grid>
+                                            </Grid.GestureRecognizers>
+                                        </Grid>
 
                                         <!-- Fallback for no media -->
                                         <VerticalStackLayout IsVisible="{Binding PostFileURL, Converter={StaticResource StringNotEmptyConverter}, ConverterParameter='negate'}"
@@ -207,7 +207,7 @@
                                                    HorizontalOptions="Center" 
                                                    VerticalOptions="Center" />
                                         </VerticalStackLayout>
-                                    </Microsoft.Maui.Controls.Grid>
+                                    </Grid>
 
                                     <!-- Post Actions -->
                                     <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto" 
@@ -377,7 +377,7 @@
         </Grid>
 
         <!-- Fullscreen Media Viewer (initially hidden) -->
-        <Microsoft.Maui.Controls.Grid x:Name="fullscreenViewer" 
+        <Grid x:Name="fullscreenViewer" 
               IsVisible="false"
               BackgroundColor="Black"
               Grid.RowSpan="3">
@@ -408,6 +408,6 @@
                     Margin="20"
                     HorizontalOptions="End"
                     VerticalOptions="Start" />
-        </Microsoft.Maui.Controls.Grid>
+        </Grid>
     </Grid>
 </ContentPage>
