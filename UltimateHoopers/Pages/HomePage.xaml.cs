@@ -1,5 +1,4 @@
-﻿// HomePage.xaml.cs
-using System;
+﻿using System;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Xaml;
 
@@ -23,9 +22,9 @@ namespace UltimateHoopers.Pages
             await DisplayAlert("Find Games", "Find Games feature coming soon!", "OK");
         }
 
-        private async void OnTrainingClicked(object sender, EventArgs e)
+        private async void OnHoopersClicked(object sender, EventArgs e)
         {
-            await DisplayAlert("Training", "Training feature coming soon!", "OK");
+            await DisplayAlert("Hoopers", "Hoopers feature coming soon!", "OK");
         }
 
         private async void OnTeamsClicked(object sender, EventArgs e)
@@ -33,9 +32,26 @@ namespace UltimateHoopers.Pages
             await DisplayAlert("Teams", "Teams feature coming soon!", "OK");
         }
 
+        private async void OnPostsClicked(object sender, EventArgs e)
+        {
+            // Navigate to posts page
+            await Shell.Current.GoToAsync("//PostsPage");
+        }
+
+        private async void OnShopClicked(object sender, EventArgs e)
+        {
+            await DisplayAlert("Shop", "Shop feature coming soon!", "OK");
+        }
+
         private async void OnProfileClicked(object sender, EventArgs e)
         {
             await DisplayAlert("Profile", "Profile feature coming soon!", "OK");
+        }
+
+        private async void OnPostsNavigationClicked(object sender, TappedEventArgs e)
+        {
+            // Navigate to posts page
+            await Shell.Current.GoToAsync("//PostsPage");
         }
 
         private void OnMenuClicked(object sender, EventArgs e)

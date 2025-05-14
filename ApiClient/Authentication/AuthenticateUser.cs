@@ -1,11 +1,11 @@
 ﻿using Domain;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 
 namespace ApiClient.Authentication
 {
@@ -16,9 +16,6 @@ namespace ApiClient.Authentication
         private readonly ILogger<AuthenticateUser> _logger;
         private readonly string _baseUrl;
 
-        // Global static AuthResult property to be accessed throughout the app
-        public static AuthResult CurrentAuthResult { get; private set; }
-
         public AuthenticateUser(
             HttpClient httpClient,
             IConfiguration configuration,
@@ -27,7 +24,14 @@ namespace ApiClient.Authentication
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _baseUrl = configuration["ApiSettings:BaseUrl"] ?? "https://ultimatehoopersapi.azurewebsites.net";
+
+            // Get base URL from configuration
+            _baseUrl = _configuration["ApiSettings:BaseUrl"];
+            if (string.IsNullOrEmpty(_baseUrl))
+            {
+                _baseUrl = "https://ultimatehoopersapi.azurewebsites.net";
+                _logger.LogWarning("API base URL not found in configuration. Using default: {BaseUrl}", _baseUrl);
+            }
         }
 
         public async Task<User> AuthenticateAsync(string email, string password)
@@ -54,7 +58,11 @@ namespace ApiClient.Authentication
                 {
                     _logger.LogWarning("Authentication failed for email: {Email}, Status code: {StatusCode}",
                         email, response.StatusCode);
-                    return null;
+
+                    // Return more info about the failure
+                    string errorResponse = await response.Content.ReadAsStringAsync();
+                    throw new AuthenticationException($"Authentication failed: {response.StatusCode}",
+                        errorResponse, (int)response.StatusCode);
                 }
 
                 // Read and parse the response
@@ -64,34 +72,77 @@ namespace ApiClient.Authentication
                     PropertyNameCaseInsensitive = true
                 };
 
-                // Store authentication result in static property for global access
-                CurrentAuthResult = JsonSerializer.Deserialize<AuthResult>(responseContent, options);
+                // Deserialize the authentication result
+                var authResult = JsonSerializer.Deserialize<AuthResult>(responseContent, options);
+
+                if (authResult == null)
+                {
+                    throw new AuthenticationException("Failed to deserialize authentication response");
+                }
+
+                // Check if token is present
+                if (string.IsNullOrEmpty(authResult.Token))
+                {
+                    throw new AuthenticationException("Authentication response did not contain a token");
+                }
 
                 // Create a user object with the authentication result
                 var authenticatedUser = new User
                 {
-                    UserId = CurrentAuthResult.UserId,
-                    ProfileId = CurrentAuthResult.ProfileId,
-                    FirstName = CurrentAuthResult.FirstName,
-                    LastName = CurrentAuthResult.LastName,
-                    SegId = CurrentAuthResult.SegId,
-                    SubId = CurrentAuthResult.SubId,
+                    UserId = authResult.UserId,
+                    ProfileId = authResult.ProfileId,
+                    FirstName = authResult.FirstName,
+                    LastName = authResult.LastName,
+                    SegId = authResult.SegId,
+                    SubId = authResult.SubId,
                     Email = email,
-                    Token = CurrentAuthResult.Token,
-                    AccessLevel = CurrentAuthResult.AccessLevel
+                    Token = authResult.Token,
+                    AccessLevel = authResult.AccessLevel,
+                    TokenExpiration = authResult.ExpiresAt
                 };
 
                 return authenticatedUser;
             }
+            catch (AuthenticationException)
+            {
+                // Re-throw authentication exceptions
+                throw;
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "Network error during authentication for email: {Email}", email);
+                throw new AuthenticationException("Network error occurred during authentication", ex);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during authentication for email: {Email}", email);
-                return null;
+                throw new AuthenticationException("Authentication failed", ex);
             }
         }
     }
 
-    // Public AuthResult class moved outside the AuthenticateUser class for global access
+    // Custom exception for authentication failures
+    public class AuthenticationException : Exception
+    {
+        public string ResponseContent { get; }
+        public int? StatusCode { get; }
+
+        public AuthenticationException(string message) : base(message)
+        {
+        }
+
+        public AuthenticationException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
+
+        public AuthenticationException(string message, string responseContent, int statusCode = 0) : base(message)
+        {
+            ResponseContent = responseContent;
+            StatusCode = statusCode > 0 ? statusCode : null;
+        }
+    }
+
+    // AuthResult class moved outside the AuthenticateUser class
     public class AuthResult
     {
         public string? UserId { get; set; }

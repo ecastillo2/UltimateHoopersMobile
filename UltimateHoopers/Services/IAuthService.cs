@@ -1,15 +1,34 @@
-﻿// Services/IAuthService.cs
-// Services/IAuthService.cs
-using Domain;
+﻿using Domain;
 using System.Threading.Tasks;
 
 namespace UltimateHoopers.Services
 {
     public interface IAuthService
     {
+        /// <summary>
+        /// Authenticates a user with email and password
+        /// </summary>
+        /// <param name="email">The user's email</param>
+        /// <param name="password">The user's password</param>
+        /// <returns>The authenticated user if successful</returns>
+        /// <exception cref="ApiClient.Authentication.AuthenticationException">Thrown when authentication fails</exception>
         Task<User> LoginAsync(string email, string password);
+
+        /// <summary>
+        /// Logs out the current user
+        /// </summary>
         Task LogoutAsync();
+
+        /// <summary>
+        /// Checks if the user is authenticated
+        /// </summary>
+        /// <returns>True if the user is authenticated, false otherwise</returns>
         Task<bool> IsAuthenticatedAsync();
+
+        /// <summary>
+        /// Gets the current authentication token
+        /// </summary>
+        /// <returns>The current token, or null if not authenticated</returns>
         Task<string> GetTokenAsync();
     }
 }

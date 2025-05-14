@@ -69,43 +69,84 @@ namespace UltimateHoopers
 
         private async Task PerformLogout()
         {
-            bool answer = await DisplayAlert("Logout", "Are you sure you want to logout?", "Yes", "No");
-            if (answer)
+            try
             {
-                // Use auth service to logout if available
-                if (_authService != null)
+                bool answer = await DisplayAlert("Logout", "Are you sure you want to logout?", "Yes", "No");
+                if (answer)
                 {
-                    await _authService.LogoutAsync();
-                }
-                else
-                {
-                    // Fallback if service is not available
-                    App.AuthToken = null;
-                    await SecureStorage.SetAsync("auth_token", string.Empty);
-                    await SecureStorage.SetAsync("user_id", string.Empty);
-                }
+                    // Use auth service to logout if available
+                    if (_authService != null)
+                    {
+                        try
+                        {
+                            await _authService.LogoutAsync();
+                        }
+                        catch (Exception ex)
+                        {
+                            // Log the exception but continue with logout process
+                            System.Diagnostics.Debug.WriteLine($"Error in auth service logout: {ex.Message}");
+                            // Manual fallback for logout
+                            App.AuthToken = null;
+                            await SecureStorage.Default.SetAsync("auth_token", string.Empty);
+                            await SecureStorage.Default.SetAsync("user_id", string.Empty);
+                        }
+                    }
+                    else
+                    {
+                        // Fallback if service is not available
+                        App.AuthToken = null;
+                        await SecureStorage.Default.SetAsync("auth_token", string.Empty);
+                        await SecureStorage.Default.SetAsync("user_id", string.Empty);
+                    }
 
-                // Try to get LoginPage from DI
-                var serviceProvider = MauiProgram.CreateMauiApp().Services;
-                var loginPage = serviceProvider.GetService<LoginPage>();
+                    // Wrap the main page transition in try-catch
+                    try
+                    {
+                        // Create a new instance of LoginPage
+                        LoginPage loginPage;
 
-                // Navigate back to LoginPage
-                if (loginPage != null)
-                {
-                    Application.Current.MainPage = loginPage;
-                }
-                else if (_authService != null)
-                {
-                    // Create LoginPage with auth service if available
-                    Application.Current.MainPage = new LoginPage(_authService);
-                }
-                else
-                {
-                    // Fallback without auth service
-                    Application.Current.MainPage = new LoginPage();
+                        // Try to get LoginPage from DI
+                        var serviceProvider = MauiProgram.CreateMauiApp().Services;
+                        var resolvedLoginPage = serviceProvider.GetService<LoginPage>();
+
+                        if (resolvedLoginPage != null)
+                        {
+                            loginPage = resolvedLoginPage;
+                        }
+                        else if (_authService != null)
+                        {
+                            // Create LoginPage with auth service if available
+                            loginPage = new LoginPage(_authService);
+                        }
+                        else
+                        {
+                            // Fallback without auth service
+                            loginPage = new LoginPage();
+                        }
+
+                        // Important: Dispatch to main thread for UI operations
+                        await MainThread.InvokeOnMainThreadAsync(() =>
+                        {
+                            Application.Current.MainPage = loginPage;
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        // Handle navigation error
+                        System.Diagnostics.Debug.WriteLine($"Error navigating to login page: {ex.Message}");
+                        await DisplayAlert("Error", "There was a problem logging out. Please restart the app.", "OK");
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Unhandled exception in logout: {ex.Message}");
+                await DisplayAlert("Error", "An unexpected error occurred. Please try again.", "OK");
+            }
         }
+
+
+
 
         // These methods can be used for tap gesture recognizers in Shell
         private async void OnHelpTapped(object sender, TappedEventArgs e)

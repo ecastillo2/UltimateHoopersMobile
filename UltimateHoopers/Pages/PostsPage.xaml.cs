@@ -3,29 +3,26 @@ using Microsoft.Maui.Controls;
 using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
-//using UltimateHoopers.Models;
 using UltimateHoopers.Services;
 
 namespace UltimateHoopers.Pages
 {
     public partial class PostsPage : ContentPage
     {
-        //private readonly IPostService _postService;
         private readonly ObservableCollection<Post> _posts = new ObservableCollection<Post>();
-
-        
-        private readonly PostService _postService = new PostService();
+        private readonly PostService _postService;
 
         public PostsPage()
         {
             try
             {
                 InitializeComponent();
+                _postService = new PostService();
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Exception in InitializeComponent: {ex.Message}");
-                throw; // Re-throw to see the actual error
+                System.Diagnostics.Debug.WriteLine($"Exception in PostsPage constructor: {ex.Message}");
+                // Don't rethrow here, as it might crash the app during initialization
             }
         }
 
@@ -39,9 +36,17 @@ namespace UltimateHoopers.Pages
         {
             try
             {
+                // Check if we have a valid post service
+                if (_postService == null)
+                {
+                    await DisplayAlert("Error", "Post service is not available", "OK");
+                    return;
+                }
+
+                // Try to get posts
                 var posts = await _postService.GetPostsAsync();
 
-                if (posts.Count > 0)
+                if (posts != null && posts.Count > 0)
                 {
                     _posts.Clear();
                     foreach (var post in posts)
@@ -59,56 +64,13 @@ namespace UltimateHoopers.Pages
                     await DisplayAlert("No Posts", "No posts were found", "OK");
                 }
             }
-            catch (Exception ex)
+            catch (UnauthorizedAccessException ex)
             {
-                await DisplayAlert("Error", $"An error occurred: {ex.Message}", "OK");
-            }
-        }
+                // Handle specifically the unauthorized access exception (no token)
+                await DisplayAlert("Authentication Error", "Please log in to view posts", "OK");
 
-        private async void OnProfileClicked(object sender, TappedEventArgs e)
-        {
-            await DisplayAlert("Profile", "Profile feature coming soon!", "OK");
-        }
-
-        private void OnMenuClicked(object sender, TappedEventArgs e)
-        {
-            Shell.Current.FlyoutIsPresented = true;
-        }
-
-        private async void OnHomeClicked(object sender, TappedEventArgs e)
-        {
-            await Shell.Current.GoToAsync("//HomePage");
-        }
-
-        private async void OnExploreClicked(object sender, TappedEventArgs e)
-        {
-            await DisplayAlert("Explore", "Explore feature coming soon!", "OK");
-        }
-
-        private async void OnCreatePostClicked(object sender, TappedEventArgs e)
-        {
-            try
-            {
-                var newPost = new Post
-                {
-                    PostId = Guid.NewGuid().ToString(),
-                    Caption = "New post created from mobile app",
-                    Type = "Text",
-                    Status = "Active",
-                    PostedDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
-                };
-
-                var createdPost = await _postService.CreatePostAsync(newPost);
-
-                if (createdPost != null)
-                {
-                    await DisplayAlert("Success", "Post created successfully!", "OK");
-                    await LoadPostsAsync();
-                }
-                else
-                {
-                    await DisplayAlert("Error", "Failed to create post", "OK");
-                }
+                // Optionally, navigate to login page
+                // await Shell.Current.GoToAsync("//LoginPage");
             }
             catch (Exception ex)
             {
@@ -116,19 +78,6 @@ namespace UltimateHoopers.Pages
             }
         }
 
-        private async void OnActivityClicked(object sender, TappedEventArgs e)
-        {
-            await DisplayAlert("Activity", "Activity feed feature coming soon!", "OK");
-        }
-
-        private async void OnScheduleClicked(object sender, TappedEventArgs e)
-        {
-            await DisplayAlert("Schedule", "Schedule feature coming soon!", "OK");
-        }
-
-        private async void OnSettingsClicked(object sender, TappedEventArgs e)
-        {
-            await DisplayAlert("Settings", "Settings feature coming soon!", "OK");
-        }
+        // Rest of the event handlers...
     }
 }

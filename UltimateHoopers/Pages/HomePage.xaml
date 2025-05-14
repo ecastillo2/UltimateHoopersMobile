@@ -8,7 +8,7 @@
     <Grid RowDefinitions="Auto,*,Auto"
           Padding="20">
 
-        <!-- Header with Hamburger Menu -->
+        <!-- Header with Profile Icon -->
         <Grid Grid.Row="0" 
               ColumnDefinitions="*,Auto,Auto"
               Margin="0,10,0,20">
@@ -44,8 +44,6 @@
                     <TapGestureRecognizer Tapped="OnProfileClicked" />
                 </Frame.GestureRecognizers>
             </Frame>
-
-           
         </Grid>
 
         <!-- Content -->
@@ -60,7 +58,7 @@
                        Margin="0,10,0,5" />
 
                 <Grid ColumnDefinitions="*,*" 
-                      RowDefinitions="Auto,Auto"
+                      RowDefinitions="Auto,Auto,Auto"
                       ColumnSpacing="15"
                       RowSpacing="15">
 
@@ -112,7 +110,7 @@
                         </Frame.GestureRecognizers>
                     </Frame>
 
-                    <!-- Training Card -->
+                    <!-- Hoopers Card -->
                     <Frame Grid.Row="1" Grid.Column="0"
                            BorderColor="{StaticResource BorderColor}"
                            BackgroundColor="{StaticResource CardBackgroundColor}"
@@ -126,17 +124,17 @@
                                    FontSize="18" 
                                    FontAttributes="Bold"
                                    TextColor="{StaticResource PrimaryTextColor}" />
-                            <Label Text="Improve your skills" 
+                            <Label Text="Search Hoopers" 
                                    FontSize="14"
                                    TextColor="{StaticResource SecondaryTextColor}" />
                         </VerticalStackLayout>
 
                         <Frame.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnTrainingClicked" />
+                            <TapGestureRecognizer Tapped="OnHoopersClicked" />
                         </Frame.GestureRecognizers>
                     </Frame>
 
-                    <!-- Squad Card -->
+                    <!-- Squads Card -->
                     <Frame Grid.Row="1" Grid.Column="1"
                            BorderColor="{StaticResource BorderColor}"
                            BackgroundColor="{StaticResource CardBackgroundColor}"
@@ -159,71 +157,125 @@
                             <TapGestureRecognizer Tapped="OnTeamsClicked" />
                         </Frame.GestureRecognizers>
                     </Frame>
+
+                    <!-- New Posts Card -->
+                    <Frame Grid.Row="2" Grid.Column="0"
+                           BorderColor="{StaticResource BorderColor}"
+                           BackgroundColor="{StaticResource CardBackgroundColor}"
+                           CornerRadius="10"
+                           HasShadow="True"
+                           Padding="15">
+
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="📝" FontSize="32" HorizontalOptions="Start" />
+                            <Label Text="Posts" 
+                                   FontSize="18" 
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource PrimaryTextColor}" />
+                            <Label Text="Share your thoughts" 
+                                   FontSize="14"
+                                   TextColor="{StaticResource SecondaryTextColor}" />
+                        </VerticalStackLayout>
+
+                        <Frame.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnPostsClicked" />
+                        </Frame.GestureRecognizers>
+                    </Frame>
+
+                    <!-- New Shop Card -->
+                    <Frame Grid.Row="2" Grid.Column="1"
+                           BorderColor="{StaticResource BorderColor}"
+                           BackgroundColor="{StaticResource CardBackgroundColor}"
+                           CornerRadius="10"
+                           HasShadow="True"
+                           Padding="15">
+
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="🛒" FontSize="32" HorizontalOptions="Start" />
+                            <Label Text="Shop" 
+                                   FontSize="18" 
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource PrimaryTextColor}" />
+                            <Label Text="Get basketball gear" 
+                                   FontSize="14"
+                                   TextColor="{StaticResource SecondaryTextColor}" />
+                        </VerticalStackLayout>
+
+                        <Frame.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnShopClicked" />
+                        </Frame.GestureRecognizers>
+                    </Frame>
                 </Grid>
-
-                <!-- Rest of the XAML content remains the same -->
-
             </VerticalStackLayout>
         </ScrollView>
 
+   
         <!-- Navigation Footer -->
         <Grid Grid.Row="2"
-              ColumnDefinitions="*,*,*,*"
-              BackgroundColor="{StaticResource CardBackgroundColor}"
-              HeightRequest="60"
-              Margin="-20,-10,-20,0"
-              Padding="0,5,0,15">
+      ColumnDefinitions="*,*,*,*"
+      BackgroundColor="{StaticResource CardBackgroundColor}"
+      HeightRequest="70"
+      Margin="-20,0,-20,0"
+      Padding="0,5,0,20">
 
             <VerticalStackLayout Grid.Column="0"
-                                 HorizontalOptions="Center"
-                                 Spacing="2">
+                         HorizontalOptions="Center"
+                         VerticalOptions="Center"
+                         Spacing="2">
                 <Label Text="🏠"
-                       FontSize="20"
-                       HorizontalOptions="Center" />
+               FontSize="20"
+               HorizontalOptions="Center" />
                 <Label Text="Home"
-                       FontSize="12"
-                       TextColor="{StaticResource PrimaryColor}"
-                       FontAttributes="Bold"
-                       HorizontalOptions="Center" />
+               FontSize="12"
+               TextColor="{StaticResource PrimaryColor}"
+               FontAttributes="Bold"
+               HorizontalOptions="Center" />
             </VerticalStackLayout>
 
             <VerticalStackLayout Grid.Column="1"
-                                 HorizontalOptions="Center"
-                                 Spacing="2"
-                                 Opacity="0.6">
+                         HorizontalOptions="Center"
+                         VerticalOptions="Center"
+                         Spacing="2"
+                         Opacity="0.6">
                 <Label Text="🔍"
-                       FontSize="20"
-                       HorizontalOptions="Center" />
+               FontSize="20"
+               HorizontalOptions="Center" />
                 <Label Text="Post"
-                       FontSize="12"
-                       TextColor="{StaticResource SecondaryTextColor}"
-                       HorizontalOptions="Center" />
+               FontSize="12"
+               TextColor="{StaticResource SecondaryTextColor}"
+               HorizontalOptions="Center" />
+
+                <VerticalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnPostsNavigationClicked" />
+                </VerticalStackLayout.GestureRecognizers>
             </VerticalStackLayout>
 
             <VerticalStackLayout Grid.Column="2"
-                                 HorizontalOptions="Center"
-                                 Spacing="2"
-                                 Opacity="0.6">
+                         HorizontalOptions="Center"
+                         VerticalOptions="Center"
+                         Spacing="2"
+                         Opacity="0.6">
                 <Label Text="📅"
-                       FontSize="20"
-                       HorizontalOptions="Center" />
+               FontSize="20"
+               HorizontalOptions="Center" />
                 <Label Text="Schedule"
-                       FontSize="12"
-                       TextColor="{StaticResource SecondaryTextColor}"
-                       HorizontalOptions="Center" />
+               FontSize="12"
+               TextColor="{StaticResource SecondaryTextColor}"
+               HorizontalOptions="Center" />
             </VerticalStackLayout>
 
             <VerticalStackLayout Grid.Column="3"
-                                 HorizontalOptions="Center"
-                                 Spacing="2"
-                                 Opacity="0.6">
+                         HorizontalOptions="Center"
+                         VerticalOptions="Center"
+                         Spacing="2"
+                         Opacity="0.6">
                 <Label Text="⚙️"
-                       FontSize="20"
-                       HorizontalOptions="Center" />
+               FontSize="20"
+               HorizontalOptions="Center" />
                 <Label Text="Settings"
-                       FontSize="12"
-                       TextColor="{StaticResource SecondaryTextColor}"
-                       HorizontalOptions="Center" />
+               FontSize="12"
+               TextColor="{StaticResource SecondaryTextColor}"
+               HorizontalOptions="Center" />
             </VerticalStackLayout>
         </Grid>
     </Grid>

@@ -67,5 +67,7 @@ namespace Domain
         [NotMapped]
         [JsonIgnore]
         public List<PrivateRunInvite>? PrivateRunInvite { get; set; }
+        [NotMapped]
+        public DateTime? TokenExpiration { get; set; }
     }
 }

@@ -33,41 +33,40 @@ namespace UltimateHoopers
 
                 if (authService != null)
                 {
-                    // Check if user is authenticated
-                    bool isAuthenticated = await authService.IsAuthenticatedAsync();
-
-                    if (isAuthenticated)
+                    try
                     {
-                        // Get token and set it for global access
-                        AuthToken = await authService.GetTokenAsync();
+                        // Check if user is authenticated
+                        bool isAuthenticated = await authService.IsAuthenticatedAsync();
 
-                        // Try to get AppShell from DI
-                        var appShell = serviceProvider.GetService<AppShell>();
-
-                        if (appShell != null)
+                        if (isAuthenticated)
                         {
-                            MainPage = appShell;
+                            // Get token and set it for global access
+                            AuthToken = await authService.GetTokenAsync();
+
+                            // Try to get AppShell from DI
+                            var appShell = serviceProvider.GetService<AppShell>();
+
+                            if (appShell != null)
+                            {
+                                MainPage = appShell;
+                            }
+                            else
+                            {
+                                // Fallback if DI can't resolve the AppShell
+                                MainPage = new AppShell(authService);
+                            }
                         }
                         else
                         {
-                            // Fallback if DI can't resolve the AppShell
-                            MainPage = new AppShell(authService);
+                            // User is not authenticated, show login page
+                            SetLoginPage(serviceProvider, authService);
                         }
                     }
-                    else
+                    catch (Exception authEx)
                     {
-                        // Try to get LoginPage from DI
-                        var loginPage = serviceProvider.GetService<LoginPage>();
-
-                        if (loginPage != null)
-                        {
-                            MainPage = loginPage;
-                        }
-                        else
-                        {
-                            // Fallback if DI can't resolve the LoginPage
-                            MainPage = new LoginPage(authService);
-                        }
+                        // Handle authentication errors
+                        System.Diagnostics.Debug.WriteLine($"Authentication error: {authEx.Message}");
+                        SetLoginPage(serviceProvider, authService);
                     }
                 }
                 else
@@ -80,6 +79,27 @@ namespace UltimateHoopers
             {
                 System.Diagnostics.Debug.WriteLine($"Error initializing app: {ex.Message}");
                 // Fallback to login page without auth service
+                MainPage = new LoginPage();
+            }
+        }
+
+        private void SetLoginPage(IServiceProvider serviceProvider, IAuthService authService)
+        {
+            // Try to get LoginPage from DI
+            var loginPage = serviceProvider.GetService<LoginPage>();
+
+            if (loginPage != null)
+            {
+                MainPage = loginPage;
+            }
+            else if (authService != null)
+            {
+                // Fallback if DI can't resolve the LoginPage but we have authService
+                MainPage = new LoginPage(authService);
+            }
+            else
+            {
+                // Fallback if both DI resolution and authService fail
                 MainPage = new LoginPage();
             }
         }
