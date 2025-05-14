@@ -1,13 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using DataLayer.DAL;
 using DataLayer;
-using Domain;
-using Microsoft.AspNetCore.Authorization;
 using System.Net;
-using StackExchange.Redis;
 using Order = Domain.Order;
 
-namespace API.Controllers
+namespace WebAPI.Controllers
 {
     /// <summary>
     /// Order Controller

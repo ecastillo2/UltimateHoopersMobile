@@ -3,7 +3,7 @@ using DataLayer.DAL;
 using DataLayer;
 using Microsoft.AspNetCore.Authorization;
 
-namespace API.Controllers
+namespace WebAPI.Controllers
 {
     /// <summary>
     /// Tag Controller

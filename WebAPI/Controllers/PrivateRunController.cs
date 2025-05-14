@@ -5,7 +5,7 @@ using Domain;
 using Microsoft.AspNetCore.Authorization;
 using System.Net;
 
-namespace API.Controllers
+namespace WebAPI.Controllers
 {
     /// <summary>
     /// PrivateRun Controller

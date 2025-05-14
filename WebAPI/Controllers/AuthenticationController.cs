@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using API.Services;
+using WebAPI.Services;
 using Domain;
 
-namespace API.Controllers
+namespace WebAPI.Controllers
 {
 
     /// <summary>
@@ -27,10 +27,10 @@ namespace API.Controllers
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
-        [HttpPost("SocialMediaAuthenticate")]
-        public ActionResult SocialMediaAuthenticate([FromBody] User model)
+        [HttpPost("Authenticate")]
+        public ActionResult Authenticate([FromBody] User model)
         {
-            var userResult = _authenticateService.SocialMediaAuthenticate(model.AuthToken, model.Email, model.Password);
+            var userResult = _authenticateService.Authenticate(model.Token, model.Email, model.Password);
 
             if (userResult == null)
                 return BadRequest();

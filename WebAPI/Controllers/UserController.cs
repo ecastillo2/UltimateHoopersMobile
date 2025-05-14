@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Messages;
 
 
-namespace API.Controllers
+namespace WebWebAPI.Controllers
 {
     /// <summary>
     /// User Controller

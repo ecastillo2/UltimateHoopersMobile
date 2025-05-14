@@ -1,4 +1,4 @@
-﻿namespace API.Interface
+﻿namespace WebAPI.Interface
 {
     interface IAuthentication
     {

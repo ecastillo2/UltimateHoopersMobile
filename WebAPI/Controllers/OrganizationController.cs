@@ -4,7 +4,7 @@ using DataLayer;
 using Domain;
 using System.Net;
 
-namespace API.Controllers
+namespace WebAPI.Controllers
 {
     /// <summary>
     /// Organization Controller

@@ -1,4 +1,5 @@
-﻿using DataLayer.DAL;
+﻿using DataLayer;
+using DataLayer.DAL;
 using Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -6,7 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace WebAPI.Controllers
+namespace WebWebAPI.Controllers
 {
     /// <summary>
     /// Post Controller
@@ -17,10 +18,10 @@ namespace WebAPI.Controllers
         private readonly IPostRepository _repository;
         private readonly IConfiguration _configuration;
 
-        public PostController(IPostRepository repository, IConfiguration configuration)
+        public PostController(HUDBContext context, IConfiguration configuration)
         {
-            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            this._configuration = configuration;
+            this._repository = new PostRepository(context, _configuration);
         }
 
         /// <summary>

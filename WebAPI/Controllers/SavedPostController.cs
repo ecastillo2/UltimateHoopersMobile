@@ -4,7 +4,7 @@ using DataLayer;
 using Domain;
 using Microsoft.AspNetCore.Authorization;
 
-namespace API.Controllers
+namespace WebAPI.Controllers
 {
     /// <summary>
     /// SavedPost Controller

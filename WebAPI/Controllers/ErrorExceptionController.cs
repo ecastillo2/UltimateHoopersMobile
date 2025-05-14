@@ -5,7 +5,7 @@ using Domain;
 using Microsoft.AspNetCore.Authorization;
 using Swashbuckle.Swagger;
 
-namespace API.Controllers
+namespace WebAPI.Controllers
 {
     /// <summary>
     /// ColorOption Controller

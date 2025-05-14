@@ -69,6 +69,9 @@ namespace Domain
         [NotMapped]
         public string Token { get; set; }
 
+        [NotMapped]
+        public string UserName { get; set; }
+
         /// <summary>
         /// Gets or sets the associated profile
         /// </summary>
@@ -86,5 +89,11 @@ namespace Domain
         /// </summary>
         public DateTime? LastModifiedDate { get; set; }
         public string SegId { get; set; }
+        [NotMapped]
+        public List<User> Followers { get; set; }
+        [NotMapped]
+        public List<User> Following { get; set; }
+        [NotMapped]
+        public List<Post> Posts { get; set; }
     }
 }

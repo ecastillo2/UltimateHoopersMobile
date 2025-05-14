@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Domain;
 using Swashbuckle.Swagger;
 using System.Diagnostics;
-using Activity = Domain.Activity;
+
 
 namespace WebAPI.Controllers
 {

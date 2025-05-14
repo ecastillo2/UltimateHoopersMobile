@@ -7,7 +7,7 @@ using Swashbuckle.Swagger;
 using WebPush;
 using System.Text.Json;
 
-namespace API.Controllers
+namespace WebAPI.Controllers
 {
     /// <summary>
     /// Notification Controller

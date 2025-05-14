@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Domain;
 using Swashbuckle.Swagger;
 
-namespace API.Controllers
+namespace WebApi.Controllers
 {
     /// <summary>
     /// Contact Controller

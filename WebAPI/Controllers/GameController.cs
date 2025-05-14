@@ -5,7 +5,7 @@ using Domain;
 using Microsoft.AspNetCore.Authorization;
 using System.Net;
 
-namespace API.Controllers
+namespace WebWebAPI.Controllers
 {
     /// <summary>
     /// Game Controller

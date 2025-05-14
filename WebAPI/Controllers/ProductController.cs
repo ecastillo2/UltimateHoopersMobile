@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.CodeAnalysis;
 using System.Net;
 
-namespace API.Controllers
+namespace WebAPI.Controllers
 {
     /// <summary>
     /// Product Controller

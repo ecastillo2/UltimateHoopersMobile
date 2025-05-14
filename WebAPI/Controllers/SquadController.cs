@@ -7,7 +7,7 @@ using Swashbuckle.Swagger;
 using System.Diagnostics;
 using Activity = Domain.Activity;
 
-namespace API.Controllers
+namespace WebAPI.Controllers
 {
     /// <summary>
     /// Activity Controller
