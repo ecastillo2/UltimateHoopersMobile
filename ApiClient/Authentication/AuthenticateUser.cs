@@ -16,6 +16,9 @@ namespace ApiClient.Authentication
         private readonly ILogger<AuthenticateUser> _logger;
         private readonly string _baseUrl;
 
+        // Global static AuthResult property to be accessed throughout the app
+        public static AuthResult CurrentAuthResult { get; private set; }
+
         public AuthenticateUser(
             HttpClient httpClient,
             IConfiguration configuration,
@@ -24,7 +27,7 @@ namespace ApiClient.Authentication
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _baseUrl = _configuration["ApiSettings:BaseUrl"] ?? "https://api.undergroundhoopers.com";
+            _baseUrl = configuration["ApiSettings:BaseUrl"] ?? "https://ultimatehoopersapi.azurewebsites.net";
         }
 
         public async Task<User> AuthenticateAsync(string email, string password)
@@ -35,7 +38,7 @@ namespace ApiClient.Authentication
                 var loginRequest = new
                 {
                     Email = email,
-                    Password = password // Sending password as parameter, not trying to access user.Password
+                    Password = password
                 };
 
                 var content = new StringContent(
@@ -44,7 +47,7 @@ namespace ApiClient.Authentication
                     "application/json");
 
                 // Send login request to the API
-                var response = await _httpClient.PostAsync($"{_baseUrl}/api/Auth/login", content);
+                var response = await _httpClient.PostAsync($"{_baseUrl}/api/Authentication/Authenticate", content);
 
                 // Check for successful response
                 if (!response.IsSuccessStatusCode)
@@ -61,15 +64,21 @@ namespace ApiClient.Authentication
                     PropertyNameCaseInsensitive = true
                 };
 
-                var authResult = JsonSerializer.Deserialize<AuthResult>(responseContent, options);
+                // Store authentication result in static property for global access
+                CurrentAuthResult = JsonSerializer.Deserialize<AuthResult>(responseContent, options);
 
                 // Create a user object with the authentication result
                 var authenticatedUser = new User
                 {
-                    UserId = authResult.UserId,
+                    UserId = CurrentAuthResult.UserId,
+                    ProfileId = CurrentAuthResult.ProfileId,
+                    FirstName = CurrentAuthResult.FirstName,
+                    LastName = CurrentAuthResult.LastName,
+                    SegId = CurrentAuthResult.SegId,
+                    SubId = CurrentAuthResult.SubId,
                     Email = email,
-                    Token = authResult.Token,
-                    AccessLevel = authResult.AccessLevel
+                    Token = CurrentAuthResult.Token,
+                    AccessLevel = CurrentAuthResult.AccessLevel
                 };
 
                 return authenticatedUser;
@@ -80,14 +89,19 @@ namespace ApiClient.Authentication
                 return null;
             }
         }
+    }
 
-        // Simple class to deserialize authentication result
-        private class AuthResult
-        {
-            public string UserId { get; set; }
-            public string Token { get; set; }
-            public string AccessLevel { get; set; }
-            public DateTime? ExpiresAt { get; set; }
-        }
+    // Public AuthResult class moved outside the AuthenticateUser class for global access
+    public class AuthResult
+    {
+        public string? UserId { get; set; }
+        public string? ProfileId { get; set; }
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
+        public string? SegId { get; set; }
+        public string? SubId { get; set; }
+        public string? Token { get; set; }
+        public string? AccessLevel { get; set; }
+        public DateTime? ExpiresAt { get; set; }
     }
 }

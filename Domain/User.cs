@@ -41,8 +41,8 @@ namespace Domain
         public string? Status { get; set; }
         public string? SegId { get; set; }
         public string? SubId { get; set; }
-        [NotMapped]
-        public string? AuthToken { get; set; }
+        
+        public string? ProfileId { get; set; }
         [NotMapped]
         public List<User>? Followers { get; set; }
 

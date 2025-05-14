@@ -59,6 +59,7 @@
                                    Placeholder="Username or Email"
                                    Grid.Column="1"
                                    VerticalOptions="Center"
+                                   TextColor="Black"
                                    BackgroundColor="Transparent" />
                         </Grid>
                     </Border>
@@ -78,6 +79,7 @@
                                    Placeholder="Password"
                                    IsPassword="True"
                                    Grid.Column="1"
+                                   TextColor="Black"
                                    VerticalOptions="Center"
                                    BackgroundColor="Transparent" />
                         </Grid>

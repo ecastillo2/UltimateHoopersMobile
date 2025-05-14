@@ -1,4 +1,10 @@
-﻿using Microsoft.Extensions.Logging;
+﻿// MauiProgram.cs
+using ApiClient.Authentication;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
+using System.Net.Http;
+using Microsoft.Extensions.Configuration;
 using UltimateHoopers.Pages;
 using UltimateHoopers.Services;
 
@@ -17,8 +23,26 @@ namespace UltimateHoopers
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 });
 
+            // Create a configuration object for API client settings
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>
+                {
+                    ["ApiSettings:BaseUrl"] = "https://ultimatehoopersapi.azurewebsites.net/"
+                })
+                .Build();
+
+            builder.Services.AddSingleton<IConfiguration>(configuration);
+
+            // Register HTTP client
+            builder.Services.AddSingleton<HttpClient>();
+
             // Register services
             builder.Services.AddSingleton<IPostService, PostService>();
+            builder.Services.AddSingleton<IAuthenticateUser, AuthenticateUser>();
+            builder.Services.AddSingleton<IAuthService, AuthService>();
+
+            // Register shell
+            builder.Services.AddTransient<AppShell>();
 
             // Register pages
             builder.Services.AddTransient<HomePage>();

@@ -109,12 +109,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Models\" />
+	  <ProjectReference Include="..\ApiClient\ApiClient.csproj" />
+	  <ProjectReference Include="..\Domain\Domain.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\ApiClient\ApiClient.csproj" />
-	  <ProjectReference Include="..\Domain\Domain.csproj" />
+	  <Folder Include="Models\" />
 	</ItemGroup>
 
 </Project>

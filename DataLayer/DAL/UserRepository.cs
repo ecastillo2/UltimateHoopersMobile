@@ -472,7 +472,7 @@ namespace DataLayer.DAL
                 setting.ProfileId = user.Profile.ProfileId;
                 criteria.ProfileId = user.Profile.ProfileId;
                 scoutingReport.ProfileId = user.Profile.ProfileId.ToString();
-
+                user.ProfileId = user.Profile.ProfileId;
                 // Add all entities to context
                 await _context.User.AddAsync(user);
                 await _context.Profile.AddAsync(user.Profile);
