@@ -25,9 +25,6 @@ namespace UltimateHoopers
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 });
 
-            // Register MediaElement
-            builder.UseMauiCommunityToolkitMediaElement();
-
             // Create a configuration object for API client settings
             var configuration = new ConfigurationBuilder()
                 .AddInMemoryCollection(new Dictionary<string, string>

@@ -65,9 +65,6 @@ namespace UltimateHoopers.Pages
         protected override void OnDisappearing()
         {
             base.OnDisappearing();
-
-            // Stop any playing media - disabled temporarily
-            // StopAllMedia();
         }
 
         // Image post tap handler
@@ -82,7 +79,7 @@ namespace UltimateHoopers.Pages
         // Video post tap handler
         private void OnVideoPostTapped(object sender, EventArgs e)
         {
-            if (sender is Grid grid && grid.BindingContext is Post post)
+            if (sender is Microsoft.Maui.Controls.Grid videoGrid && videoGrid.BindingContext is Post post)
             {
                 if (post.PostType?.Equals("video", StringComparison.OrdinalIgnoreCase) == true)
                 {
@@ -114,34 +111,14 @@ namespace UltimateHoopers.Pages
             // Show the fullscreen viewer with image
             fullscreenViewer.IsVisible = true;
             fullscreenImage.IsVisible = true;
-
-            // No video player yet - commenting out
-            // fullscreenVideoPlayer.IsVisible = false;
-
-            // Stop the video player if it's playing - removed until fixed
-            /*
-            if (fullscreenVideoPlayer.CurrentState == MediaElementState.Playing)
-            {
-                fullscreenVideoPlayer.Stop();
-            }
-            */
         }
 
         // Close fullscreen viewer
         private void CloseFullscreenViewer(object sender, EventArgs e)
         {
-            // Stop the video if it's playing - removed until fixed
-            /*
-            if (fullscreenVideoPlayer.CurrentState == MediaElementState.Playing)
-            {
-                fullscreenVideoPlayer.Stop();
-            }
-            */
-
             // Hide the fullscreen viewer
             fullscreenViewer.IsVisible = false;
             fullscreenImage.IsVisible = false;
-            // fullscreenVideoPlayer.IsVisible = false;
             _currentMediaPost = null;
         }
 
@@ -197,36 +174,6 @@ namespace UltimateHoopers.Pages
                     break;
             }
         }
-
-        // Stop all media players - disabled until fixed
-        /*
-        private void StopAllMedia()
-        {
-            // Stop fullscreen video if playing
-            if (fullscreenVideoPlayer != null && fullscreenVideoPlayer.CurrentState == MediaElementState.Playing)
-            {
-                fullscreenVideoPlayer.Stop();
-            }
-
-            // Stop any inline video players
-            // This would need to find all MediaElements in the visual tree
-            try
-            {
-                var mediaElements = FindVisualChildren<CommunityToolkit.Maui.Views.MediaElement>(this.Content);
-                foreach (var mediaElement in mediaElements)
-                {
-                    if (mediaElement.CurrentState == MediaElementState.Playing)
-                    {
-                        mediaElement.Stop();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error stopping media: {ex.Message}");
-            }
-        }
-        */
 
         // Helper method to find visual children of a certain type
         private IEnumerable<T> FindVisualChildren<T>(Element element) where T : Element
