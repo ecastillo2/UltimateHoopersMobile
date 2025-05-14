@@ -11,6 +11,7 @@ using CommunityToolkit.Maui;
 using UltimateHoopers.Helpers;
 using System;
 using Domain;
+using CommunityToolkit.Maui.Media;
 
 namespace UltimateHoopers
 {
@@ -28,6 +29,7 @@ namespace UltimateHoopers
                 builder
                     .UseMauiApp<App>()
                     .UseMauiCommunityToolkit() // Keep this for existing Community Toolkit features
+                    .UseMauiCommunityToolkitMediaElement() // Add this to initialize MediaElement
                     .ConfigureFonts(fonts =>
                     {
                         fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -52,7 +54,13 @@ namespace UltimateHoopers
                 DiagnosticHelper.Log("HttpClient registered");
 
                 // Register services
-                builder.Services.AddSingleton<IPostService, PostService>();
+                builder.Services.AddSingleton<IPostService>(sp =>
+                {
+                    var httpClient = sp.GetService<HttpClient>();
+                    var configuration = sp.GetService<IConfiguration>();
+                    var logger = sp.GetService<ILogger<PostService>>();
+                    return new PostService(httpClient, configuration, logger);
+                });
                 builder.Services.AddSingleton<IAuthenticateUser, AuthenticateUser>();
                 builder.Services.AddSingleton<IAuthService, AuthService>();
                 DiagnosticHelper.Log("Services registered");

@@ -1,47 +1,40 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              x:Class="UltimateHoopers.Pages.VideoPlayerPage"
              Title="Video"
-             BackgroundColor="#CC000000">
+             BackgroundColor="Black">
 
     <ContentPage.Content>
-        <Frame Margin="20"
-               CornerRadius="12"
-               BackgroundColor="Black"
-               Padding="0"
-               HasShadow="True">
+        <Grid RowDefinitions="Auto,*,Auto">
+            <!-- Header with Close Button -->
+            <Grid Grid.Row="0" 
+                  Padding="10"
+                  HeightRequest="60">
 
-            <Grid RowDefinitions="Auto,*,Auto">
-                <!-- Header -->
-                <Grid Grid.Row="0" 
-                      Padding="10"
-                      HeightRequest="50"
-                      BackgroundColor="#222222">
+                <Label Text="{Binding UserName, StringFormat='Video by {0}'}"
+                       FontSize="16"
+                       FontAttributes="Bold"
+                       TextColor="White"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center" />
 
-                    <Label Text="Video"
-                           FontSize="16"
-                           FontAttributes="Bold"
-                           TextColor="White"
-                           HorizontalOptions="Center"
-                           VerticalOptions="Center" />
+                <Button Text="✕"
+                        BackgroundColor="Transparent"
+                        TextColor="White"
+                        FontSize="18"
+                        WidthRequest="40"
+                        HeightRequest="40"
+                        CornerRadius="20"
+                        HorizontalOptions="End"
+                        VerticalOptions="Center"
+                        Clicked="OnCloseClicked" />
+            </Grid>
 
-                    <Button Text="✕"
-                            BackgroundColor="Transparent"
-                            TextColor="White"
-                            FontSize="18"
-                            WidthRequest="40"
-                            HeightRequest="40"
-                            CornerRadius="20"
-                            HorizontalOptions="End"
-                            VerticalOptions="Center"
-                            Clicked="OnCloseClicked" />
-                </Grid>
-
-                <!-- Video Content - Using WebView -->
+            <!-- Video Content - Using WebView -->
+            <Grid Grid.Row="1">
                 <WebView x:Name="videoWebView" 
-                         Grid.Row="1"
-                         HeightRequest="300"
                          HorizontalOptions="FillAndExpand"
                          VerticalOptions="FillAndExpand"
                          Navigated="VideoWebView_Navigated"
@@ -49,7 +42,6 @@
 
                 <!-- Fallback for when WebView is not showing -->
                 <Grid x:Name="fallbackGrid" 
-                      Grid.Row="1" 
                       BackgroundColor="#111111" 
                       IsVisible="True">
 
@@ -87,18 +79,66 @@
                         </Frame.GestureRecognizers>
                     </Frame>
                 </Grid>
+            </Grid>
+
+            <!-- Social Controls Bottom -->
+            <Grid Grid.Row="2"
+                  Padding="20,10"
+                  BackgroundColor="#222222"
+                  ColumnDefinitions="Auto,*,Auto,Auto,Auto">
+
+                <!-- Like Button -->
+                <Label Grid.Column="0" 
+                       Text="{Binding LikedPost, Converter={StaticResource LikedPostToHeartConverter}}" 
+                       FontSize="24" 
+                       Margin="0,0,20,0"
+                       TextColor="White">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnLikeClicked" />
+                    </Label.GestureRecognizers>
+                </Label>
 
                 <!-- Caption -->
-                <Grid Grid.Row="2"
-                      Padding="10,8"
-                      BackgroundColor="#222222">
-                    <Label x:Name="captionLabel"
-                           TextColor="White"
-                           LineBreakMode="TailTruncation"
-                           MaxLines="2"
-                           FontSize="14" />
-                </Grid>
+                <Label Grid.Column="1"
+                       x:Name="captionLabel"
+                       TextColor="White"
+                       LineBreakMode="TailTruncation"
+                       MaxLines="2"
+                       FontSize="14"
+                       VerticalOptions="Center" />
+
+                <!-- Comments -->
+                <Label Grid.Column="2" 
+                       Text="💬" 
+                       FontSize="24" 
+                       Margin="0,0,15,0"
+                       TextColor="White">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnCommentsClicked" />
+                    </Label.GestureRecognizers>
+                </Label>
+
+                <!-- Share -->
+                <Label Grid.Column="3" 
+                       Text="📩" 
+                       FontSize="24"
+                       Margin="0,0,15,0"
+                       TextColor="White">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnShareClicked" />
+                    </Label.GestureRecognizers>
+                </Label>
+
+                <!-- Save -->
+                <Label Grid.Column="4" 
+                       Text="{Binding SavedPost, Converter={StaticResource SavedPostToBookmarkConverter}}" 
+                       FontSize="24" 
+                       TextColor="White">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnSaveClicked" />
+                    </Label.GestureRecognizers>
+                </Label>
             </Grid>
-        </Frame>
+        </Grid>
     </ContentPage.Content>
 </ContentPage>

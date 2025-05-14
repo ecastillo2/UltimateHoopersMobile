@@ -5,26 +5,50 @@ using Domain;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Controls;
+using WebAPI.ApiClients;
 
 namespace UltimateHoopers.Services
 {
     public class PostService : IPostService
     {
+        private readonly IPostApi _postApi;
         private readonly ILogger<PostService> _logger;
         private const string TOKEN_KEY = "auth_token";
 
-        // Constructor with minimal dependencies
-        public PostService(ILogger<PostService> logger = null)
+        // Constructor with proper DI
+        public PostService(HttpClient httpClient, IConfiguration configuration, ILogger<PostService> logger = null)
         {
+            // Create PostApi with the provided dependencies
+            _postApi = new PostApi(httpClient, configuration);
             _logger = logger;
+        }
+
+        // Simplified constructor for non-DI scenarios
+        public PostService()
+        {
+            // Create PostApi with default dependencies
+            var httpClient = new HttpClient();
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>
+                {
+                    ["ApiSettings:BaseUrl"] = "https://ultimatehoopersapi.azurewebsites.net/"
+                })
+                .Build();
+
+            _postApi = new PostApi(httpClient, configuration);
         }
 
         public async Task<Post> CreatePostAsync(Post post)
         {
             try
             {
-                // Implementation would be here
-                return post;
+                var token = await GetTokenAsync();
+                if (string.IsNullOrEmpty(token))
+                {
+                    throw new UnauthorizedAccessException("No access token available");
+                }
+
+                return await _postApi.CreatePostAsync(post, token);
             }
             catch (Exception ex)
             {
@@ -37,8 +61,13 @@ namespace UltimateHoopers.Services
         {
             try
             {
-                // Implementation would be here
-                return true;
+                var token = await GetTokenAsync();
+                if (string.IsNullOrEmpty(token))
+                {
+                    throw new UnauthorizedAccessException("No access token available");
+                }
+
+                return await _postApi.DeletePostAsync(postId, token);
             }
             catch (Exception ex)
             {
@@ -51,8 +80,13 @@ namespace UltimateHoopers.Services
         {
             try
             {
-                // Implementation would be here
-                return null;
+                var token = await GetTokenAsync();
+                if (string.IsNullOrEmpty(token))
+                {
+                    throw new UnauthorizedAccessException("No access token available");
+                }
+
+                return await _postApi.GetPostByIdAsync(postId, token);
             }
             catch (Exception ex)
             {
@@ -65,127 +99,35 @@ namespace UltimateHoopers.Services
         {
             try
             {
-                // Create a list to hold the posts
-                IList<Post> posts = new List<Post>();
-
-                // Add posts with your Azure Blob Storage URLs - using minimal data to test robustness
-
-                // Post 1: Just ID and URL
-                posts.Add(new Post
+                // Get token (first from App state, then from secure storage)
+                var token = await GetTokenAsync();
+                if (string.IsNullOrEmpty(token))
                 {
-                    PostId = "1",
-                    PostFileURL = "https://uhblobstorageaccount.blob.core.windows.net/postfile/c3c7c0b7-e279-42a7-af86-a862f42d349a.webp"
-                    // Everything else null
-                });
-
-                // Post 2: ID, URL, and type
-                posts.Add(new Post
-                {
-                    PostId = "2",
-                    PostFileURL = "https://uhblobstorageaccount.blob.core.windows.net/postfile/92a4bc09-eace-48e5-a2f4-73561d3451b9.mp4",
-                    PostType = "video"
-                    // Everything else null
-                });
-
-                // Post 3: Most fields but some nulls
-                posts.Add(new Post
-                {
-                    PostId = "3",
-                    UserName = "Regular User",
-                    Caption = "Testing with a regular image URL",
-                    PostFileURL = "https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=1000&auto=format&fit=crop",
-                    PostType = "image",
-                    Likes = 42,
-                    // RelativeTime is null
-                    ProfileImageURL = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1000&auto=format&fit=crop",
-                    // LikedPost is null
-                    SavedPost = true,
-                    PostCommentCount = 5
-                });
-
-                // Post 4: Empty strings instead of nulls
-                posts.Add(new Post
-                {
-                    PostId = "4",
-                    UserName = "",
-                    Caption = "",
-                    PostFileURL = "https://images.unsplash.com/photo-1505666287802-931d7a78bde2?q=80&w=1000&auto=format&fit=crop",
-                    PostType = "",
-                    Likes = 0,
-                    RelativeTime = "",
-                    ProfileImageURL = "",
-                    LikedPost = false,
-                    SavedPost = false,
-                    PostCommentCount = 0
-                });
-
-                // Post 5: Just whitespace in string fields
-                posts.Add(new Post
-                {
-                    PostId = "5",
-                    UserName = "   ",
-                    Caption = "  ",
-                    PostFileURL = "https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=1000&auto=format&fit=crop",
-                    PostType = " ",
-                    Likes = null,
-                    RelativeTime = "  ",
-                    ProfileImageURL = "  ",
-                    LikedPost = null,
-                    SavedPost = null,
-                    PostCommentCount = null
-                });
-
-                // Post 6: First and last name but no username
-                posts.Add(new Post
-                {
-                    PostId = "6",
-                    FirstName = "John",
-                    LastName = "Doe",
-                    // UserName is null
-                    Caption = "Testing name fallback",
-                    PostFileURL = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1000&auto=format&fit=crop",
-                    // PostType is null - should be detected from URL
-                    Likes = 12,
-                    // All other fields null
-                });
-
-                // Post 7: A complete post with all fields
-                posts.Add(new Post
-                {
-                    PostId = "7",
-                    UserName = "Complete User",
-                    FirstName = "Complete",
-                    LastName = "User",
-                    Caption = "This post has all fields populated",
-                    PostFileURL = "https://uhblobstorageaccount.blob.core.windows.net/postfile/c3c7c0b7-e279-42a7-af86-a862f42d349a.webp",
-                    ThumbnailUrl = "https://uhblobstorageaccount.blob.core.windows.net/postfile/c3c7c0b7-e279-42a7-af86-a862f42d349a.webp",
-                    PostType = "image",
-                    PostedDate = DateTime.Now.AddDays(-2).ToString(),
-                    RelativeTime = "2 days ago",
-                    ProfileImageURL = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1000&auto=format&fit=crop",
-                    Likes = 87,
-                    LikedPost = true,
-                    SavedPost = true,
-                    PostCommentCount = 15
-                });
-
-                // Log what we're returning
-                Console.WriteLine($"GetPostsAsync returning {posts.Count} posts");
-                foreach (var post in posts)
-                {
-                    Console.WriteLine($"Post: {post.PostId}, Type: {post.PostType ?? "null"}, URL: {post.PostFileURL}");
+                    throw new UnauthorizedAccessException("No access token available");
                 }
 
-                // Convert to List<Post> for return
-                return new List<Post>(posts);
+                // Call the API with the retrieved token
+                var posts = await _postApi.GetPostsAsync(token);
+
+                // Add mock data if no posts returned (development/testing only)
+                if (posts == null || posts.Count == 0)
+                {
+                    // In a real app, you might not want to do this in production
+                    posts = CreateMockPosts();
+                }
+
+                return posts;
             }
             catch (Exception ex)
             {
                 LogError("Error getting posts", ex);
 
                 // For development/testing, return mock data if API fails
-                Console.WriteLine("Returning fallback mock posts due to error");
+#if DEBUG
                 return CreateMockPosts();
+#else
+                throw;
+#endif
             }
         }
 
@@ -193,8 +135,13 @@ namespace UltimateHoopers.Services
         {
             try
             {
-                // Implementation would be here
-                return true;
+                var token = await GetTokenAsync();
+                if (string.IsNullOrEmpty(token))
+                {
+                    throw new UnauthorizedAccessException("No access token available");
+                }
+
+                return await _postApi.UpdatePostAsync(post, token);
             }
             catch (Exception ex)
             {
@@ -205,8 +152,24 @@ namespace UltimateHoopers.Services
 
         private async Task<string> GetTokenAsync()
         {
-            // Implementation would be here
-            return "sample-token";
+            // First try to get the token from the App's global auth token
+            var token = App.AuthToken;
+
+            // If it's not available in the global App state, try to get it from secure storage
+            if (string.IsNullOrEmpty(token))
+            {
+                token = await SecureStorage.GetAsync(TOKEN_KEY);
+            }
+
+            // For development, provide a fallback token
+#if DEBUG
+            if (string.IsNullOrEmpty(token))
+            {
+                token = "development-token";
+            }
+#endif
+
+            return token;
         }
 
         private void LogError(string message, Exception ex)
@@ -217,20 +180,20 @@ namespace UltimateHoopers.Services
             }
             else
             {
-                Console.WriteLine($"{message}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"{message}: {ex.Message}");
             }
         }
 
-        // Mock data for fallback
+        // Mock data for development and testing
         private List<Post> CreateMockPosts()
         {
             return new List<Post>
             {
                 new Post
                 {
-                    PostId = "fallback-1",
-                    UserName = "Fallback User",
-                    Caption = "Fallback post with a regular image",
+                    PostId = "1",
+                    UserName = "michael_johnson",
+                    Caption = "Looking for players to join our game this Sunday at Downtown Court. We need 2-3 more players. All skill levels welcome! #basketball #pickup #sunday",
                     PostFileURL = "https://images.unsplash.com/photo-1505666287802-931d7a78bde2?q=80&w=1000&auto=format&fit=crop",
                     PostType = "image",
                     Likes = 32,
@@ -240,7 +203,49 @@ namespace UltimateHoopers.Services
                     LikedPost = false,
                     SavedPost = false
                 },
-                // Add more fallback posts if needed
+                new Post
+                {
+                    PostId = "2",
+                    UserName = "sarah_thompson",
+                    Caption = "Just finished my first training session with Coach Williams. His shooting drills are incredible! My three-point percentage has already improved. #basketball #training #threepointer",
+                    PostFileURL = "https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=1000&fmt=webp",
+                    PostType = "image",
+                    Likes = 55,
+                    ProfileImageURL = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1000&auto=format&fit=crop",
+                    RelativeTime = "5 hours ago",
+                    PostCommentCount = 8,
+                    LikedPost = true,
+                    SavedPost = false
+                },
+                new Post
+                {
+                    PostId = "3",
+                    UserName = "basketball_highlights",
+                    Caption = "Check out this amazing dunk from last night's game! Who says white men can't jump? 🏀🔥 #basketball #dunk #highlights",
+                    PostFileURL = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                    ThumbnailUrl = "https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?q=80&w=1000&auto=format&fit=crop",
+                    PostType = "video",
+                    Likes = 128,
+                    ProfileImageURL = "https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?q=80&w=1000&auto=format&fit=crop",
+                    RelativeTime = "1 day ago",
+                    PostCommentCount = 24,
+                    LikedPost = false,
+                    SavedPost = true
+                },
+                new Post
+                {
+                    PostId = "4",
+                    UserName = "webp_tester",
+                    Caption = "Testing WEBP image format - this is a high quality but smaller file size format! #webp #basketball",
+                    PostFileURL = "https://www.gstatic.com/webp/gallery/4.webp",
+                    PostType = "image",
+                    Likes = 19,
+                    ProfileImageURL = "https://www.gstatic.com/webp/gallery/5.webp",
+                    RelativeTime = "3 hours ago",
+                    PostCommentCount = 2,
+                    LikedPost = false,
+                    SavedPost = false
+                }
             };
         }
     }

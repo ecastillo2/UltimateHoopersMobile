@@ -3,6 +3,7 @@ using Microsoft.Maui.Controls;
 using System;
 using System.Diagnostics;
 using Microsoft.Maui.Controls.Xaml;
+using UltimateHoopers.ViewModels;
 
 namespace UltimateHoopers.Pages
 {
@@ -26,6 +27,9 @@ namespace UltimateHoopers.Pages
 
             try
             {
+                // Set binding context for social interactions
+                BindingContext = _post;
+
                 // Set caption if available
                 if (!string.IsNullOrWhiteSpace(_post.Caption))
                 {
@@ -33,7 +37,7 @@ namespace UltimateHoopers.Pages
                 }
                 else if (!string.IsNullOrWhiteSpace(_post.UserName))
                 {
-                    captionLabel.Text = $"Video by {_post.UserName}";
+                    captionLabel.Text = "Video by " + _post.UserName;
                 }
                 else
                 {
@@ -293,6 +297,61 @@ namespace UltimateHoopers.Pages
                     playButtonFrame.IsVisible = true;
                     loadingIndicator.IsVisible = false;
                 });
+            }
+        }
+
+        // Social interaction handlers
+        private async void OnLikeClicked(object sender, EventArgs e)
+        {
+            if (_post != null)
+            {
+                // Toggle like state
+                _post.LikedPost = !(_post.LikedPost ?? false);
+
+                // Update like count
+                if (_post.LikedPost == true)
+                {
+                    _post.Likes = (_post.Likes ?? 0) + 1;
+                }
+                else
+                {
+                    _post.Likes = Math.Max(0, (_post.Likes ?? 0) - 1);
+                }
+
+                // Force UI update
+                OnPropertyChanged(nameof(_post.LikedPost));
+
+                // You would call your API here to update the like status
+                // await _postService.LikePostAsync(_post.PostId, _post.LikedPost ?? false);
+            }
+        }
+
+        private async void OnCommentsClicked(object sender, EventArgs e)
+        {
+            await DisplayAlert("Comments", "Comments feature coming soon!", "OK");
+        }
+
+        private async void OnShareClicked(object sender, EventArgs e)
+        {
+            await DisplayAlert("Share", "Share feature coming soon!", "OK");
+        }
+
+        private async void OnSaveClicked(object sender, EventArgs e)
+        {
+            if (_post != null)
+            {
+                // Toggle save state
+                _post.SavedPost = !(_post.SavedPost ?? false);
+
+                // Force UI update
+                OnPropertyChanged(nameof(_post.SavedPost));
+
+                // You would call your API here to update the save status
+                // await _postService.SavePostAsync(_post.PostId, _post.SavedPost ?? false);
+
+                // Show confirmation
+                string message = _post.SavedPost == true ? "Post saved to collection" : "Post removed from collection";
+                await DisplayAlert("Saved", message, "OK");
             }
         }
 

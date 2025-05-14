@@ -55,15 +55,7 @@
 		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <MauiXaml Remove="Controls\InlineVideoPlayer.xaml" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <EmbeddedResource Include="Controls\InlineVideoPlayer.xaml">
-	    <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
-	  </EmbeddedResource>
-	</ItemGroup>
+	
 
 	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.Maui.Core" Version="11.2.0" />

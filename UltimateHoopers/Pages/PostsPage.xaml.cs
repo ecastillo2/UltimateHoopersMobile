@@ -1,18 +1,20 @@
 ﻿using Domain;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Maui.Controls;
 using UltimateHoopers.Services;
 using UltimateHoopers.ViewModels;
 using Microsoft.Maui.ApplicationModel; // For MainThread
 using System.Diagnostics; // Add this for Debug
+using System.Threading.Tasks;
 
 using Grid = Microsoft.Maui.Controls.Grid; // Explicitly specify which Grid to use
 namespace UltimateHoopers.Pages
 {
     public partial class PostsPage : ContentPage
     {
-        private List<InlineVideoPlayer> _activePlayers = new List<InlineVideoPlayer>();
+        private List<object> _activePlayers = new List<object>(); // Define this properly
         private readonly PostsViewModel _viewModel;
         private Post _currentMediaPost;
         private double _currentScale = 1;
@@ -60,13 +62,46 @@ namespace UltimateHoopers.Pages
 
             try
             {
+                // Add verbose logging
+                Console.WriteLine("PostsPage.OnAppearing - About to load posts");
+                Debug.WriteLine("PostsPage.OnAppearing - About to load posts");
+
+                // Check ViewModel availability
+                if (_viewModel == null)
+                {
+                    Console.WriteLine("ERROR: ViewModel is null!");
+                    await DisplayAlert("Error", "ViewModel is not initialized", "OK");
+                    return;
+                }
+
                 // Load posts when page appears
                 await _viewModel.LoadPostsAsync();
+
+                // Verbose logging for post count
                 Console.WriteLine($"PostsPage loaded {_viewModel.Posts.Count} posts");
+                Debug.WriteLine($"PostsPage loaded {_viewModel.Posts.Count} posts");
+
+                // If posts were loaded but aren't showing, check binding context
+                if (_viewModel.Posts.Count > 0)
+                {
+                    Console.WriteLine("Posts were loaded but may not be displaying. Checking binding context...");
+                    Console.WriteLine($"Current binding context: {BindingContext}");
+
+                    // Force refresh the binding
+                    BindingContext = null;
+                    BindingContext = _viewModel;
+                    Console.WriteLine("Binding context reset. This should refresh the UI.");
+                }
+                else
+                {
+                    Console.WriteLine("No posts were loaded from the service.");
+                }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in PostsPage.OnAppearing: {ex.Message}");
+                Debug.WriteLine($"Error in PostsPage.OnAppearing: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 await DisplayAlert("Error", $"Could not load posts: {ex.Message}", "OK");
             }
         }
@@ -74,6 +109,9 @@ namespace UltimateHoopers.Pages
         protected override void OnDisappearing()
         {
             base.OnDisappearing();
+
+            // Stop all videos when page disappears
+            StopAllVideos();
         }
 
         // Image post tap handler
@@ -100,7 +138,8 @@ namespace UltimateHoopers.Pages
         {
             try
             {
-                if (sender is Grid videoGrid && videoGrid.BindingContext is Post post)
+                var element = sender as VisualElement;
+                if (element != null && element.BindingContext is Post post)
                 {
                     Debug.WriteLine($"Tapped video post: {post.PostId}, URL: {post.PostFileURL}");
 
@@ -122,16 +161,16 @@ namespace UltimateHoopers.Pages
         }
 
         // Helper to find the InlineVideoPlayer in the visual tree
-        private InlineVideoPlayer FindVideoPlayer(Element element)
+        private object FindVideoPlayer(IView element)
         {
             // First, check if this element is an InlineVideoPlayer
-            if (element is InlineVideoPlayer player)
+            if (element.GetType().Name == "InlineVideoPlayer")
             {
-                return player;
+                return element;
             }
 
-            // If not, search through its children
-            if (element is Layout layout)
+            // If not, search through its children if it's a layout
+            if (element is Microsoft.Maui.Controls.Layout layout)
             {
                 foreach (var child in layout.Children)
                 {
@@ -344,21 +383,22 @@ namespace UltimateHoopers.Pages
             }
         }
 
-        
-
-        protected override void OnDisappearing()
-        {
-            base.OnDisappearing();
-
-            // Stop all videos when page disappears
-            StopAllVideos();
-        }
-
         private void StopAllVideos()
         {
             foreach (var player in _activePlayers)
             {
-                player.StopVideo();
+                try
+                {
+                    // Use reflection or a safer approach to call methods
+                    if (player != null && player.GetType().GetMethod("StopVideo") != null)
+                    {
+                        player.GetType().GetMethod("StopVideo").Invoke(player, null);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error stopping video: {ex.Message}");
+                }
             }
             _activePlayers.Clear();
         }
@@ -366,9 +406,9 @@ namespace UltimateHoopers.Pages
         // Add this to track active players
         private void OnVideoStarted(object sender, EventArgs e)
         {
-            if (sender is InlineVideoPlayer player && !_activePlayers.Contains(player))
+            if (sender != null && !_activePlayers.Contains(sender))
             {
-                _activePlayers.Add(player);
+                _activePlayers.Add(sender);
             }
         }
 

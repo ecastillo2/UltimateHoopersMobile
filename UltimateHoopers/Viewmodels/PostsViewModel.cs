@@ -39,6 +39,7 @@ namespace UltimateHoopers.ViewModels
         public PostsViewModel(IPostService postService)
         {
             _postService = postService ?? throw new ArgumentNullException(nameof(postService));
+            Console.WriteLine("PostsViewModel created with postService: " + (postService != null));
 
             // Initialize commands
             RefreshCommand = new Command(async () => await LoadPostsAsync());
@@ -67,6 +68,20 @@ namespace UltimateHoopers.ViewModels
                 // Get posts from API
                 var posts = await _postService.GetPostsAsync();
                 Console.WriteLine($"Received {posts?.Count ?? 0} posts from service");
+
+                // Debug post data
+                if (posts != null && posts.Count > 0)
+                {
+                    Console.WriteLine("First post details:");
+                    Console.WriteLine($"  ID: {posts[0].PostId}");
+                    Console.WriteLine($"  Username: {posts[0].UserName}");
+                    Console.WriteLine($"  URL: {posts[0].PostFileURL}");
+                    Console.WriteLine($"  Type: {posts[0].PostType}");
+                }
+                else
+                {
+                    Console.WriteLine("No posts returned from service or list is empty");
+                }
 
                 // Add posts to collection with super-robust null handling
                 if (posts != null)
@@ -104,7 +119,10 @@ namespace UltimateHoopers.ViewModels
                             Console.WriteLine($"Adding sanitized post: {post.PostId}, Type: {post.PostType}, URL: {post.PostFileURL}");
 
                             // Add to the collection
-                            Posts.Add(post);
+                            MainThread.BeginInvokeOnMainThread(() =>
+                            {
+                                Posts.Add(post);
+                            });
                             validPostCount++;
                         }
                         catch (Exception ex)
@@ -115,6 +133,10 @@ namespace UltimateHoopers.ViewModels
                     }
 
                     Console.WriteLine($"Added {validPostCount} valid posts, skipped {skippedPostCount} invalid posts");
+                    Console.WriteLine($"Final Posts collection count: {Posts.Count}");
+
+                    // Force property changed notification for the collection
+                    OnPropertyChanged(nameof(Posts));
                 }
                 else
                 {
@@ -129,6 +151,7 @@ namespace UltimateHoopers.ViewModels
             catch (Exception ex)
             {
                 Console.WriteLine($"Error loading posts: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 await Shell.Current.DisplayAlert("Error", $"An error occurred: {ex.Message}", "OK");
             }
             finally
@@ -374,25 +397,10 @@ namespace UltimateHoopers.ViewModels
                     return;
                 }
 
-                // Let the user choose how to play the video
-                string action = await Shell.Current.DisplayActionSheet(
-                    "Play Video",
-                    "Cancel",
-                    null,
-                    "Play in App",
-                    "Open in Browser");
+                Console.WriteLine($"Playing video: {post.PostFileURL}");
 
-                switch (action)
-                {
-                    case "Play in App":
-                        // Navigate to the video player page
-                        await Shell.Current.Navigation.PushModalAsync(new Pages.VideoPlayerPage(post));
-                        break;
-
-                    case "Open in Browser":
-                        await Launcher.OpenAsync(new Uri(post.PostFileURL));
-                        break;
-                }
+                // Navigate directly to the video player page without showing options
+                await Shell.Current.Navigation.PushModalAsync(new Pages.VideoPlayerPage(post));
             }
             catch (Exception ex)
             {
