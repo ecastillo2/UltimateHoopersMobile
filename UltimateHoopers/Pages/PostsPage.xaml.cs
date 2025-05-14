@@ -8,7 +8,8 @@ using System.Threading.Tasks;
 using UltimateHoopers.Services;
 using UltimateHoopers.ViewModels;
 using Microsoft.Maui.ApplicationModel; // For MainThread
-using Grid = Microsoft.Maui.Controls.Grid; // Explicitly specify which Grid to use
+using Grid = Microsoft.Maui.Controls.Grid;
+using Microsoft.Maui.Controls.Compatibility; // Explicitly specify which Grid to use
 
 namespace UltimateHoopers.Pages
 {

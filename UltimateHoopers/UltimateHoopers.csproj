@@ -64,18 +64,18 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <MauiXaml Remove="Pages\VideoPlayerPage.xaml" />
+		<MauiXaml Remove="Pages\VideoPlayerPage.xaml" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <EmbeddedResource Include="Pages\VideoPlayerPage.xaml">
-	    <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
-	  </EmbeddedResource>
+		<EmbeddedResource Include="Pages\VideoPlayerPage.xaml">
+			<Generator>MSBuild:UpdateDesignTimeXaml</Generator>
+		</EmbeddedResource>
 	</ItemGroup>
 
 	<ItemGroup>
 		<!-- Use consistent package versions, removing duplicates -->
-		<PackageReference Include="Berry.Maui.MediaElement" Version="1.4.1" />
+		<!-- Removed Berry.Maui.MediaElement as we're using CommunityToolkit.Maui.MediaElement instead -->
 		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.5" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.5" />
 		<PackageReference Include="Microsoft.Extensions.Http" Version="9.0.5" />

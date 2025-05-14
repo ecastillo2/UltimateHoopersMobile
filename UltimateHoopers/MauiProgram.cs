@@ -12,7 +12,7 @@ using UltimateHoopers.Helpers;
 using System;
 using CommunityToolkit.Maui.Core;
 using Domain;
-using CommunityToolkit.Maui.MediaElement.Core;
+using CommunityToolkit.Maui.MediaElement;
 
 namespace UltimateHoopers
 {
