@@ -42,6 +42,12 @@ namespace WebAPI
 
         public void ConfigureServices(IServiceCollection services)
         {
+            // In ConfigureServices() or equivalent
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "Your API", Version = "v1" });
+            });
+
             // Enable CORS with the necessary policy
             services.AddCors(options =>
             {
@@ -163,7 +169,7 @@ namespace WebAPI
           .AllowAnyMethod()
           .AllowAnyHeader());
             // Enable middleware to serve generated Swagger as a JSON endpoint.  
-            app.UseSwagger();
+            //app.UseSwagger();
 
             // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.), specifying the Swagger JSON endpoint.  
 

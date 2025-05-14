@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Domain
 {
@@ -8,40 +9,28 @@ namespace Domain
     /// </summary>
     public class ScoutingReport
     {
-        /// <summary>
-        /// Gets or sets the scouting report ID
-        /// </summary>
         [Key]
-        public string ScoutingReportId { get; set; }
+        public string? ScoutingReportId { get; set; }
+        public string? ProfileId { get; set; }
+        public string? PlayStyle { get; set; }
+        public string? StrengthOne { get; set; }
+        public string? StrengthTwo { get; set; }
+        public string? WeaknessOne { get; set; }
+        public string? WeaknessTwo { get; set; }
+        public string? PlayStyleImpactOne { get; set; }
+        public string? PlayStyleImpactTwo { get; set; }
+        public string? Comparison { get; set; }
+        public string? Conclusion { get; set; }
+        public string? Status { get; set; }
 
-        /// <summary>
-        /// Gets or sets the profile ID
-        /// </summary>
-        public string ProfileId { get; set; }
+        public string? IdealRole { get; set; }
+        public DateTime? CreatedDate { get; set; }
+        public DateTime? LastUpdated { get; set; }
 
-        /// <summary>
-        /// Gets or sets the player strengths
-        /// </summary>
-        public string Strengths { get; set; }
+        [NotMapped]
+        public Profile? Profile { get; set; }
 
-        /// <summary>
-        /// Gets or sets the player weaknesses
-        /// </summary>
-        public string Weaknesses { get; set; }
-
-        /// <summary>
-        /// Gets or sets additional notes
-        /// </summary>
-        public string Notes { get; set; }
-
-        /// <summary>
-        /// Gets or sets the creation date
-        /// </summary>
-        public DateTime CreatedDate { get; set; } = DateTime.Now;
-
-        /// <summary>
-        /// Gets or sets the last modified date
-        /// </summary>
-        public DateTime? LastModifiedDate { get; set; }
+        [NotMapped]
+        public string? SubId { get; set; }
     }
 }

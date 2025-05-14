@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Domain;
 using Newtonsoft.Json;
 using Common;
-using Dapper;
+
 
 
 namespace DataLayer.DAL

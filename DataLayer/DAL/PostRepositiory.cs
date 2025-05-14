@@ -2,23 +2,19 @@
 using Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
+
 
 namespace DataLayer.DAL
 {
     public class PostRepository : IPostRepository, IDisposable
     {
         private readonly IConfiguration _config;
-        private readonly UHDBContext _context;
+        private readonly HUDBContext _context;
 
         /// <summary>
         /// Post Repository constructor
         /// </summary>
-        public PostRepository(UHDBContext context, IConfiguration config)
+        public PostRepository(HUDBContext context, IConfiguration config)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _config = config ?? throw new ArgumentNullException(nameof(config));
@@ -204,17 +200,19 @@ namespace DataLayer.DAL
         }
 
         /// <summary>
-        /// Get all posts using stored procedure and optimized processing
+        /// Get all posts with optimized queries
         /// </summary>
         public async Task<List<Post>> GetAllPosts(string timeZone)
         {
             try
             {
-                // Ensure connection is open
-                await EnsureConnectionOpenAsync();
+                // Get all posts from the database
+                var posts = await _context.Post
+                    .AsNoTracking()
+                    .ToListAsync();
 
-                // Execute stored procedure to get posts
-                var posts = (await _connection.QueryAsync<Post>("GetAllPosts", commandType: CommandType.StoredProcedure)).ToList();
+                if (!posts.Any())
+                    return new List<Post>();
 
                 // Extract all mention IDs for batch loading
                 var allMentionIds = posts
@@ -547,7 +545,7 @@ namespace DataLayer.DAL
                 // Query for posts that mention the specified profile
                 var posts = await _context.Post
                     .AsNoTracking()
-                    .Where(p => p.Mention.Contains(profileId))
+                    .Where(p => p.Mention != null && p.Mention.Contains(profileId))
                     .ToListAsync();
 
                 // Process common data for these posts
@@ -585,7 +583,8 @@ namespace DataLayer.DAL
                 // Query for posts containing this hashtag
                 var posts = await _context.Post
                     .AsNoTracking()
-                    .Where(p => p.Caption.Contains(hashtagText) || p.PostText.Contains(hashtagText))
+                    .Where(p => (p.Caption != null && p.Caption.Contains(hashtagText)) ||
+                                (p.PostText != null && p.PostText.Contains(hashtagText)))
                     .ToListAsync();
 
                 // Process common data for these posts
@@ -843,37 +842,51 @@ namespace DataLayer.DAL
 
             try
             {
-                // Calculate ratings for all profiles in a single query
+                // First, fetch the ratings from the database
                 var ratings = await _context.Rating
                     .AsNoTracking()
                     .Where(r => profileIds.Contains(r.ProfileId))
+                    .ToListAsync();
+
+                // Then process them in memory, where we can use out parameters
+                var result = ratings
                     .GroupBy(r => r.ProfileId)
-                    .Select(g => new
-                    {
-                        ProfileId = g.Key,
-                        AverageRating = g.Select(r => !string.IsNullOrEmpty(r.StarRating) ?
-                                                        (int.TryParse(r.StarRating, out int parsed) ? parsed : 0) : 0)
-                                        .DefaultIfEmpty(0)
-                                        .Average()
-                    })
-                    .ToDictionaryAsync(x => x.ProfileId, x => x.AverageRating.ToString("F1"));
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.Select(r => ParseRating(r.StarRating))
+                              .DefaultIfEmpty(0)
+                              .Average()
+                              .ToString("F1")
+                    );
 
                 // Ensure all requested profile IDs have an entry, even if no ratings
                 foreach (var profileId in profileIds)
                 {
-                    if (!ratings.ContainsKey(profileId))
+                    if (!result.ContainsKey(profileId))
                     {
-                        ratings[profileId] = "0";
+                        result[profileId] = "0";
                     }
                 }
 
-                return ratings;
+                return result;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error batch getting star ratings: {ex.Message}");
                 return profileIds.ToDictionary(id => id, id => "0");
             }
+        }
+
+        // Helper method to parse rating
+        private int ParseRating(string ratingStr)
+        {
+            if (string.IsNullOrEmpty(ratingStr))
+                return 0;
+
+            if (int.TryParse(ratingStr, out int result))
+                return result;
+
+            return 0;
         }
 
         /// <summary>
@@ -1015,6 +1028,14 @@ namespace DataLayer.DAL
             {
                 Console.WriteLine($"Error loading post details: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// Get post by id with details - alias for existing method to match interface
+        /// </summary>
+        public async Task<Post> GetPostByIdWithDetailsAsync(string postId, string timeZone)
+        {
+            return await GetPostById(postId, timeZone);
         }
 
         /// <summary>
