@@ -3,10 +3,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Compatibility;
 using System;
-using System.Collections.ObjectModel;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows.Input;
 using UltimateHoopers.Services;
 using UltimateHoopers.ViewModels;
 
@@ -67,8 +66,8 @@ namespace UltimateHoopers.Pages
         {
             base.OnDisappearing();
 
-            // Stop any playing media
-            StopAllMedia();
+            // Stop any playing media - disabled temporarily
+            // StopAllMedia();
         }
 
         // Image post tap handler
@@ -87,63 +86,14 @@ namespace UltimateHoopers.Pages
             {
                 if (post.PostType?.Equals("video", StringComparison.OrdinalIgnoreCase) == true)
                 {
-                    PlayVideoInline(post, grid);
+                    // We can't use the video player yet, so show a message
+                    ShowFullscreenImage(post); // Fallback to showing image
+
+                    // Show a message about video
+                    MainThread.BeginInvokeOnMainThread(async () => {
+                        await DisplayAlert("Video", "Video player is currently under maintenance. Coming soon!", "OK");
+                    });
                 }
-            }
-        }
-
-        // Play video inline within the post
-        private void PlayVideoInline(Post post, Grid postGrid)
-        {
-            // Store current post reference
-            _currentMediaPost = post;
-
-            try
-            {
-                // Get video container elements from the post grid's parent (the vertical stack layout)
-                if (postGrid.Parent is VerticalStackLayout postContainer)
-                {
-                    // Find the grid containing the video player (3rd child of the post container)
-                    var contentGrid = postContainer.Children.ElementAtOrDefault(1) as Grid;
-
-                    if (contentGrid != null)
-                    {
-                        // Find the video player container within the content grid
-                        var videoContainer = contentGrid.Children.FirstOrDefault(c => c is Grid g && g.ClassId == "videoPlayerContainer") as Grid;
-                        var videoPlayer = videoContainer?.Children.FirstOrDefault(c => c is MediaElement) as MediaElement;
-
-                        if (videoContainer != null && videoPlayer != null)
-                        {
-                            // Hide the thumbnail and show the video player
-                            foreach (var child in contentGrid.Children)
-                            {
-                                if (child != videoContainer)
-                                {
-                                    child.IsVisible = false;
-                                }
-                            }
-
-                            // Show video container and player
-                            videoContainer.IsVisible = true;
-                            videoPlayer.IsVisible = true;
-
-                            // Set video source and play
-                            videoPlayer.Source = MediaSource.FromUri(post.PostFileURL);
-                            videoPlayer.Play();
-                        }
-                        else
-                        {
-                            // If we can't find the inline player, show fullscreen video instead
-                            ShowFullscreenVideo(post);
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                // If there's an error with inline play, fallback to fullscreen
-                Console.WriteLine($"Error playing inline video: {ex.Message}");
-                ShowFullscreenVideo(post);
             }
         }
 
@@ -164,45 +114,34 @@ namespace UltimateHoopers.Pages
             // Show the fullscreen viewer with image
             fullscreenViewer.IsVisible = true;
             fullscreenImage.IsVisible = true;
-            fullscreenVideoPlayer.IsVisible = false;
 
-            // Stop the video player if it's playing
+            // No video player yet - commenting out
+            // fullscreenVideoPlayer.IsVisible = false;
+
+            // Stop the video player if it's playing - removed until fixed
+            /*
             if (fullscreenVideoPlayer.CurrentState == MediaElementState.Playing)
             {
                 fullscreenVideoPlayer.Stop();
             }
-        }
-
-        // Show fullscreen video player
-        private void ShowFullscreenVideo(Post post)
-        {
-            _currentMediaPost = post;
-
-            // Set video source
-            fullscreenVideoPlayer.Source = MediaSource.FromUri(post.PostFileURL);
-
-            // Show the fullscreen viewer with video
-            fullscreenViewer.IsVisible = true;
-            fullscreenVideoPlayer.IsVisible = true;
-            fullscreenImage.IsVisible = false;
-
-            // Play the video
-            fullscreenVideoPlayer.Play();
+            */
         }
 
         // Close fullscreen viewer
         private void CloseFullscreenViewer(object sender, EventArgs e)
         {
-            // Stop the video if it's playing
+            // Stop the video if it's playing - removed until fixed
+            /*
             if (fullscreenVideoPlayer.CurrentState == MediaElementState.Playing)
             {
                 fullscreenVideoPlayer.Stop();
             }
+            */
 
             // Hide the fullscreen viewer
             fullscreenViewer.IsVisible = false;
             fullscreenImage.IsVisible = false;
-            fullscreenVideoPlayer.IsVisible = false;
+            // fullscreenVideoPlayer.IsVisible = false;
             _currentMediaPost = null;
         }
 
@@ -259,7 +198,8 @@ namespace UltimateHoopers.Pages
             }
         }
 
-        // Stop all media players
+        // Stop all media players - disabled until fixed
+        /*
         private void StopAllMedia()
         {
             // Stop fullscreen video if playing
@@ -272,7 +212,7 @@ namespace UltimateHoopers.Pages
             // This would need to find all MediaElements in the visual tree
             try
             {
-                var mediaElements = FindVisualChildren<MediaElement>(this.Content);
+                var mediaElements = FindVisualChildren<CommunityToolkit.Maui.Views.MediaElement>(this.Content);
                 foreach (var mediaElement in mediaElements)
                 {
                     if (mediaElement.CurrentState == MediaElementState.Playing)
@@ -286,6 +226,7 @@ namespace UltimateHoopers.Pages
                 Console.WriteLine($"Error stopping media: {ex.Message}");
             }
         }
+        */
 
         // Helper method to find visual children of a certain type
         private IEnumerable<T> FindVisualChildren<T>(Element element) where T : Element

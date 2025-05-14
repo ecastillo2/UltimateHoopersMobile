@@ -1,6 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:mediaelement="clr-namespace:CommunityToolkit.Maui.Views;assembly=CommunityToolkit.Maui.MediaElement"
              x:Class="UltimateHoopers.Pages.PostsPage"
              xmlns:viewmodels="clr-namespace:UltimateHoopers.ViewModels"
              xmlns:converters="clr-namespace:UltimateHoopers.Converters"
@@ -199,14 +201,10 @@
 
                                         <!-- In-Line Video Player (Initially Hidden) -->
                                         <Grid x:Name="videoPlayerContainer" 
+                                              ClassId="videoPlayerContainer"
                                               IsVisible="False"
                                               BackgroundColor="Black">
-                                            <MediaElement x:Name="inlineVideoPlayer"
-                                                          IsVisible="False"
-                                                          Aspect="AspectFit"
-                                                          HorizontalOptions="FillAndExpand"
-                                                          VerticalOptions="FillAndExpand"
-                                                          ShowsPlaybackControls="True" />
+                                            <!-- We'll hide this for now until we fix the MediaElement issue -->
                                         </Grid>
 
                                         <!-- Fallback for no media -->
@@ -406,13 +404,7 @@
                 </Image.GestureRecognizers>
             </Image>
 
-            <!-- Video Player -->
-            <MediaElement x:Name="fullscreenVideoPlayer"
-                          IsVisible="false"
-                          Aspect="AspectFit"
-                          HorizontalOptions="FillAndExpand" 
-                          VerticalOptions="FillAndExpand"
-                          ShowsPlaybackControls="True" />
+            <!-- Video Player - temporarily removed until MediaElement is fixed -->
 
             <!-- Close Button -->
             <Button Text="✕"
