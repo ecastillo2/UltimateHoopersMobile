@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using Domain;
 using Microsoft.Maui.Controls;
+using UltimateHoopers.Pages;
 using UltimateHoopers.Services;
 
 namespace UltimateHoopers.ViewModels
@@ -275,8 +276,32 @@ namespace UltimateHoopers.ViewModels
 
         private async Task PlayVideo(Post post)
         {
-            // In a real implementation, this would open a video player
-            await Shell.Current.DisplayAlert("Play Video", "Video player coming soon!", "OK");
+            try
+            {
+                if (post == null || string.IsNullOrEmpty(post.PostFileURL))
+                {
+                    await Shell.Current.DisplayAlert("Error", "Video is not available", "OK");
+                    return;
+                }
+
+                // Check if the video type is valid
+                bool isVideoFile = post.PostFileURL.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase) ||
+                                post.PostFileURL.EndsWith(".mov", StringComparison.OrdinalIgnoreCase) ||
+                                post.PostFileURL.EndsWith(".webm", StringComparison.OrdinalIgnoreCase);
+
+                if (!isVideoFile && post.PostType?.Equals("video", StringComparison.OrdinalIgnoreCase) != true)
+                {
+                    await Shell.Current.DisplayAlert("Error", "This is not a valid video file", "OK");
+                    return;
+                }
+
+                // Navigate to the video player page
+                await Shell.Current.Navigation.PushModalAsync(new VideoPlayerPage(post));
+            }
+            catch (Exception ex)
+            {
+                await Shell.Current.DisplayAlert("Error", $"Could not play video: {ex.Message}", "OK");
+            }
         }
     }
 }

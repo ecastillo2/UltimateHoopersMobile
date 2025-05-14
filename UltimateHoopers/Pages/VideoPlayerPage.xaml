@@ -31,15 +31,25 @@
                     Clicked="OnCloseClicked" />
         </Grid>
 
-        <!-- Video Content placeholder -->
-        <Grid Grid.Row="1" BackgroundColor="#111111">
+        <!-- Video Content - Using WebView as alternative to MediaElement -->
+        <WebView x:Name="videoWebView" 
+                 Grid.Row="1"
+                 HorizontalOptions="FillAndExpand"
+                 VerticalOptions="FillAndExpand" />
+
+        <!-- Fallback for when WebView is not showing -->
+        <Grid x:Name="fallbackGrid" 
+              Grid.Row="1" 
+              BackgroundColor="#111111" 
+              IsVisible="True">
             <Image x:Name="thumbnailImage"
                    Aspect="AspectFit"
                    HorizontalOptions="FillAndExpand"
                    VerticalOptions="FillAndExpand" />
 
             <!-- Play Button -->
-            <Frame BackgroundColor="#80000000"
+            <Frame x:Name="playButtonFrame"
+                   BackgroundColor="#80000000"
                    CornerRadius="30"
                    HeightRequest="60"
                    WidthRequest="60"
@@ -51,15 +61,11 @@
                        HorizontalOptions="Center"
                        VerticalOptions="Center"
                        TextColor="White" />
-            </Frame>
 
-            <Label x:Name="placeholderLabel"
-                   Text="Video player is temporarily unavailable"
-                   TextColor="White"
-                   FontSize="16"
-                   HorizontalOptions="Center"
-                   VerticalOptions="End"
-                   Margin="0,0,0,40" />
+                <Frame.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnPlayButtonTapped" />
+                </Frame.GestureRecognizers>
+            </Frame>
         </Grid>
 
         <!-- Caption -->

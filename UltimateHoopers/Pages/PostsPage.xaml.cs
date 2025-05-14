@@ -8,8 +8,7 @@ using System.Threading.Tasks;
 using UltimateHoopers.Services;
 using UltimateHoopers.ViewModels;
 using Microsoft.Maui.ApplicationModel; // For MainThread
-using Grid = Microsoft.Maui.Controls.Grid;
-using Microsoft.Maui.Controls.Compatibility; // Explicitly specify which Grid to use
+using Grid = Microsoft.Maui.Controls.Grid; // Explicitly specify which Grid to use
 
 namespace UltimateHoopers.Pages
 {
@@ -74,6 +73,10 @@ namespace UltimateHoopers.Pages
         {
             if (sender is Image image && image.BindingContext is Post post)
             {
+                // Check if it's a WebP image
+                bool isWebP = post.PostFileURL?.EndsWith(".webp", StringComparison.OrdinalIgnoreCase) == true;
+
+                // Show full screen image viewer
                 ShowFullscreenImage(post);
             }
         }
@@ -81,13 +84,72 @@ namespace UltimateHoopers.Pages
         // Video post tap handler
         private async void OnVideoPostTapped(object sender, EventArgs e)
         {
-            if (sender is Microsoft.Maui.Controls.Grid videoGrid && videoGrid.BindingContext is Post post)
+            if (sender is Grid videoGrid && videoGrid.BindingContext is Post post)
             {
                 if (post.PostType?.Equals("video", StringComparison.OrdinalIgnoreCase) == true)
                 {
-                    // Navigate to the video player page
-                    await Navigation.PushModalAsync(new VideoPlayerPage(post));
+                    // Display options for video
+                    await DisplayInlineVideo(post);
                 }
+            }
+        }
+
+        // Play video directly in the post using WebView
+        private async Task DisplayInlineVideo(Post post)
+        {
+            try
+            {
+                string videoUrl = post.PostFileURL;
+                if (string.IsNullOrEmpty(videoUrl))
+                {
+                    await DisplayAlert("Error", "Video URL is not available", "OK");
+                    return;
+                }
+
+                // Create an action sheet to let the user choose how to view the video
+                string action = await DisplayActionSheet(
+                    "View Video",
+                    "Cancel",
+                    null,
+                    "Play Video",
+                    "Open in Browser");
+
+                switch (action)
+                {
+                    case "Play Video":
+                        // Navigate to simplified video player
+                        await Navigation.PushModalAsync(new VideoPlayerPage(post));
+                        break;
+
+                    case "Open in Browser":
+                        // Open in browser using the device's default browser
+                        await OpenVideoInBrowser(post);
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", $"Could not play video: {ex.Message}", "OK");
+            }
+        }
+
+        // Open video in the device's browser
+        private async Task OpenVideoInBrowser(Post post)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(post.PostFileURL))
+                {
+                    await DisplayAlert("Error", "Video URL is not available", "OK");
+                    return;
+                }
+
+                // Use the device's browser to open the video
+                await Launcher.OpenAsync(new Uri(post.PostFileURL));
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", $"Could not open browser: {ex.Message}", "OK");
             }
         }
 
@@ -169,34 +231,6 @@ namespace UltimateHoopers.Pages
                     fullscreenImage.TranslationX += e.TotalX;
                     fullscreenImage.TranslationY += e.TotalY;
                     break;
-            }
-        }
-
-        // Helper method to find visual children of a certain type
-        private IEnumerable<T> FindVisualChildren<T>(Element element) where T : Element
-        {
-            if (element == null)
-                yield break;
-
-            if (element is T typedElement)
-                yield return typedElement;
-
-            if (element is Layout<View> layout)
-            {
-                foreach (var child in layout.Children)
-                {
-                    foreach (var visualChild in FindVisualChildren<T>(child))
-                    {
-                        yield return visualChild;
-                    }
-                }
-            }
-            else if (element is ContentView contentView && contentView.Content != null)
-            {
-                foreach (var visualChild in FindVisualChildren<T>(contentView.Content))
-                {
-                    yield return visualChild;
-                }
             }
         }
 
