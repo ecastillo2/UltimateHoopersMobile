@@ -1,9 +1,10 @@
 ﻿using System;
 using ApiClient.Configuration;
-using ApiClient.Interfaces;
+//using ApiClient.Interfaces;
 using ApiClient.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using WebAPI.ApiClients;
 
 namespace ApiClient.Extensions
 {
@@ -35,11 +36,7 @@ namespace ApiClient.Extensions
             }
 
             // Register HTTP clients with dependency injection
-            services.AddHttpClient<IPostApi, PostApiClient>(client =>
-            {
-                client.BaseAddress = new Uri(options.BaseUrl);
-                client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
-            });
+          
 
             // Register other API clients here
             // services.AddHttpClient<IUserApi, UserApiClient>();

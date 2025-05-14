@@ -25,7 +25,6 @@ namespace Domain
         public string? Title { get; set; }
         public string? Category { get; set; }
         public string? Mention { get; set; }
-        public string? TagId { get; set; }
         public string? MentionUserNames { get; set; }
         [NotMapped]
         public List<Profile>? ProfileMentions { get; set; }
@@ -33,19 +32,19 @@ namespace Domain
         public List<PostComment>? PostComments { get; set; }
 
         [NotMapped]
-        
+
         public string? FirstName { get; set; }
 
         [NotMapped]
-      
+
         public string? LastName { get; set; }
 
         [NotMapped]
-       
+
         public string? ProfileImageURL { get; set; }
 
         [NotMapped]
-       
+
         public string? UserName { get; set; }
 
         [NotMapped]

@@ -123,7 +123,7 @@ namespace ApiClient.BlobStorageAPI
                             // Use JPEG encoder with quality setting
                             var encoder = ImageCodecInfo.GetImageEncoders().First(c => c.FormatID == ImageFormat.Jpeg.Guid);
                             var encoderParams = new EncoderParameters(1);
-                            encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, 85L); // 85% quality
+                            //encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, 85L); // 85% quality
 
                             resized.Save(outputStream, encoder, encoderParams);
                             outputStream.Position = 0;

@@ -1,152 +1,130 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using DataLayer.DAL;
+using DataLayer;
 using Domain;
 using Microsoft.AspNetCore.Authorization;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using DataLayer.Repositories;
-using System;
+using System.Net;
 
-namespace WebAPI.Controllers
+namespace API.Controllers
 {
     /// <summary>
     /// Court Controller
     /// </summary>
     [Route("api/[controller]")]
-    [ApiController]
-    public class CourtController : ControllerBase
+    [Authorize]
+    public class CourtController : Controller
     {
-        private readonly ICourtRepository _repository;
+        HttpResponseMessage returnMessage = new HttpResponseMessage();
+        private ICourtRepository repository;        
         private readonly IConfiguration _configuration;
 
         /// <summary>
-        /// Court Controller Constructor
+        /// Court Controller
         /// </summary>
-        /// <param name="repository">Court repository</param>
-        /// <param name="configuration">Configuration</param>
-        public CourtController(ICourtRepository repository, IConfiguration configuration)
+        /// <param name="context"></param>
+        /// <param name="configuration"></param>
+        public CourtController(HUDBContext context, IConfiguration configuration)
         {
-            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+           
+            this._configuration = configuration;
+            this.repository = new CourtRepository(context);
+
         }
 
         /// <summary>
-        /// Get All Courts
+        /// Get Courts
         /// </summary>
-        /// <returns>List of courts</returns>
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Court>>> GetCourts()
+        /// <returns></returns>
+        [HttpGet("GetCourts")]
+        //[Authorize]
+        public async Task<List<Court>> GetCourts()
         {
-            return await _repository.GetAllAsync();
+            return await repository.GetCourts();
+
         }
 
         /// <summary>
         /// Get Court By Id
         /// </summary>
-        /// <param name="id">Court ID</param>
-        /// <returns>Court</returns>
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Court>> GetCourt(string id)
+        /// <param name="tagId"></param>
+        /// <returns></returns>
+        //[Authorize]
+        [HttpGet("GetCourtById")]
+        public async Task<Court> GetCourtById(string courtId)
         {
-            var court = await _repository.GetByIdAsync(id);
-
-            if (court == null)
+            try
             {
-                return NotFound();
+                return await repository.GetCourtById(courtId);
+            }
+            catch(Exception ex)
+            {
+                throw ex;
             }
 
-            return court;
         }
 
         /// <summary>
         /// Create Court
         /// </summary>
-        /// <param name="court">Court to create</param>
-        /// <returns>Created court</returns>
-        [HttpPost]
-        [Authorize]
-        public async Task<ActionResult<Court>> CreateCourt(Court court)
+        /// <param name="tag"></param>
+        /// <returns></returns>
+        [HttpPost("CreateCourt")]
+        public async Task CreateCourt([FromBody] Court court)
         {
+            
             try
             {
-                if (string.IsNullOrEmpty(court.CourtId))
-                {
-                    court.CourtId = Guid.NewGuid().ToString();
-                }
-
-                // Set image URL using CourtId
-                string fileType = ".webp";
-                court.ImageURL = $"https://uhblobstorageaccount.blob.core.windows.net/courtimage/{court.CourtId}{fileType}";
-
-                await _repository.AddAsync(court);
-                await _repository.SaveAsync();
-
-                return CreatedAtAction(nameof(GetCourt), new { id = court.CourtId }, court);
+                  await  repository.InsertCourt(court);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "An error occurred while creating the court", error = ex.Message });
+                var x = ex;
             }
+
         }
 
         /// <summary>
-        /// Update Court
+        /// Update User
         /// </summary>
-        /// <param name="id">Court ID</param>
-        /// <param name="court">Updated court data</param>
-        /// <returns>No content if successful</returns>
-        [HttpPut("{id}")]
-        [Authorize]
-        public async Task<IActionResult> UpdateCourt(string id, Court court)
+        /// <param name="user"></param>
+        /// <returns></returns>
+        [HttpPost("UpdateCourt")]
+        public async Task UpdateCourt([FromBody] Court court)
         {
-            if (id != court.CourtId)
-            {
-                return BadRequest();
-            }
 
             try
             {
-                await _repository.UpdateCourtAsync(court);
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                // Check if court exists
-                var existingCourt = await _repository.GetByIdAsync(id);
-                if (existingCourt == null)
-                {
-                    return NotFound();
-                }
+                await repository.UpdateCourt(court);
 
-                return StatusCode(500, new { message = "An error occurred while updating the court", error = ex.Message });
             }
+            catch
+            {
+                var message = new HttpResponseMessage(HttpStatusCode.BadRequest);
+            }
+
         }
 
         /// <summary>
         /// Delete Court
         /// </summary>
-        /// <param name="id">Court ID</param>
-        /// <returns>No content if successful</returns>
-        [HttpDelete("{id}")]
-        [Authorize]
-        public async Task<IActionResult> DeleteCourt(string id)
+        /// <param name="tagId"></param>
+        /// <returns></returns>
+        [HttpDelete("DeleteCourt")]
+        public async Task<HttpResponseMessage> DeleteCourt(string courtId)
         {
-            var court = await _repository.GetByIdAsync(id);
-            if (court == null)
-            {
-                return NotFound();
-            }
-
             try
             {
-                await _repository.DeleteByIdAsync(id);
-                await _repository.SaveAsync();
+                await repository.DeleteCourt(courtId);
 
-                return NoContent();
+                returnMessage.RequestMessage = new HttpRequestMessage(HttpMethod.Post, "DeleteCourt");
+
+                return await Task.FromResult(returnMessage);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "An error occurred while deleting the court", error = ex.Message });
+                Console.WriteLine(ex.ToString());
             }
+            return await Task.FromResult(returnMessage);
         }
     }
 }

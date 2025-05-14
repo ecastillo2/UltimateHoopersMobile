@@ -1,6 +1,6 @@
 ﻿using Domain;
 
-namespace SocialMedia.Common
+namespace Common
 {
     public static class SetFollowing
     {

@@ -23,7 +23,7 @@ namespace WebAPI.ApiClients
         public PostApi(HttpClient httpClient, IConfiguration configuration)
         {
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-            _baseUrl = configuration["ApiSettings:BaseUrl"] ?? "https://api.undergroundhoopers.com";
+            _baseUrl = configuration["ApiSettings:BaseUrl"] ?? "https://ultimatehoopersapi.azurewebsites.net";
 
             _jsonOptions = new JsonSerializerOptions
             {

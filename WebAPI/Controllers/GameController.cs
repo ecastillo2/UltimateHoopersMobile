@@ -1,154 +1,171 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using DataLayer.DAL;
+using DataLayer;
 using Domain;
 using Microsoft.AspNetCore.Authorization;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using DataLayer.Repositories;
-using System;
+using System.Net;
 
-namespace WebAPI.Controllers
+namespace API.Controllers
 {
     /// <summary>
     /// Game Controller
     /// </summary>
     [Route("api/[controller]")]
-    [ApiController]
-    public class GameController : ControllerBase
+    [Authorize]
+    public class GameController : Controller
     {
-        private readonly IGameRepository _repository;
+        HttpResponseMessage returnMessage = new HttpResponseMessage();
+        private IGameRepository repository;        
         private readonly IConfiguration _configuration;
 
         /// <summary>
-        /// Game Controller Constructor
+        /// Game Controller
         /// </summary>
-        /// <param name="repository">Game repository</param>
-        /// <param name="configuration">Configuration</param>
-        public GameController(IGameRepository repository, IConfiguration configuration)
+        /// <param name="context"></param>
+        /// <param name="configuration"></param>
+        public GameController(HUDBContext context, IConfiguration configuration)
         {
-            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            this._configuration = configuration;
+            this.repository = new GameRepository(context);
+
         }
 
         /// <summary>
-        /// Get All Games
+        /// Get Games
         /// </summary>
-        /// <returns>List of games</returns>
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Game>>> GetGames()
+        /// <returns></returns>
+        [HttpGet("GetGames")]
+        
+        public async Task<List<Game>> GetGames()
         {
-            return await _repository.GetAllAsync();
+
+            return await repository.GetGames();
+
         }
+
 
         /// <summary>
         /// Get Game By Id
         /// </summary>
-        /// <param name="id">Game ID</param>
-        /// <returns>Game</returns>
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Game>> GetGame(string id)
+        /// <param name="gameId"></param>
+        /// <returns></returns>
+        [HttpGet("GetGameById")]
+        public async Task<Game> GetGameById(string gameId)
         {
-            var game = await _repository.GetByIdAsync(id);
-
-            if (game == null)
+            try
             {
-                return NotFound();
+                return await repository.GetGameById(gameId);
+            }
+            catch(Exception ex)
+            {
+                throw ex;
             }
 
-            return game;
         }
 
         /// <summary>
-        /// Get Games By Profile Id
+        /// Get Games By ProfileId
         /// </summary>
-        /// <param name="profileId">Profile ID</param>
-        /// <returns>List of games for the profile</returns>
-        [HttpGet("profile/{profileId}")]
-        public async Task<ActionResult<IEnumerable<Game>>> GetGamesByProfileId(string profileId)
+        /// <param name="ProfileId"></param>
+        /// <returns></returns>
+        //[Authorize]
+        [HttpGet("GetGamesByProfileId")]
+        public async Task<List<Game>> GetGamesByProfileId(string ProfileId)
         {
-            return await _repository.GetGamesByProfileIdAsync(profileId);
+            try
+            {
+                return await repository.GetGamesByProfileId(ProfileId);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
         }
 
         /// <summary>
         /// Create Game
         /// </summary>
-        /// <param name="game">Game to create</param>
-        /// <returns>Created game</returns>
-        [HttpPost]
-        [Authorize]
-        public async Task<ActionResult<Game>> CreateGame(Game game)
+        /// <param name="game"></param>
+        /// <returns></returns>
+        [HttpPost("CreateGame")]
+        public async Task CreateTag([FromBody] Game game)
         {
+            
             try
             {
-                await _repository.AddAsync(game);
-                await _repository.SaveAsync();
-
-                return CreatedAtAction(nameof(GetGame), new { id = game.GameId }, game);
+                  await  repository.InsertGame(game);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "An error occurred while creating the game", error = ex.Message });
+                var x = ex;
             }
+
         }
+
 
         /// <summary>
         /// Update Game
         /// </summary>
-        /// <param name="id">Game ID</param>
-        /// <param name="game">Updated game data</param>
-        /// <returns>No content if successful</returns>
-        [HttpPut("{id}")]
-        [Authorize]
-        public async Task<IActionResult> UpdateGame(string id, Game game)
+        /// <param name="game"></param>
+        /// <returns></returns>
+        
+        [HttpPost("UpdateGame")]
+        public async Task UpdateGame([FromBody] Game game)
         {
-            if (id != game.GameId)
-            {
-                return BadRequest();
-            }
 
             try
             {
-                await _repository.UpdateGameAsync(game);
-                return NoContent();
+                await repository.UpdateGame(game);
+
+            }
+            catch
+            {
+                var message = new HttpResponseMessage(HttpStatusCode.BadRequest);
+            }
+
+        }
+
+        /// <summary>
+        /// Get Game History
+        /// </summary>
+        /// <returns></returns>
+        //[Authorize]
+        [HttpGet("GetGameHistory")]
+        public async Task<List<Game>> GetGameHistory()
+        {
+            try
+            {
+                return await repository.GetGameHistory();
+
             }
             catch (Exception ex)
             {
-                // Check if game exists
-                var existingGame = await _repository.GetByIdAsync(id);
-                if (existingGame == null)
-                {
-                    return NotFound();
-                }
-
-                return StatusCode(500, new { message = "An error occurred while updating the game", error = ex.Message });
+                throw ex;
             }
         }
 
         /// <summary>
         /// Delete Game
         /// </summary>
-        /// <param name="id">Game ID</param>
-        /// <returns>No content if successful</returns>
-        [HttpDelete("{id}")]
-        [Authorize]
-        public async Task<IActionResult> DeleteGame(string id)
+        /// <param name="gameId"></param>
+        /// <returns></returns>
+        [HttpDelete("DeleteGame")]
+        public async Task<HttpResponseMessage> DeleteGame(string gameId)
         {
-            var game = await _repository.GetByIdAsync(id);
-            if (game == null)
-            {
-                return NotFound();
-            }
-
             try
             {
-                await _repository.DeleteByIdAsync(id);
-                await _repository.SaveAsync();
+                await repository.DeleteGame(gameId);
 
-                return NoContent();
+                returnMessage.RequestMessage = new HttpRequestMessage(HttpMethod.Post, "DeleteGame");
+
+                return await Task.FromResult(returnMessage);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "An error occurred while deleting the game", error = ex.Message });
+                Console.WriteLine(ex.ToString());
             }
+            return await Task.FromResult(returnMessage);
         }
     }
 }

@@ -85,5 +85,6 @@ namespace Domain
         /// Gets or sets the last modified date
         /// </summary>
         public DateTime? LastModifiedDate { get; set; }
+        public string SegId { get; set; }
     }
 }

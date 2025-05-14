@@ -16,7 +16,7 @@ namespace ApiClient.Services
     /// <summary>
     /// Implementation of the Post API client
     /// </summary>
-    public class PostApiClient : BaseApiClient, IPostApi
+    public class PostApiClient : BaseApiClient
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="PostApiClient"/> class

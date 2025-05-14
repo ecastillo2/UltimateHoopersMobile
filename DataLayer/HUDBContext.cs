@@ -3,104 +3,60 @@ using Domain;
 
 namespace DataLayer
 {
-    /// <summary>
-    /// Database context for the Underground Hoopers application
-    /// </summary>
-    public class HUDBContext : DbContext
+    public partial class HUDBContext : DbContext
     {
-        public HUDBContext(DbContextOptions<HUDBContext> options) : base(options)
+        public HUDBContext()
         {
+        
         }
 
-        // Entity sets
-        public DbSet<Activity> Activities { get; set; }
-        public DbSet<Comment> Comments { get; set; }
-        public DbSet<Contact> Contacts { get; set; }
-        public DbSet<Court> Courts { get; set; }
-        public DbSet<Criteria> Criteria { get; set; }
-        public DbSet<Follower> Followers { get; set; }
-        public DbSet<Following> Following { get; set; }
-        public DbSet<Game> Games { get; set; }
-        public DbSet<History> History { get; set; }
-        public DbSet<LikedPost> LikedPosts { get; set; }
-        public DbSet<Notification> Notifications { get; set; }
-        public DbSet<Order> Orders { get; set; }
-        public DbSet<Organization> Organizations { get; set; }
-        public DbSet<PlayerComment> PlayerComments { get; set; }
-        public DbSet<Post> Posts { get; set; }
-        public DbSet<PostComment> PostComments { get; set; }
-        public DbSet<PostUpdateTime> PostUpdateTimes { get; set; }
-        public DbSet<PrivateRun> PrivateRuns { get; set; }
-        public DbSet<PrivateRunInvite> PrivateRunInvites { get; set; }
-        public DbSet<Product> Products { get; set; }
-        public DbSet<Profile> Profiles { get; set; }
-        public DbSet<ProjectManagement> ProjectManagement { get; set; }
-        public DbSet<PushSubscription> PushSubscriptions { get; set; }
-        public DbSet<Rating> Ratings { get; set; }
-        public DbSet<SavedPost> SavedPosts { get; set; }
-        public DbSet<ScoutingReport> ScoutingReports { get; set; }
-        public DbSet<Setting> Settings { get; set; }
-        public DbSet<Squad> Squads { get; set; }
-        public DbSet<SquadTeam> SquadTeams { get; set; }
-        public DbSet<SquadRequest> SquadRequests { get; set; }
-        public DbSet<StatusUpdateTime> StatusUpdateTimes { get; set; }
-        public DbSet<Tag> Tags { get; set; }
-        public DbSet<ThirdPartyService> ThirdPartyServices { get; set; }
-        public DbSet<User> Users { get; set; }
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        public HUDBContext(DbContextOptions<HUDBContext> options)
+            : base(options)
         {
-            base.OnModelCreating(modelBuilder);
 
-            // Configure entity relationships and constraints
-            modelBuilder.Entity<User>()
-                .HasOne(u => u.Profile)
-                .WithOne()
-                .HasForeignKey<Profile>(p => p.UserId);
-
-            modelBuilder.Entity<Post>()
-                .HasOne<Profile>()
-                .WithMany()
-                .HasForeignKey(p => p.ProfileId);
-
-            modelBuilder.Entity<PostComment>()
-                .HasOne<Post>()
-                .WithMany(p => p.PostComments)
-                .HasForeignKey(pc => pc.PostId);
-
-            modelBuilder.Entity<Following>()
-                .HasKey(f => f.FollowingId);
-
-            modelBuilder.Entity<Following>()
-                .Property(f => f.FollowDate)
-                .HasMaxLength(50)
-                .IsRequired(false);
-
-            modelBuilder.Entity<Follower>()
-                .HasKey(f => f.FollowerId);
-
-            modelBuilder.Entity<Follower>()
-                .Property(f => f.FollowDate)
-                .HasMaxLength(50)
-                .IsRequired(false);
-
-            modelBuilder.Entity<Game>()
-                .HasKey(g => g.GameId);
-
-            modelBuilder.Entity<PrivateRun>()
-                .HasKey(pr => pr.PrivateRunId);
-
-            modelBuilder.Entity<PrivateRunInvite>()
-                .HasKey(pri => pri.PrivateRunInviteId);
-
-            modelBuilder.Entity<Court>()
-                .HasKey(c => c.CourtId);
-
-            modelBuilder.Entity<Product>()
-                .HasKey(p => p.ProductId);
-
-            modelBuilder.Entity<Tag>()
-                .HasKey(t => t.TagId);
         }
+     
+        public virtual DbSet<User> User { get; set; }
+        public virtual DbSet<Post> Post { get; set; }
+        public virtual DbSet<Following> Following { get; set; }
+        public virtual DbSet<Follower> Follower { get; set; }
+        public virtual DbSet<SavedPost> SavedPost { get; set; }
+        public virtual DbSet<LikedPost> LikedPost { get; set; }
+        public virtual DbSet<Comment> Comment { get; set; }
+        public virtual DbSet<PlayerComment> PlayerComment { get; set; }
+        public virtual DbSet<PostComment> PostComment { get; set; }
+        public virtual DbSet<PrivateRun> PrivateRun { get; set; }
+        public virtual DbSet<PrivateRunInvite> PrivateRunInvite { get; set; }
+        public virtual DbSet<ErrorException> ErrorException { get; set; }
+        public virtual DbSet<Profile> Profile { get; set; }
+        public virtual DbSet<Tag> Tag { get; set; }
+        public virtual DbSet<Rating> Rating { get; set; }
+        public virtual DbSet<History> History { get; set; }
+        public virtual DbSet<Game> Game { get; set; }
+        public virtual DbSet<Setting> Setting { get; set; }
+        public virtual DbSet<Product> Product { get; set; }
+        public virtual DbSet<Notification> Notification { get; set; }
+        public virtual DbSet<PushSubscription> PushSubscription { get; set; }
+        public virtual DbSet<Court> Court { get; set; }
+        public virtual DbSet<Contact> Contact { get; set; }
+        public virtual DbSet<Organization> Organization { get; set; }
+        public virtual DbSet<StatusUpdateTime> StatusUpdateTime { get; set; }
+        public virtual DbSet<PostUpdateTime> PostUpdateTime { get; set; }
+        public virtual DbSet<ThirdPartyService> ThirdPartyService { get; set; }
+        public virtual DbSet<ProjectManagement> ProjectManagement { get; set; }
+        public virtual DbSet<Order> Order { get; set; }
+        public virtual DbSet<Activity> Activity { get; set; }
+        public virtual DbSet<ScoutingReport> ScoutingReport { get; set; }
+        public virtual DbSet<Criteria> Criteria { get; set; }
+        public virtual DbSet<Squad> Squad { get; set; }
+        public virtual DbSet<SquadTeam> SquadTeam { get; set; }
+        public virtual DbSet<SquadRequest> SquadRequest { get; set; }
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+
+        }
+
+
+        partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
     }
 }
