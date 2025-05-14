@@ -1,8 +1,12 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.EntityFrameworkCore;
+﻿using Common;
 using Domain;
-using Common;
-using Dapper; 
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace DataLayer.DAL
 {
@@ -10,18 +14,14 @@ namespace DataLayer.DAL
     {
         private readonly IConfiguration _config;
         private readonly UHDBContext _context;
-    
-        
 
         /// <summary>
-        /// Post Repository
+        /// Post Repository constructor
         /// </summary>
         public PostRepository(UHDBContext context, IConfiguration config)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _config = config ?? throw new ArgumentNullException(nameof(config));
-            
-         
         }
 
         /// <summary>
@@ -71,7 +71,7 @@ namespace DataLayer.DAL
                 model.Likes = likes;
 
                 // Process comments with in-memory operations instead of database queries
-                if (comments != null)
+                if (comments != null && comments.Any())
                 {
                     var commentProfileIds = comments.Select(c => c.PostCommentByProfileId).Distinct().ToList();
 
@@ -154,7 +154,8 @@ namespace DataLayer.DAL
             }
             catch (Exception ex)
             {
-                // Log the exception
+                // Log the exception (consider using a proper logging framework)
+                Console.WriteLine($"Error getting post by ID: {ex.Message}");
                 return null;
             }
         }
@@ -169,29 +170,37 @@ namespace DataLayer.DAL
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 10;
 
-            // Use cached count when possible
-            var countTask = _context.Post.CountAsync();
+            try
+            {
+                // Use cached count when possible
+                var countTask = _context.Post.CountAsync();
 
-            // Fetch posts with minimal shape for pagination
-            var postsTask = _context.Post
-                .AsNoTracking()
-                .OrderByDescending(p => p.PostedDate)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
+                // Fetch posts with minimal shape for pagination
+                var postsTask = _context.Post
+                    .AsNoTracking()
+                    .OrderByDescending(p => p.PostedDate)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
 
-            // Execute both queries in parallel
-            await Task.WhenAll(countTask, postsTask);
+                // Execute both queries in parallel
+                await Task.WhenAll(countTask, postsTask);
 
-            var totalCount = await countTask;
-            var posts = await postsTask;
+                var totalCount = await countTask;
+                var posts = await postsTask;
 
-            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+                var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
-            // Load related data efficiently
-            await LoadPostDetailsAsync(posts, timeZone);
+                // Load related data efficiently
+                await LoadPostDetailsAsync(posts, timeZone);
 
-            return (posts, totalCount, totalPages);
+                return (posts, totalCount, totalPages);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting paginated posts: {ex.Message}");
+                return (new List<Post>(), 0, 0);
+            }
         }
 
         /// <summary>
@@ -267,30 +276,32 @@ namespace DataLayer.DAL
             }
             catch (Exception ex)
             {
-                // Log error
+                Console.WriteLine($"Error getting all posts: {ex.Message}");
                 return new List<Post>();
             }
         }
 
         /// <summary>
-        /// Get posts with optimized Dapper query
+        /// Get posts with optimized queries
         /// </summary>
         public async Task<List<Post>> GetPosts(string timeZone)
         {
             try
             {
-                await EnsureConnectionOpenAsync();
+                // Fetch posts using EF Core
+                var posts = await _context.Post
+                    .AsNoTracking()
+                    .OrderByDescending(p => p.PostedDate)
+                    .ToListAsync();
 
-                // Use Dapper's multi-mapping capabilities for more efficient queries
-                var posts = (await _connection.QueryAsync<Post>("GetPosts", commandType: CommandType.StoredProcedure)).ToList();
-
-                // Batch process data as in GetAllPosts
+                // Process common data for posts
                 await ProcessPostsCommonData(posts, timeZone);
 
-                return posts.OrderByDescending(post => post.PostedDate).ToList();
+                return posts;
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error getting posts: {ex.Message}");
                 return new List<Post>();
             }
         }
@@ -302,9 +313,12 @@ namespace DataLayer.DAL
         {
             try
             {
-                await EnsureConnectionOpenAsync();
-
-                var posts = (await _connection.QueryAsync<Post>("GetBlogs", commandType: CommandType.StoredProcedure)).ToList();
+                // Use EF Core to fetch blog posts
+                var posts = await _context.Post
+                    .AsNoTracking()
+                    .Where(p => p.PostType == "Blog")
+                    .OrderByDescending(p => p.PostedDate)
+                    .ToListAsync();
 
                 // Simplified processing for blogs - they don't need full mention processing
                 Parallel.ForEach(posts, post =>
@@ -319,10 +333,11 @@ namespace DataLayer.DAL
                     }
                 });
 
-                return posts.OrderByDescending(post => post.PostedDate).ToList();
+                return posts;
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error getting blogs: {ex.Message}");
                 return new List<Post>();
             }
         }
@@ -334,9 +349,12 @@ namespace DataLayer.DAL
         {
             try
             {
-                await EnsureConnectionOpenAsync();
-
-                var posts = (await _connection.QueryAsync<Post>("GetHoopNews", commandType: CommandType.StoredProcedure)).ToList();
+                // Use EF Core to fetch hoop news posts
+                var posts = await _context.Post
+                    .AsNoTracking()
+                    .Where(p => p.PostType == "HoopNews")
+                    .OrderByDescending(p => p.PostedDate)
+                    .ToListAsync();
 
                 // Same simplified processing as for blogs
                 Parallel.ForEach(posts, post =>
@@ -351,10 +369,11 @@ namespace DataLayer.DAL
                     }
                 });
 
-                return posts.OrderByDescending(post => post.PostedDate).ToList();
+                return posts;
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error getting hoop news: {ex.Message}");
                 return new List<Post>();
             }
         }
@@ -366,9 +385,12 @@ namespace DataLayer.DAL
         {
             try
             {
-                await EnsureConnectionOpenAsync();
-
-                var posts = (await _connection.QueryAsync<Post>("GetEvents", commandType: CommandType.StoredProcedure)).ToList();
+                // Use EF Core to fetch event posts
+                var posts = await _context.Post
+                    .AsNoTracking()
+                    .Where(p => p.PostType == "Event")
+                    .OrderByDescending(p => p.PostedDate)
+                    .ToListAsync();
 
                 // Same simplified processing as for blogs and news
                 Parallel.ForEach(posts, post =>
@@ -383,10 +405,11 @@ namespace DataLayer.DAL
                     }
                 });
 
-                return posts.OrderByDescending(post => post.PostedDate).ToList();
+                return posts;
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error getting events: {ex.Message}");
                 return new List<Post>();
             }
         }
@@ -438,6 +461,7 @@ namespace DataLayer.DAL
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error getting public posts: {ex.Message}");
                 return new List<Post>();
             }
         }
@@ -508,20 +532,220 @@ namespace DataLayer.DAL
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error getting posts by profile ID: {ex.Message}");
                 return new List<Post>();
             }
         }
 
-        // All other methods follow similar optimization patterns...
+        /// <summary>
+        /// Get posts that mention a specific profile
+        /// </summary>
+        public async Task<List<Post>> GetPostsMentionProfileId(string profileId, string timeZone)
+        {
+            try
+            {
+                // Query for posts that mention the specified profile
+                var posts = await _context.Post
+                    .AsNoTracking()
+                    .Where(p => p.Mention.Contains(profileId))
+                    .ToListAsync();
+
+                // Process common data for these posts
+                if (posts.Any())
+                {
+                    await ProcessPostsCommonData(posts, timeZone);
+                }
+
+                return posts.OrderByDescending(p => p.PostedDate).ToList();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting posts mentioning profile: {ex.Message}");
+                return new List<Post>();
+            }
+        }
+
+        /// <summary>
+        /// Get posts with a specific tag
+        /// </summary>
+        public async Task<List<Post>> GetPostsWithTagByTagId(string tagId, string timeZone)
+        {
+            try
+            {
+                // First, get the tag text
+                var tag = await _context.Tag
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(t => t.TagId == tagId);
+
+                if (tag == null)
+                    return new List<Post>();
+
+                string hashtagText = $"#{tag.HashTag}";
+
+                // Query for posts containing this hashtag
+                var posts = await _context.Post
+                    .AsNoTracking()
+                    .Where(p => p.Caption.Contains(hashtagText) || p.PostText.Contains(hashtagText))
+                    .ToListAsync();
+
+                // Process common data for these posts
+                if (posts.Any())
+                {
+                    await ProcessPostsCommonData(posts, timeZone);
+                }
+
+                return posts.OrderByDescending(p => p.PostedDate).ToList();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting posts with tag: {ex.Message}");
+                return new List<Post>();
+            }
+        }
+
+        /// <summary>
+        /// Get posts saved by a specific profile
+        /// </summary>
+        public async Task<List<Post>> GetSavedPostsByProfileId(string profileId, string timeZone)
+        {
+            try
+            {
+                // Get IDs of posts saved by the profile
+                var savedPostIds = await _context.SavedPost
+                    .AsNoTracking()
+                    .Where(sp => sp.SavedByProfileId == profileId)
+                    .Select(sp => sp.PostId)
+                    .ToListAsync();
+
+                if (!savedPostIds.Any())
+                    return new List<Post>();
+
+                // Get the actual posts
+                var posts = await _context.Post
+                    .AsNoTracking()
+                    .Where(p => savedPostIds.Contains(p.PostId))
+                    .ToListAsync();
+
+                // Process common data for these posts
+                await ProcessPostsCommonData(posts, timeZone);
+
+                return posts.OrderByDescending(p => p.PostedDate).ToList();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting saved posts: {ex.Message}");
+                return new List<Post>();
+            }
+        }
+
+        /// <summary>
+        /// Insert a new post
+        /// </summary>
+        public async Task InsertPost(Post model)
+        {
+            try
+            {
+                model.PostId = model.PostId ?? Guid.NewGuid().ToString();
+                model.PostedDate = DateTime.Now.ToString();
+
+                await _context.Post.AddAsync(model);
+                await Save();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error inserting post: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Delete an existing post
+        /// </summary>
+        public async Task DeletePost(string postId)
+        {
+            try
+            {
+                var post = await _context.Post.FirstOrDefaultAsync(p => p.PostId == postId);
+                if (post != null)
+                {
+                    _context.Post.Remove(post);
+                    await Save();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting post: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Update an existing post
+        /// </summary>
+        public async Task UpdatePost(Post model)
+        {
+            try
+            {
+                var existingPost = await _context.Post.FirstOrDefaultAsync(p => p.PostId == model.PostId);
+                if (existingPost != null)
+                {
+                    existingPost.Caption = model.Caption;
+                    existingPost.PostText = model.PostText;
+                    existingPost.Status = model.Status;
+                    existingPost.Type = model.Type;
+                    existingPost.Title = model.Title;
+                    existingPost.PostType = model.PostType;
+                    existingPost.Mention = model.Mention;
+
+                    _context.Post.Update(existingPost);
+                    await Save();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating post: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Update a post's status
+        /// </summary>
+        public async Task UpdatePostStatus(string postId, string status)
+        {
+            try
+            {
+                var post = await _context.Post.FirstOrDefaultAsync(p => p.PostId == postId);
+                if (post != null)
+                {
+                    post.Status = status;
+                    _context.Post.Update(post);
+                    await Save();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating post status: {ex.Message}");
+                throw;
+            }
+        }
 
         /// <summary>
         /// Check if post is liked by profile - uses fast index lookup
         /// </summary>
         public async Task<bool> IsPostLikedByProfileAsync(string postId, string profileId)
         {
-            return await _context.LikedPost
-                .AsNoTracking() // Important for performance
-                .AnyAsync(lp => lp.PostId == postId && lp.LikedByProfileId == profileId);
+            try
+            {
+                return await _context.LikedPost
+                    .AsNoTracking() // Important for performance
+                    .AnyAsync(lp => lp.PostId == postId && lp.LikedByProfileId == profileId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error checking if post is liked: {ex.Message}");
+                return false;
+            }
         }
 
         /// <summary>
@@ -529,31 +753,83 @@ namespace DataLayer.DAL
         /// </summary>
         public async Task LikePostAsync(string postId, string profileId)
         {
-            // First check if already liked - this prevents duplicate insert attempts
-            if (!await IsPostLikedByProfileAsync(postId, profileId))
+            try
             {
-                var likedPost = new LikedPost
+                // First check if already liked - this prevents duplicate insert attempts
+                if (!await IsPostLikedByProfileAsync(postId, profileId))
                 {
-                    LikedPostId = Guid.NewGuid().ToString(),
-                    PostId = postId,
-                    LikedByProfileId = profileId,
-                    LikedDate = DateTime.Now.ToString()
-                };
+                    var likedPost = new LikedPost
+                    {
+                        LikedPostId = Guid.NewGuid().ToString(),
+                        PostId = postId,
+                        LikedByProfileId = profileId,
+                        LikedDate = DateTime.Now.ToString()
+                    };
 
-                // Add and save in one go
-                _context.LikedPost.Add(likedPost);
-                await _context.SaveChangesAsync();
+                    // Add and save in one go
+                    _context.LikedPost.Add(likedPost);
+                    await _context.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error liking post: {ex.Message}");
+                throw;
             }
         }
 
         /// <summary>
-        /// Optimized helper to ensure connection is open
+        /// Unlike a post
         /// </summary>
-        private async Task EnsureConnectionOpenAsync()
+        public async Task UnlikePostAsync(string postId, string profileId)
         {
-            if (_connection.State != ConnectionState.Open)
+            try
             {
-                await _connection.OpenAsync();
+                var likedPost = await _context.LikedPost
+                    .FirstOrDefaultAsync(lp => lp.PostId == postId && lp.LikedByProfileId == profileId);
+
+                if (likedPost != null)
+                {
+                    _context.LikedPost.Remove(likedPost);
+                    await _context.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error unliking post: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Get the average star rating for a profile
+        /// </summary>
+        public async Task<string> GetAverageStarRatingByProfileId(string profileId)
+        {
+            try
+            {
+                var ratings = await _context.Rating
+                    .AsNoTracking()
+                    .Where(r => r.ProfileId == profileId)
+                    .Select(r => r.StarRating)
+                    .ToListAsync();
+
+                if (!ratings.Any())
+                    return "0";
+
+                var validRatings = ratings
+                    .Where(r => !string.IsNullOrEmpty(r))
+                    .Select(r => int.TryParse(r, out int rating) ? rating : 0);
+
+                if (!validRatings.Any())
+                    return "0";
+
+                return validRatings.Average().ToString("F1");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting average star rating: {ex.Message}");
+                return "0";
             }
         }
 
@@ -565,30 +841,39 @@ namespace DataLayer.DAL
             if (profileIds == null || !profileIds.Any())
                 return new Dictionary<string, string>();
 
-            // Calculate ratings for all profiles in a single query
-            var ratings = await _context.Rating
-                .AsNoTracking()
-                .Where(r => profileIds.Contains(r.ProfileId))
-                .GroupBy(r => r.ProfileId)
-                .Select(g => new
-                {
-                    ProfileId = g.Key,
-                    AverageRating = g.Select(r => !string.IsNullOrEmpty(r.StarRating) ? int.Parse(r.StarRating) : 0)
-                                    .DefaultIfEmpty(0)
-                                    .Average()
-                })
-                .ToDictionaryAsync(x => x.ProfileId, x => x.AverageRating.ToString());
-
-            // Ensure all requested profile IDs have an entry, even if no ratings
-            foreach (var profileId in profileIds)
+            try
             {
-                if (!ratings.ContainsKey(profileId))
-                {
-                    ratings[profileId] = "0";
-                }
-            }
+                // Calculate ratings for all profiles in a single query
+                var ratings = await _context.Rating
+                    .AsNoTracking()
+                    .Where(r => profileIds.Contains(r.ProfileId))
+                    .GroupBy(r => r.ProfileId)
+                    .Select(g => new
+                    {
+                        ProfileId = g.Key,
+                        AverageRating = g.Select(r => !string.IsNullOrEmpty(r.StarRating) ?
+                                                        (int.TryParse(r.StarRating, out int parsed) ? parsed : 0) : 0)
+                                        .DefaultIfEmpty(0)
+                                        .Average()
+                    })
+                    .ToDictionaryAsync(x => x.ProfileId, x => x.AverageRating.ToString("F1"));
 
-            return ratings;
+                // Ensure all requested profile IDs have an entry, even if no ratings
+                foreach (var profileId in profileIds)
+                {
+                    if (!ratings.ContainsKey(profileId))
+                    {
+                        ratings[profileId] = "0";
+                    }
+                }
+
+                return ratings;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error batch getting star ratings: {ex.Message}");
+                return profileIds.ToDictionary(id => id, id => "0");
+            }
         }
 
         /// <summary>
@@ -599,59 +884,66 @@ namespace DataLayer.DAL
             if (posts == null || !posts.Any())
                 return;
 
-            // Batch load all mentioned profiles and ratings
-            var allMentionIds = posts
-                .Where(p => !string.IsNullOrWhiteSpace(p.Mention))
-                .SelectMany(p => p.Mention.Split(',')
-                    .Select(id => id.Trim())
-                    .Where(id => !string.IsNullOrEmpty(id)))
-                .Distinct()
-                .ToList();
-
-            var profileIds = posts.Select(p => p.ProfileId).Distinct().ToList();
-
-            // Run these queries in parallel
-            var mentionedProfilesTask = allMentionIds.Any()
-                ? _context.Profile
-                    .AsNoTracking()
-                    .Where(p => allMentionIds.Contains(p.ProfileId))
-                    .ToDictionaryAsync(p => p.ProfileId)
-                : Task.FromResult(new Dictionary<string, Profile>());
-
-            var starRatingsTask = BatchGetAverageStarRatingsAsync(profileIds);
-
-            await Task.WhenAll(mentionedProfilesTask, starRatingsTask);
-
-            var mentionedProfiles = await mentionedProfilesTask;
-            var starRatings = await starRatingsTask;
-
-            // Process posts in parallel
-            Parallel.ForEach(posts, post =>
+            try
             {
-                post.StarRating = starRatings.GetValueOrDefault(post.ProfileId, "0");
-
-                if (!string.IsNullOrWhiteSpace(post.Mention))
-                {
-                    var mentionIds = post.Mention.Split(',')
+                // Batch load all mentioned profiles and ratings
+                var allMentionIds = posts
+                    .Where(p => !string.IsNullOrWhiteSpace(p.Mention))
+                    .SelectMany(p => p.Mention.Split(',')
                         .Select(id => id.Trim())
-                        .Where(id => !string.IsNullOrEmpty(id))
-                        .ToList();
+                        .Where(id => !string.IsNullOrEmpty(id)))
+                    .Distinct()
+                    .ToList();
 
-                    post.ProfileMentions = mentionIds
-                        .Where(id => mentionedProfiles.ContainsKey(id))
-                        .Select(id => mentionedProfiles[id])
-                        .ToList();
-                }
+                var profileIds = posts.Select(p => p.ProfileId).Distinct().ToList();
 
-                if (DateTime.TryParse(post.PostedDate, out DateTime dateTime))
+                // Run these queries in parallel
+                var mentionedProfilesTask = allMentionIds.Any()
+                    ? _context.Profile
+                        .AsNoTracking()
+                        .Where(p => allMentionIds.Contains(p.ProfileId))
+                        .ToDictionaryAsync(p => p.ProfileId)
+                    : Task.FromResult(new Dictionary<string, Profile>());
+
+                var starRatingsTask = BatchGetAverageStarRatingsAsync(profileIds);
+
+                await Task.WhenAll(mentionedProfilesTask, starRatingsTask);
+
+                var mentionedProfiles = await mentionedProfilesTask;
+                var starRatings = await starRatingsTask;
+
+                // Process posts in parallel
+                Parallel.ForEach(posts, post =>
                 {
-                    post.RelativeTime = RelativeTime.GetRelativeTime(dateTime, timeZone);
-                }
-                else
-                {
-                    post.RelativeTime = "Unknown";
-                }
-            });
+                    post.StarRating = starRatings.GetValueOrDefault(post.ProfileId, "0");
+
+                    if (!string.IsNullOrWhiteSpace(post.Mention))
+                    {
+                        var mentionIds = post.Mention.Split(',')
+                            .Select(id => id.Trim())
+                            .Where(id => !string.IsNullOrEmpty(id))
+                            .ToList();
+
+                        post.ProfileMentions = mentionIds
+                            .Where(id => mentionedProfiles.ContainsKey(id))
+                            .Select(id => mentionedProfiles[id])
+                            .ToList();
+                    }
+
+                    if (DateTime.TryParse(post.PostedDate, out DateTime dateTime))
+                    {
+                        post.RelativeTime = RelativeTime.GetRelativeTime(dateTime, timeZone);
+                    }
+                    else
+                    {
+                        post.RelativeTime = "Unknown";
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error processing posts common data: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -662,68 +954,67 @@ namespace DataLayer.DAL
             if (posts == null || !posts.Any())
                 return;
 
-            // Get all IDs needed for lookups
-            var profileIds = posts.Select(p => p.ProfileId).Distinct().ToList();
-            var postIds = posts.Select(p => p.PostId).ToList();
-
-            // Run all queries in parallel for maximum performance
-            var profilesTask = _context.Profile
-                .AsNoTracking()
-                .Where(p => profileIds.Contains(p.ProfileId))
-                .Select(p => new { p.ProfileId, p.UserName, p.ImageURL })
-                .ToDictionaryAsync(p => p.ProfileId);
-
-            var commentCountsTask = _context.PostComment
-                .AsNoTracking()
-                .Where(pc => postIds.Contains(pc.PostId))
-                .GroupBy(pc => pc.PostId)
-                .Select(g => new { PostId = g.Key, Count = g.Count() })
-                .ToDictionaryAsync(g => g.PostId, g => g.Count);
-
-            var likeCountsTask = _context.LikedPost
-                .AsNoTracking()
-                .Where(lp => postIds.Contains(lp.PostId))
-                .GroupBy(lp => lp.PostId)
-                .Select(g => new { PostId = g.Key, Count = g.Count() })
-                .ToDictionaryAsync(g => g.PostId, g => g.Count);
-
-            // Wait for all tasks to complete
-            await Task.WhenAll(profilesTask, commentCountsTask, likeCountsTask);
-
-            var profiles = await profilesTask;
-            var commentCounts = await commentCountsTask;
-            var likeCounts = await likeCountsTask;
-
-            // Apply data to posts in parallel
-            Parallel.ForEach(posts, post =>
+            try
             {
-                // Set profile info
-                if (profiles.TryGetValue(post.ProfileId, out var profile))
+                // Get all IDs needed for lookups
+                var profileIds = posts.Select(p => p.ProfileId).Distinct().ToList();
+                var postIds = posts.Select(p => p.PostId).ToList();
+
+                // Run all queries in parallel for maximum performance
+                var profilesTask = _context.Profile
+                    .AsNoTracking()
+                    .Where(p => profileIds.Contains(p.ProfileId))
+                    .Select(p => new { p.ProfileId, p.UserName, p.ImageURL })
+                    .ToDictionaryAsync(p => p.ProfileId);
+
+                var commentCountsTask = _context.PostComment
+                    .AsNoTracking()
+                    .Where(pc => postIds.Contains(pc.PostId))
+                    .GroupBy(pc => pc.PostId)
+                    .Select(g => new { PostId = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(g => g.PostId, g => g.Count);
+
+                var likeCountsTask = _context.LikedPost
+                    .AsNoTracking()
+                    .Where(lp => postIds.Contains(lp.PostId))
+                    .GroupBy(lp => lp.PostId)
+                    .Select(g => new { PostId = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(g => g.PostId, g => g.Count);
+
+                // Wait for all tasks to complete
+                await Task.WhenAll(profilesTask, commentCountsTask, likeCountsTask);
+
+                var profiles = await profilesTask;
+                var commentCounts = await commentCountsTask;
+                var likeCounts = await likeCountsTask;
+
+                // Apply data to posts in parallel
+                Parallel.ForEach(posts, post =>
                 {
-                    post.UserName = profile.UserName;
-                    post.ProfileImageURL = profile.ImageURL;
-                }
+                    // Set profile info
+                    if (profiles.TryGetValue(post.ProfileId, out var profile))
+                    {
+                        post.UserName = profile.UserName;
+                        post.ProfileImageURL = profile.ImageURL;
+                    }
 
-                // Set comment count
-                post.PostCommentCount = commentCounts.GetValueOrDefault(post.PostId, 0);
+                    // Set comment count
+                    post.PostCommentCount = commentCounts.GetValueOrDefault(post.PostId, 0);
 
-                // Set like count
-                post.Likes = likeCounts.GetValueOrDefault(post.PostId, 0);
+                    // Set like count
+                    post.Likes = likeCounts.GetValueOrDefault(post.PostId, 0);
 
-                // Calculate relative time
-                if (DateTime.TryParse(post.PostedDate, out DateTime postedDate))
-                {
-                    post.RelativeTime = RelativeTime.GetRelativeTime(postedDate, timeZone);
-                }
-            });
-        }
-
-        /// <summary>
-        /// Get post by id with details - alias for existing method to match interface
-        /// </summary>
-        public async Task<Post> GetPostByIdWithDetailsAsync(string postId, string timeZone)
-        {
-            return await GetPostById(postId, timeZone);
+                    // Calculate relative time
+                    if (DateTime.TryParse(post.PostedDate, out DateTime postedDate))
+                    {
+                        post.RelativeTime = RelativeTime.GetRelativeTime(postedDate, timeZone);
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading post details: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -732,7 +1023,6 @@ namespace DataLayer.DAL
         public void Dispose()
         {
             _context?.Dispose();
-            _connection?.Dispose();
         }
 
         /// <summary>
