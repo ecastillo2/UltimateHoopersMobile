@@ -11,12 +11,12 @@ namespace WebAPI.Services
     {
 
         /// <summary>
-        /// SocialMedia Authenticate
+        ///  Authenticate
         /// </summary>
         /// <param name="email"></param>
         /// <param name="password"></param>
         /// <returns></returns>
-        User Authenticate(string authToken, string email, string password);
+        User Authenticate(string token, string email, string password);
         
     }
 }

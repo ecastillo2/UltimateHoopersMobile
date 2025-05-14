@@ -154,11 +154,11 @@ namespace WebAPI
         /// <param name="env"></param>
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            app.Use(async (context, next) =>
-            {
-                context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
-                await next();
-            });
+            //app.Use(async (context, next) =>
+            //{
+            //    context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
+            //    await next();
+            //});
 
             if (env.IsDevelopment())
             {
