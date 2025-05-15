@@ -5,7 +5,6 @@
              x:Class="UltimateHoopers.Pages.PostsPage"
              xmlns:viewmodels="clr-namespace:UltimateHoopers.ViewModels"
              xmlns:converters="clr-namespace:UltimateHoopers.Converters"
-             xmlns:controls="clr-namespace:UltimateHoopers.Controls"
              Title="Posts"
              BackgroundColor="{StaticResource PageBackgroundColor}">
 
