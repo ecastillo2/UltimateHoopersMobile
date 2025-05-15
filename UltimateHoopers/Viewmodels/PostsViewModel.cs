@@ -84,7 +84,7 @@ namespace UltimateHoopers.ViewModels
                     Console.WriteLine("No posts returned from service or list is empty");
                 }
 
-                // Add posts to collection with super-robust null handling
+                // Add posts to collection with robust null handling
                 if (posts != null)
                 {
                     int validPostCount = 0;
@@ -204,15 +204,11 @@ namespace UltimateHoopers.ViewModels
             // Required fields
             post.PostId = string.IsNullOrWhiteSpace(post.PostId) ? Guid.NewGuid().ToString() : post.PostId;
 
-            // PostFileURL is already checked before this method is called
-            // Make sure PostFileURL is a valid URI
+            // Validate PostFileURL (already checked for null/empty before this method is called)
             if (!string.IsNullOrWhiteSpace(post.PostFileURL))
             {
                 try
                 {
-                    // Validate the URL format
-                    var uri = new Uri(post.PostFileURL);
-
                     // Ensure URL has a protocol (http or https)
                     if (!post.PostFileURL.StartsWith("http://") && !post.PostFileURL.StartsWith("https://"))
                     {
@@ -220,56 +216,69 @@ namespace UltimateHoopers.ViewModels
                         post.PostFileURL = "https://" + post.PostFileURL.TrimStart('/');
                         Console.WriteLine($"Fixed URL by adding protocol: {post.PostFileURL}");
                     }
+
+                    // Validate by creating a URI object (will throw if invalid)
+                    var uri = new Uri(post.PostFileURL);
                 }
                 catch (UriFormatException ex)
                 {
                     Console.WriteLine($"Invalid URL format: {post.PostFileURL}, Error: {ex.Message}");
-                    // Don't clear the URL yet, let the converter handle it
+                    // If URL is invalid but not empty, don't clear it yet - let the converter handle it
                 }
             }
 
-            // Set PostType based on file extension if not provided
+            // Accurately determine PostType based on file extension
             if (string.IsNullOrWhiteSpace(post.PostType))
             {
-                var fileUrl = post.PostFileURL.ToLower();
-                if (fileUrl.EndsWith(".mp4") || fileUrl.EndsWith(".mov") || fileUrl.EndsWith(".avi"))
-                {
-                    post.PostType = "video";
-                }
-                else if (fileUrl.EndsWith(".webp") || fileUrl.EndsWith(".jpg") ||
-                         fileUrl.EndsWith(".jpeg") || fileUrl.EndsWith(".png") ||
-                         fileUrl.EndsWith(".gif"))
-                {
-                    post.PostType = "image";
-                }
-                else
-                {
-                    // Default to image for unknown formats
-                    post.PostType = "image";
-                }
+                post.PostType = DeterminePostType(post.PostFileURL);
                 Console.WriteLine($"Auto-detected post type: {post.PostType} for URL: {post.PostFileURL}");
             }
 
-            // Do the same validation for ThumbnailUrl if present
-            if (!string.IsNullOrWhiteSpace(post.ThumbnailUrl))
+            // If PostType is already set but doesn't match the URL, prioritize the content type
+            else if (post.PostType.ToLower() != DeterminePostType(post.PostFileURL))
             {
-                try
-                {
-                    var uri = new Uri(post.ThumbnailUrl);
+                string autoDetectedType = DeterminePostType(post.PostFileURL);
+                Console.WriteLine($"PostType mismatch - Existing: {post.PostType}, Detected: {autoDetectedType} for URL: {post.PostFileURL}");
 
-                    if (!post.ThumbnailUrl.StartsWith("http://") && !post.ThumbnailUrl.StartsWith("https://"))
-                    {
-                        post.ThumbnailUrl = "https://" + post.ThumbnailUrl.TrimStart('/');
-                        Console.WriteLine($"Fixed thumbnail URL: {post.ThumbnailUrl}");
-                    }
-                }
-                catch (UriFormatException ex)
+                // Only override if we can confidently determine it's a video from the URL
+                if (autoDetectedType == "video" && IsVideoUrl(post.PostFileURL))
                 {
-                    Console.WriteLine($"Invalid thumbnail URL: {post.ThumbnailUrl}, Error: {ex.Message}");
+                    post.PostType = "video";
+                    Console.WriteLine($"Changed post type to video based on URL extension: {post.PostFileURL}");
                 }
             }
 
-            // Optional fields with defaults
+            // Validate ThumbnailUrl if present (for video posts)
+            if (post.PostType.ToLower() == "video")
+            {
+                // If it's a video but no thumbnail, use a logic to determine one
+                if (string.IsNullOrWhiteSpace(post.ThumbnailUrl))
+                {
+                    // You could set a default video thumbnail here if needed
+                    Console.WriteLine($"Video post {post.PostId} has no thumbnail URL");
+                }
+                else
+                {
+                    // Validate and fix the thumbnail URL
+                    try
+                    {
+                        if (!post.ThumbnailUrl.StartsWith("http://") && !post.ThumbnailUrl.StartsWith("https://"))
+                        {
+                            post.ThumbnailUrl = "https://" + post.ThumbnailUrl.TrimStart('/');
+                            Console.WriteLine($"Fixed thumbnail URL: {post.ThumbnailUrl}");
+                        }
+
+                        // Validate by creating a URI object
+                        var uri = new Uri(post.ThumbnailUrl);
+                    }
+                    catch (UriFormatException ex)
+                    {
+                        Console.WriteLine($"Invalid thumbnail URL: {post.ThumbnailUrl}, Error: {ex.Message}");
+                    }
+                }
+            }
+
+            // Fill other optional fields with defaults if missing
             post.UserName = string.IsNullOrWhiteSpace(post.UserName) ?
                 (string.IsNullOrWhiteSpace(post.FirstName) && string.IsNullOrWhiteSpace(post.LastName) ?
                     "Anonymous User" :
@@ -288,6 +297,37 @@ namespace UltimateHoopers.ViewModels
             post.LikedPost = post.LikedPost ?? false;
             post.SavedPost = post.SavedPost ?? false;
             post.PostCommentCount = post.PostCommentCount ?? 0;
+        }
+
+        // Helper to determine post type from URL
+        private string DeterminePostType(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                return "image"; // Default to image
+
+            // Check for common video extensions
+            if (IsVideoUrl(url))
+                return "video";
+
+            // Default to image for all other formats
+            return "image";
+        }
+
+        // Helper to check if a URL points to a video
+        private bool IsVideoUrl(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                return false;
+
+            string lowercaseUrl = url.ToLower();
+            return lowercaseUrl.EndsWith(".mp4") ||
+                   lowercaseUrl.EndsWith(".mov") ||
+                   lowercaseUrl.EndsWith(".avi") ||
+                   lowercaseUrl.EndsWith(".webm") ||
+                   lowercaseUrl.EndsWith(".mkv") ||
+                   lowercaseUrl.Contains("video") ||
+                   lowercaseUrl.Contains("mp4") ||
+                   lowercaseUrl.Contains("youtu");
         }
 
         private string FormatRelativeTime(string postedDateStr)

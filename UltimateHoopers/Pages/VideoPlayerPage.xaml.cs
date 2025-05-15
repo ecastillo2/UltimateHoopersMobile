@@ -1,4 +1,5 @@
-﻿using Domain;
+﻿
+using Domain;
 using Microsoft.Maui.Controls;
 using System;
 using System.Diagnostics;
@@ -44,13 +45,45 @@ namespace UltimateHoopers.Pages
                     captionLabel.Text = "Video";
                 }
 
-                // Set thumbnail image - use ImageSource.FromUri
+                // Set thumbnail image - prioritize ThumbnailUrl if available, otherwise use PostFileURL
+                SetThumbnailImage();
+
+                // Initially show the fallback grid with thumbnail and play button
+                fallbackGrid.IsVisible = true;
+                videoWebView.IsVisible = false;
+                loadingIndicator.IsVisible = false;
+
+                // Debug output
+                Debug.WriteLine($"VideoPlayerPage created for post: {_post.PostId}");
+                Debug.WriteLine($"PostFileURL: {_post.PostFileURL}");
+                Debug.WriteLine($"ThumbnailUrl: {_post.ThumbnailUrl ?? "Not available"}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error in VideoPlayerPage constructor: {ex.Message}");
+                DisplayAlert("Error", $"Error loading video: {ex.Message}", "OK");
+            }
+        }
+
+        private void SetThumbnailImage()
+        {
+            try
+            {
+                // Choose the thumbnail source - prefer ThumbnailUrl if available
                 string thumbnailUrl = !string.IsNullOrWhiteSpace(_post.ThumbnailUrl) ?
                     _post.ThumbnailUrl : _post.PostFileURL;
 
                 if (!string.IsNullOrWhiteSpace(thumbnailUrl))
                 {
                     Debug.WriteLine($"Setting thumbnail: {thumbnailUrl}");
+
+                    // Make sure the URL has a valid protocol
+                    if (!thumbnailUrl.StartsWith("http://") && !thumbnailUrl.StartsWith("https://"))
+                    {
+                        thumbnailUrl = "https://" + thumbnailUrl.TrimStart('/');
+                        Debug.WriteLine($"Fixed thumbnail URL with protocol: {thumbnailUrl}");
+                    }
+
                     try
                     {
                         thumbnailImage.Source = ImageSource.FromUri(new Uri(thumbnailUrl));
@@ -66,20 +99,11 @@ namespace UltimateHoopers.Pages
                 {
                     thumbnailImage.Source = "dotnet_bot.png";
                 }
-
-                // Initially show the fallback grid with thumbnail and play button
-                fallbackGrid.IsVisible = true;
-                videoWebView.IsVisible = false;
-                loadingIndicator.IsVisible = false;
-
-                // Debug output
-                Debug.WriteLine($"VideoPlayerPage created for post: {_post.PostId}");
-                Debug.WriteLine($"PostFileURL: {_post.PostFileURL}");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error in VideoPlayerPage constructor: {ex.Message}");
-                DisplayAlert("Error", $"Error loading video: {ex.Message}", "OK");
+                Debug.WriteLine($"Error setting thumbnail: {ex.Message}");
+                thumbnailImage.Source = "dotnet_bot.png"; // Fallback to default image
             }
         }
 
@@ -128,6 +152,13 @@ namespace UltimateHoopers.Pages
 
                 string videoUrl = _post.PostFileURL;
                 Debug.WriteLine($"Loading video URL: {videoUrl}");
+
+                // Ensure URL has a protocol
+                if (!videoUrl.StartsWith("http://") && !videoUrl.StartsWith("https://"))
+                {
+                    videoUrl = "https://" + videoUrl.TrimStart('/');
+                    Debug.WriteLine($"Fixed video URL with protocol: {videoUrl}");
+                }
 
                 // Create an enhanced HTML wrapper for the video
                 string videoHtml = GetVideoHtml(videoUrl);
@@ -271,6 +302,7 @@ namespace UltimateHoopers.Pages
                 if (e.Url == "maui-callback://videoCanPlay")
                 {
                     Debug.WriteLine("Video can play callback received");
+                    // You could add additional handling here if needed
                 }
                 else if (e.Url == "maui-callback://videoError")
                 {
@@ -400,10 +432,5 @@ namespace UltimateHoopers.Pages
                 await DisplayAlert("Saved", message, "OK");
             }
         }
-
-        // Close button handler
-      
-
-        // Rest of the code remains the same
     }
 }

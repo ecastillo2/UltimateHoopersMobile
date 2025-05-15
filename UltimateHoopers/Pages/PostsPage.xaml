@@ -14,7 +14,6 @@
         <converters:LikedPostToHeartConverter x:Key="LikedPostToHeartConverter" />
         <converters:SavedPostToBookmarkConverter x:Key="SavedPostToBookmarkConverter" />
         <converters:GreaterThanZeroConverter x:Key="GreaterThanZeroConverter" />
-        <!--<converters:StringToImageSourceConverter x:Key="StringToImageSourceConverter" />-->
     </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,*,Auto"
@@ -159,38 +158,38 @@
 
                                     <!-- Post Content -->
                                     <Grid BackgroundColor="LightGray" HeightRequest="400">
-                                        <!-- Image Post -->
+                                        <!-- Image Post - Only show when PostType is 'image' -->
                                         <Image Source="{Binding PostFileURL}"
-       IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='image'}"
-       Aspect="AspectFill"
-       HorizontalOptions="FillAndExpand"
-       VerticalOptions="FillAndExpand">
+                                               IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='image'}"
+                                               Aspect="AspectFill"
+                                               HorizontalOptions="FillAndExpand"
+                                               VerticalOptions="FillAndExpand">
                                             <Image.GestureRecognizers>
                                                 <TapGestureRecognizer Tapped="OnImagePostTapped" />
                                             </Image.GestureRecognizers>
                                         </Image>
 
-                                        <!-- Video Post -->
+                                        <!-- Video Post - Only show when PostType is 'video' -->
                                         <Grid IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='video'}">
-                                            <!-- Video Thumbnail -->
+                                            <!-- Video Thumbnail - Use ThumbnailUrl if available, otherwise use PostFileURL -->
                                             <Image Source="{Binding ThumbnailUrl, TargetNullValue={Binding PostFileURL}}"
-           Aspect="AspectFill"
-           HorizontalOptions="FillAndExpand"
-           VerticalOptions="FillAndExpand" />
+                                                   Aspect="AspectFill"
+                                                   HorizontalOptions="FillAndExpand"
+                                                   VerticalOptions="FillAndExpand" />
 
                                             <!-- Play Button Overlay -->
                                             <Frame BackgroundColor="#80000000"
-           CornerRadius="30"
-           HeightRequest="60"
-           WidthRequest="60"
-           HorizontalOptions="Center"
-           VerticalOptions="Center"
-           HasShadow="False">
+                                                   CornerRadius="30"
+                                                   HeightRequest="60"
+                                                   WidthRequest="60"
+                                                   HorizontalOptions="Center"
+                                                   VerticalOptions="Center"
+                                                   HasShadow="False">
                                                 <Label Text="▶️"
-               FontSize="32"
-               HorizontalOptions="Center"
-               VerticalOptions="Center"
-               TextColor="White" />
+                                                       FontSize="32"
+                                                       HorizontalOptions="Center"
+                                                       VerticalOptions="Center"
+                                                       TextColor="White" />
                                             </Frame>
 
                                             <Grid.GestureRecognizers>
@@ -200,8 +199,8 @@
 
                                         <!-- Fallback for no media -->
                                         <VerticalStackLayout IsVisible="{Binding PostFileURL, Converter={StaticResource StringNotEmptyConverter}, ConverterParameter='negate'}"
-                                                   HorizontalOptions="Center"
-                                                   VerticalOptions="Center">
+                                                             HorizontalOptions="Center"
+                                                             VerticalOptions="Center">
                                             <Label Text="🏀" 
                                                    FontSize="100" 
                                                    HorizontalOptions="Center" 
@@ -378,16 +377,16 @@
 
         <!-- Fullscreen Media Viewer (initially hidden) -->
         <Grid x:Name="fullscreenViewer" 
-      IsVisible="false"
-      BackgroundColor="Black"
-      Grid.RowSpan="3">
+              IsVisible="false"
+              BackgroundColor="Black"
+              Grid.RowSpan="3">
 
             <!-- Image Viewer -->
             <Image x:Name="fullscreenImage"
-           IsVisible="false"
-           Aspect="AspectFit"
-           HorizontalOptions="FillAndExpand"
-           VerticalOptions="FillAndExpand">
+                   IsVisible="false"
+                   Aspect="AspectFit"
+                   HorizontalOptions="FillAndExpand"
+                   VerticalOptions="FillAndExpand">
                 <Image.GestureRecognizers>
                     <TapGestureRecognizer Tapped="OnFullscreenImageTapped" />
                     <PinchGestureRecognizer PinchUpdated="OnPinchUpdated" />
@@ -397,17 +396,17 @@
 
             <!-- Close Button -->
             <Button Text="✕"
-            Clicked="CloseFullscreenViewer"
-            BackgroundColor="#80000000"
-            TextColor="White"
-            BorderColor="Transparent"
-            FontSize="20"
-            WidthRequest="40"
-            HeightRequest="40"
-            CornerRadius="20"
-            Margin="20"
-            HorizontalOptions="End"
-            VerticalOptions="Start" />
+                    Clicked="CloseFullscreenViewer"
+                    BackgroundColor="#80000000"
+                    TextColor="White"
+                    BorderColor="Transparent"
+                    FontSize="20"
+                    WidthRequest="40"
+                    HeightRequest="40"
+                    CornerRadius="20"
+                    Margin="20"
+                    HorizontalOptions="End"
+                    VerticalOptions="Start" />
         </Grid>
     </Grid>
 </ContentPage>

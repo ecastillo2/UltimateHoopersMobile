@@ -35,10 +35,10 @@
             <!-- Video Content - Using WebView -->
             <Grid Grid.Row="1">
                 <WebView x:Name="videoWebView" 
-         HorizontalOptions="FillAndExpand"
-         VerticalOptions="FillAndExpand"
-         Navigated="VideoWebView_Navigated"
-         Navigating="VideoWebView_Navigating" />
+                         HorizontalOptions="FillAndExpand"
+                         VerticalOptions="FillAndExpand"
+                         Navigated="VideoWebView_Navigated"
+                         Navigating="VideoWebView_Navigating" />
 
                 <!-- Fallback for when WebView is not showing -->
                 <Grid x:Name="fallbackGrid" 
@@ -54,10 +54,17 @@
                                       HorizontalOptions="Center"
                                       VerticalOptions="Center" />
 
+                    <!-- Video Thumbnail Image (with aspect fill to cover the space) -->
                     <Image x:Name="thumbnailImage"
-                           Aspect="AspectFit"
+                           Aspect="AspectFill"
                            HorizontalOptions="FillAndExpand"
                            VerticalOptions="FillAndExpand" />
+
+                    <!-- Semi-transparent overlay for better play button visibility -->
+                    <BoxView Color="Black"
+                             Opacity="0.3"
+                             HorizontalOptions="Fill"
+                             VerticalOptions="Fill" />
 
                     <!-- Play Button -->
                     <Frame x:Name="playButtonFrame"

@@ -108,7 +108,7 @@ namespace UltimateHoopers.Services
 
                 // Call the API with the retrieved token
                 var posts = await _postApi.GetPostsAsync(token);
-
+                //var posts = (List<Post>?)null;
                 // Add mock data if no posts returned (development/testing only)
                 if (posts == null || posts.Count == 0)
                 {
@@ -194,9 +194,10 @@ namespace UltimateHoopers.Services
                     PostId = "1",
                     UserName = "michael_johnson",
                     Caption = "Looking for players to join our game this Sunday at Downtown Court. We need 2-3 more players. All skill levels welcome! #basketball #pickup #sunday",
-                    PostFileURL = "https://images.unsplash.com/photo-1505666287802-931d7a78bde2?q=80&w=1000&auto=format&fit=crop",
-                    PostType = "image",
+                    PostFileURL = "https://uhblobstorageaccount.blob.core.windows.net/postfile/92a4bc09-eace-48e5-a2f4-73561d3451b9.mp4",
+                    PostType = "video",
                     Likes = 32,
+                    ThumbnailUrl = "https://uhblobstorageaccount.blob.core.windows.net/postthumbnail/92a4bc09-eace-48e5-a2f4-73561d3451b9.png",
                     ProfileImageURL = "https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=1000&auto=format&fit=crop",
                     RelativeTime = "2 hours ago",
                     PostCommentCount = 12,
@@ -208,7 +209,7 @@ namespace UltimateHoopers.Services
                     PostId = "2",
                     UserName = "sarah_thompson",
                     Caption = "Just finished my first training session with Coach Williams. His shooting drills are incredible! My three-point percentage has already improved. #basketball #training #threepointer",
-                    PostFileURL = "https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=1000&fmt=webp",
+                    PostFileURL = "https://uhblobstorageaccount.blob.core.windows.net/postfile/bd2f7d77-88db-4997-807f-b122ef7bbd0d.webp",
                     PostType = "image",
                     Likes = 55,
                     ProfileImageURL = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1000&auto=format&fit=crop",
