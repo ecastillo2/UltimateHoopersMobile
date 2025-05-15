@@ -85,6 +85,9 @@ namespace UltimateHoopers.Pages
                     Console.WriteLine("Posts were loaded but may not be displaying. Checking binding context...");
                     Console.WriteLine($"Current binding context: {BindingContext}");
 
+                    // Apply direct image source conversion for each post if needed
+                    ProcessPostImages();
+
                     // Force refresh the binding
                     BindingContext = null;
                     BindingContext = _viewModel;
@@ -101,6 +104,64 @@ namespace UltimateHoopers.Pages
                 Debug.WriteLine($"Error in PostsPage.OnAppearing: {ex.Message}");
                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 await DisplayAlert("Error", $"Could not load posts: {ex.Message}", "OK");
+            }
+        }
+
+        // Helper method to process post images directly
+        private void ProcessPostImages()
+        {
+            try
+            {
+                foreach (var post in _viewModel.Posts)
+                {
+                    // Make sure PostFileURL is a valid URI
+                    if (!string.IsNullOrWhiteSpace(post.PostFileURL))
+                    {
+                        try
+                        {
+                            // Ensure URL has a protocol (http or https)
+                            if (!post.PostFileURL.StartsWith("http://") && !post.PostFileURL.StartsWith("https://"))
+                            {
+                                // Add https protocol if missing
+                                post.PostFileURL = "https://" + post.PostFileURL.TrimStart('/');
+                                Console.WriteLine($"Fixed URL by adding protocol: {post.PostFileURL}");
+                            }
+
+                            // Test creating a URI object to validate
+                            var uri = new Uri(post.PostFileURL);
+                            Console.WriteLine($"Valid URI: {uri}");
+                        }
+                        catch (UriFormatException ex)
+                        {
+                            Console.WriteLine($"Invalid URL format: {post.PostFileURL}, Error: {ex.Message}");
+                        }
+                    }
+
+                    // Do the same for ThumbnailUrl
+                    if (!string.IsNullOrWhiteSpace(post.ThumbnailUrl))
+                    {
+                        try
+                        {
+                            if (!post.ThumbnailUrl.StartsWith("http://") && !post.ThumbnailUrl.StartsWith("https://"))
+                            {
+                                post.ThumbnailUrl = "https://" + post.ThumbnailUrl.TrimStart('/');
+                                Console.WriteLine($"Fixed thumbnail URL: {post.ThumbnailUrl}");
+                            }
+
+                            // Test creating a URI object
+                            var uri = new Uri(post.ThumbnailUrl);
+                            Console.WriteLine($"Valid thumbnail URI: {uri}");
+                        }
+                        catch (UriFormatException ex)
+                        {
+                            Console.WriteLine($"Invalid thumbnail URL: {post.ThumbnailUrl}, Error: {ex.Message}");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in ProcessPostImages: {ex.Message}");
             }
         }
 

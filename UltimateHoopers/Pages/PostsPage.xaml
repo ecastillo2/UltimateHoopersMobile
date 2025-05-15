@@ -14,7 +14,7 @@
         <converters:LikedPostToHeartConverter x:Key="LikedPostToHeartConverter" />
         <converters:SavedPostToBookmarkConverter x:Key="SavedPostToBookmarkConverter" />
         <converters:GreaterThanZeroConverter x:Key="GreaterThanZeroConverter" />
-        <converters:StringToImageSourceConverter x:Key="StringToImageSourceConverter" />
+        <!--<converters:StringToImageSourceConverter x:Key="StringToImageSourceConverter" />-->
     </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,*,Auto"
@@ -160,8 +160,7 @@
                                     <!-- Post Content -->
                                     <Grid BackgroundColor="LightGray" HeightRequest="400">
                                         <!-- Image Post -->
-                                        <!-- Updated Image element in the Post Content section -->
-                                        <Image Source="{Binding PostFileURL, Converter={StaticResource StringToImageSourceConverter}}"
+                                        <Image Source="{Binding PostFileURL}"
        IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='image'}"
        Aspect="AspectFill"
        HorizontalOptions="FillAndExpand"
@@ -172,15 +171,14 @@
                                         </Image>
 
                                         <!-- Video Post -->
-                                        <Grid IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='video'}"
-      HeightRequest="400">
-                                            <!-- Thumbnail view (visible initially) -->
-                                            <Image Source="{Binding ThumbnailUrl, TargetNullValue={Binding PostFileURL}, Converter={StaticResource StringToImageSourceConverter}}"
-       Aspect="AspectFill"
-       HorizontalOptions="FillAndExpand"
-       VerticalOptions="FillAndExpand" />
+                                        <Grid IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='video'}">
+                                            <!-- Video Thumbnail -->
+                                            <Image Source="{Binding ThumbnailUrl, TargetNullValue={Binding PostFileURL}}"
+           Aspect="AspectFill"
+           HorizontalOptions="FillAndExpand"
+           VerticalOptions="FillAndExpand" />
 
-                                            <!-- Play Button -->
+                                            <!-- Play Button Overlay -->
                                             <Frame BackgroundColor="#80000000"
            CornerRadius="30"
            HeightRequest="60"
@@ -195,7 +193,6 @@
                TextColor="White" />
                                             </Frame>
 
-                                            <!-- Add the GestureRecognizer to the Grid -->
                                             <Grid.GestureRecognizers>
                                                 <TapGestureRecognizer Tapped="OnVideoThumbnailTapped" />
                                             </Grid.GestureRecognizers>
