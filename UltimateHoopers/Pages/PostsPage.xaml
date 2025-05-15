@@ -161,40 +161,43 @@
                                     <Grid BackgroundColor="LightGray" HeightRequest="400">
                                         <!-- Image Post -->
                                         <Image Source="{Binding PostFileURL}"
-                                               IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='image'}"
-                                               Aspect="AspectFill"
-                                               HorizontalOptions="FillAndExpand"
-                                               VerticalOptions="FillAndExpand">
+       IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='image'}"
+       Aspect="AspectFill"
+       HorizontalOptions="FillAndExpand"
+       VerticalOptions="FillAndExpand"
+       Loaded="OnImageLoaded">
                                             <Image.GestureRecognizers>
                                                 <TapGestureRecognizer Tapped="OnImagePostTapped" />
                                             </Image.GestureRecognizers>
                                         </Image>
 
                                         <!-- Video Post -->
-                                        <Grid IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='video'}">
-                                            <!-- Video Thumbnail -->
+                                        <Grid IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='video'}"
+      HeightRequest="400">
+                                            <!-- Thumbnail view (visible initially) -->
                                             <Image Source="{Binding ThumbnailUrl, TargetNullValue={Binding PostFileURL}}"
-                                                   Aspect="AspectFill"
-                                                   HorizontalOptions="FillAndExpand"
-                                                   VerticalOptions="FillAndExpand" />
+           Aspect="AspectFill"
+           HorizontalOptions="FillAndExpand"
+           VerticalOptions="FillAndExpand" />
 
-                                            <!-- Play Button Overlay -->
+                                            <!-- Play Button -->
                                             <Frame BackgroundColor="#80000000"
-                                                   CornerRadius="30"
-                                                   HeightRequest="60"
-                                                   WidthRequest="60"
-                                                   HorizontalOptions="Center"
-                                                   VerticalOptions="Center"
-                                                   HasShadow="False">
+           CornerRadius="30"
+           HeightRequest="60"
+           WidthRequest="60"
+           HorizontalOptions="Center"
+           VerticalOptions="Center"
+           HasShadow="False">
                                                 <Label Text="▶️"
-                                                       FontSize="32"
-                                                       HorizontalOptions="Center"
-                                                       VerticalOptions="Center"
-                                                       TextColor="White" />
+               FontSize="32"
+               HorizontalOptions="Center"
+               VerticalOptions="Center"
+               TextColor="White" />
                                             </Frame>
 
+                                            <!-- Add the GestureRecognizer to the Grid -->
                                             <Grid.GestureRecognizers>
-                                                <TapGestureRecognizer Tapped="OnVideoPostTapped" />
+                                                <TapGestureRecognizer Tapped="OnVideoThumbnailTapped" />
                                             </Grid.GestureRecognizers>
                                         </Grid>
 
@@ -378,16 +381,16 @@
 
         <!-- Fullscreen Media Viewer (initially hidden) -->
         <Grid x:Name="fullscreenViewer" 
-              IsVisible="false"
-              BackgroundColor="Black"
-              Grid.RowSpan="3">
+      IsVisible="false"
+      BackgroundColor="Black"
+      Grid.RowSpan="3">
 
             <!-- Image Viewer -->
             <Image x:Name="fullscreenImage"
-                   IsVisible="false"
-                   Aspect="AspectFit"
-                   HorizontalOptions="FillAndExpand"
-                   VerticalOptions="FillAndExpand">
+           IsVisible="false"
+           Aspect="AspectFit"
+           HorizontalOptions="FillAndExpand"
+           VerticalOptions="FillAndExpand">
                 <Image.GestureRecognizers>
                     <TapGestureRecognizer Tapped="OnFullscreenImageTapped" />
                     <PinchGestureRecognizer PinchUpdated="OnPinchUpdated" />
@@ -397,17 +400,17 @@
 
             <!-- Close Button -->
             <Button Text="✕"
-                    Clicked="CloseFullscreenViewer"
-                    BackgroundColor="#80000000"
-                    TextColor="White"
-                    BorderColor="Transparent"
-                    FontSize="20"
-                    WidthRequest="40"
-                    HeightRequest="40"
-                    CornerRadius="20"
-                    Margin="20"
-                    HorizontalOptions="End"
-                    VerticalOptions="Start" />
+            Clicked="CloseFullscreenViewer"
+            BackgroundColor="#80000000"
+            TextColor="White"
+            BorderColor="Transparent"
+            FontSize="20"
+            WidthRequest="40"
+            HeightRequest="40"
+            CornerRadius="20"
+            Margin="20"
+            HorizontalOptions="End"
+            VerticalOptions="Start" />
         </Grid>
     </Grid>
 </ContentPage>

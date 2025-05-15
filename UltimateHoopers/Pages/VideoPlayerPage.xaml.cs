@@ -167,6 +167,13 @@ namespace UltimateHoopers.Pages
             max-height: 100vh;
             object-fit: contain;
         }
+        /* Added to handle errors better */
+        .error-message {
+            color: #fff;
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -175,19 +182,25 @@ namespace UltimateHoopers.Pages
             <source src='" + urlWithCacheBusting + @"' type='video/mp4'>
             Your browser does not support HTML5 video.
         </video>
+        <div id='errorMessage' class='error-message'>
+            Could not load video. Please try opening in browser.
+        </div>
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Video player loaded');
             var video = document.getElementById('videoPlayer');
+            var errorMessage = document.getElementById('errorMessage');
             
             video.addEventListener('canplay', function() {
                 console.log('Video can play');
                 window.location.href = 'maui-callback://videoCanPlay';
             });
             
-            video.addEventListener('error', function() {
-                console.log('Video error');
+            video.addEventListener('error', function(e) {
+                console.log('Video error:', e);
+                errorMessage.style.display = 'block';
+                video.style.display = 'none';
                 window.location.href = 'maui-callback://videoError';
             });
             
@@ -199,12 +212,14 @@ namespace UltimateHoopers.Pages
             // Force load
             video.load();
             
-            // Try autoplay
+            // Try autoplay with timeout and fallback
             setTimeout(function() {
                 var playPromise = video.play();
                 if (playPromise !== undefined) {
                     playPromise.catch(function(error) {
                         console.log('Autoplay prevented:', error);
+                        // Show play button UI
+                        window.location.href = 'maui-callback://autoplayBlocked';
                     });
                 }
             }, 1000);
@@ -213,7 +228,6 @@ namespace UltimateHoopers.Pages
 </body>
 </html>";
         }
-
         // WebView navigation event handlers
         private void VideoWebView_Navigating(object sender, WebNavigatingEventArgs e)
         {

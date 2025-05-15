@@ -6,6 +6,7 @@ using System.Windows.Input;
 using Domain;
 using Microsoft.Maui.Controls;
 using UltimateHoopers.Services;
+using UltimateHoopers.Pages;
 
 namespace UltimateHoopers.ViewModels
 {
@@ -146,13 +147,22 @@ namespace UltimateHoopers.ViewModels
             catch (UnauthorizedAccessException ex)
             {
                 Console.WriteLine($"Authentication error: {ex.Message}");
-                await Shell.Current.DisplayAlert("Authentication Error", "Please log in to view posts", "OK");
+
+                // Use Application.Current.MainPage instead of Shell.Current.DisplayAlert
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    await Application.Current.MainPage.DisplayAlert("Authentication Error", "Please log in to view posts", "OK");
+                });
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error loading posts: {ex.Message}");
                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
-                await Shell.Current.DisplayAlert("Error", $"An error occurred: {ex.Message}", "OK");
+
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    await Application.Current.MainPage.DisplayAlert("Error", $"An error occurred: {ex.Message}", "OK");
+                });
             }
             finally
             {
@@ -305,14 +315,17 @@ namespace UltimateHoopers.ViewModels
                 // For now, just show a message
                 await MainThread.InvokeOnMainThreadAsync(async () =>
                 {
-                    await Shell.Current.DisplayAlert("Like Post",
+                    await Application.Current.MainPage.DisplayAlert("Like Post",
                         post.LikedPost == true ? "Post liked!" : "Post unliked!",
                         "OK");
                 });
             }
             catch (Exception ex)
             {
-                await Shell.Current.DisplayAlert("Error", $"Failed to like post: {ex.Message}", "OK");
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    await Application.Current.MainPage.DisplayAlert("Error", $"Failed to like post: {ex.Message}", "OK");
+                });
             }
         }
 
@@ -336,53 +349,71 @@ namespace UltimateHoopers.ViewModels
                 // For now, just show a message
                 await MainThread.InvokeOnMainThreadAsync(async () =>
                 {
-                    await Shell.Current.DisplayAlert("Save Post",
+                    await Application.Current.MainPage.DisplayAlert("Save Post",
                         post.SavedPost == true ? "Post saved!" : "Post unsaved!",
                         "OK");
                 });
             }
             catch (Exception ex)
             {
-                await Shell.Current.DisplayAlert("Error", $"Failed to save post: {ex.Message}", "OK");
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    await Application.Current.MainPage.DisplayAlert("Error", $"Failed to save post: {ex.Message}", "OK");
+                });
             }
         }
 
         private async Task NavigateToComments(Post post)
         {
             // This would navigate to a comments page
-            await Shell.Current.DisplayAlert("Comments", "Comments feature coming soon!", "OK");
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                await Application.Current.MainPage.DisplayAlert("Comments", "Comments feature coming soon!", "OK");
+            });
         }
 
         private async Task SharePost(Post post)
         {
-            await Shell.Current.DisplayAlert("Share Post", "Share feature coming soon!", "OK");
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                await Application.Current.MainPage.DisplayAlert("Share Post", "Share feature coming soon!", "OK");
+            });
         }
 
         private async Task ShowPostOptions(Post post)
         {
-            string result = await Shell.Current.DisplayActionSheet(
-                "Post Options",
-                "Cancel",
-                null,
-                "Report",
-                "Copy Link",
-                "Share to...",
-                "Hide");
+            string result = await MainThread.InvokeOnMainThreadAsync<string>(async () =>
+            {
+                return await Application.Current.MainPage.DisplayActionSheet(
+                    "Post Options",
+                    "Cancel",
+                    null,
+                    "Report",
+                    "Copy Link",
+                    "Share to...",
+                    "Hide");
+            });
 
             // Handle the selected option
             switch (result)
             {
                 case "Report":
-                    await Shell.Current.DisplayAlert("Report", "Report feature coming soon!", "OK");
+                    await MainThread.InvokeOnMainThreadAsync(async () => {
+                        await Application.Current.MainPage.DisplayAlert("Report", "Report feature coming soon!", "OK");
+                    });
                     break;
                 case "Copy Link":
-                    await Shell.Current.DisplayAlert("Copy Link", "Link copied to clipboard", "OK");
+                    await MainThread.InvokeOnMainThreadAsync(async () => {
+                        await Application.Current.MainPage.DisplayAlert("Copy Link", "Link copied to clipboard", "OK");
+                    });
                     break;
                 case "Share to...":
                     await SharePost(post);
                     break;
                 case "Hide":
-                    await Shell.Current.DisplayAlert("Hide", "Post hidden", "OK");
+                    await MainThread.InvokeOnMainThreadAsync(async () => {
+                        await Application.Current.MainPage.DisplayAlert("Hide", "Post hidden", "OK");
+                    });
                     break;
             }
         }
@@ -393,18 +424,36 @@ namespace UltimateHoopers.ViewModels
             {
                 if (post == null || string.IsNullOrEmpty(post.PostFileURL))
                 {
-                    await Shell.Current.DisplayAlert("Error", "Video URL is not available", "OK");
+                    await MainThread.InvokeOnMainThreadAsync(async () => {
+                        await Application.Current.MainPage.DisplayAlert("Error", "Video URL is not available", "OK");
+                    });
                     return;
                 }
 
                 Console.WriteLine($"Playing video: {post.PostFileURL}");
 
-                // Navigate directly to the video player page without showing options
-                await Shell.Current.Navigation.PushModalAsync(new Pages.VideoPlayerPage(post));
+                // Navigate directly to the video player page
+                await MainThread.InvokeOnMainThreadAsync(async () => {
+                    // We need to check what type of Page we're on for proper navigation
+                    if (Application.Current.MainPage is Shell shell)
+                    {
+                        await shell.Navigation.PushModalAsync(new VideoPlayerPage(post));
+                    }
+                    else if (Application.Current.MainPage.Navigation != null)
+                    {
+                        await Application.Current.MainPage.Navigation.PushModalAsync(new VideoPlayerPage(post));
+                    }
+                    else
+                    {
+                        await Application.Current.MainPage.DisplayAlert("Error", "Navigation not available", "OK");
+                    }
+                });
             }
             catch (Exception ex)
             {
-                await Shell.Current.DisplayAlert("Error", $"Could not play video: {ex.Message}", "OK");
+                await MainThread.InvokeOnMainThreadAsync(async () => {
+                    await Application.Current.MainPage.DisplayAlert("Error", $"Could not play video: {ex.Message}", "OK");
+                });
             }
         }
     }

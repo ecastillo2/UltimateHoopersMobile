@@ -6,10 +6,8 @@ using Microsoft.Maui.Controls;
 using UltimateHoopers.Services;
 using UltimateHoopers.ViewModels;
 using Microsoft.Maui.ApplicationModel; // For MainThread
-using System.Diagnostics; // Add this for Debug
 using System.Threading.Tasks;
 
-using Grid = Microsoft.Maui.Controls.Grid; // Explicitly specify which Grid to use
 namespace UltimateHoopers.Pages
 {
     public partial class PostsPage : ContentPage
@@ -160,31 +158,7 @@ namespace UltimateHoopers.Pages
             }
         }
 
-        // Helper to find the InlineVideoPlayer in the visual tree
-        private object FindVideoPlayer(IView element)
-        {
-            // First, check if this element is an InlineVideoPlayer
-            if (element.GetType().Name == "InlineVideoPlayer")
-            {
-                return element;
-            }
-
-            // If not, search through its children if it's a layout
-            if (element is Microsoft.Maui.Controls.Layout layout)
-            {
-                foreach (var child in layout.Children)
-                {
-                    var found = FindVideoPlayer(child);
-                    if (found != null)
-                    {
-                        return found;
-                    }
-                }
-            }
-
-            // If we reach here, no InlineVideoPlayer was found
-            return null;
-        }
+        // Removed FindVideoPlayer method since InlineVideoPlayer doesn't exist
 
         // Fallback method to navigate to dedicated video player page
         private async void NavigateToVideoPlayer(Post post)
@@ -385,21 +359,7 @@ namespace UltimateHoopers.Pages
 
         private void StopAllVideos()
         {
-            foreach (var player in _activePlayers)
-            {
-                try
-                {
-                    // Use reflection or a safer approach to call methods
-                    if (player != null && player.GetType().GetMethod("StopVideo") != null)
-                    {
-                        player.GetType().GetMethod("StopVideo").Invoke(player, null);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Error stopping video: {ex.Message}");
-                }
-            }
+            // Since we removed InlineVideoPlayer references, we'll just clear the list
             _activePlayers.Clear();
         }
 
@@ -409,6 +369,21 @@ namespace UltimateHoopers.Pages
             if (sender != null && !_activePlayers.Contains(sender))
             {
                 _activePlayers.Add(sender);
+            }
+        }
+
+        // Handler for Image loaded event
+        private void OnImageLoaded(object sender, EventArgs e)
+        {
+            // This method is referenced in the XAML but was missing in the code-behind
+            // It can be used to perform actions when an image finishes loading
+            if (sender is Image image)
+            {
+                // You could add logic here such as:
+                // - Hide a loading indicator
+                // - Adjust layout based on loaded image dimensions
+                // - Log successful image loads
+                Debug.WriteLine($"Image loaded: {image.Source}");
             }
         }
 
