@@ -56,10 +56,14 @@
 
 	<ItemGroup>
 	  <MauiXaml Remove="Pages\CodeSplashScreen.xaml" />
+	  <MauiXaml Remove="Pages\EditProfilePage.xaml" />
 	</ItemGroup>
 
 	<ItemGroup>
 	  <EmbeddedResource Include="Pages\CodeSplashScreen.xaml">
+	    <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
+	  </EmbeddedResource>
+	  <EmbeddedResource Include="Pages\EditProfilePage.xaml">
 	    <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
 	  </EmbeddedResource>
 	</ItemGroup>

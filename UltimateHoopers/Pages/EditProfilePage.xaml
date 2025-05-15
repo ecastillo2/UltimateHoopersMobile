@@ -1,0 +1,516 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="UltimateHoopers.Pages.EditProfilePage"
+             Title="Edit Profile"
+             BackgroundColor="{StaticResource PageBackgroundColor}">
+
+    <Grid RowDefinitions="Auto,*,Auto"
+          Padding="20">
+
+        <!-- Header with Title -->
+        <Grid Grid.Row="0" 
+              ColumnDefinitions="*,Auto"
+              Margin="0,10,0,20">
+
+            <VerticalStackLayout Grid.Column="0">
+                <Label Text="Edit Profile"
+                       FontSize="28"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource PrimaryColor}" />
+
+                <Label Text="Update your personal information"
+                       FontSize="16"
+                       TextColor="{StaticResource SecondaryTextColor}" />
+            </VerticalStackLayout>
+
+            <!-- Back Button -->
+            <Frame Grid.Column="1"
+                   CornerRadius="25"
+                   HeightRequest="50"
+                   WidthRequest="50"
+                   Padding="0"
+                   BorderColor="{StaticResource BorderColor}"
+                   BackgroundColor="{StaticResource CardBackgroundColor}"
+                   HasShadow="True">
+
+                <Label Text="←"
+                       FontSize="24"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       TextColor="{StaticResource PrimaryTextColor}" />
+
+                <Frame.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnBackClicked" />
+                </Frame.GestureRecognizers>
+            </Frame>
+        </Grid>
+
+        <!-- Content -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="20">
+
+                <!-- Profile Photo -->
+                <Frame BackgroundColor="{StaticResource CardBackgroundColor}"
+                       BorderColor="{StaticResource BorderColor}"
+                       CornerRadius="10"
+                       HasShadow="True"
+                       Padding="20">
+
+                    <VerticalStackLayout Spacing="15" HorizontalOptions="Center">
+                        <Frame CornerRadius="75"
+                               HeightRequest="150"
+                               WidthRequest="150"
+                               Padding="0"
+                               BorderColor="{StaticResource PrimaryColor}"
+                               HasShadow="False"
+                               HorizontalOptions="Center">
+                            <Grid>
+                                <Label Text="👤" 
+                                       FontSize="80" 
+                                       HorizontalOptions="Center" 
+                                       VerticalOptions="Center" />
+
+                                <!-- Image (visible when available) -->
+                                <Image x:Name="ProfileImage"
+                                       IsVisible="False"
+                                       Aspect="AspectFill"
+                                       HorizontalOptions="FillAndExpand"
+                                       VerticalOptions="FillAndExpand" />
+                            </Grid>
+                        </Frame>
+
+                        <Button Text="Change Photo"
+                                BackgroundColor="{StaticResource PrimaryColor}"
+                                TextColor="White"
+                                CornerRadius="20"
+                                WidthRequest="150"
+                                HeightRequest="40"
+                                Clicked="OnChangePhotoClicked" />
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Basic Information -->
+                <Frame BackgroundColor="{StaticResource CardBackgroundColor}"
+                       BorderColor="{StaticResource BorderColor}"
+                       CornerRadius="10"
+                       HasShadow="True"
+                       Padding="20">
+
+                    <VerticalStackLayout Spacing="15">
+                        <Label Text="Basic Information"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource PrimaryTextColor}" />
+
+                        <!-- Username Entry -->
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="Username"
+                                   FontSize="14"
+                                   TextColor="{StaticResource SecondaryTextColor}" />
+                            <Frame Padding="15,0" 
+                                   CornerRadius="5" 
+                                   HasShadow="False"
+                                   BorderColor="{StaticResource BorderColor}"
+                                   HeightRequest="45">
+                                <Entry x:Name="UsernameEntry"
+                                       Text="@yourUsername"
+                                       TextColor="{StaticResource PrimaryTextColor}"
+                                       BackgroundColor="Transparent"
+                                       VerticalOptions="Center" />
+                            </Frame>
+                        </VerticalStackLayout>
+
+                        <!-- Name Entry -->
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="Full Name"
+                                   FontSize="14"
+                                   TextColor="{StaticResource SecondaryTextColor}" />
+                            <Frame Padding="15,0" 
+                                   CornerRadius="5" 
+                                   HasShadow="False"
+                                   BorderColor="{StaticResource BorderColor}"
+                                   HeightRequest="45">
+                                <Entry x:Name="FullNameEntry"
+                                       Text="John Smith"
+                                       TextColor="{StaticResource PrimaryTextColor}"
+                                       BackgroundColor="Transparent"
+                                       VerticalOptions="Center" />
+                            </Frame>
+                        </VerticalStackLayout>
+
+                        <!-- Email Entry -->
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="Email"
+                                   FontSize="14"
+                                   TextColor="{StaticResource SecondaryTextColor}" />
+                            <Frame Padding="15,0" 
+                                   CornerRadius="5" 
+                                   HasShadow="False"
+                                   BorderColor="{StaticResource BorderColor}"
+                                   HeightRequest="45">
+                                <Entry x:Name="EmailEntry"
+                                       Text="john.smith@example.com"
+                                       TextColor="{StaticResource PrimaryTextColor}"
+                                       BackgroundColor="Transparent"
+                                       VerticalOptions="Center"
+                                       Keyboard="Email" />
+                            </Frame>
+                        </VerticalStackLayout>
+
+                        <!-- Phone Entry -->
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="Phone Number"
+                                   FontSize="14"
+                                   TextColor="{StaticResource SecondaryTextColor}" />
+                            <Frame Padding="15,0" 
+                                   CornerRadius="5" 
+                                   HasShadow="False"
+                                   BorderColor="{StaticResource BorderColor}"
+                                   HeightRequest="45">
+                                <Entry x:Name="PhoneEntry"
+                                       Text="(555) 123-4567"
+                                       TextColor="{StaticResource PrimaryTextColor}"
+                                       BackgroundColor="Transparent"
+                                       VerticalOptions="Center"
+                                       Keyboard="Telephone" />
+                            </Frame>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Basketball Profile -->
+                <Frame BackgroundColor="{StaticResource CardBackgroundColor}"
+                       BorderColor="{StaticResource BorderColor}"
+                       CornerRadius="10"
+                       HasShadow="True"
+                       Padding="20">
+
+                    <VerticalStackLayout Spacing="15">
+                        <Label Text="Basketball Profile"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource PrimaryTextColor}" />
+
+                        <!-- Position Picker -->
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="Primary Position"
+                                   FontSize="14"
+                                   TextColor="{StaticResource SecondaryTextColor}" />
+                            <Frame Padding="15,0" 
+                                   CornerRadius="5" 
+                                   HasShadow="False"
+                                   BorderColor="{StaticResource BorderColor}"
+                                   HeightRequest="45">
+                                <Picker x:Name="PositionPicker"
+                                        Title="Select Position"
+                                        SelectedIndex="0"
+                                        TextColor="{StaticResource PrimaryTextColor}"
+                                        BackgroundColor="Transparent"
+                                        VerticalOptions="Center">
+                                    <Picker.Items>
+                                        <x:String>Point Guard</x:String>
+                                        <x:String>Shooting Guard</x:String>
+                                        <x:String>Small Forward</x:String>
+                                        <x:String>Power Forward</x:String>
+                                        <x:String>Center</x:String>
+                                    </Picker.Items>
+                                </Picker>
+                            </Frame>
+                        </VerticalStackLayout>
+
+                        <!-- Height Entry -->
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="Height"
+                                   FontSize="14"
+                                   TextColor="{StaticResource SecondaryTextColor}" />
+                            <Frame Padding="15,0" 
+                                   CornerRadius="5" 
+                                   HasShadow="False"
+                                   BorderColor="{StaticResource BorderColor}"
+                                   HeightRequest="45">
+                                <Entry x:Name="HeightEntry"
+                                       Text="6'2\""
+                                       TextColor="{StaticResource PrimaryTextColor}"
+                                       BackgroundColor="Transparent"
+                                       VerticalOptions="Center" />
+                            </Frame>
+                        </VerticalStackLayout>
+
+                        <!-- Skill Level -->
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="Skill Level"
+                                   FontSize="14"
+                                   TextColor="{StaticResource SecondaryTextColor}" />
+                            <Frame Padding="15,0" 
+                                   CornerRadius="5" 
+                                   HasShadow="False"
+                                   BorderColor="{StaticResource BorderColor}"
+                                   HeightRequest="45">
+                                <Picker x:Name="SkillLevelPicker"
+                                        Title="Select Skill Level"
+                                        SelectedIndex="1"
+                                        TextColor="{StaticResource PrimaryTextColor}"
+                                        BackgroundColor="Transparent"
+                                        VerticalOptions="Center">
+                                    <Picker.Items>
+                                        <x:String>Beginner</x:String>
+                                        <x:String>Intermediate</x:String>
+                                        <x:String>Advanced</x:String>
+                                        <x:String>Professional</x:String>
+                                    </Picker.Items>
+                                </Picker>
+                            </Frame>
+                        </VerticalStackLayout>
+
+                        <!-- Years Playing -->
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="Years Playing"
+                                   FontSize="14"
+                                   TextColor="{StaticResource SecondaryTextColor}" />
+                            <Frame Padding="15,0" 
+                                   CornerRadius="5" 
+                                   HasShadow="False"
+                                   BorderColor="{StaticResource BorderColor}"
+                                   HeightRequest="45">
+                                <Entry x:Name="YearsPlayingEntry"
+                                       Text="10"
+                                       TextColor="{StaticResource PrimaryTextColor}"
+                                       BackgroundColor="Transparent"
+                                       VerticalOptions="Center"
+                                       Keyboard="Numeric" />
+                            </Frame>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Location -->
+                <Frame BackgroundColor="{StaticResource CardBackgroundColor}"
+                       BorderColor="{StaticResource BorderColor}"
+                       CornerRadius="10"
+                       HasShadow="True"
+                       Padding="20">
+
+                    <VerticalStackLayout Spacing="15">
+                        <Label Text="Location"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource PrimaryTextColor}" />
+
+                        <!-- City Entry -->
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="City"
+                                   FontSize="14"
+                                   TextColor="{StaticResource SecondaryTextColor}" />
+                            <Frame Padding="15,0" 
+                                   CornerRadius="5" 
+                                   HasShadow="False"
+                                   BorderColor="{StaticResource BorderColor}"
+                                   HeightRequest="45">
+                                <Entry x:Name="CityEntry"
+                                       Text="Atlanta"
+                                       TextColor="{StaticResource PrimaryTextColor}"
+                                       BackgroundColor="Transparent"
+                                       VerticalOptions="Center" />
+                            </Frame>
+                        </VerticalStackLayout>
+
+                        <!-- State Entry -->
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="State"
+                                   FontSize="14"
+                                   TextColor="{StaticResource SecondaryTextColor}" />
+                            <Frame Padding="15,0" 
+                                   CornerRadius="5" 
+                                   HasShadow="False"
+                                   BorderColor="{StaticResource BorderColor}"
+                                   HeightRequest="45">
+                                <Entry x:Name="StateEntry"
+                                       Text="Georgia"
+                                       TextColor="{StaticResource PrimaryTextColor}"
+                                       BackgroundColor="Transparent"
+                                       VerticalOptions="Center" />
+                            </Frame>
+                        </VerticalStackLayout>
+
+                        <!-- Share Location Switch -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <VerticalStackLayout Grid.Column="0">
+                                <Label Text="Share My Location"
+                                       FontSize="16"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                                <Label Text="Allow other players to see your general location"
+                                       FontSize="13"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
+                            </VerticalStackLayout>
+
+                            <Switch Grid.Column="1"
+                                    x:Name="ShareLocationSwitch"
+                                    IsToggled="true"
+                                    OnColor="{StaticResource PrimaryColor}"
+                                    VerticalOptions="Center" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Privacy Settings -->
+                <Frame BackgroundColor="{StaticResource CardBackgroundColor}"
+                       BorderColor="{StaticResource BorderColor}"
+                       CornerRadius="10"
+                       HasShadow="True"
+                       Padding="20">
+
+                    <VerticalStackLayout Spacing="15">
+                        <Label Text="Privacy Settings"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource PrimaryTextColor}" />
+
+                        <!-- Public Profile Switch -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <VerticalStackLayout Grid.Column="0">
+                                <Label Text="Public Profile"
+                                       FontSize="16"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                                <Label Text="Make your profile visible to other players"
+                                       FontSize="13"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
+                            </VerticalStackLayout>
+
+                            <Switch Grid.Column="1"
+                                    x:Name="PublicProfileSwitch"
+                                    IsToggled="true"
+                                    OnColor="{StaticResource PrimaryColor}"
+                                    VerticalOptions="Center" />
+                        </Grid>
+
+                        <!-- Show Stats Switch -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <VerticalStackLayout Grid.Column="0">
+                                <Label Text="Show Statistics"
+                                       FontSize="16"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                                <Label Text="Allow others to see your game statistics"
+                                       FontSize="13"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
+                            </VerticalStackLayout>
+
+                            <Switch Grid.Column="1"
+                                    x:Name="ShowStatsSwitch"
+                                    IsToggled="true"
+                                    OnColor="{StaticResource PrimaryColor}"
+                                    VerticalOptions="Center" />
+                        </Grid>
+
+                        <!-- Game Notifications Switch -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <VerticalStackLayout Grid.Column="0">
+                                <Label Text="Game Notifications"
+                                       FontSize="16"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                                <Label Text="Receive notifications about nearby games"
+                                       FontSize="13"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
+                            </VerticalStackLayout>
+
+                            <Switch Grid.Column="1"
+                                    x:Name="GameNotificationsSwitch"
+                                    IsToggled="true"
+                                    OnColor="{StaticResource PrimaryColor}"
+                                    VerticalOptions="Center" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Save Button -->
+                <Button Text="Save Changes"
+                        BackgroundColor="{StaticResource PrimaryColor}"
+                        TextColor="White"
+                        CornerRadius="25"
+                        HeightRequest="50"
+                        FontAttributes="Bold"
+                        FontSize="16"
+                        Margin="0,10,0,40"
+                        Clicked="OnSaveChangesClicked" />
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Navigation Footer -->
+        <Grid Grid.Row="2"
+              ColumnDefinitions="*,*,*,*"
+              BackgroundColor="{StaticResource CardBackgroundColor}"
+              HeightRequest="70"
+              Margin="-20,0,-20,0"
+              Padding="0,5,0,20">
+
+            <VerticalStackLayout Grid.Column="0"
+                         HorizontalOptions="Center"
+                         VerticalOptions="Center"
+                         Spacing="2">
+                <Label Text="🏠"
+                       FontSize="20"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+                <Label Text="Home"
+                       FontSize="12"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+
+                <VerticalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnHomeNavigationClicked" />
+                </VerticalStackLayout.GestureRecognizers>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Grid.Column="1"
+                         HorizontalOptions="Center"
+                         VerticalOptions="Center"
+                         Spacing="2">
+                <Label Text="📊"
+                       FontSize="20"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+                <Label Text="Stats"
+                       FontSize="12"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+
+                <VerticalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnStatsNavigationClicked" />
+                </VerticalStackLayout.GestureRecognizers>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Grid.Column="2"
+                         HorizontalOptions="Center"
+                         VerticalOptions="Center"
+                         Spacing="2">
+                <Label Text="🏀"
+                       FontSize="20"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+                <Label Text="Games"
+                       FontSize="12"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+
+                <VerticalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnGamesNavigationClicked" />
+                </VerticalStackLayout.GestureRecognizers>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Grid.Column="3"
+                         HorizontalOptions="Center"
+                         VerticalOptions="Center"
+                         Spacing="2">
+                <Label Text="👤"
+                       FontSize="20"
+                       TextColor="{StaticResource PrimaryColor}"
+                       HorizontalOptions="Center" />
+                <Label Text="Profile"
+                       FontSize="12"
+                       TextColor="{StaticResource PrimaryColor}"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center" />
+            </VerticalStackLayout>
+        </Grid>
+    </Grid>
+</ContentPage>
