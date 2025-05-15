@@ -44,9 +44,8 @@
         <!-- Replace with FindGamesPage once available -->
     </FlyoutItem>
 
-    <FlyoutItem Title="Training" Icon="training.png">
-        <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" />
-        <!-- Replace with TrainingPage once available -->
+    <FlyoutItem Title="Hoopers" Icon="search.png">
+        <ShellContent ContentTemplate="{DataTemplate pages:HoopersPage}" Route="HoopersPage" />
     </FlyoutItem>
 
     <FlyoutItem Title="Teams" Icon="team.png">

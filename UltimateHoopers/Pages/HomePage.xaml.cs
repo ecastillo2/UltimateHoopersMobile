@@ -24,7 +24,26 @@ namespace UltimateHoopers.Pages
 
         private async void OnHoopersClicked(object sender, EventArgs e)
         {
-            await DisplayAlert("Hoopers", "Hoopers feature coming soon!", "OK");
+            try
+            {
+                // Navigate to HoopersPage
+                await Navigation.PushAsync(new HoopersPage());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Navigation error: {ex.Message}");
+
+                // Alternative navigation using Shell if direct navigation fails
+                try
+                {
+                    await Shell.Current.GoToAsync("HoopersPage");
+                }
+                catch
+                {
+                    // Fallback to display an alert if all navigation attempts fail
+                    await DisplayAlert("Hoopers", "Could not navigate to Hoopers page", "OK");
+                }
+            }
         }
 
         private async void OnTeamsClicked(object sender, EventArgs e)

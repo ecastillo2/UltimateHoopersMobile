@@ -79,6 +79,7 @@ namespace UltimateHoopers
                 builder.Services.AddTransient<LoginPage>();
                 builder.Services.AddTransient<VideoPlayerPage>();
                 builder.Services.AddTransient<CodeSplashScreen>();
+                builder.Services.AddTransient<HoopersPage>();
                 DiagnosticHelper.Log("Pages registered");
 
 #if DEBUG
