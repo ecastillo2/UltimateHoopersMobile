@@ -54,7 +54,7 @@ namespace UltimateHoopers.Pages
         private void LoadUserProfileData()
         {
             // Load data into form fields
-            UsernameEntry.Text = _userProfile.Username;
+            UsernameEntry.Text = App.User.Profile.UserName;
             FullNameEntry.Text = _userProfile.FullName;
             EmailEntry.Text = _userProfile.Email;
             PhoneEntry.Text = _userProfile.PhoneNumber;

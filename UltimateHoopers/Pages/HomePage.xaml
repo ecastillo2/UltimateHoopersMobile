@@ -262,6 +262,9 @@
                FontSize="12"
                TextColor="{StaticResource SecondaryTextColor}"
                HorizontalOptions="Center" />
+                <VerticalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnMessagesNavigationClicked" />
+                </VerticalStackLayout.GestureRecognizers>
             </VerticalStackLayout>
 
             <VerticalStackLayout Grid.Column="3"

@@ -44,7 +44,7 @@ namespace UltimateHoopers.Services
 
                     // Update the global token for easy access
                     App.AuthToken = user.Token;
-
+                    App.User = user;
                     return user;
                 }
 
@@ -79,6 +79,7 @@ namespace UltimateHoopers.Services
 
                 // Clear the global token
                 App.AuthToken = null;
+                App.User = null;
             }
             catch (Exception ex)
             {
@@ -179,7 +180,7 @@ namespace UltimateHoopers.Services
 
                     // Update global token
                     App.AuthToken = user.Token;
-
+                    App.User = user;
                     return true;
                 }
 

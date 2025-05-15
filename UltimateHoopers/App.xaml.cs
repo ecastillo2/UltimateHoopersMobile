@@ -6,6 +6,7 @@ using UltimateHoopers.Pages;
 using UltimateHoopers.Services;
 using UltimateHoopers.Helpers;
 using Microsoft.Maui.Dispatching;
+using Domain;
 
 namespace UltimateHoopers
 {
@@ -13,6 +14,8 @@ namespace UltimateHoopers
     {
         // Auth token for global access
         public static string AuthToken { get; set; }
+        public static Profile Profile { get; set; }
+        public static User User { get; set; }
 
         public App()
         {

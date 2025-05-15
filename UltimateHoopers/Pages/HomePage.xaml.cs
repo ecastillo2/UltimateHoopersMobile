@@ -121,13 +121,28 @@ namespace UltimateHoopers.Pages
 
         private async void OnProfileClicked(object sender, EventArgs e)
         {
-            await DisplayAlert("Profile", "Profile feature coming soon!", "OK");
+            try
+            {
+                // Navigate to EditProfilePage
+                await Navigation.PushAsync(new EditProfilePage());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Navigation error: {ex.Message}");
+                await DisplayAlert("Profile", "Could not navigate to Edit Profile page", "OK");
+            }
         }
 
         private async void OnPostsNavigationClicked(object sender, TappedEventArgs e)
         {
             // Navigate to posts page
             await Shell.Current.GoToAsync("//PostsPage");
+        }
+
+        private async void OnMessagesNavigationClicked(object sender, TappedEventArgs e)
+        {
+            // Navigate to posts page
+            await Shell.Current.GoToAsync("//MessagesPage");
         }
 
         private void OnMenuClicked(object sender, EventArgs e)

@@ -63,6 +63,7 @@ namespace UltimateHoopers
             Routing.RegisterRoute("statspage", typeof(Pages.StatsPage));
             Routing.RegisterRoute("findrunspage", typeof(Pages.FindRunsPage));
             Routing.RegisterRoute("shoppage", typeof(Pages.ShopPage));
+            Routing.RegisterRoute("editprofilepage", typeof(Pages.EditProfilePage));
             // Add additional routes as you create more pages
         }
 

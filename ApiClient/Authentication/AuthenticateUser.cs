@@ -98,7 +98,8 @@ namespace ApiClient.Authentication
                     Email = email,
                     Token = authResult.Token,
                     AccessLevel = authResult.AccessLevel,
-                    TokenExpiration = authResult.ExpiresAt
+                    TokenExpiration = authResult.ExpiresAt,
+                    Profile = authResult.Profile
                 };
 
                 return authenticatedUser;
@@ -153,6 +154,7 @@ namespace ApiClient.Authentication
         public string? SubId { get; set; }
         public string? Token { get; set; }
         public string? AccessLevel { get; set; }
+        public Profile? Profile { get; set; }
         public DateTime? ExpiresAt { get; set; }
     }
 }

@@ -52,55 +52,122 @@
 
                 <!-- Player Profile Card -->
                 <Frame BorderColor="{StaticResource BorderColor}"
-                       CornerRadius="10"
-                       HasShadow="True"
-                       Padding="20"
-                       BackgroundColor="{StaticResource CardBackgroundColor}">
-
+       CornerRadius="10"
+       HasShadow="True"
+       Padding="20"
+       BackgroundColor="{StaticResource CardBackgroundColor}">
                     <Grid RowDefinitions="Auto,Auto"
-                          ColumnDefinitions="Auto,*">
-
+          ColumnDefinitions="Auto,*,Auto">
                         <!-- Profile Photo -->
                         <Frame Grid.Row="0"
-                               Grid.RowSpan="2"
-                               Grid.Column="0"
-                               CornerRadius="40"
-                               HeightRequest="80"
-                               WidthRequest="80"
-                               Padding="0"
-                               BorderColor="{StaticResource PrimaryColor}"
-                               HasShadow="False">
+               Grid.RowSpan="2"
+               Grid.Column="0"
+               CornerRadius="40"
+               HeightRequest="80"
+               WidthRequest="80"
+               Padding="0"
+               BorderColor="{StaticResource PrimaryColor}"
+               HasShadow="False">
                             <Label Text="👤" 
-                                   FontSize="40" 
-                                   HorizontalOptions="Center" 
-                                   VerticalOptions="Center" />
+                   FontSize="40" 
+                   HorizontalOptions="Center" 
+                   VerticalOptions="Center" />
                         </Frame>
 
                         <!-- Profile Info -->
                         <VerticalStackLayout Grid.Row="0"
-                                             Grid.Column="1"
-                                             Margin="15,0,0,0">
+                             Grid.Column="1"
+                             Margin="15,0,0,0"
+                             Spacing="2">
+                            <!-- Username -->
                             <Label Text="@yourUsername"
-                                   FontSize="20"
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource PrimaryTextColor}" />
+                   FontSize="20"
+                   FontAttributes="Bold"
+                   TextColor="{StaticResource PrimaryTextColor}" />
+
+                            <!-- Position and Height -->
                             <Label Text="Point Guard • 6'2"
-                                   FontSize="16"
-                                   TextColor="{StaticResource SecondaryTextColor}" />
+                   FontSize="16"
+                   TextColor="{StaticResource SecondaryTextColor}" />
+
+                            <!-- Player Number -->
+                            <HorizontalStackLayout Spacing="5">
+                                <Label Text="Player #"
+                       FontSize="14"
+                       TextColor="{StaticResource SecondaryTextColor}" />
+                                <Label Text="23456"
+                       FontSize="14"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource PrimaryTextColor}" />
+                            </HorizontalStackLayout>
+                        </VerticalStackLayout>
+
+                        <!-- Stats Badges Container -->
+                        <VerticalStackLayout Grid.Row="0"
+                            Grid.Column="2"
+                            HorizontalOptions="End"
+                            VerticalOptions="Start"
+                            Spacing="8">
+
+                            <!-- Ranking Badge -->
+                            <Frame BackgroundColor="{StaticResource PrimaryColor}"
+                   CornerRadius="15"
+                   Padding="10,5"
+                   HasShadow="True">
+                                <StackLayout Orientation="Horizontal" Spacing="5">
+                                    <Label Text="🏆" 
+                           FontSize="14" 
+                           TextColor="White"
+                           VerticalOptions="Center" />
+                                    <Label Text="#3"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           TextColor="White" 
+                           VerticalOptions="Center" />
+                                    <Label Text="Rank"
+                           FontSize="12"
+                           TextColor="White" 
+                           VerticalOptions="Center" />
+                                </StackLayout>
+                            </Frame>
+
+                            <!-- Points Badge -->
+                            <Frame BackgroundColor="{StaticResource SecondaryColor}"
+                   BorderColor="{StaticResource PrimaryColor}"
+                   CornerRadius="15"
+                   Padding="10,5"
+                   HasShadow="True">
+                                <StackLayout Orientation="Horizontal" Spacing="5">
+                                    <Label Text="⭐" 
+                           FontSize="14" 
+                           TextColor="{StaticResource PrimaryColor}"
+                           VerticalOptions="Center" />
+                                    <Label Text="2,450"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource PrimaryColor}" 
+                           VerticalOptions="Center" />
+                                    <Label Text="pts"
+                           FontSize="12"
+                           TextColor="{StaticResource PrimaryColor}" 
+                           VerticalOptions="Center" />
+                                </StackLayout>
+                            </Frame>
                         </VerticalStackLayout>
 
                         <!-- Edit Profile Button -->
                         <Button Grid.Row="1"
-                                Grid.Column="1"
-                                Text="Edit Profile"
-                                Margin="15,10,0,0"
-                                BackgroundColor="{StaticResource PrimaryColor}"
-                                TextColor="White"
-                                CornerRadius="20"
-                                HeightRequest="40"
-                                WidthRequest="120"
-                                HorizontalOptions="Start"
-                                Clicked="OnEditProfileClicked" />
+                Grid.Column="1"
+                Grid.ColumnSpan="2"
+                Text="Edit Profile"
+                Margin="15,10,0,0"
+                BackgroundColor="{StaticResource PrimaryColor}"
+                TextColor="White"
+                CornerRadius="20"
+                HeightRequest="40"
+                WidthRequest="120"
+                HorizontalOptions="Start"
+                Clicked="OnEditProfileClicked" />
                     </Grid>
                 </Frame>
 
@@ -244,7 +311,7 @@
                             </Frame>
 
                             <!-- 3-Point % -->
-                            <Frame Grid.Row="2"
+                            <!--<Frame Grid.Row="2"
                                    Grid.Column="0"
                                    BorderColor="{StaticResource BorderColor}"
                                    CornerRadius="10"
@@ -261,10 +328,10 @@
                                            TextColor="{StaticResource SecondaryTextColor}"
                                            HorizontalOptions="Center" />
                                 </VerticalStackLayout>
-                            </Frame>
+                            </Frame>-->
 
                             <!-- Field Goal % -->
-                            <Frame Grid.Row="2"
+                            <!--<Frame Grid.Row="2"
                                    Grid.Column="1"
                                    BorderColor="{StaticResource BorderColor}"
                                    CornerRadius="10"
@@ -281,10 +348,10 @@
                                            TextColor="{StaticResource SecondaryTextColor}"
                                            HorizontalOptions="Center" />
                                 </VerticalStackLayout>
-                            </Frame>
+                            </Frame>-->
 
                             <!-- Free Throw % -->
-                            <Frame Grid.Row="2"
+                            <!--<Frame Grid.Row="2"
                                    Grid.Column="2"
                                    BorderColor="{StaticResource BorderColor}"
                                    CornerRadius="10"
@@ -301,7 +368,7 @@
                                            TextColor="{StaticResource SecondaryTextColor}"
                                            HorizontalOptions="Center" />
                                 </VerticalStackLayout>
-                            </Frame>
+                            </Frame>-->
                         </Grid>
                     </VerticalStackLayout>
                 </Frame>
@@ -340,7 +407,7 @@
                                        FontSize="16"
                                        FontAttributes="Bold"
                                        TextColor="{StaticResource PrimaryTextColor}" />
-                                <Label Text="Win - 21 pts, 4 ast, 2 reb"
+                                <Label Text="Win"
                                        FontSize="14"
                                        TextColor="{StaticResource SecondaryTextColor}" />
                             </VerticalStackLayout>
@@ -350,10 +417,7 @@
                                    CornerRadius="15"
                                    Padding="10,5"
                                    VerticalOptions="Center">
-                                <Label Text="76-68"
-                                       TextColor="White"
-                                       FontAttributes="Bold"
-                                       FontSize="14" />
+                                
                             </Frame>
                         </Grid>
 
@@ -378,9 +442,7 @@
                                        FontSize="16"
                                        FontAttributes="Bold"
                                        TextColor="{StaticResource PrimaryTextColor}" />
-                                <Label Text="Loss - 15 pts, 7 ast, 3 reb"
-                                       FontSize="14"
-                                       TextColor="{StaticResource SecondaryTextColor}" />
+                                
                             </VerticalStackLayout>
 
                             <Frame Grid.Column="2"
@@ -388,10 +450,7 @@
                                    CornerRadius="15"
                                    Padding="10,5"
                                    VerticalOptions="Center">
-                                <Label Text="64-72"
-                                       TextColor="White"
-                                       FontAttributes="Bold"
-                                       FontSize="14" />
+                               
                             </Frame>
                         </Grid>
 
@@ -416,7 +475,7 @@
                                        FontSize="16"
                                        FontAttributes="Bold"
                                        TextColor="{StaticResource PrimaryTextColor}" />
-                                <Label Text="Win - 24 pts, 3 ast, 4 reb"
+                                <Label Text="Win"
                                        FontSize="14"
                                        TextColor="{StaticResource SecondaryTextColor}" />
                             </VerticalStackLayout>
@@ -426,10 +485,7 @@
                                    CornerRadius="15"
                                    Padding="10,5"
                                    VerticalOptions="Center">
-                                <Label Text="82-71"
-                                       TextColor="White"
-                                       FontAttributes="Bold"
-                                       FontSize="14" />
+                               
                             </Frame>
                         </Grid>
 
@@ -445,7 +501,7 @@
                     </VerticalStackLayout>
                 </Frame>
 
-                <!-- Skills Radar Chart (placeholder) -->
+                <!-- Skills Radar Chart (placeholder) --><!--
                 <Frame BorderColor="{StaticResource BorderColor}"
                        CornerRadius="10"
                        HasShadow="True"
@@ -458,7 +514,7 @@
                                FontAttributes="Bold"
                                TextColor="{StaticResource PrimaryTextColor}" />
 
-                        <!-- Radar Chart Placeholder - Changed from Grid with CornerRadius to Frame -->
+                        --><!-- Radar Chart Placeholder - Changed from Grid with CornerRadius to Frame --><!--
                         <Frame HeightRequest="200"
                               BackgroundColor="{StaticResource PageBackgroundColor}"
                               CornerRadius="10"
@@ -470,12 +526,12 @@
                                    TextColor="{StaticResource SecondaryTextColor}" />
                         </Frame>
 
-                        <!-- Skill Ratings -->
+                        --><!-- Skill Ratings --><!--
                         <Grid ColumnDefinitions="*,Auto"
                               RowDefinitions="Auto,Auto,Auto,Auto,Auto"
                               RowSpacing="10">
 
-                            <!-- Shooting Rating -->
+                            --><!-- Shooting Rating --><!--
                             <Label Grid.Row="0"
                                    Grid.Column="0"
                                    Text="Shooting"
@@ -488,7 +544,7 @@
                                        FontSize="16" />
                             </HorizontalStackLayout>
 
-                            <!-- Passing Rating -->
+                            --><!-- Passing Rating --><!--
                             <Label Grid.Row="1"
                                    Grid.Column="0"
                                    Text="Passing"
@@ -501,7 +557,7 @@
                                        FontSize="16" />
                             </HorizontalStackLayout>
 
-                            <!-- Defense Rating -->
+                            --><!-- Defense Rating --><!--
                             <Label Grid.Row="2"
                                    Grid.Column="0"
                                    Text="Defense"
@@ -514,7 +570,7 @@
                                        FontSize="16" />
                             </HorizontalStackLayout>
 
-                            <!-- Speed Rating -->
+                            --><!-- Speed Rating --><!--
                             <Label Grid.Row="3"
                                    Grid.Column="0"
                                    Text="Speed"
@@ -527,7 +583,7 @@
                                        FontSize="16" />
                             </HorizontalStackLayout>
 
-                            <!-- Basketball IQ Rating -->
+                            --><!-- Basketball IQ Rating --><!--
                             <Label Grid.Row="4"
                                    Grid.Column="0"
                                    Text="Basketball IQ"
@@ -541,7 +597,7 @@
                             </HorizontalStackLayout>
                         </Grid>
                     </VerticalStackLayout>
-                </Frame>
+                </Frame>-->
 
                 <!-- Achievements or Badges Card -->
                 <Frame BorderColor="{StaticResource BorderColor}"

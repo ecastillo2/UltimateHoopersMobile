@@ -67,7 +67,7 @@
                         <Frame Padding="15,0" 
                                CornerRadius="25" 
                                HasShadow="False"
-                               BorderColor="{StaticResource BorderColor}"
+                               BorderColor="White"
                                HeightRequest="50">
                             <Grid ColumnDefinitions="Auto,*">
                                 <Label Text="🔍" 
@@ -78,7 +78,7 @@
                                        Placeholder="Search by location..." 
                                        PlaceholderColor="{StaticResource SecondaryTextColor}"
                                        TextColor="{StaticResource PrimaryTextColor}"
-                                       BackgroundColor="Transparent" 
+                                       BackgroundColor="LightGrey"
                                        Margin="5,0,0,0"
                                        VerticalOptions="Center"
                                        x:Name="SearchEntry"
@@ -92,16 +92,20 @@
                                    Padding="10" 
                                    CornerRadius="10" 
                                    HasShadow="False"
+                                   BackgroundColor="White"
                                    BorderColor="{StaticResource BorderColor}">
                                 <Grid ColumnDefinitions="Auto,*">
                                     <Label Text="📅" 
                                            FontSize="18" 
                                            VerticalOptions="Center"
+                                           BackgroundColor="White"
                                            TextColor="{StaticResource PrimaryTextColor}" />
                                     <Picker Grid.Column="1" 
                                             Title="Select Date" 
+                                            TitleColor="Black"
                                             Margin="5,0,0,0"
                                             TextColor="{StaticResource PrimaryTextColor}"
+                                            BackgroundColor="LightGrey"
                                             x:Name="DatePicker"
                                             SelectedIndexChanged="OnDateSelected">
                                         <Picker.Items>
@@ -118,17 +122,23 @@
                                    Padding="10" 
                                    CornerRadius="10" 
                                    HasShadow="False"
+                                   BackgroundColor="White"
                                    BorderColor="{StaticResource BorderColor}">
                                 <Grid ColumnDefinitions="Auto,*">
                                     <Label Text="👥" 
                                            FontSize="18" 
                                            VerticalOptions="Center"
-                                           TextColor="{StaticResource PrimaryTextColor}" />
+                                           BackgroundColor="White"
+                                           TextColor="Black" />
                                     <Picker Grid.Column="1" 
                                             Title="Skill Level" 
-                                            Margin="5,0,0,0"
+                                            TitleColor="Black"
                                             TextColor="{StaticResource PrimaryTextColor}"
+                                            Margin="5,0,0,0"
+                                           
                                             x:Name="SkillLevelPicker"
+                                            BackgroundColor="LightGrey"
+                                         
                                             SelectedIndexChanged="OnSkillLevelSelected">
                                         <Picker.Items>
                                             <x:String>All Levels</x:String>
