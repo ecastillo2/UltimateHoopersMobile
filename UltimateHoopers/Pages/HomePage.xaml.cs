@@ -38,7 +38,26 @@ namespace UltimateHoopers.Pages
 
         private async void OnFindGamesClicked(object sender, EventArgs e)
         {
-            await DisplayAlert("Find Games", "Find Games feature coming soon!", "OK");
+            try
+            {
+                // Navigate to Find Runs
+                await Navigation.PushAsync(new FindRunsPage());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Navigation error: {ex.Message}");
+
+                // Alternative navigation using Shell if direct navigation fails
+                try
+                {
+                    await Shell.Current.GoToAsync("FindRunsPage");
+                }
+                catch
+                {
+                    // Fallback to display an alert if all navigation attempts fail
+                    await DisplayAlert("Find Runs", "Could not navigate to Finds Runs page", "OK");
+                }
+            }
         }
 
         private async void OnHoopersClicked(object sender, EventArgs e)

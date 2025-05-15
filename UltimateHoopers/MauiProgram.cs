@@ -81,6 +81,7 @@ namespace UltimateHoopers
                 builder.Services.AddTransient<CodeSplashScreen>();
                 builder.Services.AddTransient<HoopersPage>();
                 builder.Services.AddTransient<StatsPage>();
+                builder.Services.AddTransient<FindRunsPage>();
                 DiagnosticHelper.Log("Pages registered");
 
 #if DEBUG

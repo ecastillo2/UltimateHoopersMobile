@@ -258,7 +258,7 @@
                 <Label Text="📅"
                FontSize="20"
                HorizontalOptions="Center" />
-                <Label Text="Schedule"
+                <Label Text="Messages"
                FontSize="12"
                TextColor="{StaticResource SecondaryTextColor}"
                HorizontalOptions="Center" />

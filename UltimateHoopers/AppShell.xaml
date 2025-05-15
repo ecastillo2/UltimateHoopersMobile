@@ -38,9 +38,8 @@
         <ShellContent ContentTemplate="{DataTemplate pages:StatsPage}" Route="statsPage" />
     </FlyoutItem>
 
-    <FlyoutItem Title="Find Games" Icon="basketball.png">
-        <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" />
-        <!-- Replace with FindGamesPage once available -->
+    <FlyoutItem Title="Stats" Icon="search.png">
+        <ShellContent ContentTemplate="{DataTemplate pages:FindRunsPage}" Route="rindrunsPage" />
     </FlyoutItem>
 
     <FlyoutItem Title="Hoopers" Icon="search.png">
