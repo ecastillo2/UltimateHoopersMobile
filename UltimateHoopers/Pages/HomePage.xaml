@@ -34,11 +34,16 @@
                    BackgroundColor="{StaticResource CardBackgroundColor}"
                    HasShadow="True"
                    Margin="0,0,10,0">
-
-                <Label Text="👤"
-                       HorizontalOptions="Center"
-                       VerticalOptions="Center"
-                       FontSize="24" />
+                <Label Text="👤" 
+            FontSize="24" 
+            HorizontalOptions="Center" 
+            VerticalOptions="Center" />
+                <!-- Image (visible when available) -->
+                <Image x:Name="ProfileImage"
+IsVisible="False"
+Aspect="AspectFill"
+HorizontalOptions="FillAndExpand"
+VerticalOptions="FillAndExpand" />
 
                 <Frame.GestureRecognizers>
                     <TapGestureRecognizer Tapped="OnProfileClicked" />

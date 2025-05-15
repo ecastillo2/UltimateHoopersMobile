@@ -10,6 +10,33 @@ namespace UltimateHoopers.Pages
         public HomePage()
         {
             InitializeComponent();
+            InitializeUserProfile();
+        }
+
+        private void InitializeUserProfile()
+        {
+            //UsernameText.Text = App.User.Profile.UserName;
+            //PositionHeightText.Text = $"{App.User.Profile.Position} • {App.User.Profile.Height}";
+            //PlayerNumberText.Text = App.User.Profile.PlayerNumber;
+            //GamesText.Text = App.User.Profile.TotalGames;
+            //RecordText.Text = $"{App.User.Profile.TotalWins} - {App.User.Profile.TotalLosses}";
+            //WinPercentageText.Text = App.User.Profile.WinPercentage;
+
+
+
+            // Load profile image if available
+            if (!string.IsNullOrEmpty(App.User.Profile.ImageURL))
+            {
+                try
+                {
+                    ProfileImage.Source = App.User.Profile.ImageURL;
+                    ProfileImage.IsVisible = true;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error loading profile image: {ex.Message}");
+                }
+            }
         }
 
         private async void OnStatsClicked(object sender, EventArgs e)

@@ -48,6 +48,7 @@ namespace Domain
 
         [NotMapped]
         public string? UserName { get; set; }
+       
 
         [NotMapped]
         public List<User>? Following { get; set; }

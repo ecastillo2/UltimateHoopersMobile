@@ -2,6 +2,7 @@
 using Domain;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace UltimateHoopers.Services
@@ -13,6 +14,7 @@ namespace UltimateHoopers.Services
         private const string TOKEN_KEY = "auth_token";
         private const string TOKEN_EXPIRATION_KEY = "token_expiration";
         private const string USER_ID_KEY = "user_id";
+        private const string USER_KEY = "user_data";
         private const string EMAIL_KEY = "user_email";
         private const string PASSWORD_KEY = "user_password"; // Note: storing password is risky, consider alternatives
 
@@ -34,6 +36,10 @@ namespace UltimateHoopers.Services
                     await SecureStorage.SetAsync(TOKEN_KEY, user.Token);
                     await SecureStorage.SetAsync(USER_ID_KEY, user.UserId);
                     await SecureStorage.SetAsync(EMAIL_KEY, email);
+                    await SecureStorage.SetAsync(PASSWORD_KEY, password);
+
+                    // Store full user data as JSON
+                    await SaveUserDataAsync(user);
 
                     // Store token expiration if available
                     if (user.TokenExpiration.HasValue)
@@ -42,9 +48,10 @@ namespace UltimateHoopers.Services
                             user.TokenExpiration.Value.ToString("o")); // ISO 8601 format
                     }
 
-                    // Update the global token for easy access
+                    // Update the global references for easy access
                     App.AuthToken = user.Token;
                     App.User = user;
+
                     return user;
                 }
 
@@ -62,7 +69,7 @@ namespace UltimateHoopers.Services
             try
             {
                 // Clear all stored authentication data
-                var keysToRemove = new[] { TOKEN_KEY, USER_ID_KEY, EMAIL_KEY, TOKEN_EXPIRATION_KEY, PASSWORD_KEY };
+                var keysToRemove = new[] { TOKEN_KEY, USER_ID_KEY, EMAIL_KEY, TOKEN_EXPIRATION_KEY, PASSWORD_KEY, USER_KEY };
 
                 foreach (var key in keysToRemove)
                 {
@@ -109,6 +116,17 @@ namespace UltimateHoopers.Services
                     }
                 }
 
+                // Load user data to App.User if not already set
+                if (App.User == null)
+                {
+                    App.User = await LoadUserDataAsync();
+                    if (App.User == null)
+                    {
+                        _logger.LogWarning("User data could not be loaded from secure storage");
+                        return false;
+                    }
+                }
+
                 return true;
             }
             catch (Exception ex)
@@ -122,7 +140,20 @@ namespace UltimateHoopers.Services
         {
             try
             {
-                var token = await SecureStorage.GetAsync(TOKEN_KEY);
+                // First try to get the token from the App's global auth token
+                var token = App.AuthToken;
+
+                // If it's not available in the global App state, try to get it from secure storage
+                if (string.IsNullOrEmpty(token))
+                {
+                    token = await SecureStorage.GetAsync(TOKEN_KEY);
+
+                    // Update the global token if we found it in storage
+                    if (!string.IsNullOrEmpty(token))
+                    {
+                        App.AuthToken = token;
+                    }
+                }
 
                 // If token exists but might be expired, check and refresh if needed
                 if (!string.IsNullOrEmpty(token))
@@ -137,6 +168,7 @@ namespace UltimateHoopers.Services
                             await RefreshTokenAsync();
                             // Get the new token
                             token = await SecureStorage.GetAsync(TOKEN_KEY);
+                            App.AuthToken = token;
                         }
                     }
                 }
@@ -172,6 +204,9 @@ namespace UltimateHoopers.Services
                     // Update stored token and expiration
                     await SecureStorage.SetAsync(TOKEN_KEY, user.Token);
 
+                    // Save the full user data
+                    await SaveUserDataAsync(user);
+
                     if (user.TokenExpiration.HasValue)
                     {
                         await SecureStorage.SetAsync(TOKEN_EXPIRATION_KEY,
@@ -190,6 +225,60 @@ namespace UltimateHoopers.Services
             {
                 _logger.LogError(ex, "Error refreshing token");
                 return false;
+            }
+        }
+
+        // Store user data in secure storage
+        private async Task SaveUserDataAsync(User user)
+        {
+            try
+            {
+                if (user == null)
+                    return;
+
+                // Serialize the User object to JSON
+                string jsonUser = JsonSerializer.Serialize(user, new JsonSerializerOptions
+                {
+                    WriteIndented = false
+                });
+
+                // Store the serialized user data
+                await SecureStorage.SetAsync(USER_KEY, jsonUser);
+                _logger.LogInformation("User data saved to secure storage");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving user data to secure storage");
+            }
+        }
+
+        // Load user data from secure storage
+        private async Task<User> LoadUserDataAsync()
+        {
+            try
+            {
+                // Get the serialized user data
+                string jsonUser = await SecureStorage.GetAsync(USER_KEY);
+
+                if (string.IsNullOrEmpty(jsonUser))
+                {
+                    _logger.LogWarning("No user data found in secure storage");
+                    return null;
+                }
+
+                // Deserialize the User object
+                User user = JsonSerializer.Deserialize<User>(jsonUser, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                _logger.LogInformation("User data loaded from secure storage");
+                return user;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading user data from secure storage");
+                return null;
             }
         }
     }

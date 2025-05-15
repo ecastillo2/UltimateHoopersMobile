@@ -55,16 +55,17 @@ namespace UltimateHoopers.Pages
         {
             // Load data into form fields
             UsernameEntry.Text = App.User.Profile.UserName;
-            FullNameEntry.Text = _userProfile.FullName;
-            EmailEntry.Text = _userProfile.Email;
-            PhoneEntry.Text = _userProfile.PhoneNumber;
+            FullNameEntry.Text = App.User.FirstName ;
+            EmailEntry.Text = App.User.Email;
+            PhoneEntry.Text = App.User.PhoneNumber;
+            
 
             // Set pickers
-            SetPickerValue(PositionPicker, _userProfile.Position);
+            SetPickerValue(PositionPicker, App.User.Profile.Position);
             SetPickerValue(SkillLevelPicker, _userProfile.SkillLevel);
 
-            HeightEntry.Text = _userProfile.Height;
-            YearsPlayingEntry.Text = _userProfile.YearsPlaying;
+            HeightEntry.Text = App.User.Profile.Height;
+            
 
             CityEntry.Text = _userProfile.City;
             StateEntry.Text = _userProfile.State;
@@ -76,11 +77,11 @@ namespace UltimateHoopers.Pages
             GameNotificationsSwitch.IsToggled = _userProfile.GameNotifications;
 
             // Load profile image if available
-            if (!string.IsNullOrEmpty(_userProfile.ProfileImagePath))
+            if (!string.IsNullOrEmpty(App.User.Profile.ImageURL))
             {
                 try
                 {
-                    ProfileImage.Source = _userProfile.ProfileImagePath;
+                    ProfileImage.Source = App.User.Profile.ImageURL;
                     ProfileImage.IsVisible = true;
                 }
                 catch (Exception ex)
@@ -89,6 +90,15 @@ namespace UltimateHoopers.Pages
                 }
             }
         }
+
+
+        private void OnPositionPickerSelectedIndexChanged(object sender, EventArgs e)
+        {
+            // When a position is selected, hide the placeholder
+            PickerPlaceholder.IsVisible = (PositionPicker.SelectedIndex == -1);
+        }
+
+       
 
         private void SetPickerValue(Picker picker, string value)
         {
@@ -272,8 +282,7 @@ namespace UltimateHoopers.Pages
                 _userProfile.Position = PositionPicker.SelectedItem?.ToString();
                 _userProfile.Height = HeightEntry.Text;
                 _userProfile.SkillLevel = SkillLevelPicker.SelectedItem?.ToString();
-                _userProfile.YearsPlaying = YearsPlayingEntry.Text;
-
+                
                 _userProfile.City = CityEntry.Text;
                 _userProfile.State = StateEntry.Text;
 
@@ -313,6 +322,11 @@ namespace UltimateHoopers.Pages
         {
             base.OnAppearing();
 
+            base.OnAppearing();
+
+            // Set initial state - hide placeholder if there's already a selection
+            PickerPlaceholder.IsVisible = (PositionPicker.SelectedIndex == -1);
+
             // Attach event handlers to track changes
             UsernameEntry.TextChanged += OnFormFieldChanged;
             FullNameEntry.TextChanged += OnFormFieldChanged;
@@ -322,7 +336,7 @@ namespace UltimateHoopers.Pages
             PositionPicker.SelectedIndexChanged += OnFormFieldChanged;
             HeightEntry.TextChanged += OnFormFieldChanged;
             SkillLevelPicker.SelectedIndexChanged += OnFormFieldChanged;
-            YearsPlayingEntry.TextChanged += OnFormFieldChanged;
+           
 
             CityEntry.TextChanged += OnFormFieldChanged;
             StateEntry.TextChanged += OnFormFieldChanged;
@@ -346,7 +360,7 @@ namespace UltimateHoopers.Pages
             PositionPicker.SelectedIndexChanged -= OnFormFieldChanged;
             HeightEntry.TextChanged -= OnFormFieldChanged;
             SkillLevelPicker.SelectedIndexChanged -= OnFormFieldChanged;
-            YearsPlayingEntry.TextChanged -= OnFormFieldChanged;
+            
 
             CityEntry.TextChanged -= OnFormFieldChanged;
             StateEntry.TextChanged -= OnFormFieldChanged;

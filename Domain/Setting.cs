@@ -34,14 +34,6 @@ namespace Domain
         /// </summary>
         public bool AllowEmailNotification { get; set; } = true;
 
-        /// <summary>
-        /// Gets or sets the creation date
-        /// </summary>
-        public DateTime CreatedDate { get; set; } = DateTime.Now;
-
-        /// <summary>
-        /// Gets or sets the last modified date
-        /// </summary>
-        public DateTime? LastModifiedDate { get; set; }
+        
     }
 }

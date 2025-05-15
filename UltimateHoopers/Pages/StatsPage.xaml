@@ -72,6 +72,12 @@
                    FontSize="40" 
                    HorizontalOptions="Center" 
                    VerticalOptions="Center" />
+                            <!-- Image (visible when available) -->
+                            <Image x:Name="ProfileImage"
+       IsVisible="False"
+       Aspect="AspectFill"
+       HorizontalOptions="FillAndExpand"
+       VerticalOptions="FillAndExpand" />
                         </Frame>
 
                         <!-- Profile Info -->
@@ -80,13 +86,13 @@
                              Margin="15,0,0,0"
                              Spacing="2">
                             <!-- Username -->
-                            <Label Text="@yourUsername"
+                            <Label x:Name="UsernameText"
                    FontSize="20"
                    FontAttributes="Bold"
                    TextColor="{StaticResource PrimaryTextColor}" />
 
                             <!-- Position and Height -->
-                            <Label Text="Point Guard • 6'2"
+                            <Label x:Name="PositionHeightText" 
                    FontSize="16"
                    TextColor="{StaticResource SecondaryTextColor}" />
 
@@ -95,7 +101,7 @@
                                 <Label Text="Player #"
                        FontSize="14"
                        TextColor="{StaticResource SecondaryTextColor}" />
-                                <Label Text="23456"
+                                <Label x:Name="PlayerNumberText" 
                        FontSize="14"
                        FontAttributes="Bold"
                        TextColor="{StaticResource PrimaryTextColor}" />
@@ -198,7 +204,7 @@
                                    Padding="10"
                                    BackgroundColor="{StaticResource PageBackgroundColor}">
                                 <VerticalStackLayout HorizontalOptions="Center">
-                                    <Label Text="87"
+                                    <Label x:Name="GamesText" 
                                            FontSize="24"
                                            FontAttributes="Bold"
                                            TextColor="{StaticResource PrimaryColor}"
@@ -218,7 +224,7 @@
                                    Padding="10"
                                    BackgroundColor="{StaticResource PageBackgroundColor}">
                                 <VerticalStackLayout HorizontalOptions="Center">
-                                    <Label Text="54-33"
+                                    <Label x:Name="RecordText" 
                                            FontSize="24"
                                            FontAttributes="Bold"
                                            TextColor="{StaticResource PrimaryColor}"
@@ -238,7 +244,7 @@
                                    Padding="10"
                                    BackgroundColor="{StaticResource PageBackgroundColor}">
                                 <VerticalStackLayout HorizontalOptions="Center">
-                                    <Label Text="62.1%"
+                                    <Label x:Name="WinPercentageText" 
                                            FontSize="24"
                                            FontAttributes="Bold"
                                            TextColor="{StaticResource PrimaryColor}"

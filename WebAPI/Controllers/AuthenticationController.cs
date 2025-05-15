@@ -1,7 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using DataLayer;
+using DataLayer.DAL;
+using Domain;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
 using WebAPI.Services;
-using Domain;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace WebAPI.Controllers
 {
@@ -13,14 +17,19 @@ namespace WebAPI.Controllers
     public class AuthenticationController : ControllerBase
     {
         private readonly IAuthenticateService _authenticateService;
+        private IProfileRepository repository;
+        private readonly IConfiguration _configuration;
 
         /// <summary>
         /// Initializes a new instance of the AuthenticationController
         /// </summary>
         /// <param name="authenticateService">Service for authentication operations</param>
-        public AuthenticationController(IAuthenticateService authenticateService)
+        public AuthenticationController(IAuthenticateService authenticateService, HUDBContext context, IConfiguration configuration)
         {
             _authenticateService = authenticateService ?? throw new ArgumentNullException(nameof(authenticateService));
+            _configuration = configuration;
+            this.repository = new ProfileRepository(context, _configuration);
+            
         }
 
         /// <summary>
@@ -43,7 +52,6 @@ namespace WebAPI.Controllers
                 {
                     return BadRequest(new { message = "Authentication model is null" });
                 }
-
                 // Validate required fields based on authentication type
                 if (string.IsNullOrEmpty(model.Token) && (string.IsNullOrEmpty(model.Email) || string.IsNullOrEmpty(model.Password)))
                 {
@@ -59,15 +67,51 @@ namespace WebAPI.Controllers
                     return BadRequest(new { message = "Authentication failed. Invalid credentials." });
                 }
 
+                // Get the user's profile if authentication was successful
+                if (!string.IsNullOrEmpty(userResult.ProfileId))
+                {
+                    try
+                    {
+                        // Get the user's profile
+                        var profile = await repository.GetProfileById(userResult.ProfileId);
+                        if (profile != null)
+                        {
+                            // Assign the profile to the user object
+                            userResult.Profile = profile;
+
+                            // You may want to log successful profile retrieval
+                            //_logger.LogInformation($"Retrieved profile for user {userResult.UserId}, ProfileId: {userResult.ProfileId}");
+                        }
+                        else
+                        {
+                            // Log that profile was not found but continue with authentication
+                           // _logger.LogWarning($"Profile not found for user {userResult.UserId}, ProfileId: {userResult.ProfileId}");
+                        }
+                    }
+                    catch (Exception profileEx)
+                    {
+                        // Log the profile retrieval error but continue with authentication
+                        //_logger.LogError(profileEx, $"Error retrieving profile for user {userResult.UserId}, ProfileId: {userResult.ProfileId}");
+                    }
+                }
+                else
+                {
+                    //_logger.LogWarning($"User {userResult.UserId} does not have a ProfileId assigned");
+                }
+
+                
                 // Hide sensitive information before returning
                 userResult.Password = null;
                 userResult.PasswordHash = null;
+               
 
                 return Ok(userResult);
             }
             catch (Exception ex)
             {
-                // Log exception (implement logging)
+                // Log exception
+                //_logger.LogError(ex, "Exception occurred during authentication");
+
                 return StatusCode(StatusCodes.Status500InternalServerError,
                     new { message = "An error occurred during authentication", error = ex.Message });
             }

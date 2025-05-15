@@ -105,9 +105,9 @@ namespace WebAPI.Services
                     {
                         user.Token = GenerateJwtToken(user);
 
-                        var profile = _context.Profile.FirstOrDefault(x => x.UserId == user.UserId);
+                        //var profile = _context.Profile.FirstOrDefault(x => x.UserId == user.UserId);
 
-                        user.Profile = profile;
+                        //user.Profile = profile;
 
                         return user;
                     }
