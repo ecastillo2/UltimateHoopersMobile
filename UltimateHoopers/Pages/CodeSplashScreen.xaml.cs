@@ -67,7 +67,7 @@ namespace UltimateHoopers.Pages
 
             subtitleLabel = new Label
             {
-                Text = "Where Hoopers Connect",
+                Text = "Pick Up Basketball League",
                 TextColor = Colors.LightGray,
                 FontSize = 18,
                 HorizontalOptions = LayoutOptions.Center,

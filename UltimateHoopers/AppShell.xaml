@@ -34,9 +34,8 @@
         <ShellContent ContentTemplate="{DataTemplate pages:PostsPage}" Route="PostsPage" />
     </FlyoutItem>
 
-    <FlyoutItem Title="My Stats" Icon="stats.png">
-        <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" />
-        <!-- Replace with StatsPage once available -->
+    <FlyoutItem Title="Stats" Icon="search.png">
+        <ShellContent ContentTemplate="{DataTemplate pages:StatsPage}" Route="statsPage" />
     </FlyoutItem>
 
     <FlyoutItem Title="Find Games" Icon="basketball.png">

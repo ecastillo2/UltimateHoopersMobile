@@ -1,0 +1,785 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="UltimateHoopers.Pages.StatsPage"
+             Title="My Stats"
+             BackgroundColor="{StaticResource PageBackgroundColor}">
+
+    <Grid RowDefinitions="Auto,*,Auto"
+          Padding="20">
+
+        <!-- Header with Title -->
+        <Grid Grid.Row="0" 
+              ColumnDefinitions="*,Auto"
+              Margin="0,10,0,20">
+
+            <VerticalStackLayout Grid.Column="0">
+                <Label Text="My Stats"
+                       FontSize="28"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource PrimaryColor}" />
+
+                <Label Text="Track your basketball performance"
+                       FontSize="16"
+                       TextColor="{StaticResource SecondaryTextColor}" />
+            </VerticalStackLayout>
+
+            <!-- Back Button -->
+            <Frame Grid.Column="1"
+                   CornerRadius="25"
+                   HeightRequest="50"
+                   WidthRequest="50"
+                   Padding="0"
+                   BorderColor="{StaticResource BorderColor}"
+                   BackgroundColor="{StaticResource CardBackgroundColor}"
+                   HasShadow="True">
+
+                <Label Text="←"
+                       FontSize="24"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       TextColor="{StaticResource PrimaryTextColor}" />
+
+                <Frame.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnBackClicked" />
+                </Frame.GestureRecognizers>
+            </Frame>
+        </Grid>
+
+        <!-- Content -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="20">
+
+                <!-- Player Profile Card -->
+                <Frame BorderColor="{StaticResource BorderColor}"
+                       CornerRadius="10"
+                       HasShadow="True"
+                       Padding="20"
+                       BackgroundColor="{StaticResource CardBackgroundColor}">
+
+                    <Grid RowDefinitions="Auto,Auto"
+                          ColumnDefinitions="Auto,*">
+
+                        <!-- Profile Photo -->
+                        <Frame Grid.Row="0"
+                               Grid.RowSpan="2"
+                               Grid.Column="0"
+                               CornerRadius="40"
+                               HeightRequest="80"
+                               WidthRequest="80"
+                               Padding="0"
+                               BorderColor="{StaticResource PrimaryColor}"
+                               HasShadow="False">
+                            <Label Text="👤" 
+                                   FontSize="40" 
+                                   HorizontalOptions="Center" 
+                                   VerticalOptions="Center" />
+                        </Frame>
+
+                        <!-- Profile Info -->
+                        <VerticalStackLayout Grid.Row="0"
+                                             Grid.Column="1"
+                                             Margin="15,0,0,0">
+                            <Label Text="@yourUsername"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource PrimaryTextColor}" />
+                            <Label Text="Point Guard • 6'2"
+                                   FontSize="16"
+                                   TextColor="{StaticResource SecondaryTextColor}" />
+                        </VerticalStackLayout>
+
+                        <!-- Edit Profile Button -->
+                        <Button Grid.Row="1"
+                                Grid.Column="1"
+                                Text="Edit Profile"
+                                Margin="15,10,0,0"
+                                BackgroundColor="{StaticResource PrimaryColor}"
+                                TextColor="White"
+                                CornerRadius="20"
+                                HeightRequest="40"
+                                WidthRequest="120"
+                                HorizontalOptions="Start"
+                                Clicked="OnEditProfileClicked" />
+                    </Grid>
+                </Frame>
+
+                <!-- Stats Overview Card -->
+                <Frame BorderColor="{StaticResource BorderColor}"
+                       CornerRadius="10"
+                       HasShadow="True"
+                       BackgroundColor="{StaticResource CardBackgroundColor}">
+
+                    <VerticalStackLayout Spacing="20"
+                                         Padding="15">
+                        <Label Text="Overall Performance"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource PrimaryTextColor}" />
+
+                        <!-- Main Stats Grid -->
+                        <Grid ColumnDefinitions="*,*,*"
+                              RowDefinitions="Auto,Auto,Auto"
+                              ColumnSpacing="15"
+                              RowSpacing="15">
+
+                            <!-- Games Played -->
+                            <Frame Grid.Row="0"
+                                   Grid.Column="0"
+                                   BorderColor="{StaticResource BorderColor}"
+                                   CornerRadius="10"
+                                   Padding="10"
+                                   BackgroundColor="{StaticResource PageBackgroundColor}">
+                                <VerticalStackLayout HorizontalOptions="Center">
+                                    <Label Text="87"
+                                           FontSize="24"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource PrimaryColor}"
+                                           HorizontalOptions="Center" />
+                                    <Label Text="Games"
+                                           FontSize="14"
+                                           TextColor="{StaticResource SecondaryTextColor}"
+                                           HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </Frame>
+
+                            <!-- Win-Loss Record -->
+                            <Frame Grid.Row="0"
+                                   Grid.Column="1"
+                                   BorderColor="{StaticResource BorderColor}"
+                                   CornerRadius="10"
+                                   Padding="10"
+                                   BackgroundColor="{StaticResource PageBackgroundColor}">
+                                <VerticalStackLayout HorizontalOptions="Center">
+                                    <Label Text="54-33"
+                                           FontSize="24"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource PrimaryColor}"
+                                           HorizontalOptions="Center" />
+                                    <Label Text="Record"
+                                           FontSize="14"
+                                           TextColor="{StaticResource SecondaryTextColor}"
+                                           HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </Frame>
+
+                            <!-- Win Percentage -->
+                            <Frame Grid.Row="0"
+                                   Grid.Column="2"
+                                   BorderColor="{StaticResource BorderColor}"
+                                   CornerRadius="10"
+                                   Padding="10"
+                                   BackgroundColor="{StaticResource PageBackgroundColor}">
+                                <VerticalStackLayout HorizontalOptions="Center">
+                                    <Label Text="62.1%"
+                                           FontSize="24"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource PrimaryColor}"
+                                           HorizontalOptions="Center" />
+                                    <Label Text="Win %"
+                                           FontSize="14"
+                                           TextColor="{StaticResource SecondaryTextColor}"
+                                           HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </Frame>
+
+                            <!-- Points Per Game -->
+                            <Frame Grid.Row="1"
+                                   Grid.Column="0"
+                                   BorderColor="{StaticResource BorderColor}"
+                                   CornerRadius="10"
+                                   Padding="10"
+                                   BackgroundColor="{StaticResource PageBackgroundColor}">
+                                <VerticalStackLayout HorizontalOptions="Center">
+                                    <Label Text="18.4"
+                                           FontSize="24"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource PrimaryColor}"
+                                           HorizontalOptions="Center" />
+                                    <Label Text="PPG"
+                                           FontSize="14"
+                                           TextColor="{StaticResource SecondaryTextColor}"
+                                           HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </Frame>
+
+                            <!-- Assists Per Game -->
+                            <Frame Grid.Row="1"
+                                   Grid.Column="1"
+                                   BorderColor="{StaticResource BorderColor}"
+                                   CornerRadius="10"
+                                   Padding="10"
+                                   BackgroundColor="{StaticResource PageBackgroundColor}">
+                                <VerticalStackLayout HorizontalOptions="Center">
+                                    <Label Text="5.2"
+                                           FontSize="24"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource PrimaryColor}"
+                                           HorizontalOptions="Center" />
+                                    <Label Text="APG"
+                                           FontSize="14"
+                                           TextColor="{StaticResource SecondaryTextColor}"
+                                           HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </Frame>
+
+                            <!-- Rebounds Per Game -->
+                            <Frame Grid.Row="1"
+                                   Grid.Column="2"
+                                   BorderColor="{StaticResource BorderColor}"
+                                   CornerRadius="10"
+                                   Padding="10"
+                                   BackgroundColor="{StaticResource PageBackgroundColor}">
+                                <VerticalStackLayout HorizontalOptions="Center">
+                                    <Label Text="3.7"
+                                           FontSize="24"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource PrimaryColor}"
+                                           HorizontalOptions="Center" />
+                                    <Label Text="RPG"
+                                           FontSize="14"
+                                           TextColor="{StaticResource SecondaryTextColor}"
+                                           HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </Frame>
+
+                            <!-- 3-Point % -->
+                            <Frame Grid.Row="2"
+                                   Grid.Column="0"
+                                   BorderColor="{StaticResource BorderColor}"
+                                   CornerRadius="10"
+                                   Padding="10"
+                                   BackgroundColor="{StaticResource PageBackgroundColor}">
+                                <VerticalStackLayout HorizontalOptions="Center">
+                                    <Label Text="36.8%"
+                                           FontSize="24"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource PrimaryColor}"
+                                           HorizontalOptions="Center" />
+                                    <Label Text="3PT%"
+                                           FontSize="14"
+                                           TextColor="{StaticResource SecondaryTextColor}"
+                                           HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </Frame>
+
+                            <!-- Field Goal % -->
+                            <Frame Grid.Row="2"
+                                   Grid.Column="1"
+                                   BorderColor="{StaticResource BorderColor}"
+                                   CornerRadius="10"
+                                   Padding="10"
+                                   BackgroundColor="{StaticResource PageBackgroundColor}">
+                                <VerticalStackLayout HorizontalOptions="Center">
+                                    <Label Text="47.5%"
+                                           FontSize="24"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource PrimaryColor}"
+                                           HorizontalOptions="Center" />
+                                    <Label Text="FG%"
+                                           FontSize="14"
+                                           TextColor="{StaticResource SecondaryTextColor}"
+                                           HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </Frame>
+
+                            <!-- Free Throw % -->
+                            <Frame Grid.Row="2"
+                                   Grid.Column="2"
+                                   BorderColor="{StaticResource BorderColor}"
+                                   CornerRadius="10"
+                                   Padding="10"
+                                   BackgroundColor="{StaticResource PageBackgroundColor}">
+                                <VerticalStackLayout HorizontalOptions="Center">
+                                    <Label Text="82.3%"
+                                           FontSize="24"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource PrimaryColor}"
+                                           HorizontalOptions="Center" />
+                                    <Label Text="FT%"
+                                           FontSize="14"
+                                           TextColor="{StaticResource SecondaryTextColor}"
+                                           HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </Frame>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Recent Games Card -->
+                <Frame BorderColor="{StaticResource BorderColor}"
+                       CornerRadius="10"
+                       HasShadow="True"
+                       BackgroundColor="{StaticResource CardBackgroundColor}">
+
+                    <VerticalStackLayout Spacing="15"
+                                         Padding="15">
+                        <Label Text="Recent Games"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource PrimaryTextColor}" />
+
+                        <!-- Game 1 -->
+                        <Grid ColumnDefinitions="Auto,*,Auto"
+                              ColumnSpacing="15">
+                            <Frame Grid.Column="0"
+                                   CornerRadius="25"
+                                   HeightRequest="50"
+                                   WidthRequest="50"
+                                   Padding="0"
+                                   BorderColor="{StaticResource BorderColor}"
+                                   BackgroundColor="{StaticResource PageBackgroundColor}">
+                                <Label Text="🏆" 
+                                       FontSize="24" 
+                                       HorizontalOptions="Center" 
+                                       VerticalOptions="Center" />
+                            </Frame>
+
+                            <VerticalStackLayout Grid.Column="1">
+                                <Label Text="Downtown Court - May 12, 2025"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                                <Label Text="Win - 21 pts, 4 ast, 2 reb"
+                                       FontSize="14"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
+                            </VerticalStackLayout>
+
+                            <Frame Grid.Column="2"
+                                   BackgroundColor="{StaticResource PrimaryColor}"
+                                   CornerRadius="15"
+                                   Padding="10,5"
+                                   VerticalOptions="Center">
+                                <Label Text="76-68"
+                                       TextColor="White"
+                                       FontAttributes="Bold"
+                                       FontSize="14" />
+                            </Frame>
+                        </Grid>
+
+                        <!-- Game 2 -->
+                        <Grid ColumnDefinitions="Auto,*,Auto"
+                              ColumnSpacing="15">
+                            <Frame Grid.Column="0"
+                                   CornerRadius="25"
+                                   HeightRequest="50"
+                                   WidthRequest="50"
+                                   Padding="0"
+                                   BorderColor="{StaticResource BorderColor}"
+                                   BackgroundColor="{StaticResource PageBackgroundColor}">
+                                <Label Text="❌" 
+                                       FontSize="24" 
+                                       HorizontalOptions="Center" 
+                                       VerticalOptions="Center" />
+                            </Frame>
+
+                            <VerticalStackLayout Grid.Column="1">
+                                <Label Text="Central Park - May 8, 2025"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                                <Label Text="Loss - 15 pts, 7 ast, 3 reb"
+                                       FontSize="14"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
+                            </VerticalStackLayout>
+
+                            <Frame Grid.Column="2"
+                                   BackgroundColor="{StaticResource SecondaryTextColor}"
+                                   CornerRadius="15"
+                                   Padding="10,5"
+                                   VerticalOptions="Center">
+                                <Label Text="64-72"
+                                       TextColor="White"
+                                       FontAttributes="Bold"
+                                       FontSize="14" />
+                            </Frame>
+                        </Grid>
+
+                        <!-- Game 3 -->
+                        <Grid ColumnDefinitions="Auto,*,Auto"
+                              ColumnSpacing="15">
+                            <Frame Grid.Column="0"
+                                   CornerRadius="25"
+                                   HeightRequest="50"
+                                   WidthRequest="50"
+                                   Padding="0"
+                                   BorderColor="{StaticResource BorderColor}"
+                                   BackgroundColor="{StaticResource PageBackgroundColor}">
+                                <Label Text="🏆" 
+                                       FontSize="24" 
+                                       HorizontalOptions="Center" 
+                                       VerticalOptions="Center" />
+                            </Frame>
+
+                            <VerticalStackLayout Grid.Column="1">
+                                <Label Text="Westside Rec - May 3, 2025"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                                <Label Text="Win - 24 pts, 3 ast, 4 reb"
+                                       FontSize="14"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
+                            </VerticalStackLayout>
+
+                            <Frame Grid.Column="2"
+                                   BackgroundColor="{StaticResource PrimaryColor}"
+                                   CornerRadius="15"
+                                   Padding="10,5"
+                                   VerticalOptions="Center">
+                                <Label Text="82-71"
+                                       TextColor="White"
+                                       FontAttributes="Bold"
+                                       FontSize="14" />
+                            </Frame>
+                        </Grid>
+
+                        <!-- View All Button -->
+                        <Button Text="View All Games"
+                                BackgroundColor="Transparent"
+                                TextColor="{StaticResource PrimaryColor}"
+                                BorderColor="{StaticResource PrimaryColor}"
+                                BorderWidth="1"
+                                CornerRadius="20"
+                                Margin="0,10,0,0"
+                                Clicked="OnViewAllGamesClicked" />
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Skills Radar Chart (placeholder) -->
+                <Frame BorderColor="{StaticResource BorderColor}"
+                       CornerRadius="10"
+                       HasShadow="True"
+                       BackgroundColor="{StaticResource CardBackgroundColor}">
+
+                    <VerticalStackLayout Spacing="15"
+                                         Padding="15">
+                        <Label Text="Skills Breakdown"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource PrimaryTextColor}" />
+
+                        <!-- Radar Chart Placeholder -->
+                        <Grid HeightRequest="200"
+                              BackgroundColor="{StaticResource PageBackgroundColor}"
+                              CornerRadius="10">
+                            <Label Text="Skills Chart Coming Soon"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center"
+                                   TextColor="{StaticResource SecondaryTextColor}" />
+                        </Grid>
+
+                        <!-- Skill Ratings -->
+                        <Grid ColumnDefinitions="*,Auto"
+                              RowDefinitions="Auto,Auto,Auto,Auto,Auto"
+                              RowSpacing="10">
+
+                            <!-- Shooting Rating -->
+                            <Label Grid.Row="0"
+                                   Grid.Column="0"
+                                   Text="Shooting"
+                                   TextColor="{StaticResource PrimaryTextColor}"
+                                   FontSize="16" />
+                            <HorizontalStackLayout Grid.Row="0"
+                                                  Grid.Column="1">
+                                <Label Text="⭐⭐⭐⭐"
+                                       TextColor="{StaticResource PrimaryColor}"
+                                       FontSize="16" />
+                            </HorizontalStackLayout>
+
+                            <!-- Passing Rating -->
+                            <Label Grid.Row="1"
+                                   Grid.Column="0"
+                                   Text="Passing"
+                                   TextColor="{StaticResource PrimaryTextColor}"
+                                   FontSize="16" />
+                            <HorizontalStackLayout Grid.Row="1"
+                                                  Grid.Column="1">
+                                <Label Text="⭐⭐⭐⭐⭐"
+                                       TextColor="{StaticResource PrimaryColor}"
+                                       FontSize="16" />
+                            </HorizontalStackLayout>
+
+                            <!-- Defense Rating -->
+                            <Label Grid.Row="2"
+                                   Grid.Column="0"
+                                   Text="Defense"
+                                   TextColor="{StaticResource PrimaryTextColor}"
+                                   FontSize="16" />
+                            <HorizontalStackLayout Grid.Row="2"
+                                                  Grid.Column="1">
+                                <Label Text="⭐⭐⭐"
+                                       TextColor="{StaticResource PrimaryColor}"
+                                       FontSize="16" />
+                            </HorizontalStackLayout>
+
+                            <!-- Speed Rating -->
+                            <Label Grid.Row="3"
+                                   Grid.Column="0"
+                                   Text="Speed"
+                                   TextColor="{StaticResource PrimaryTextColor}"
+                                   FontSize="16" />
+                            <HorizontalStackLayout Grid.Row="3"
+                                                  Grid.Column="1">
+                                <Label Text="⭐⭐⭐⭐"
+                                       TextColor="{StaticResource PrimaryColor}"
+                                       FontSize="16" />
+                            </HorizontalStackLayout>
+
+                            <!-- Basketball IQ Rating -->
+                            <Label Grid.Row="4"
+                                   Grid.Column="0"
+                                   Text="Basketball IQ"
+                                   TextColor="{StaticResource PrimaryTextColor}"
+                                   FontSize="16" />
+                            <HorizontalStackLayout Grid.Row="4"
+                                                  Grid.Column="1">
+                                <Label Text="⭐⭐⭐⭐"
+                                       TextColor="{StaticResource PrimaryColor}"
+                                       FontSize="16" />
+                            </HorizontalStackLayout>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Achievements or Badges Card -->
+                <Frame BorderColor="{StaticResource BorderColor}"
+                       CornerRadius="10"
+                       HasShadow="True"
+                       BackgroundColor="{StaticResource CardBackgroundColor}"
+                       Margin="0,0,0,20">
+
+                    <VerticalStackLayout Spacing="15"
+                                         Padding="15">
+                        <Label Text="Achievements"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource PrimaryTextColor}" />
+
+                        <!-- Badges grid -->
+                        <Grid ColumnDefinitions="*,*,*"
+                              RowDefinitions="Auto,Auto"
+                              ColumnSpacing="10"
+                              RowSpacing="10">
+
+                            <!-- Badge 1 -->
+                            <Frame Grid.Row="0"
+                                   Grid.Column="0"
+                                   BorderColor="{StaticResource BorderColor}"
+                                   CornerRadius="10"
+                                   Padding="10"
+                                   BackgroundColor="{StaticResource PageBackgroundColor}">
+                                <VerticalStackLayout HorizontalOptions="Center">
+                                    <Label Text="🏆" 
+                                           FontSize="30" 
+                                           HorizontalOptions="Center" />
+                                    <Label Text="MVP"
+                                           FontSize="14"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource PrimaryTextColor}"
+                                           HorizontalOptions="Center"
+                                           Margin="0,5,0,0" />
+                                    <Label Text="x3"
+                                           FontSize="12"
+                                           TextColor="{StaticResource SecondaryTextColor}"
+                                           HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </Frame>
+
+                            <!-- Badge 2 -->
+                            <Frame Grid.Row="0"
+                                   Grid.Column="1"
+                                   BorderColor="{StaticResource BorderColor}"
+                                   CornerRadius="10"
+                                   Padding="10"
+                                   BackgroundColor="{StaticResource PageBackgroundColor}">
+                                <VerticalStackLayout HorizontalOptions="Center">
+                                    <Label Text="🔥" 
+                                           FontSize="30" 
+                                           HorizontalOptions="Center" />
+                                    <Label Text="Hot Streak"
+                                           FontSize="14"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource PrimaryTextColor}"
+                                           HorizontalOptions="Center"
+                                           Margin="0,5,0,0" />
+                                    <Label Text="5+ wins"
+                                           FontSize="12"
+                                           TextColor="{StaticResource SecondaryTextColor}"
+                                           HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </Frame>
+
+                            <!-- Badge 3 -->
+                            <Frame Grid.Row="0"
+                                   Grid.Column="2"
+                                   BorderColor="{StaticResource BorderColor}"
+                                   CornerRadius="10"
+                                   Padding="10"
+                                   BackgroundColor="{StaticResource PageBackgroundColor}">
+                                <VerticalStackLayout HorizontalOptions="Center">
+                                    <Label Text="👌" 
+                                           FontSize="30" 
+                                           HorizontalOptions="Center" />
+                                    <Label Text="3-Point"
+                                           FontSize="14"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource PrimaryTextColor}"
+                                           HorizontalOptions="Center"
+                                           Margin="0,5,0,0" />
+                                    <Label Text="40%+"
+                                           FontSize="12"
+                                           TextColor="{StaticResource SecondaryTextColor}"
+                                           HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </Frame>
+
+                            <!-- Badge 4 -->
+                            <Frame Grid.Row="1"
+                                   Grid.Column="0"
+                                   BorderColor="{StaticResource BorderColor}"
+                                   CornerRadius="10"
+                                   Padding="10"
+                                   BackgroundColor="{StaticResource PageBackgroundColor}">
+                                <VerticalStackLayout HorizontalOptions="Center">
+                                    <Label Text="🎯" 
+                                           FontSize="30" 
+                                           HorizontalOptions="Center" />
+                                    <Label Text="Assist King"
+                                           FontSize="14"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource PrimaryTextColor}"
+                                           HorizontalOptions="Center"
+                                           Margin="0,5,0,0" />
+                                    <Label Text="10+ assists"
+                                           FontSize="12"
+                                           TextColor="{StaticResource SecondaryTextColor}"
+                                           HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </Frame>
+
+                            <!-- Badge 5 -->
+                            <Frame Grid.Row="1"
+                                   Grid.Column="1"
+                                   BorderColor="{StaticResource BorderColor}"
+                                   CornerRadius="10"
+                                   Padding="10"
+                                   BackgroundColor="{StaticResource PageBackgroundColor}">
+                                <VerticalStackLayout HorizontalOptions="Center">
+                                    <Label Text="💯" 
+                                           FontSize="30" 
+                                           HorizontalOptions="Center" />
+                                    <Label Text="100 Games"
+                                           FontSize="14"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource PrimaryTextColor}"
+                                           HorizontalOptions="Center"
+                                           Margin="0,5,0,0" />
+                                    <Label Text="87/100"
+                                           FontSize="12"
+                                           TextColor="{StaticResource SecondaryTextColor}"
+                                           HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </Frame>
+
+                            <!-- Badge 6 -->
+                            <Frame Grid.Row="1"
+                                   Grid.Column="2"
+                                   BorderColor="{StaticResource BorderColor}"
+                                   CornerRadius="10"
+                                   Padding="10"
+                                   BackgroundColor="{StaticResource PageBackgroundColor}">
+                                <VerticalStackLayout HorizontalOptions="Center">
+                                    <Label Text="🔒" 
+                                           FontSize="30" 
+                                           HorizontalOptions="Center" />
+                                    <Label Text="Lockdown"
+                                           FontSize="14"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource PrimaryTextColor}"
+                                           HorizontalOptions="Center"
+                                           Margin="0,5,0,0" />
+                                    <Label Text="5+ steals"
+                                           FontSize="12"
+                                           TextColor="{StaticResource SecondaryTextColor}"
+                                           HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </Frame>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Frame>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Navigation Footer -->
+        <Grid Grid.Row="2"
+              ColumnDefinitions="*,*,*,*"
+              BackgroundColor="{StaticResource CardBackgroundColor}"
+              HeightRequest="70"
+              Margin="-20,0,-20,0"
+              Padding="0,5,0,20">
+
+            <VerticalStackLayout Grid.Column="0"
+                         HorizontalOptions="Center"
+                         VerticalOptions="Center"
+                         Spacing="2">
+                <Label Text="🏠"
+                       FontSize="20"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+                <Label Text="Home"
+                       FontSize="12"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+
+                <VerticalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnHomeNavigationClicked" />
+                </VerticalStackLayout.GestureRecognizers>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Grid.Column="1"
+                         HorizontalOptions="Center"
+                         VerticalOptions="Center"
+                         Spacing="2">
+                <Label Text="📊"
+                       FontSize="20"
+                       TextColor="{StaticResource PrimaryColor}"
+                       HorizontalOptions="Center" />
+                <Label Text="Stats"
+                       FontSize="12"
+                       TextColor="{StaticResource PrimaryColor}"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center" />
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Grid.Column="2"
+                         HorizontalOptions="Center"
+                         VerticalOptions="Center"
+                         Spacing="2"
+                         Opacity="0.6">
+                <Label Text="🏀"
+                       FontSize="20"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+                <Label Text="Games"
+                       FontSize="12"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Grid.Column="3"
+                         HorizontalOptions="Center"
+                         VerticalOptions="Center"
+                         Spacing="2"
+                         Opacity="0.6">
+                <Label Text="👤"
+                       FontSize="20"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+                <Label Text="Profile"
+                       FontSize="12"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+            </VerticalStackLayout>
+        </Grid>
+    </Grid>
+</ContentPage>
