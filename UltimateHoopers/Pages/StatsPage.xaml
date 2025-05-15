@@ -458,15 +458,17 @@
                                FontAttributes="Bold"
                                TextColor="{StaticResource PrimaryTextColor}" />
 
-                        <!-- Radar Chart Placeholder -->
-                        <Grid HeightRequest="200"
+                        <!-- Radar Chart Placeholder - Changed from Grid with CornerRadius to Frame -->
+                        <Frame HeightRequest="200"
                               BackgroundColor="{StaticResource PageBackgroundColor}"
-                              CornerRadius="10">
+                              CornerRadius="10"
+                              Padding="0"
+                              HasShadow="False">
                             <Label Text="Skills Chart Coming Soon"
                                    HorizontalOptions="Center"
                                    VerticalOptions="Center"
                                    TextColor="{StaticResource SecondaryTextColor}" />
-                        </Grid>
+                        </Frame>
 
                         <!-- Skill Ratings -->
                         <Grid ColumnDefinitions="*,Auto"

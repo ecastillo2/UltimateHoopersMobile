@@ -56,14 +56,10 @@
 
 	<ItemGroup>
 	  <MauiXaml Remove="Pages\CodeSplashScreen.xaml" />
-	  <MauiXaml Remove="Pages\StatsPage.xaml" />
 	</ItemGroup>
 
 	<ItemGroup>
 	  <EmbeddedResource Include="Pages\CodeSplashScreen.xaml">
-	    <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
-	  </EmbeddedResource>
-	  <EmbeddedResource Include="Pages\StatsPage.xaml">
 	    <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
 	  </EmbeddedResource>
 	</ItemGroup>
@@ -106,6 +102,9 @@
 		</MauiXaml>
 		<MauiXaml Update="Pages\PostsPage.xaml">
 			<Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
+		<MauiXaml Update="Pages\StatsPage.xaml">
+		  <Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
 	</ItemGroup>
 

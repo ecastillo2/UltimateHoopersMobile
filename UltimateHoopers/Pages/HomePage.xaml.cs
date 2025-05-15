@@ -14,7 +14,26 @@ namespace UltimateHoopers.Pages
 
         private async void OnStatsClicked(object sender, EventArgs e)
         {
-            await DisplayAlert("Stats", "Stats feature coming soon!", "OK");
+            try
+            {
+                // Navigate to StatsPage
+                await Navigation.PushAsync(new StatsPage());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Navigation error: {ex.Message}");
+
+                // Alternative navigation using Shell if direct navigation fails
+                try
+                {
+                    await Shell.Current.GoToAsync("StatsPage");
+                }
+                catch
+                {
+                    // Fallback to display an alert if all navigation attempts fail
+                    await DisplayAlert("Stats", "Could not navigate to Stats page", "OK");
+                }
+            }
         }
 
         private async void OnFindGamesClicked(object sender, EventArgs e)
