@@ -42,6 +42,10 @@
         <ShellContent ContentTemplate="{DataTemplate pages:FindRunsPage}" Route="rindrunsPage" />
     </FlyoutItem>
 
+    <FlyoutItem Title="Shop" Icon="search.png">
+        <ShellContent ContentTemplate="{DataTemplate pages:ShopPage}" Route="shopPage" />
+    </FlyoutItem>
+
     <FlyoutItem Title="Hoopers" Icon="search.png">
         <ShellContent ContentTemplate="{DataTemplate pages:HoopersPage}" Route="HoopersPage" />
     </FlyoutItem>

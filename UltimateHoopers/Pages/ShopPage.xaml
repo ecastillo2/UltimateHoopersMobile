@@ -1,0 +1,647 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="UltimateHoopers.Pages.ShopPage"
+             Title="Shop"
+             BackgroundColor="{StaticResource PageBackgroundColor}">
+
+    <Grid RowDefinitions="Auto,*,Auto"
+          Padding="20">
+
+        <!-- Header with Title -->
+        <Grid Grid.Row="0" 
+              ColumnDefinitions="*,Auto,Auto"
+              Margin="0,10,0,20">
+
+            <VerticalStackLayout Grid.Column="0">
+                <Label Text="Shop"
+                       FontSize="28"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource PrimaryColor}" />
+
+                <Label Text="Basketball gear and apparel"
+                       FontSize="16"
+                       TextColor="{StaticResource SecondaryTextColor}" />
+            </VerticalStackLayout>
+
+            <!-- Cart Button -->
+            <Frame Grid.Column="1"
+                   CornerRadius="25"
+                   HeightRequest="50"
+                   WidthRequest="50"
+                   Padding="0"
+                   BorderColor="{StaticResource BorderColor}"
+                   BackgroundColor="{StaticResource CardBackgroundColor}"
+                   HasShadow="True"
+                   Margin="0,0,10,0">
+
+                <Grid>
+                    <Label Text="🛒"
+                           FontSize="24"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"
+                           TextColor="{StaticResource PrimaryTextColor}" />
+
+                    <!-- Cart Badge -->
+                    <Frame BackgroundColor="{StaticResource PrimaryColor}"
+                           CornerRadius="10"
+                           HeightRequest="20"
+                           WidthRequest="20"
+                           Padding="0"
+                           HorizontalOptions="End"
+                           VerticalOptions="Start"
+                           Margin="0,-5,-5,0">
+                        <Label Text="2"
+                               FontSize="12"
+                               FontAttributes="Bold"
+                               TextColor="White"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center" />
+                    </Frame>
+                </Grid>
+
+                <Frame.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnCartClicked" />
+                </Frame.GestureRecognizers>
+            </Frame>
+
+            <!-- Back Button -->
+            <Frame Grid.Column="2"
+                   CornerRadius="25"
+                   HeightRequest="50"
+                   WidthRequest="50"
+                   Padding="0"
+                   BorderColor="{StaticResource BorderColor}"
+                   BackgroundColor="{StaticResource CardBackgroundColor}"
+                   HasShadow="True">
+
+                <Label Text="←"
+                       FontSize="24"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       TextColor="{StaticResource PrimaryTextColor}" />
+
+                <Frame.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnBackClicked" />
+                </Frame.GestureRecognizers>
+            </Frame>
+        </Grid>
+
+        <!-- Content -->
+        <Grid Grid.Row="1" RowDefinitions="Auto,*">
+            <!-- Categories and Search Bar -->
+            <VerticalStackLayout Grid.Row="0" Spacing="15">
+                <!-- Search Bar -->
+                <Frame Padding="15,0" 
+                       CornerRadius="25" 
+                       HasShadow="False"
+                       BorderColor="{StaticResource BorderColor}"
+                       HeightRequest="50"
+                       Margin="0,0,0,5">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Label Text="🔍" 
+                               FontSize="20" 
+                               VerticalOptions="Center"
+                               TextColor="{StaticResource SecondaryTextColor}" />
+                        <Entry Grid.Column="1" 
+                               Placeholder="Search products..." 
+                               PlaceholderColor="{StaticResource SecondaryTextColor}"
+                               TextColor="{StaticResource PrimaryTextColor}"
+                               BackgroundColor="Transparent" 
+                               Margin="5,0,0,0"
+                               VerticalOptions="Center"
+                               x:Name="SearchEntry"
+                               TextChanged="OnSearchTextChanged" />
+                    </Grid>
+                </Frame>
+
+                <!-- Categories -->
+                <ScrollView Orientation="Horizontal" 
+                            HorizontalScrollBarVisibility="Never">
+                    <HorizontalStackLayout Spacing="10">
+                        <Frame Padding="15,8" 
+                               CornerRadius="20" 
+                               BackgroundColor="{StaticResource PrimaryColor}">
+                            <Label Text="All" 
+                                   TextColor="White" 
+                                   FontAttributes="Bold" />
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnCategorySelected" />
+                            </Frame.GestureRecognizers>
+                        </Frame>
+                        <Frame Padding="15,8" 
+                               CornerRadius="20" 
+                               BackgroundColor="{StaticResource CardBackgroundColor}"
+                               BorderColor="{StaticResource BorderColor}">
+                            <Label Text="Shoes" 
+                                   TextColor="{StaticResource PrimaryTextColor}" />
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnCategorySelected" />
+                            </Frame.GestureRecognizers>
+                        </Frame>
+                        <Frame Padding="15,8" 
+                               CornerRadius="20" 
+                               BackgroundColor="{StaticResource CardBackgroundColor}"
+                               BorderColor="{StaticResource BorderColor}">
+                            <Label Text="Apparel" 
+                                   TextColor="{StaticResource PrimaryTextColor}" />
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnCategorySelected" />
+                            </Frame.GestureRecognizers>
+                        </Frame>
+                        <Frame Padding="15,8" 
+                               CornerRadius="20" 
+                               BackgroundColor="{StaticResource CardBackgroundColor}"
+                               BorderColor="{StaticResource BorderColor}">
+                            <Label Text="Basketballs" 
+                                   TextColor="{StaticResource PrimaryTextColor}" />
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnCategorySelected" />
+                            </Frame.GestureRecognizers>
+                        </Frame>
+                        <Frame Padding="15,8" 
+                               CornerRadius="20" 
+                               BackgroundColor="{StaticResource CardBackgroundColor}"
+                               BorderColor="{StaticResource BorderColor}">
+                            <Label Text="Accessories" 
+                                   TextColor="{StaticResource PrimaryTextColor}" />
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnCategorySelected" />
+                            </Frame.GestureRecognizers>
+                        </Frame>
+                        <Frame Padding="15,8" 
+                               CornerRadius="20" 
+                               BackgroundColor="{StaticResource CardBackgroundColor}"
+                               BorderColor="{StaticResource BorderColor}">
+                            <Label Text="Equipment" 
+                                   TextColor="{StaticResource PrimaryTextColor}" />
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnCategorySelected" />
+                            </Frame.GestureRecognizers>
+                        </Frame>
+                    </HorizontalStackLayout>
+                </ScrollView>
+            </VerticalStackLayout>
+
+            <!-- Products Grid -->
+            <ScrollView Grid.Row="1" Margin="0,15,0,0">
+                <VerticalStackLayout>
+                    <!-- Featured Products -->
+                    <Label Text="Featured Products"
+                           FontSize="20"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource PrimaryTextColor}"
+                           Margin="0,0,0,10" />
+
+                    <!-- Products Grid - Row 1 -->
+                    <Grid ColumnDefinitions="*,*" 
+                          ColumnSpacing="15" 
+                          RowSpacing="15">
+
+                        <!-- Product 1 -->
+                        <Frame Grid.Column="0"
+                               BorderColor="{StaticResource BorderColor}"
+                               CornerRadius="10"
+                               HasShadow="True"
+                               Padding="0"
+                               IsClippedToBounds="True">
+
+                            <Grid RowDefinitions="Auto,Auto,Auto"
+                                  RowSpacing="5">
+                                <!-- Product Image -->
+                                <Frame HeightRequest="150"
+                                       Padding="0"
+                                       IsClippedToBounds="True">
+                                    <Image Source="https://placehold.co/150x150"
+                                           Aspect="AspectFill"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center" />
+                                </Frame>
+
+                                <!-- Product Info -->
+                                <VerticalStackLayout Grid.Row="1"
+                                                     Padding="10,5">
+                                    <Label Text="Pro Basketball Shoes"
+                                           FontAttributes="Bold"
+                                           FontSize="14"
+                                           TextColor="{StaticResource PrimaryTextColor}" />
+                                    <Label Text="High performance basketball shoes"
+                                           FontSize="12"
+                                           LineBreakMode="TailTruncation"
+                                           MaxLines="1"
+                                           TextColor="{StaticResource SecondaryTextColor}" />
+                                    <Label Text="$129.99"
+                                           FontAttributes="Bold"
+                                           FontSize="16"
+                                           TextColor="{StaticResource PrimaryColor}"
+                                           Margin="0,5,0,0" />
+                                </VerticalStackLayout>
+
+                                <!-- Add to Cart Button -->
+                                <Button Grid.Row="2"
+                                        Text="Add to Cart"
+                                        BackgroundColor="{StaticResource PrimaryColor}"
+                                        TextColor="White"
+                                        CornerRadius="0"
+                                        Margin="0"
+                                        Padding="0"
+                                        HeightRequest="40"
+                                        Clicked="OnAddToCartClicked" />
+                            </Grid>
+                        </Frame>
+
+                        <!-- Product 2 -->
+                        <Frame Grid.Column="1"
+                               BorderColor="{StaticResource BorderColor}"
+                               CornerRadius="10"
+                               HasShadow="True"
+                               Padding="0"
+                               IsClippedToBounds="True">
+
+                            <Grid RowDefinitions="Auto,Auto,Auto"
+                                  RowSpacing="5">
+                                <!-- Product Image -->
+                                <Frame HeightRequest="150"
+                                       Padding="0"
+                                       IsClippedToBounds="True">
+                                    <Image Source="https://placehold.co/150x150"
+                                           Aspect="AspectFill"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center" />
+                                </Frame>
+
+                                <!-- Product Info -->
+                                <VerticalStackLayout Grid.Row="1"
+                                                     Padding="10,5">
+                                    <Label Text="Premium Basketball"
+                                           FontAttributes="Bold"
+                                           FontSize="14"
+                                           TextColor="{StaticResource PrimaryTextColor}" />
+                                    <Label Text="Official size and weight"
+                                           FontSize="12"
+                                           LineBreakMode="TailTruncation"
+                                           MaxLines="1"
+                                           TextColor="{StaticResource SecondaryTextColor}" />
+                                    <Label Text="$49.99"
+                                           FontAttributes="Bold"
+                                           FontSize="16"
+                                           TextColor="{StaticResource PrimaryColor}"
+                                           Margin="0,5,0,0" />
+                                </VerticalStackLayout>
+
+                                <!-- Add to Cart Button -->
+                                <Button Grid.Row="2"
+                                        Text="Add to Cart"
+                                        BackgroundColor="{StaticResource PrimaryColor}"
+                                        TextColor="White"
+                                        CornerRadius="0"
+                                        Margin="0"
+                                        Padding="0"
+                                        HeightRequest="40"
+                                        Clicked="OnAddToCartClicked" />
+                            </Grid>
+                        </Frame>
+                    </Grid>
+
+                    <!-- Products Grid - Row 2 -->
+                    <Grid ColumnDefinitions="*,*" 
+                          ColumnSpacing="15" 
+                          RowSpacing="15"
+                          Margin="0,15,0,0">
+
+                        <!-- Product 3 -->
+                        <Frame Grid.Column="0"
+                               BorderColor="{StaticResource BorderColor}"
+                               CornerRadius="10"
+                               HasShadow="True"
+                               Padding="0"
+                               IsClippedToBounds="True">
+
+                            <Grid RowDefinitions="Auto,Auto,Auto"
+                                  RowSpacing="5">
+                                <!-- Product Image -->
+                                <Frame HeightRequest="150"
+                                       Padding="0"
+                                       IsClippedToBounds="True">
+                                    <Image Source="https://placehold.co/150x150"
+                                           Aspect="AspectFill"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center" />
+                                </Frame>
+
+                                <!-- Product Info -->
+                                <VerticalStackLayout Grid.Row="1"
+                                                     Padding="10,5">
+                                    <Label Text="Performance Jersey"
+                                           FontAttributes="Bold"
+                                           FontSize="14"
+                                           TextColor="{StaticResource PrimaryTextColor}" />
+                                    <Label Text="Breathable basketball jersey"
+                                           FontSize="12"
+                                           LineBreakMode="TailTruncation"
+                                           MaxLines="1"
+                                           TextColor="{StaticResource SecondaryTextColor}" />
+                                    <Label Text="$39.99"
+                                           FontAttributes="Bold"
+                                           FontSize="16"
+                                           TextColor="{StaticResource PrimaryColor}"
+                                           Margin="0,5,0,0" />
+                                </VerticalStackLayout>
+
+                                <!-- Add to Cart Button -->
+                                <Button Grid.Row="2"
+                                        Text="Add to Cart"
+                                        BackgroundColor="{StaticResource PrimaryColor}"
+                                        TextColor="White"
+                                        CornerRadius="0"
+                                        Margin="0"
+                                        Padding="0"
+                                        HeightRequest="40"
+                                        Clicked="OnAddToCartClicked" />
+                            </Grid>
+                        </Frame>
+
+                        <!-- Product 4 -->
+                        <Frame Grid.Column="1"
+                               BorderColor="{StaticResource BorderColor}"
+                               CornerRadius="10"
+                               HasShadow="True"
+                               Padding="0"
+                               IsClippedToBounds="True">
+
+                            <Grid RowDefinitions="Auto,Auto,Auto"
+                                  RowSpacing="5">
+                                <!-- Product Image -->
+                                <Frame HeightRequest="150"
+                                       Padding="0"
+                                       IsClippedToBounds="True">
+                                    <Image Source="https://placehold.co/150x150"
+                                           Aspect="AspectFill"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center" />
+                                </Frame>
+
+                                <!-- Product Info -->
+                                <VerticalStackLayout Grid.Row="1"
+                                                     Padding="10,5">
+                                    <Label Text="Basketball Shorts"
+                                           FontAttributes="Bold"
+                                           FontSize="14"
+                                           TextColor="{StaticResource PrimaryTextColor}" />
+                                    <Label Text="Lightweight and durable"
+                                           FontSize="12"
+                                           LineBreakMode="TailTruncation"
+                                           MaxLines="1"
+                                           TextColor="{StaticResource SecondaryTextColor}" />
+                                    <Label Text="$34.99"
+                                           FontAttributes="Bold"
+                                           FontSize="16"
+                                           TextColor="{StaticResource PrimaryColor}"
+                                           Margin="0,5,0,0" />
+                                </VerticalStackLayout>
+
+                                <!-- Add to Cart Button -->
+                                <Button Grid.Row="2"
+                                        Text="Add to Cart"
+                                        BackgroundColor="{StaticResource PrimaryColor}"
+                                        TextColor="White"
+                                        CornerRadius="0"
+                                        Margin="0"
+                                        Padding="0"
+                                        HeightRequest="40"
+                                        Clicked="OnAddToCartClicked" />
+                            </Grid>
+                        </Frame>
+                    </Grid>
+
+                    <!-- New Arrivals Section -->
+                    <Label Text="New Arrivals"
+                           FontSize="20"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource PrimaryTextColor}"
+                           Margin="0,25,0,10" />
+
+                    <!-- Products Grid - Row 3 -->
+                    <Grid ColumnDefinitions="*,*" 
+                          ColumnSpacing="15" 
+                          RowSpacing="15">
+
+                        <!-- Product 5 -->
+                        <Frame Grid.Column="0"
+                               BorderColor="{StaticResource BorderColor}"
+                               CornerRadius="10"
+                               HasShadow="True"
+                               Padding="0"
+                               IsClippedToBounds="True">
+
+                            <Grid RowDefinitions="Auto,Auto,Auto"
+                                  RowSpacing="5">
+                                <!-- Product Image -->
+                                <Grid HeightRequest="150">
+                                    <Image Source="https://placehold.co/150x150"
+                                           Aspect="AspectFill"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center" />
+
+                                    <!-- New Badge -->
+                                    <Frame BackgroundColor="{StaticResource PrimaryColor}"
+                                           CornerRadius="5"
+                                           Padding="5,2"
+                                           HorizontalOptions="Start"
+                                           VerticalOptions="Start"
+                                           Margin="5">
+                                        <Label Text="NEW"
+                                               FontSize="10"
+                                               FontAttributes="Bold"
+                                               TextColor="White" />
+                                    </Frame>
+                                </Grid>
+
+                                <!-- Product Info -->
+                                <VerticalStackLayout Grid.Row="1"
+                                                     Padding="10,5">
+                                    <Label Text="Basketball Training Kit"
+                                           FontAttributes="Bold"
+                                           FontSize="14"
+                                           TextColor="{StaticResource PrimaryTextColor}" />
+                                    <Label Text="Complete training system"
+                                           FontSize="12"
+                                           LineBreakMode="TailTruncation"
+                                           MaxLines="1"
+                                           TextColor="{StaticResource SecondaryTextColor}" />
+                                    <Label Text="$89.99"
+                                           FontAttributes="Bold"
+                                           FontSize="16"
+                                           TextColor="{StaticResource PrimaryColor}"
+                                           Margin="0,5,0,0" />
+                                </VerticalStackLayout>
+
+                                <!-- Add to Cart Button -->
+                                <Button Grid.Row="2"
+                                        Text="Add to Cart"
+                                        BackgroundColor="{StaticResource PrimaryColor}"
+                                        TextColor="White"
+                                        CornerRadius="0"
+                                        Margin="0"
+                                        Padding="0"
+                                        HeightRequest="40"
+                                        Clicked="OnAddToCartClicked" />
+                            </Grid>
+                        </Frame>
+
+                        <!-- Product 6 -->
+                        <Frame Grid.Column="1"
+                               BorderColor="{StaticResource BorderColor}"
+                               CornerRadius="10"
+                               HasShadow="True"
+                               Padding="0"
+                               IsClippedToBounds="True">
+
+                            <Grid RowDefinitions="Auto,Auto,Auto"
+                                  RowSpacing="5">
+                                <!-- Product Image -->
+                                <Grid HeightRequest="150">
+                                    <Image Source="https://placehold.co/150x150"
+                                           Aspect="AspectFill"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center" />
+
+                                    <!-- New Badge -->
+                                    <Frame BackgroundColor="{StaticResource PrimaryColor}"
+                                           CornerRadius="5"
+                                           Padding="5,2"
+                                           HorizontalOptions="Start"
+                                           VerticalOptions="Start"
+                                           Margin="5">
+                                        <Label Text="NEW"
+                                               FontSize="10"
+                                               FontAttributes="Bold"
+                                               TextColor="White" />
+                                    </Frame>
+                                </Grid>
+
+                                <!-- Product Info -->
+                                <VerticalStackLayout Grid.Row="1"
+                                                     Padding="10,5">
+                                    <Label Text="Basketball Shooting Sleeve"
+                                           FontAttributes="Bold"
+                                           FontSize="14"
+                                           TextColor="{StaticResource PrimaryTextColor}" />
+                                    <Label Text="Compression technology"
+                                           FontSize="12"
+                                           LineBreakMode="TailTruncation"
+                                           MaxLines="1"
+                                           TextColor="{StaticResource SecondaryTextColor}" />
+                                    <Label Text="$19.99"
+                                           FontAttributes="Bold"
+                                           FontSize="16"
+                                           TextColor="{StaticResource PrimaryColor}"
+                                           Margin="0,5,0,0" />
+                                </VerticalStackLayout>
+
+                                <!-- Add to Cart Button -->
+                                <Button Grid.Row="2"
+                                        Text="Add to Cart"
+                                        BackgroundColor="{StaticResource PrimaryColor}"
+                                        TextColor="White"
+                                        CornerRadius="0"
+                                        Margin="0"
+                                        Padding="0"
+                                        HeightRequest="40"
+                                        Clicked="OnAddToCartClicked" />
+                            </Grid>
+                        </Frame>
+                    </Grid>
+
+                    <!-- Load More Button -->
+                    <Button Text="Load More Products"
+                            BackgroundColor="Transparent"
+                            TextColor="{StaticResource PrimaryColor}"
+                            BorderColor="{StaticResource PrimaryColor}"
+                            BorderWidth="1"
+                            CornerRadius="20"
+                            Margin="0,25,0,20"
+                            Clicked="OnLoadMoreClicked" />
+                </VerticalStackLayout>
+            </ScrollView>
+        </Grid>
+
+        <!-- Navigation Footer -->
+        <Grid Grid.Row="2"
+              ColumnDefinitions="*,*,*,*"
+              BackgroundColor="{StaticResource CardBackgroundColor}"
+              HeightRequest="70"
+              Margin="-20,0,-20,0"
+              Padding="0,5,0,20">
+
+            <VerticalStackLayout Grid.Column="0"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Spacing="2">
+                <Label Text="🏠"
+                       FontSize="20"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+                <Label Text="Home"
+                       FontSize="12"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+
+                <VerticalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnHomeNavigationClicked" />
+                </VerticalStackLayout.GestureRecognizers>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Grid.Column="1"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Spacing="2">
+                <Label Text="🏀"
+                       FontSize="20"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+                <Label Text="Games"
+                       FontSize="12"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+
+                <VerticalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnGamesNavigationClicked" />
+                </VerticalStackLayout.GestureRecognizers>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Grid.Column="2"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Spacing="2">
+                <Label Text="🛒"
+                       FontSize="20"
+                       TextColor="{StaticResource PrimaryColor}"
+                       HorizontalOptions="Center" />
+                <Label Text="Shop"
+                       FontSize="12"
+                       TextColor="{StaticResource PrimaryColor}"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center" />
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Grid.Column="3"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Spacing="2">
+                <Label Text="👤"
+                       FontSize="20"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+                <Label Text="Profile"
+                       FontSize="12"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+
+                <VerticalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnProfileNavigationClicked" />
+                </VerticalStackLayout.GestureRecognizers>
+            </VerticalStackLayout>
+        </Grid>
+    </Grid>
+</ContentPage>

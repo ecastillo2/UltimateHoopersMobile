@@ -106,6 +106,9 @@
 		<MauiXaml Update="Pages\PostsPage.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
+		<MauiXaml Update="Pages\ShopPage.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
 		<MauiXaml Update="Pages\StatsPage.xaml">
 		  <Generator>MSBuild:Compile</Generator>
 		</MauiXaml>

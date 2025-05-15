@@ -97,7 +97,26 @@ namespace UltimateHoopers.Pages
 
         private async void OnShopClicked(object sender, EventArgs e)
         {
-            await DisplayAlert("Shop", "Shop feature coming soon!", "OK");
+            try
+            {
+                // Navigate to Shop
+                await Navigation.PushAsync(new ShopPage());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Navigation error: {ex.Message}");
+
+                // Alternative navigation using Shell if direct navigation fails
+                try
+                {
+                    await Shell.Current.GoToAsync("ShopPage");
+                }
+                catch
+                {
+                    // Fallback to display an alert if all navigation attempts fail
+                    await DisplayAlert("Shop", "Could not navigate to Finds Runs page", "OK");
+                }
+            }
         }
 
         private async void OnProfileClicked(object sender, EventArgs e)
