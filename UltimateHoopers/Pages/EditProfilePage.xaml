@@ -230,7 +230,7 @@
                                    BorderColor="{StaticResource BorderColor}"
                                    HeightRequest="45">
                                 <Entry x:Name="HeightEntry"
-                                       Text="6'2\""
+                                       Text="6'2"
                                        TextColor="{StaticResource PrimaryTextColor}"
                                        BackgroundColor="Transparent"
                                        VerticalOptions="Center" />
