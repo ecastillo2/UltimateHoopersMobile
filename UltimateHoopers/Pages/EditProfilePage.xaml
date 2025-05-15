@@ -111,12 +111,13 @@
                             <Frame Padding="15,0" 
                                    CornerRadius="5" 
                                    HasShadow="False"
+                                   BackgroundColor="LightGrey"
                                    BorderColor="{StaticResource BorderColor}"
                                    HeightRequest="45">
                                 <Entry x:Name="UsernameEntry"
                                        Text="@yourUsername"
                                        TextColor="{StaticResource PrimaryTextColor}"
-                                       BackgroundColor="Transparent"
+                                       BackgroundColor="LightGrey"
                                        VerticalOptions="Center" />
                             </Frame>
                         </VerticalStackLayout>
@@ -129,12 +130,13 @@
                             <Frame Padding="15,0" 
                                    CornerRadius="5" 
                                    HasShadow="False"
+                                   BackgroundColor="LightGrey"
                                    BorderColor="{StaticResource BorderColor}"
                                    HeightRequest="45">
                                 <Entry x:Name="FullNameEntry"
                                        Text="John Smith"
                                        TextColor="{StaticResource PrimaryTextColor}"
-                                       BackgroundColor="Transparent"
+                                       BackgroundColor="LightGrey"
                                        VerticalOptions="Center" />
                             </Frame>
                         </VerticalStackLayout>
@@ -147,12 +149,13 @@
                             <Frame Padding="15,0" 
                                    CornerRadius="5" 
                                    HasShadow="False"
+                                   BackgroundColor="LightGrey"
                                    BorderColor="{StaticResource BorderColor}"
                                    HeightRequest="45">
                                 <Entry x:Name="EmailEntry"
                                        Text="john.smith@example.com"
                                        TextColor="{StaticResource PrimaryTextColor}"
-                                       BackgroundColor="Transparent"
+                                       BackgroundColor="LightGrey"
                                        VerticalOptions="Center"
                                        Keyboard="Email" />
                             </Frame>
@@ -166,12 +169,13 @@
                             <Frame Padding="15,0" 
                                    CornerRadius="5" 
                                    HasShadow="False"
+                                   BackgroundColor="LightGrey"
                                    BorderColor="{StaticResource BorderColor}"
                                    HeightRequest="45">
                                 <Entry x:Name="PhoneEntry"
                                        Text="(555) 123-4567"
                                        TextColor="{StaticResource PrimaryTextColor}"
-                                       BackgroundColor="Transparent"
+                                       BackgroundColor="LightGrey"
                                        VerticalOptions="Center"
                                        Keyboard="Telephone" />
                             </Frame>
@@ -200,13 +204,15 @@
                             <Frame Padding="15,0" 
                                    CornerRadius="5" 
                                    HasShadow="False"
+                                   BackgroundColor="LightGrey"
                                    BorderColor="{StaticResource BorderColor}"
                                    HeightRequest="45">
                                 <Picker x:Name="PositionPicker"
                                         Title="Select Position"
+                                        TitleColor="LightGrey"
                                         SelectedIndex="0"
                                         TextColor="{StaticResource PrimaryTextColor}"
-                                        BackgroundColor="Transparent"
+                                        BackgroundColor="LightGrey"
                                         VerticalOptions="Center">
                                     <Picker.Items>
                                         <x:String>Point Guard</x:String>
@@ -227,12 +233,13 @@
                             <Frame Padding="15,0" 
                                    CornerRadius="5" 
                                    HasShadow="False"
+                                   BackgroundColor="LightGrey"
                                    BorderColor="{StaticResource BorderColor}"
                                    HeightRequest="45">
                                 <Entry x:Name="HeightEntry"
                                        Text="6'2"
                                        TextColor="{StaticResource PrimaryTextColor}"
-                                       BackgroundColor="Transparent"
+                                       BackgroundColor="LightGrey"
                                        VerticalOptions="Center" />
                             </Frame>
                         </VerticalStackLayout>
@@ -245,13 +252,15 @@
                             <Frame Padding="15,0" 
                                    CornerRadius="5" 
                                    HasShadow="False"
+                                   BackgroundColor="LightGrey"
                                    BorderColor="{StaticResource BorderColor}"
                                    HeightRequest="45">
                                 <Picker x:Name="SkillLevelPicker"
                                         Title="Select Skill Level"
+                                        TitleColor="Black"
                                         SelectedIndex="1"
                                         TextColor="{StaticResource PrimaryTextColor}"
-                                        BackgroundColor="Transparent"
+                                        BackgroundColor="LightGrey"
                                         VerticalOptions="Center">
                                     <Picker.Items>
                                         <x:String>Beginner</x:String>
@@ -271,12 +280,13 @@
                             <Frame Padding="15,0" 
                                    CornerRadius="5" 
                                    HasShadow="False"
+                                   BackgroundColor="LightGrey"
                                    BorderColor="{StaticResource BorderColor}"
                                    HeightRequest="45">
                                 <Entry x:Name="YearsPlayingEntry"
                                        Text="10"
                                        TextColor="{StaticResource PrimaryTextColor}"
-                                       BackgroundColor="Transparent"
+                                       BackgroundColor="LightGrey"
                                        VerticalOptions="Center"
                                        Keyboard="Numeric" />
                             </Frame>
@@ -305,12 +315,13 @@
                             <Frame Padding="15,0" 
                                    CornerRadius="5" 
                                    HasShadow="False"
+                                   BackgroundColor="LightGrey"
                                    BorderColor="{StaticResource BorderColor}"
                                    HeightRequest="45">
                                 <Entry x:Name="CityEntry"
                                        Text="Atlanta"
                                        TextColor="{StaticResource PrimaryTextColor}"
-                                       BackgroundColor="Transparent"
+                                       BackgroundColor="LightGrey"
                                        VerticalOptions="Center" />
                             </Frame>
                         </VerticalStackLayout>
@@ -323,12 +334,13 @@
                             <Frame Padding="15,0" 
                                    CornerRadius="5" 
                                    HasShadow="False"
+                                  BackgroundColor="LightGrey"
                                    BorderColor="{StaticResource BorderColor}"
                                    HeightRequest="45">
                                 <Entry x:Name="StateEntry"
                                        Text="Georgia"
                                        TextColor="{StaticResource PrimaryTextColor}"
-                                       BackgroundColor="Transparent"
+                                       BackgroundColor="LightGrey"
                                        VerticalOptions="Center" />
                             </Frame>
                         </VerticalStackLayout>
