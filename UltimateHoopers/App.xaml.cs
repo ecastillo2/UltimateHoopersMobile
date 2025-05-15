@@ -4,7 +4,8 @@ using System;
 using System.Threading.Tasks;
 using UltimateHoopers.Pages;
 using UltimateHoopers.Services;
-using UltimateHoopers.Helpers; // Add this for DiagnosticHelper
+using UltimateHoopers.Helpers;
+using Microsoft.Maui.Dispatching;
 
 namespace UltimateHoopers
 {
@@ -20,9 +21,13 @@ namespace UltimateHoopers
                 DiagnosticHelper.Log("App constructor starting");
                 InitializeComponent();
                 DiagnosticHelper.Log("InitializeComponent complete");
+               
 
                 // Check for existing authentication
                 InitializeAsync();
+                // Show splash screen on startup
+                // Use code-only splash screen 
+                MainPage = new CodeSplashScreen();
                 DiagnosticHelper.Log("InitializeAsync called");
             }
             catch (Exception ex)
@@ -30,11 +35,26 @@ namespace UltimateHoopers
                 DiagnosticHelper.LogException(ex, "App constructor");
                 MainPage = new ContentPage
                 {
-                    Content = new Label
+                    Content = new VerticalStackLayout
                     {
-                        Text = $"Startup Error: {ex.Message}",
-                        HorizontalOptions = LayoutOptions.Center,
-                        VerticalOptions = LayoutOptions.Center
+                        Children =
+                        {
+                            new Label
+                            {
+                                Text = "Startup Error",
+                                FontSize = 22,
+                                FontAttributes = FontAttributes.Bold,
+                                HorizontalOptions = LayoutOptions.Center
+                            },
+                            new Label
+                            {
+                                Text = ex.Message,
+                                HorizontalOptions = LayoutOptions.Center,
+                                VerticalOptions = LayoutOptions.Center
+                            }
+                        },
+                        VerticalOptions = LayoutOptions.Center,
+                        Padding = new Thickness(20)
                     }
                 };
             }

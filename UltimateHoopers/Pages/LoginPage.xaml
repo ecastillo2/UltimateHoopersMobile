@@ -13,7 +13,7 @@
         <VerticalStackLayout Grid.Row="0" 
                              Spacing="10" 
                              Margin="0,40,0,0">
-            <Image Source="dotnet_bot.png"
+            <Image Source="uh_logo.svg"
                    HeightRequest="120"
                    WidthRequest="120"
                    HorizontalOptions="Center" />
