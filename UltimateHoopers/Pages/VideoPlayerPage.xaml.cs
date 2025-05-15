@@ -152,6 +152,28 @@ namespace UltimateHoopers.Pages
             }
         }
 
+        // Close button handler
+        private async void OnCloseClicked(object sender, EventArgs e)
+        {
+            try
+            {
+                // Clean up resources if needed
+                Debug.WriteLine("Closing video player");
+
+                // Use Navigation to go back/dismiss the modal
+                await Navigation.PopModalAsync();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error closing video player: {ex.Message}");
+                // Fallback if navigation fails
+                if (Application.Current != null)
+                {
+                    Application.Current.MainPage = new AppShell();
+                }
+            }
+        }
+
         private string GetVideoHtml(string videoUrl)
         {
             // Add cache busting parameter
@@ -238,6 +260,149 @@ namespace UltimateHoopers.Pages
 </body>
 </html>";
         }
+
+        // WebView navigation event handlers
+        private void VideoWebView_Navigating(object sender, WebNavigatingEventArgs e)
+        {
+            if (e.Url.StartsWith("maui-callback://"))
+            {
+                e.Cancel = true; // Cancel the navigation
+
+                if (e.Url == "maui-callback://videoCanPlay")
+                {
+                    Debug.WriteLine("Video can play callback received");
+                }
+                else if (e.Url == "maui-callback://videoError")
+                {
+                    Debug.WriteLine("Video error callback received");
+                    MainThread.BeginInvokeOnMainThread(async () =>
+                    {
+                        bool openExternal = await DisplayAlert(
+                            "Playback Issue",
+                            "The video couldn't be played in the app. Would you like to open it in your browser?",
+                            "Open in Browser",
+                            "Cancel");
+
+                        if (openExternal && _post != null && !string.IsNullOrWhiteSpace(_post.PostFileURL))
+                        {
+                            await Launcher.OpenAsync(new Uri(_post.PostFileURL));
+                        }
+                        else
+                        {
+                            // Reset UI if user cancels
+                            fallbackGrid.IsVisible = true;
+                            playButtonFrame.IsVisible = true;
+                            loadingIndicator.IsVisible = false;
+                        }
+                    });
+                }
+                else if (e.Url == "maui-callback://videoPlaying")
+                {
+                    Debug.WriteLine("Video playing callback received");
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        // Hide fallback once playing
+                        fallbackGrid.IsVisible = false;
+                        loadingIndicator.IsVisible = false;
+                    });
+                }
+            }
+        }
+
+        private void VideoWebView_Navigated(object sender, WebNavigatedEventArgs e)
+        {
+            if (e.Result == WebNavigationResult.Success)
+            {
+                Debug.WriteLine("WebView loaded successfully");
+                _isVideoLoaded = true;
+
+                // Add a delay before hiding the loading indicator
+                // This gives the video player time to initialize
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    Device.StartTimer(TimeSpan.FromSeconds(3), () =>
+                    {
+                        // If the fallback is still visible, hide it
+                        if (fallbackGrid.IsVisible)
+                        {
+                            fallbackGrid.IsVisible = false;
+                            loadingIndicator.IsVisible = false;
+                        }
+                        return false; // Don't repeat
+                    });
+                });
+            }
+            else
+            {
+                Debug.WriteLine($"WebView navigation failed: {e.Result}");
+                _isVideoLoaded = false;
+
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    // Show fallback on error
+                    fallbackGrid.IsVisible = true;
+                    playButtonFrame.IsVisible = true;
+                    loadingIndicator.IsVisible = false;
+                });
+            }
+        }
+
+        private void OnLikeClicked(object sender, EventArgs e)
+        {
+            if (_post != null)
+            {
+                // Toggle like state
+                _post.LikedPost = !(_post.LikedPost ?? false);
+
+                // Update like count
+                if (_post.LikedPost == true)
+                {
+                    _post.Likes = (_post.Likes ?? 0) + 1;
+                }
+                else
+                {
+                    _post.Likes = Math.Max(0, (_post.Likes ?? 0) - 1);
+                }
+
+                // Force UI update
+                OnPropertyChanged(nameof(_post.LikedPost));
+
+                // You would call your API here to update the like status
+                // await _postService.LikePostAsync(_post.PostId, _post.LikedPost ?? false);
+            }
+        }
+
+        private async void OnCommentsClicked(object sender, EventArgs e)
+        {
+            await DisplayAlert("Comments", "Comments feature coming soon!", "OK");
+        }
+
+        private async void OnShareClicked(object sender, EventArgs e)
+        {
+            await DisplayAlert("Share", "Share feature coming soon!", "OK");
+        }
+
+        private async void OnSaveClicked(object sender, EventArgs e)
+        {
+            if (_post != null)
+            {
+                // Toggle save state
+                _post.SavedPost = !(_post.SavedPost ?? false);
+
+                // Force UI update
+                OnPropertyChanged(nameof(_post.SavedPost));
+
+                // You would call your API here to update the save status
+                // await _postService.SavePostAsync(_post.PostId, _post.SavedPost ?? false);
+
+                // Show confirmation
+                string message = _post.SavedPost == true ? "Post saved to collection" : "Post removed from collection";
+                await DisplayAlert("Saved", message, "OK");
+            }
+        }
+
+        // Close button handler
+      
 
         // Rest of the code remains the same
     }

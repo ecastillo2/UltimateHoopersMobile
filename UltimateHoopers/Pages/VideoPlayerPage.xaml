@@ -35,10 +35,10 @@
             <!-- Video Content - Using WebView -->
             <Grid Grid.Row="1">
                 <WebView x:Name="videoWebView" 
-                         HorizontalOptions="FillAndExpand"
-                         VerticalOptions="FillAndExpand"
-                         Navigated="VideoWebView_Navigated"
-                         Navigating="VideoWebView_Navigating" />
+         HorizontalOptions="FillAndExpand"
+         VerticalOptions="FillAndExpand"
+         Navigated="VideoWebView_Navigated"
+         Navigating="VideoWebView_Navigating" />
 
                 <!-- Fallback for when WebView is not showing -->
                 <Grid x:Name="fallbackGrid" 
