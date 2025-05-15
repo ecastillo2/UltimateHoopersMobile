@@ -102,9 +102,18 @@ namespace UltimateHoopers.Pages
             }
         }
 
+
         private async void OnCreateAccountClicked(object sender, EventArgs e)
         {
-            await DisplayAlert("Registration", "Registration functionality would be implemented here", "OK");
+            try
+            {
+                // Navigate to the Create Account page
+                await Navigation.PushAsync(new CreateAccountPage());
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", $"Could not open registration page: {ex.Message}", "OK");
+            }
         }
     }
 }

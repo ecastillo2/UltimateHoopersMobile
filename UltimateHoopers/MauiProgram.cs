@@ -84,6 +84,7 @@ namespace UltimateHoopers
                 builder.Services.AddTransient<FindRunsPage>();
                 builder.Services.AddTransient<ShopPage>();
                 builder.Services.AddTransient<EditProfilePage>();
+                builder.Services.AddTransient<CreateAccountPage>();
                 DiagnosticHelper.Log("Pages registered");
 
 #if DEBUG
