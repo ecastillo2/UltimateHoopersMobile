@@ -158,6 +158,33 @@ namespace UltimateHoopers.Pages
             }
         }
 
+        // Handler for video thumbnail tap events
+        private async void OnVideoThumbnailTapped(object sender, EventArgs e)
+        {
+            try
+            {
+                var element = sender as VisualElement;
+                if (element != null && element.BindingContext is Post post)
+                {
+                    Debug.WriteLine($"Tapped video thumbnail: {post.PostId}, URL: {post.PostFileURL}");
+
+                    if (string.IsNullOrWhiteSpace(post.PostFileURL))
+                    {
+                        await DisplayAlert("Error", "Video URL is not available", "OK");
+                        return;
+                    }
+
+                    // Navigate to the video player page
+                    await Navigation.PushModalAsync(new VideoPlayerPage(post));
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error in OnVideoThumbnailTapped: {ex.Message}");
+                await DisplayAlert("Error", $"Could not play video: {ex.Message}", "OK");
+            }
+        }
+
         // Removed FindVideoPlayer method since InlineVideoPlayer doesn't exist
 
         // Fallback method to navigate to dedicated video player page
