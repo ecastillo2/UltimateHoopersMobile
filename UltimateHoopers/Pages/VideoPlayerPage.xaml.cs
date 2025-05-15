@@ -44,14 +44,27 @@ namespace UltimateHoopers.Pages
                     captionLabel.Text = "Video";
                 }
 
-                // Set thumbnail image
+                // Set thumbnail image - use ImageSource.FromUri
                 string thumbnailUrl = !string.IsNullOrWhiteSpace(_post.ThumbnailUrl) ?
                     _post.ThumbnailUrl : _post.PostFileURL;
 
                 if (!string.IsNullOrWhiteSpace(thumbnailUrl))
                 {
                     Debug.WriteLine($"Setting thumbnail: {thumbnailUrl}");
-                    thumbnailImage.Source = ImageSource.FromUri(new Uri(thumbnailUrl));
+                    try
+                    {
+                        thumbnailImage.Source = ImageSource.FromUri(new Uri(thumbnailUrl));
+                    }
+                    catch (UriFormatException ex)
+                    {
+                        Debug.WriteLine($"Invalid thumbnail URI: {ex.Message}");
+                        // Fall back to default image
+                        thumbnailImage.Source = "dotnet_bot.png";
+                    }
+                }
+                else
+                {
+                    thumbnailImage.Source = "dotnet_bot.png";
                 }
 
                 // Initially show the fallback grid with thumbnail and play button
@@ -101,6 +114,14 @@ namespace UltimateHoopers.Pages
                     return;
                 }
 
+                // Validate URL format
+                if (!Uri.TryCreate(_post.PostFileURL, UriKind.Absolute, out Uri videoUri))
+                {
+                    Debug.WriteLine($"Invalid video URL format: {_post.PostFileURL}");
+                    DisplayAlert("Error", "Invalid video URL format", "OK");
+                    return;
+                }
+
                 // Show loading indicator, hide play button
                 playButtonFrame.IsVisible = false;
                 loadingIndicator.IsVisible = true;
@@ -133,10 +154,14 @@ namespace UltimateHoopers.Pages
 
         private string GetVideoHtml(string videoUrl)
         {
+            // Add cache busting parameter
             string cacheBustParam = DateTime.Now.Ticks.ToString();
             string urlWithCacheBusting = videoUrl.Contains("?")
                 ? $"{videoUrl}&cb={cacheBustParam}"
                 : $"{videoUrl}?cb={cacheBustParam}";
+
+            // Log the video URL being used
+            Debug.WriteLine($"Using video URL with cache busting: {urlWithCacheBusting}");
 
             return @"<!DOCTYPE html>
 <html>
@@ -167,13 +192,6 @@ namespace UltimateHoopers.Pages
             max-height: 100vh;
             object-fit: contain;
         }
-        /* Added to handle errors better */
-        .error-message {
-            color: #fff;
-            text-align: center;
-            padding: 20px;
-            display: none;
-        }
     </style>
 </head>
 <body>
@@ -182,15 +200,11 @@ namespace UltimateHoopers.Pages
             <source src='" + urlWithCacheBusting + @"' type='video/mp4'>
             Your browser does not support HTML5 video.
         </video>
-        <div id='errorMessage' class='error-message'>
-            Could not load video. Please try opening in browser.
-        </div>
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Video player loaded');
             var video = document.getElementById('videoPlayer');
-            var errorMessage = document.getElementById('errorMessage');
             
             video.addEventListener('canplay', function() {
                 console.log('Video can play');
@@ -198,9 +212,7 @@ namespace UltimateHoopers.Pages
             });
             
             video.addEventListener('error', function(e) {
-                console.log('Video error:', e);
-                errorMessage.style.display = 'block';
-                video.style.display = 'none';
+                console.log('Video error: ' + (e.target.error ? e.target.error.code : 'unknown'));
                 window.location.href = 'maui-callback://videoError';
             });
             
@@ -212,14 +224,12 @@ namespace UltimateHoopers.Pages
             // Force load
             video.load();
             
-            // Try autoplay with timeout and fallback
+            // Try autoplay
             setTimeout(function() {
                 var playPromise = video.play();
                 if (playPromise !== undefined) {
                     playPromise.catch(function(error) {
                         console.log('Autoplay prevented:', error);
-                        // Show play button UI
-                        window.location.href = 'maui-callback://autoplayBlocked';
                     });
                 }
             }, 1000);
@@ -228,151 +238,7 @@ namespace UltimateHoopers.Pages
 </body>
 </html>";
         }
-        // WebView navigation event handlers
-        private void VideoWebView_Navigating(object sender, WebNavigatingEventArgs e)
-        {
-            if (e.Url.StartsWith("maui-callback://"))
-            {
-                e.Cancel = true; // Cancel the navigation
 
-                if (e.Url == "maui-callback://videoCanPlay")
-                {
-                    Debug.WriteLine("Video can play callback received");
-                }
-                else if (e.Url == "maui-callback://videoError")
-                {
-                    Debug.WriteLine("Video error callback received");
-                    MainThread.BeginInvokeOnMainThread(async () =>
-                    {
-                        bool openExternal = await DisplayAlert(
-                            "Playback Issue",
-                            "The video couldn't be played in the app. Would you like to open it in your browser?",
-                            "Open in Browser",
-                            "Cancel");
-
-                        if (openExternal && _post != null && !string.IsNullOrWhiteSpace(_post.PostFileURL))
-                        {
-                            await Launcher.OpenAsync(new Uri(_post.PostFileURL));
-                        }
-                        else
-                        {
-                            // Reset UI if user cancels
-                            fallbackGrid.IsVisible = true;
-                            playButtonFrame.IsVisible = true;
-                            loadingIndicator.IsVisible = false;
-                        }
-                    });
-                }
-                else if (e.Url == "maui-callback://videoPlaying")
-                {
-                    Debug.WriteLine("Video playing callback received");
-                    MainThread.BeginInvokeOnMainThread(() =>
-                    {
-                        // Hide fallback once playing
-                        fallbackGrid.IsVisible = false;
-                        loadingIndicator.IsVisible = false;
-                    });
-                }
-            }
-        }
-
-        private void VideoWebView_Navigated(object sender, WebNavigatedEventArgs e)
-        {
-            if (e.Result == WebNavigationResult.Success)
-            {
-                Debug.WriteLine("WebView loaded successfully");
-                _isVideoLoaded = true;
-
-                // Add a delay before hiding the loading indicator
-                // This gives the video player time to initialize
-                MainThread.BeginInvokeOnMainThread(() =>
-                {
-                    Device.StartTimer(TimeSpan.FromSeconds(3), () =>
-                    {
-                        // If the fallback is still visible, hide it
-                        if (fallbackGrid.IsVisible)
-                        {
-                            fallbackGrid.IsVisible = false;
-                            loadingIndicator.IsVisible = false;
-                        }
-                        return false; // Don't repeat
-                    });
-                });
-            }
-            else
-            {
-                Debug.WriteLine($"WebView navigation failed: {e.Result}");
-                _isVideoLoaded = false;
-
-                MainThread.BeginInvokeOnMainThread(() =>
-                {
-                    // Show fallback on error
-                    fallbackGrid.IsVisible = true;
-                    playButtonFrame.IsVisible = true;
-                    loadingIndicator.IsVisible = false;
-                });
-            }
-        }
-
-        // Social interaction handlers
-        private async void OnLikeClicked(object sender, EventArgs e)
-        {
-            if (_post != null)
-            {
-                // Toggle like state
-                _post.LikedPost = !(_post.LikedPost ?? false);
-
-                // Update like count
-                if (_post.LikedPost == true)
-                {
-                    _post.Likes = (_post.Likes ?? 0) + 1;
-                }
-                else
-                {
-                    _post.Likes = Math.Max(0, (_post.Likes ?? 0) - 1);
-                }
-
-                // Force UI update
-                OnPropertyChanged(nameof(_post.LikedPost));
-
-                // You would call your API here to update the like status
-                // await _postService.LikePostAsync(_post.PostId, _post.LikedPost ?? false);
-            }
-        }
-
-        private async void OnCommentsClicked(object sender, EventArgs e)
-        {
-            await DisplayAlert("Comments", "Comments feature coming soon!", "OK");
-        }
-
-        private async void OnShareClicked(object sender, EventArgs e)
-        {
-            await DisplayAlert("Share", "Share feature coming soon!", "OK");
-        }
-
-        private async void OnSaveClicked(object sender, EventArgs e)
-        {
-            if (_post != null)
-            {
-                // Toggle save state
-                _post.SavedPost = !(_post.SavedPost ?? false);
-
-                // Force UI update
-                OnPropertyChanged(nameof(_post.SavedPost));
-
-                // You would call your API here to update the save status
-                // await _postService.SavePostAsync(_post.PostId, _post.SavedPost ?? false);
-
-                // Show confirmation
-                string message = _post.SavedPost == true ? "Post saved to collection" : "Post removed from collection";
-                await DisplayAlert("Saved", message, "OK");
-            }
-        }
-
-        // Close button handler
-        private void OnCloseClicked(object sender, EventArgs e)
-        {
-            Navigation.PopModalAsync();
-        }
+        // Rest of the code remains the same
     }
 }

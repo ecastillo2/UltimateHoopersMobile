@@ -205,6 +205,28 @@ namespace UltimateHoopers.ViewModels
             post.PostId = string.IsNullOrWhiteSpace(post.PostId) ? Guid.NewGuid().ToString() : post.PostId;
 
             // PostFileURL is already checked before this method is called
+            // Make sure PostFileURL is a valid URI
+            if (!string.IsNullOrWhiteSpace(post.PostFileURL))
+            {
+                try
+                {
+                    // Validate the URL format
+                    var uri = new Uri(post.PostFileURL);
+
+                    // Ensure URL has a protocol (http or https)
+                    if (!post.PostFileURL.StartsWith("http://") && !post.PostFileURL.StartsWith("https://"))
+                    {
+                        // Add https protocol if missing
+                        post.PostFileURL = "https://" + post.PostFileURL.TrimStart('/');
+                        Console.WriteLine($"Fixed URL by adding protocol: {post.PostFileURL}");
+                    }
+                }
+                catch (UriFormatException ex)
+                {
+                    Console.WriteLine($"Invalid URL format: {post.PostFileURL}, Error: {ex.Message}");
+                    // Don't clear the URL yet, let the converter handle it
+                }
+            }
 
             // Set PostType based on file extension if not provided
             if (string.IsNullOrWhiteSpace(post.PostType))
@@ -226,6 +248,25 @@ namespace UltimateHoopers.ViewModels
                     post.PostType = "image";
                 }
                 Console.WriteLine($"Auto-detected post type: {post.PostType} for URL: {post.PostFileURL}");
+            }
+
+            // Do the same validation for ThumbnailUrl if present
+            if (!string.IsNullOrWhiteSpace(post.ThumbnailUrl))
+            {
+                try
+                {
+                    var uri = new Uri(post.ThumbnailUrl);
+
+                    if (!post.ThumbnailUrl.StartsWith("http://") && !post.ThumbnailUrl.StartsWith("https://"))
+                    {
+                        post.ThumbnailUrl = "https://" + post.ThumbnailUrl.TrimStart('/');
+                        Console.WriteLine($"Fixed thumbnail URL: {post.ThumbnailUrl}");
+                    }
+                }
+                catch (UriFormatException ex)
+                {
+                    Console.WriteLine($"Invalid thumbnail URL: {post.ThumbnailUrl}, Error: {ex.Message}");
+                }
             }
 
             // Optional fields with defaults

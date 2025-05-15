@@ -308,8 +308,26 @@ namespace UltimateHoopers.Pages
 
                 Console.WriteLine($"Setting fullscreen image source: {post.PostFileURL}");
 
-                // Set image source
-                fullscreenImage.Source = post.PostFileURL;
+                // Set image source - FIXED: Convert string URL to ImageSource
+                if (!string.IsNullOrEmpty(post.PostFileURL))
+                {
+                    try
+                    {
+                        // Use ImageSource.FromUri to properly load the image from a URL
+                        fullscreenImage.Source = ImageSource.FromUri(new Uri(post.PostFileURL));
+                        Console.WriteLine($"Image source set using ImageSource.FromUri: {post.PostFileURL}");
+                    }
+                    catch (UriFormatException ex)
+                    {
+                        Console.WriteLine($"Invalid URI format: {ex.Message}");
+                        fullscreenImage.Source = "dotnet_bot.png"; // Fallback to a default image
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("PostFileURL is null or empty");
+                    fullscreenImage.Source = "dotnet_bot.png"; // Fallback to a default image
+                }
 
                 // Show the fullscreen viewer with image
                 fullscreenViewer.IsVisible = true;

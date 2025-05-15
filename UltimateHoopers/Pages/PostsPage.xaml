@@ -15,6 +15,7 @@
         <converters:LikedPostToHeartConverter x:Key="LikedPostToHeartConverter" />
         <converters:SavedPostToBookmarkConverter x:Key="SavedPostToBookmarkConverter" />
         <converters:GreaterThanZeroConverter x:Key="GreaterThanZeroConverter" />
+        <converters:StringToImageSourceConverter x:Key="StringToImageSourceConverter" />
     </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,*,Auto"
@@ -160,12 +161,12 @@
                                     <!-- Post Content -->
                                     <Grid BackgroundColor="LightGray" HeightRequest="400">
                                         <!-- Image Post -->
-                                        <Image Source="{Binding PostFileURL}"
+                                        <!-- Updated Image element in the Post Content section -->
+                                        <Image Source="{Binding PostFileURL, Converter={StaticResource StringToImageSourceConverter}}"
        IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='image'}"
        Aspect="AspectFill"
        HorizontalOptions="FillAndExpand"
-       VerticalOptions="FillAndExpand"
-       Loaded="OnImageLoaded">
+       VerticalOptions="FillAndExpand">
                                             <Image.GestureRecognizers>
                                                 <TapGestureRecognizer Tapped="OnImagePostTapped" />
                                             </Image.GestureRecognizers>
@@ -175,10 +176,10 @@
                                         <Grid IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='video'}"
       HeightRequest="400">
                                             <!-- Thumbnail view (visible initially) -->
-                                            <Image Source="{Binding ThumbnailUrl, TargetNullValue={Binding PostFileURL}}"
-           Aspect="AspectFill"
-           HorizontalOptions="FillAndExpand"
-           VerticalOptions="FillAndExpand" />
+                                            <Image Source="{Binding ThumbnailUrl, TargetNullValue={Binding PostFileURL}, Converter={StaticResource StringToImageSourceConverter}}"
+       Aspect="AspectFill"
+       HorizontalOptions="FillAndExpand"
+       VerticalOptions="FillAndExpand" />
 
                                             <!-- Play Button -->
                                             <Frame BackgroundColor="#80000000"
