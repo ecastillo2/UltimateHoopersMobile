@@ -1,21 +1,24 @@
-﻿using System;
+﻿using Domain;
+using Domain.DtoModel;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.Maui.Controls;
+using SixLabors.ImageSharp;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Domain;
-using Domain.DtoModel;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Microsoft.Maui.Controls;
-using System.Diagnostics;
+using WebAPI.ApiClients;
 
 namespace UltimateHoopers.Services
 {
     public class PostService : IPostService
     {
+        private readonly IPostApi _postApi;
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
         private readonly ILogger<PostService> _logger;
@@ -28,6 +31,7 @@ namespace UltimateHoopers.Services
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _logger = logger;
+            _postApi = new PostApi(httpClient, configuration);
 
             // Get base URL from configuration or use default
             _baseUrl = _configuration["ApiSettings:BaseUrl"] ?? "https://ultimatehoopersapi.azurewebsites.net/";
@@ -67,6 +71,7 @@ namespace UltimateHoopers.Services
                 new MediaTypeWithQualityHeaderValue("application/json"));
 
             LogInfo($"PostService initialized with base URL: {_baseUrl} (non-DI constructor)");
+            _postApi = new PostApi(_httpClient, _configuration);
         }
 
         public async Task<Post> CreatePostAsync(Post post)
@@ -145,72 +150,76 @@ namespace UltimateHoopers.Services
                     throw new UnauthorizedAccessException("No access token available");
                 }
 
-                // Create the request URL for the paginated API endpoint
-                string apiUrl = "api/Post/GetPostsWithCursor";
+                // Call the API with the retrieved token
+                var paginatedResult = await _postApi.GetPostsWithCursorAsync(
+                    cursor: null,
+                    limit: 50, // Request a larger batch
+                    direction: "next",
+                    sortBy: "Date",
+                    accessToken: token);
 
-                // Create a JSON payload for the request
-                var requestData = new
+                LogInfo($"API call completed. Result: {(paginatedResult != null ? "Success" : "Null")}");
+                LogInfo($"Items count: {paginatedResult?.Items?.Count ?? 0}");
+
+                // Convert items to Post objects
+                if (paginatedResult != null && paginatedResult.Items != null && paginatedResult.Items.Count > 0)
                 {
-                    cursor = (string)null,
-                    limit = 50,
-                    direction = "next",
-                    sortBy = "Date"
-                };
+                    // Create a list to hold the converted posts
+                    var posts = new List<Post>();
 
-                // Serialize the request data
-                var content = new StringContent(
-                    JsonSerializer.Serialize(requestData),
-                    Encoding.UTF8,
-                    "application/json");
-
-                // Add authorization header
-                _httpClient.DefaultRequestHeaders.Authorization =
-                    new AuthenticationHeaderValue("Bearer", token);
-
-                LogInfo($"Sending request to {apiUrl}");
-
-                // Make the HTTP request
-                HttpResponseMessage response = await _httpClient.PostAsync(apiUrl, content);
-
-                // Check if request was successful
-                if (response.IsSuccessStatusCode)
-                {
-                    // Read the response content
-                    string jsonResponse = await response.Content.ReadAsStringAsync();
-                    LogInfo($"Received successful response with length: {jsonResponse?.Length ?? 0}");
-
-                    // Deserialize the paginated result
-                    var options = new JsonSerializerOptions
+                    foreach (var item in paginatedResult.Items)
                     {
-                        PropertyNameCaseInsensitive = true
-                    };
+                        try
+                        {
+                            // Map properties from the DTO to a new Post object
+                            var post = new Post
+                            {
+                                PostId = item.PostId,
+                                UserId = item.UserId,
+                                Caption = item.Caption,
+                                PostFileURL = item.PostFileURL,
+                                Type = item.Type,
+                                Status = item.Status,
+                                Likes = item.Likes,
+                                DisLikes = item.DisLikes,
+                                Hearted = item.Hearted,
+                                Views = item.Views,
+                                Shared = item.Shared,
+                                PostedDate = item.PostedDate,
+                                ProfileId = item.ProfileId,
+                                ThumbnailUrl = item.ThumbnailUrl,
+                                PostType = item.PostType,
+                                PostText = item.PostText,
+                                Title = item.Title,
+                                Category = item.Category,
+                                Mention = item.Mention,
+                                MentionUserNames = item.MentionUserNames,
 
-                    var result = JsonSerializer.Deserialize<PaginatedResultDto<Post>>(jsonResponse, options);
+                                // Add these properties for the UI
+                                UserName = "Unknown User",
+                                RelativeTime = "2 hours ago",
+                                ProfileImageURL = item.ThumbnailUrl,
+                                PostCommentCount =  0,
+                                LikedPost =  false,
+                                SavedPost =  false
+                            };
 
-                    if (result != null && result.Items != null)
-                    {
-                        LogInfo($"Successfully deserialized {result.Items.Count} posts");
-                        return new List<Post>(result.Items);
+                            posts.Add(post);
+                            LogInfo($"Added post: {post.PostId}");
+                        }
+                        catch (Exception ex)
+                        {
+                            LogError($"Error mapping post {item.PostId}", ex);
+                        }
                     }
-                    else
-                    {
-                        LogInfo("No posts found in the response");
-                        return new List<Post>();
-                    }
+
+                    LogInfo($"Returning {posts.Count} posts from API");
+                    return posts;
                 }
                 else
                 {
-                    // Log the error response
-                    string errorContent = await response.Content.ReadAsStringAsync();
-                    LogError($"Error response from API: {response.StatusCode}, {errorContent}", null);
-
-                    // Check for specific status codes
-                    if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-                    {
-                        throw new UnauthorizedAccessException("Authentication failed. Please log in again.");
-                    }
-
-                    throw new HttpRequestException($"Error retrieving posts: {response.StatusCode}");
+                    LogInfo("No posts returned from API, returning empty list");
+                    return new List<Post>();
                 }
             }
             catch (UnauthorizedAccessException)
@@ -227,9 +236,34 @@ namespace UltimateHoopers.Services
                 LogInfo("Returning mock posts for testing due to API error");
                 return CreateMockPosts();
 #else
-                throw;
+        throw;
 #endif
             }
+        }
+
+        // Helper method to format relative time
+        private string FormatRelativeTime(string dateStr)
+        {
+            if (string.IsNullOrEmpty(dateStr))
+                return "Recently";
+
+            if (DateTime.TryParse(dateStr, out DateTime date))
+            {
+                TimeSpan diff = DateTime.Now - date;
+
+                if (diff.TotalMinutes < 1)
+                    return "Just now";
+                if (diff.TotalMinutes < 60)
+                    return $"{(int)diff.TotalMinutes} minutes ago";
+                if (diff.TotalHours < 24)
+                    return $"{(int)diff.TotalHours} hours ago";
+                if (diff.TotalDays < 7)
+                    return $"{(int)diff.TotalDays} days ago";
+
+                return date.ToString("MMM dd, yyyy");
+            }
+
+            return "Recently";
         }
 
         public async Task<bool> UpdatePostAsync(Post post)
@@ -329,11 +363,11 @@ namespace UltimateHoopers.Services
                     PostId = "1",
                     UserName = "michael_johnson",
                     Caption = "Looking for players to join our game this Sunday at Downtown Court. We need 2-3 more players. All skill levels welcome! #basketball #pickup #sunday",
-                    PostFileURL = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-                    ThumbnailUrl = "https://peach.blender.org/wp-content/uploads/bbb-splash.png",
+                    PostFileURL = "https://uhblobstorageaccount.blob.core.windows.net/postfile/a12a3e62-4f16-45b3-9da7-a8f5e957d658.mp4",
+                    ThumbnailUrl = "https://uhblobstorageaccount.blob.core.windows.net/postthumbnail/a12a3e62-4f16-45b3-9da7-a8f5e957d658.png",
                     PostType = "video",
                     Likes = 32,
-                    ProfileImageURL = "https://randomuser.me/api/portraits/men/32.jpg",
+                    ProfileImageURL = "https://uhblobstorageaccount.blob.core.windows.net/postthumbnail/a12a3e62-4f16-45b3-9da7-a8f5e957d658.png",
                     RelativeTime = "2 hours ago",
                     PostCommentCount = 12,
                     LikedPost = false,
