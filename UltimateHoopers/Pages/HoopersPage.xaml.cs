@@ -13,7 +13,6 @@ namespace UltimateHoopers.Pages
         // Collection of players to be displayed and filtered
         private ObservableCollection<HooperModel> _allHoopers;
         private ObservableCollection<HooperModel> _filteredHoopers;
-        private VerticalStackLayout _playersContainer;
         private readonly ProfileViewModel _viewModel;
 
         public HoopersPage()
@@ -36,80 +35,402 @@ namespace UltimateHoopers.Pages
 
             // Set the binding context
             BindingContext = _viewModel;
+
+            
         }
 
-        private void InitializePlayerData()
-        {
-            _allHoopers = new ObservableCollection<HooperModel>
-            {
-                new HooperModel
-                {
-                    Username = "mjohnson21",
-                    DisplayName = "Michael Johnson",
-                    Position = "Point Guard",
-                    Location = "Los Angeles, CA",
-                    Rank = 2,
-                    GamesPlayed = 85,
-                    Record = "36-12",
-                    WinPercentage = "75%",
-                    Rating = 4.8
-                },
-                new HooperModel
-                {
-                    Username = "sthompson",
-                    DisplayName = "Sarah Thompson",
-                    Position = "Shooting Guard",
-                    Location = "New York, NY",
-                    Rank = 1,
-                    GamesPlayed = 92,
-                    Record = "45-22",
-                    WinPercentage = "67%",
-                    Rating = 4.9
-                },
-                new HooperModel
-                {
-                    Username = "marcusw",
-                    DisplayName = "Marcus Williams",
-                    Position = "Forward",
-                    Location = "Chicago, IL",
-                    Rank = 5,
-                    GamesPlayed = 67,
-                    Record = "28-15",
-                    WinPercentage = "65%",
-                    Rating = 4.2
-                }
-            };
-
-            // Add more sample players
-            for (int i = 0; i < 10; i++)
-            {
-                _allHoopers.Add(new HooperModel
-                {
-                    Username = $"player{i}",
-                    DisplayName = $"Player {i}",
-                    Position = i % 3 == 0 ? "Guard" : (i % 3 == 1 ? "Forward" : "Center"),
-                    Location = "Atlanta, GA",
-                    Rank = i + 6,
-                    GamesPlayed = 50 + i * 3,
-                    Record = $"{20 + i}-{10 + i}",
-                    WinPercentage = $"{60 + i}%",
-                    Rating = Math.Round(3.5 + (i * 0.1), 1)
-                });
-            }
-
-            // Initialize filtered list with all players
-            _filteredHoopers = new ObservableCollection<HooperModel>(_allHoopers);
-        }
+      
 
         protected override async void OnAppearing()
         {
             base.OnAppearing();
-            // Load posts when page appears
-            var items = await _viewModel.LoadProfilesAsync();
-            // Filter the items if needed
-            _filteredHoopers = FilterItems(items);
-            // Set the collection view's item source
-            CollectionView.ItemsSource = _filteredHoopers;
+
+            try
+            {
+                // Load profiles from the API when the page appears
+                await _viewModel.LoadProfilesAsync();
+
+                // Access the loaded profiles from the ViewModel's Profiles collection
+                // and convert them to HooperModel objects if needed
+                var hooperModels = ConvertProfilesToHooperModels(_viewModel.Profiles);
+
+                // Use the filtered items for display
+                _filteredHoopers = FilterItems(hooperModels);
+
+                // Update the UI with the filtered players
+                UpdatePlayersUI();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading profiles: {ex.Message}");
+                // Fall back to sample data if profiles couldn't be loaded
+                UpdatePlayersUI();
+            }
+        }
+
+        // Helper method to convert Profile objects to HooperModel objects
+        private List<HooperModel> ConvertProfilesToHooperModels(ObservableCollection<Domain.Profile> profiles)
+        {
+            var hooperModels = new List<HooperModel>();
+
+            if (profiles == null || profiles.Count == 0)
+            {
+                // If no profiles were loaded, use the sample data instead
+                return _allHoopers.ToList();
+            }
+
+            foreach (var profile in profiles)
+            {
+                try
+                {
+                    hooperModels.Add(new HooperModel
+                    {
+                        Username = profile.UserName ?? "",
+                        //DisplayName = profile.DisplayName ?? profile.UserName ?? "Unknown Player",
+                        Position = profile.Position ?? "Unknown",
+                        Location = profile.City ?? "Unknown Location",
+                        Rank = int.TryParse(profile.Ranking, out int rank) ? rank : 99,
+                        GamesPlayed = int.TryParse(profile.TotalGames, out int games) ? games : 0,
+                        Record = $"{profile.TotalWins.ToString() ?? "0"}-{profile.TotalLosses.ToString() ?? "0"}",
+                        WinPercentage = profile.WinPercentage ?? "0%",
+                        Rating = double.TryParse(profile.StarRating, out double rating) ? rating : 0.0
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error converting profile to hooper model: {ex.Message}");
+                }
+            }
+
+            return hooperModels;
+        }
+
+        // Helper method to update the UI with the current filtered players
+        private void UpdatePlayersUI()
+        {
+            try
+            {
+                // Find the ScrollView containing player cards
+                var scrollView = this.FindByName<ScrollView>("PlayersScrollView");
+                if (scrollView == null)
+                {
+                    // If we can't find the named ScrollView, try to find it by type and position
+                    var contentGrid = (this.Content as Grid);
+                    if (contentGrid != null && contentGrid.Children.Count > 1)
+                    {
+                        var mainGrid = contentGrid.Children[1] as Grid;
+                        if (mainGrid != null && mainGrid.Children.Count > 2)
+                        {
+                            scrollView = mainGrid.Children[2] as ScrollView;
+                        }
+                    }
+                }
+
+                if (scrollView == null)
+                {
+                    Console.WriteLine("Cannot find the ScrollView to update UI");
+                    return;
+                }
+
+                // Get the VerticalStackLayout that will contain all player cards
+                var stackLayout = scrollView.Content as VerticalStackLayout;
+                if (stackLayout == null)
+                {
+                    Console.WriteLine("ScrollView's content is not a VerticalStackLayout");
+                    return;
+                }
+
+                // Clear existing content except for the title
+                if (stackLayout.Children.Count > 0)
+                {
+                    // Keep the first child (title) and remove the rest
+                    var title = stackLayout.Children[0];
+                    stackLayout.Clear();
+                    stackLayout.Add(title);
+                }
+
+                // Add each player to the UI
+                foreach (var player in _filteredHoopers)
+                {
+                    // Create a new player card for each player
+                    var playerCard = CreatePlayerCard(player);
+                    stackLayout.Add(playerCard);
+                }
+
+                Console.WriteLine($"Updated UI with {_filteredHoopers.Count} players");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating UI: {ex.Message}");
+            }
+        }
+
+        // Helper method to create a player card frame
+        private Frame CreatePlayerCard(HooperModel player)
+        {
+            // Create the frame that will contain the entire player card
+            var frame = new Frame
+            {
+                BorderColor = (Color)Application.Current.Resources["BorderColor"],
+                CornerRadius = 10,
+                HasShadow = true,
+                Padding = 0,
+                BackgroundColor = Colors.White,
+                Margin = new Thickness(0, 0, 0, 15)
+            };
+
+            // Create the grid layout for the player card
+            var grid = new Grid
+            {
+                RowDefinitions = new RowDefinitionCollection
+                {
+                    new RowDefinition { Height = GridLength.Auto },
+                    new RowDefinition { Height = GridLength.Auto }
+                },
+                ColumnDefinitions = new ColumnDefinitionCollection
+                {
+                    new ColumnDefinition { Width = GridLength.Auto },
+                    new ColumnDefinition { Width = GridLength.Star },
+                    new ColumnDefinition { Width = GridLength.Auto }
+                }
+            };
+
+            // Profile picture frame
+            var profileFrame = new Frame
+            {
+                CornerRadius = 35,
+                HeightRequest = 70,
+                WidthRequest = 70,
+                Padding = 0,
+                Margin = 15,
+                BorderColor = (Color)Application.Current.Resources["PrimaryColor"],
+                HasShadow = false
+            };
+
+            // Basketball emoji as placeholder
+            var profilePic = new Label
+            {
+                Text = "🏀",
+                FontSize = 30,
+                HorizontalOptions = LayoutOptions.Center,
+                VerticalOptions = LayoutOptions.Center
+            };
+
+            profileFrame.Content = profilePic;
+            grid.SetRowSpan(profileFrame, 2);
+            grid.Add(profileFrame, 0, 0);
+
+            // Name and details layout
+            var nameDetailsLayout = new VerticalStackLayout
+            {
+                Margin = new Thickness(0, 15, 0, 0)
+            };
+
+            // Username and rank layout
+            var usernameRankLayout = new HorizontalStackLayout();
+
+            // Username
+            var usernameLabel = new Label
+            {
+                Text = $"@{player.Username}",
+                FontAttributes = FontAttributes.Bold,
+                FontSize = 18,
+                TextColor = (Color)Application.Current.Resources["PrimaryColor"]
+            };
+            usernameRankLayout.Add(usernameLabel);
+
+            // Rank badge
+            var rankFrame = new Frame
+            {
+                BackgroundColor = (Color)Application.Current.Resources["PrimaryColor"],
+                CornerRadius = 10,
+                HeightRequest = 20,
+                Padding = new Thickness(5, 0),
+                Margin = new Thickness(10, 0, 0, 0)
+            };
+
+            var rankLayout = new HorizontalStackLayout();
+
+            var hashLabel = new Label
+            {
+                Text = "#",
+                FontSize = 12,
+                TextColor = Colors.White,
+                VerticalOptions = LayoutOptions.Center
+            };
+
+            var rankLabel = new Label
+            {
+                Text = player.Rank.ToString(),
+                FontSize = 12,
+                FontAttributes = FontAttributes.Bold,
+                TextColor = Colors.White,
+                VerticalOptions = LayoutOptions.Center
+            };
+
+            rankLayout.Add(hashLabel);
+            rankLayout.Add(rankLabel);
+            rankFrame.Content = rankLayout;
+            usernameRankLayout.Add(rankFrame);
+
+            nameDetailsLayout.Add(usernameRankLayout);
+
+            // Position and location
+            var positionLocationLabel = new Label
+            {
+                Text = $"{player.Position} • {player.Location}",
+                FontSize = 14,
+                TextColor = (Color)Application.Current.Resources["SecondaryTextColor"]
+            };
+            nameDetailsLayout.Add(positionLocationLabel);
+
+            grid.Add(nameDetailsLayout, 1, 0);
+
+            // Stats ScrollView
+            var statsScrollView = new ScrollView
+            {
+                Orientation = ScrollOrientation.Horizontal,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Never,
+                Margin = new Thickness(0, 5, 0, 15),
+                VerticalOptions = LayoutOptions.Center
+            };
+
+            var statsLayout = new HorizontalStackLayout
+            {
+                Spacing = 15,
+                VerticalOptions = LayoutOptions.Center,
+                Margin = new Thickness(0)
+            };
+
+            // Games stat
+            var gamesStack = new VerticalStackLayout();
+            var gamesValueLabel = new Label
+            {
+                Text = player.GamesPlayed.ToString(),
+                FontAttributes = FontAttributes.Bold,
+                HorizontalOptions = LayoutOptions.Center,
+                TextColor = (Color)Application.Current.Resources["PrimaryColor"]
+            };
+            var gamesTextLabel = new Label
+            {
+                Text = "Games",
+                FontSize = 12,
+                HorizontalOptions = LayoutOptions.Center,
+                TextColor = (Color)Application.Current.Resources["SecondaryTextColor"]
+            };
+            gamesStack.Add(gamesValueLabel);
+            gamesStack.Add(gamesTextLabel);
+            statsLayout.Add(gamesStack);
+
+            // Record stat
+            var recordStack = new VerticalStackLayout();
+            var recordValueLabel = new Label
+            {
+                Text = player.Record,
+                FontAttributes = FontAttributes.Bold,
+                HorizontalOptions = LayoutOptions.Center,
+                TextColor = (Color)Application.Current.Resources["PrimaryColor"]
+            };
+            var recordTextLabel = new Label
+            {
+                Text = "Record",
+                FontSize = 12,
+                HorizontalOptions = LayoutOptions.Center,
+                TextColor = (Color)Application.Current.Resources["SecondaryTextColor"]
+            };
+            recordStack.Add(recordValueLabel);
+            recordStack.Add(recordTextLabel);
+            statsLayout.Add(recordStack);
+
+            // Win percentage stat
+            var winStack = new VerticalStackLayout();
+            var winValueLabel = new Label
+            {
+                Text = player.WinPercentage,
+                FontAttributes = FontAttributes.Bold,
+                HorizontalOptions = LayoutOptions.Center,
+                TextColor = (Color)Application.Current.Resources["PrimaryColor"]
+            };
+            var winTextLabel = new Label
+            {
+                Text = "Win %",
+                FontSize = 12,
+                HorizontalOptions = LayoutOptions.Center,
+                TextColor = (Color)Application.Current.Resources["SecondaryTextColor"]
+            };
+            winStack.Add(winValueLabel);
+            winStack.Add(winTextLabel);
+            statsLayout.Add(winStack);
+
+            // Rating stat
+            var ratingStack = new VerticalStackLayout();
+            var ratingContainer = new HorizontalStackLayout
+            {
+                HorizontalOptions = LayoutOptions.Center
+            };
+            var ratingValueLabel = new Label
+            {
+                Text = player.Rating.ToString("0.0"),
+                FontAttributes = FontAttributes.Bold,
+                TextColor = (Color)Application.Current.Resources["PrimaryColor"]
+            };
+            var starLabel = new Label
+            {
+                Text = "⭐",
+                FontSize = 12,
+                TextColor = (Color)Application.Current.Resources["PrimaryColor"],
+                Margin = new Thickness(2, 0, 0, 0)
+            };
+            ratingContainer.Add(ratingValueLabel);
+            ratingContainer.Add(starLabel);
+
+            var ratingTextLabel = new Label
+            {
+                Text = "Rating",
+                FontSize = 12,
+                HorizontalOptions = LayoutOptions.Center,
+                TextColor = (Color)Application.Current.Resources["SecondaryTextColor"]
+            };
+            ratingStack.Add(ratingContainer);
+            ratingStack.Add(ratingTextLabel);
+            statsLayout.Add(ratingStack);
+
+            statsScrollView.Content = statsLayout;
+            grid.Add(statsScrollView, 1, 1);
+
+            // Connect button
+            var connectButton = new Button
+            {
+                Text = "Connect",
+                BackgroundColor = (Color)Application.Current.Resources["PrimaryColor"],
+                TextColor = Colors.White,
+                CornerRadius = 20,
+                HeightRequest = 40,
+                WidthRequest = 100,
+                Margin = new Thickness(0, 15, 15, 0)
+            };
+
+            // Add event handler for connect button
+            connectButton.Clicked += (sender, e) => OnConnectButtonClicked(player);
+
+            grid.Add(connectButton, 2, 0);
+
+            frame.Content = grid;
+            return frame;
+        }
+
+        // Implementation of the missing FilterItems method
+        private ObservableCollection<HooperModel> FilterItems(IEnumerable<HooperModel> items)
+        {
+            if (items == null || !items.Any())
+                return new ObservableCollection<HooperModel>(_allHoopers);
+
+            // If you want to apply a default filter, you can do so here
+            // For example, only show players with a certain minimum rating
+            // var filtered = items.Where(p => p.Rating >= 4.0);
+
+            // Or just return all items without filtering
+            return new ObservableCollection<HooperModel>(items);
         }
 
         // Handle search text changes
@@ -143,8 +464,15 @@ namespace UltimateHoopers.Pages
                 }
             }
 
-            // Update the display
-            // In a real app, the CollectionView would automatically update
+            // Update the UI with the filtered players
+            UpdatePlayersUI();
+        }
+
+        // Event handler for the Connect button
+        private async void OnConnectButtonClicked(HooperModel player)
+        {
+            await DisplayAlert("Connect", $"Connecting with @{player.Username}", "OK");
+            // In a real app, this would send a connection request
         }
 
         // Filter methods
@@ -178,7 +506,8 @@ namespace UltimateHoopers.Pages
                 _filteredHoopers.Add(player);
             }
 
-            // In a real app, the UI would automatically update through data binding
+            // Update the UI with the filtered players
+            UpdatePlayersUI();
         }
 
         private void FilterByLocation(string location)
@@ -189,19 +518,22 @@ namespace UltimateHoopers.Pages
                 _filteredHoopers.Add(player);
             }
 
-            // In a real app, the UI would automatically update through data binding
-        }
-        // Navigation methods
-        private void OnBackClicked(object sender, EventArgs e)
-        {
-            Navigation.PopAsync();
+            // Update the UI with the filtered players
+            UpdatePlayersUI();
         }
 
-        private void OnHomeNavigationClicked(object sender, EventArgs e)
+        // Navigation methods
+        private async void OnBackClicked(object sender, EventArgs e)
+        {
+            await Navigation.PopAsync();
+        }
+
+        private async void OnHomeNavigationClicked(object sender, EventArgs e)
         {
             // Navigate to home page
-            // Example: await Navigation.PushAsync(new HomePage());
+            await Shell.Current.GoToAsync("//HomePage");
         }
+
         // Model class for Hooper data
         public class HooperModel
         {
