@@ -1,18 +1,22 @@
 ﻿using DataLayer;
 using DataLayer.DAL;
 using Domain;
+using Domain.DtoModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+
 
 namespace WebAPI.Controllers
 {
     /// <summary>
-    /// Post Controller
+    /// Controller for managing posts
     /// </summary>
+    [ApiController]
     [Route("api/[controller]")]
     public class PostController : ControllerBase
     {
@@ -38,7 +42,7 @@ namespace WebAPI.Controllers
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>Posts with cursor-based pagination</returns>
         [HttpGet("cursor")]
-        [ProducesResponseType(typeof(CursorPagedResult<Post>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(CursorPaginatedResultDto<Post>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetPostsWithCursor(
             [FromQuery] string cursor = null,
@@ -57,7 +61,7 @@ namespace WebAPI.Controllers
                     timeZone,
                     cancellationToken);
 
-                return Ok(new CursorPagedResult<Post>
+                return Ok(new CursorPaginatedResultDto<Post>
                 {
                     Items = posts,
                     NextCursor = nextCursor,
@@ -346,27 +350,80 @@ namespace WebAPI.Controllers
                 });
             }
         }
+
+        /// <summary>
+        /// Get posts with a specific tag
+        /// </summary>
+        /// <param name="tagId">Tag ID</param>
+        /// <returns>List of posts with the specified tag</returns>
+        [HttpGet("ByTag/{tagId}")]
+        public async Task<ActionResult<IEnumerable<Post>>> GetPostsByTag(string tagId)
+        {
+            try
+            {
+                var timeZone = Request.Headers.TryGetValue("TimeZone", out var tz) ? tz.ToString() : "America/New_York";
+                var posts = await _repository.GetPostsWithTagByTagId(tagId, timeZone);
+                return Ok(posts);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    Message = $"An error occurred while retrieving posts for tag {tagId}.",
+                    Error = ex.Message
+                });
+            }
+        }
+
+        /// <summary>
+        /// Get saved posts for a specific profile
+        /// </summary>
+        /// <param name="profileId">Profile ID</param>
+        /// <returns>List of posts saved by the profile</returns>
+        [HttpGet("Saved/{profileId}")]
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<Post>>> GetSavedPosts(string profileId)
+        {
+            try
+            {
+                var timeZone = Request.Headers.TryGetValue("TimeZone", out var tz) ? tz.ToString() : "America/New_York";
+                var posts = await _repository.GetSavedPostsByProfileId(profileId, timeZone);
+                return Ok(posts);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    Message = $"An error occurred while retrieving saved posts for profile {profileId}.",
+                    Error = ex.Message
+                });
+            }
+        }
+
+        /// <summary>
+        /// Get posts that mention a specific profile
+        /// </summary>
+        /// <param name="profileId">Profile ID</param>
+        /// <returns>List of posts that mention the profile</returns>
+        [HttpGet("Mentions/{profileId}")]
+        public async Task<ActionResult<IEnumerable<Post>>> GetPostsMentioningProfile(string profileId)
+        {
+            try
+            {
+                var timeZone = Request.Headers.TryGetValue("TimeZone", out var tz) ? tz.ToString() : "America/New_York";
+                var posts = await _repository.GetPostsMentionProfileId(profileId, timeZone);
+                return Ok(posts);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    Message = $"An error occurred while retrieving posts mentioning profile {profileId}.",
+                    Error = ex.Message
+                });
+            }
+        }
     }
 
-    /// <summary>
-    /// Result class for cursor-based pagination
-    /// </summary>
-    /// <typeparam name="T">Type of items in the result</typeparam>
-    public class CursorPagedResult<T>
-    {
-        /// <summary>
-        /// The items in the current page
-        /// </summary>
-        public IEnumerable<T> Items { get; set; }
-
-        /// <summary>
-        /// The cursor to the next page, null if there are no more pages
-        /// </summary>
-        public string NextCursor { get; set; }
-
-        /// <summary>
-        /// Whether there are more items available
-        /// </summary>
-        public bool HasMore { get; set; }
-    }
+    
 }
