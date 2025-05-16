@@ -69,9 +69,23 @@ namespace DataLayer.DAL
             CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Get profile by ID with timeout
+        /// Get profile by user ID
         /// </summary>
-        Task<Profile> GetProfileByIdWithTimeoutAsync(
+        Task<Profile> GetProfileByUserIdAsync(
+            string userId,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Get profile by username
+        /// </summary>
+        Task<Profile> GetProfileByUsernameAsync(
+            string username,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Get profile with timeout
+        /// </summary>
+        Task<Profile> GetProfileWithTimeoutAsync(
             string profileId,
             TimeSpan timeout,
             CancellationToken cancellationToken = default);
@@ -80,6 +94,34 @@ namespace DataLayer.DAL
         /// Get game history for a profile
         /// </summary>
         Task<List<Game>> GetProfileGameHistoryAsync(
+            string profileId,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Get game statistics for a profile
+        /// </summary>
+        Task<GameStatistics> GetProfileGameStatisticsAsync(
+            string profileId,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Get scouting report for a profile
+        /// </summary>
+        Task<ScoutingReport> GetScoutingReportAsync(
+            string profileId,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Get squad for a profile
+        /// </summary>
+        Task<Squad> GetProfileSquadAsync(
+            string profileId,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Get settings for a profile
+        /// </summary>
+        Task<Setting> GetProfileSettingsAsync(
             string profileId,
             CancellationToken cancellationToken = default);
 
@@ -98,19 +140,19 @@ namespace DataLayer.DAL
             CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Update winner points
+        /// Update profile points
         /// </summary>
-        Task<bool> UpdateWinnerPointsAsync(
+        Task<bool> UpdateProfilePointsAsync(
             string profileId,
-            int points = 1,
+            int points,
             CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Update profile record flags
+        /// Set top record status for a profile
         /// </summary>
-        Task<bool> SetProfileRecordStatusAsync(
+        Task<bool> SetTopRecordStatusAsync(
             string profileId,
-            bool hasBestRecord,
+            bool hasTopRecord,
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -118,7 +160,7 @@ namespace DataLayer.DAL
         /// </summary>
         Task<bool> UpdateLastRunDateAsync(
             string profileId,
-            DateTimeOffset lastRunDate,
+            string lastRunDate,
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -137,17 +179,17 @@ namespace DataLayer.DAL
             CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Upsert a scouting report
+        /// </summary>
+        Task<bool> UpsertScoutingReportAsync(
+            ScoutingReport scoutingReport,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Check if a username is available
         /// </summary>
         Task<bool> IsUserNameAvailableAsync(
             string userName,
-            CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Check if an email is available
-        /// </summary>
-        Task<bool> IsEmailAvailableAsync(
-            string email,
             CancellationToken cancellationToken = default);
 
         /// <summary>

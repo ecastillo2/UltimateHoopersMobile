@@ -5,10 +5,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using DataLayer.DAL;
 using Domain;
+using Domain.DtoModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using ProfileService.Models;
+
 
 namespace WebAPI.Controllers
 {
@@ -29,13 +29,13 @@ namespace WebAPI.Controllers
         /// Get all profiles
         /// </summary>
         [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<ProfileViewModel>), 200)]
+        [ProducesResponseType(typeof(IEnumerable<ProfileViewModelDto>), 200)]
         public async Task<IActionResult> GetProfiles(CancellationToken cancellationToken)
         {
             try
             {
                 var profiles = await _profileRepository.GetProfilesAsync(cancellationToken);
-                var viewModels = profiles.Select(p => new ProfileViewModel(p));
+                var viewModels = profiles.Select(p => new ProfileViewModelDto(p));
 
                 return Ok(viewModels);
             }
@@ -50,7 +50,7 @@ namespace WebAPI.Controllers
         /// Get profiles with standard pagination
         /// </summary>
         [HttpGet("paginated")]
-        [ProducesResponseType(typeof(PaginatedResult<ProfileViewModel>), 200)]
+        [ProducesResponseType(typeof(PaginatedResultDto<ProfileViewModelDto>), 200)]
         public async Task<IActionResult> GetProfilesPaginated(
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20,
@@ -61,9 +61,9 @@ namespace WebAPI.Controllers
                 var (profiles, totalCount, totalPages) = await _profileRepository
                     .GetProfilesPaginatedAsync(page, pageSize, cancellationToken);
 
-                var viewModels = profiles.Select(p => new ProfileViewModel(p)).ToList();
+                var viewModels = profiles.Select(p => new ProfileViewModelDto(p)).ToList();
 
-                var result = new PaginatedResult<ProfileViewModel>
+                var result = new PaginatedResultDto<ProfileViewModelDto>
                 {
                     Items = viewModels,
                     Page = page,
@@ -85,7 +85,7 @@ namespace WebAPI.Controllers
         /// Get profiles with cursor-based pagination for efficient scrolling
         /// </summary>
         [HttpGet("cursor")]
-        [ProducesResponseType(typeof(CursorPaginatedResult<ProfileViewModel>), 200)]
+        [ProducesResponseType(typeof(CursorPaginatedResultDto<ProfileViewModelDto>), 200)]
         public async Task<IActionResult> GetProfilesWithCursor(
             [FromQuery] string cursor = null,
             [FromQuery] int limit = 20,
@@ -98,9 +98,9 @@ namespace WebAPI.Controllers
                 var (profiles, nextCursor) = await _profileRepository
                     .GetProfilesWithCursorAsync(cursor, limit, direction, sortBy, cancellationToken);
 
-                var viewModels = profiles.Select(p => new ProfileViewModel(p)).ToList();
+                var viewModels = profiles.Select(p => new ProfileViewModelDto(p)).ToList();
 
-                var result = new CursorPaginatedResult<ProfileViewModel>
+                var result = new CursorPaginatedResultDto<ProfileViewModelDto>
                 {
                     Items = viewModels,
                     NextCursor = nextCursor,
@@ -122,7 +122,7 @@ namespace WebAPI.Controllers
         /// Get profile by ID
         /// </summary>
         [HttpGet("{id}")]
-        [ProducesResponseType(typeof(ProfileDetailViewModel), 200)]
+        [ProducesResponseType(typeof(ProfileDetailViewModelDto), 200)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> GetProfileById(string id, CancellationToken cancellationToken)
         {
@@ -138,10 +138,10 @@ namespace WebAPI.Controllers
                 var scoutingReport = await _profileRepository.GetScoutingReportAsync(id, cancellationToken);
                 var gameStats = await _profileRepository.GetProfileGameStatisticsAsync(id, cancellationToken);
 
-                var viewModel = new ProfileDetailViewModel(profile)
+                var viewModel = new ProfileDetailViewModelDto(profile)
                 {
-                    Setting = setting != null ? new SettingViewModel(setting) : null,
-                    ScoutingReport = scoutingReport != null ? new ScoutingReportViewModel(scoutingReport) : null,
+                    Setting = setting != null ? new SettingViewModelDto(setting) : null,
+                    ScoutingReport = scoutingReport != null ? new ScoutingReportViewModelDto(scoutingReport) : null,
                     GameStatistics = gameStats
                 };
 
@@ -158,7 +158,7 @@ namespace WebAPI.Controllers
         /// Get profile by username
         /// </summary>
         [HttpGet("username/{username}")]
-        [ProducesResponseType(typeof(ProfileDetailViewModel), 200)]
+        [ProducesResponseType(typeof(ProfileDetailViewModelDto), 200)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> GetProfileByUsername(string username, CancellationToken cancellationToken)
         {
@@ -174,10 +174,10 @@ namespace WebAPI.Controllers
                 var scoutingReport = await _profileRepository.GetScoutingReportAsync(profile.ProfileId, cancellationToken);
                 var gameStats = await _profileRepository.GetProfileGameStatisticsAsync(profile.ProfileId, cancellationToken);
 
-                var viewModel = new ProfileDetailViewModel(profile)
+                var viewModel = new ProfileDetailViewModelDto(profile)
                 {
-                    Setting = setting != null ? new SettingViewModel(setting) : null,
-                    ScoutingReport = scoutingReport != null ? new ScoutingReportViewModel(scoutingReport) : null,
+                    Setting = setting != null ? new SettingViewModelDto(setting) : null,
+                    ScoutingReport = scoutingReport != null ? new ScoutingReportViewModelDto(scoutingReport) : null,
                     GameStatistics = gameStats
                 };
 
@@ -194,7 +194,7 @@ namespace WebAPI.Controllers
         /// Get following profiles for a profile
         /// </summary>
         [HttpGet("{id}/following")]
-        [ProducesResponseType(typeof(IEnumerable<ProfileViewModel>), 200)]
+        [ProducesResponseType(typeof(IEnumerable<ProfileViewModelDto>), 200)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> GetFollowingProfiles(string id, CancellationToken cancellationToken)
         {
@@ -207,7 +207,7 @@ namespace WebAPI.Controllers
                     return NotFound($"Profile with ID {id} not found");
 
                 var followingProfiles = await _profileRepository.GetFollowingProfilesAsync(id, cancellationToken);
-                var viewModels = followingProfiles.Select(p => new ProfileViewModel(p));
+                var viewModels = followingProfiles.Select(p => new ProfileViewModelDto(p));
 
                 return Ok(viewModels);
             }
@@ -222,7 +222,7 @@ namespace WebAPI.Controllers
         /// Get follower profiles for a profile
         /// </summary>
         [HttpGet("{id}/followers")]
-        [ProducesResponseType(typeof(IEnumerable<ProfileViewModel>), 200)]
+        [ProducesResponseType(typeof(IEnumerable<ProfileViewModelDto>), 200)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> GetFollowerProfiles(string id, CancellationToken cancellationToken)
         {
@@ -235,7 +235,7 @@ namespace WebAPI.Controllers
                     return NotFound($"Profile with ID {id} not found");
 
                 var followerProfiles = await _profileRepository.GetFollowerProfilesAsync(id, cancellationToken);
-                var viewModels = followerProfiles.Select(p => new ProfileViewModel(p));
+                var viewModels = followerProfiles.Select(p => new ProfileViewModelDto(p));
 
                 return Ok(viewModels);
             }
@@ -250,7 +250,7 @@ namespace WebAPI.Controllers
         /// Get game history for a profile
         /// </summary>
         [HttpGet("{id}/games")]
-        [ProducesResponseType(typeof(IEnumerable<GameViewModel>), 200)]
+        [ProducesResponseType(typeof(IEnumerable<GameViewModelDto>), 200)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> GetProfileGameHistory(string id, CancellationToken cancellationToken)
         {
@@ -263,7 +263,7 @@ namespace WebAPI.Controllers
                     return NotFound($"Profile with ID {id} not found");
 
                 var games = await _profileRepository.GetProfileGameHistoryAsync(id, cancellationToken);
-                var viewModels = games.Select(g => new GameViewModel(g));
+                var viewModels = games.Select(g => new GameViewModelDto(g));
 
                 return Ok(viewModels);
             }
@@ -305,7 +305,7 @@ namespace WebAPI.Controllers
         /// Get scouting report for a profile
         /// </summary>
         [HttpGet("{id}/scouting-report")]
-        [ProducesResponseType(typeof(ScoutingReportViewModel), 200)]
+        [ProducesResponseType(typeof(ScoutingReportViewModelDto), 200)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> GetScoutingReport(string id, CancellationToken cancellationToken)
         {
@@ -322,7 +322,7 @@ namespace WebAPI.Controllers
                 if (scoutingReport == null)
                     return NotFound($"No scouting report found for profile with ID {id}");
 
-                return Ok(new ScoutingReportViewModel(scoutingReport));
+                return Ok(new ScoutingReportViewModelDto(scoutingReport));
             }
             catch (Exception ex)
             {
@@ -335,7 +335,7 @@ namespace WebAPI.Controllers
         /// Get squad details for a profile
         /// </summary>
         [HttpGet("{id}/squad")]
-        [ProducesResponseType(typeof(SquadViewModel), 200)]
+        [ProducesResponseType(typeof(SquadViewModelDto), 200)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> GetProfileSquad(string id, CancellationToken cancellationToken)
         {
@@ -352,7 +352,7 @@ namespace WebAPI.Controllers
                 if (squad == null)
                     return NotFound($"No squad found for profile with ID {id}");
 
-                return Ok(new SquadViewModel(squad));
+                return Ok(new SquadViewModelDto(squad));
             }
             catch (Exception ex)
             {
@@ -369,7 +369,7 @@ namespace WebAPI.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> UpdateProfile(string id, ProfileUpdateModel model, CancellationToken cancellationToken)
+        public async Task<IActionResult> UpdateProfile(string id, ProfileUpdateModelDto model, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -409,7 +409,7 @@ namespace WebAPI.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> UpdateUsername(string id, [FromBody] UsernameUpdateModel model, CancellationToken cancellationToken)
+        public async Task<IActionResult> UpdateUsername(string id, [FromBody] UsernameUpdateModelDto model, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -450,7 +450,7 @@ namespace WebAPI.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> UpdateSettings(string id, [FromBody] SettingUpdateModel model, CancellationToken cancellationToken)
+        public async Task<IActionResult> UpdateSettings(string id, [FromBody] SettingUpdateModelDto model, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -500,7 +500,7 @@ namespace WebAPI.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> UpsertScoutingReport(string id, [FromBody] ScoutingReportUpdateModel model, CancellationToken cancellationToken)
+        public async Task<IActionResult> UpsertScoutingReport(string id, [FromBody] ScoutingReportUpdateModelDto model, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -568,262 +568,3 @@ namespace WebAPI.Controllers
     }
 }
 
-// View models for the controller responses
-
-namespace ProfileService.Models
-{
-    public class ProfileViewModel
-    {
-        public string ProfileId { get; set; }
-        public string UserId { get; set; }
-        public string UserName { get; set; }
-        public string Height { get; set; }
-        public string Weight { get; set; }
-        public string Position { get; set; }
-        public string Ranking { get; set; }
-        public string StarRating { get; set; }
-        public string Bio { get; set; }
-        public string ImageURL { get; set; }
-        public string PlayerArchetype { get; set; }
-        public string City { get; set; }
-        public string Zip { get; set; }
-        public string PlayerNumber { get; set; }
-        public string Status { get; set; }
-        public int? Points { get; set; }
-        public string LastRunDate { get; set; }
-        public bool? TopRecord { get; set; }
-        public bool? OnSquad { get; set; }
-
-        public ProfileViewModel(Profile profile)
-        {
-            ProfileId = profile.ProfileId;
-            UserId = profile.UserId;
-            UserName = profile.UserName;
-            Height = profile.Height;
-            Weight = profile.Weight;
-            Position = profile.Position;
-            Ranking = profile.Ranking;
-            StarRating = profile.StarRating;
-            Bio = profile.Bio;
-            ImageURL = profile.ImageURL;
-            PlayerArchetype = profile.PlayerArchetype;
-            City = profile.City;
-            Zip = profile.Zip;
-            PlayerNumber = profile.PlayerNumber;
-            Status = profile.Status;
-            Points = profile.Points;
-            LastRunDate = profile.LastRunDate;
-            TopRecord = profile.TopRecord;
-            OnSquad = profile.OnSquad;
-        }
-    }
-
-    public class ProfileDetailViewModel : ProfileViewModel
-    {
-        public SettingViewModel Setting { get; set; }
-        public ScoutingReportViewModel ScoutingReport { get; set; }
-        public GameStatistics GameStatistics { get; set; }
-        public string FollowersCount { get; set; }
-        public string FollowingCount { get; set; }
-
-        public ProfileDetailViewModel(Profile profile) : base(profile)
-        {
-            FollowersCount = profile.FollowersCount;
-            FollowingCount = profile.FollowingCount;
-        }
-    }
-
-    public class GameViewModel
-    {
-        public string GameId { get; set; }
-        public string CourtId { get; set; }
-        public string PrivateRunId { get; set; }
-        public string CreatedDate { get; set; }
-        public string WinProfileIdsStatusString { get; set; }
-        public string LoseProfileIdsStatusString { get; set; }
-        public string PrivateRunNumber { get; set; }
-        public string Location { get; set; }
-        public string GameNumber { get; set; }
-        public string Status { get; set; }
-        public string UserWinOrLose { get; set; }
-
-        public GameViewModel(Game game)
-        {
-            GameId = game.GameId;
-            CourtId = game.CourtId;
-            PrivateRunId = game.PrivateRunId;
-            CreatedDate = game.CreatedDate;
-            WinProfileIdsStatusString = game.WinProfileIdsStatusString;
-            LoseProfileIdsStatusString = game.LoseProfileIdsStatusString;
-            PrivateRunNumber = game.PrivateRunNumber;
-            Location = game.Location;
-            GameNumber = game.GameNumber;
-            Status = game.Status;
-            UserWinOrLose = game.UserWinOrLose;
-        }
-    }
-
-    public class SettingViewModel
-    {
-        public string SettingId { get; set; }
-        public string ProfileId { get; set; }
-        public bool AllowComments { get; set; }
-        public bool ShowGameHistory { get; set; }
-        public bool AllowEmailNotification { get; set; }
-
-        public SettingViewModel(Setting setting)
-        {
-            SettingId = setting.SettingId;
-            ProfileId = setting.ProfileId;
-            AllowComments = setting.AllowComments;
-            ShowGameHistory = setting.ShowGameHistory;
-            AllowEmailNotification = setting.AllowEmailNotification;
-        }
-    }
-
-    public class ScoutingReportViewModel
-    {
-        public string ScoutingReportId { get; set; }
-        public string ProfileId { get; set; }
-        public string PlayStyle { get; set; }
-        public string StrengthOne { get; set; }
-        public string StrengthTwo { get; set; }
-        public string WeaknessOne { get; set; }
-        public string WeaknessTwo { get; set; }
-        public string PlayStyleImpactOne { get; set; }
-        public string PlayStyleImpactTwo { get; set; }
-        public string Comparison { get; set; }
-        public string Conclusion { get; set; }
-        public string Status { get; set; }
-        public string IdealRole { get; set; }
-        public DateTime? CreatedDate { get; set; }
-        public DateTime? LastUpdated { get; set; }
-
-        public ScoutingReportViewModel(ScoutingReport report)
-        {
-            ScoutingReportId = report.ScoutingReportId;
-            ProfileId = report.ProfileId;
-            PlayStyle = report.PlayStyle;
-            StrengthOne = report.StrengthOne;
-            StrengthTwo = report.StrengthTwo;
-            WeaknessOne = report.WeaknessOne;
-            WeaknessTwo = report.WeaknessTwo;
-            PlayStyleImpactOne = report.PlayStyleImpactOne;
-            PlayStyleImpactTwo = report.PlayStyleImpactTwo;
-            Comparison = report.Comparison;
-            Conclusion = report.Conclusion;
-            Status = report.Status;
-            IdealRole = report.IdealRole;
-            CreatedDate = report.CreatedDate;
-            LastUpdated = report.LastUpdated;
-        }
-    }
-
-    public class SquadViewModel
-    {
-        public string SquadId { get; set; }
-        public string OwnerProfileId { get; set; }
-        public string Name { get; set; }
-
-        public SquadViewModel(Squad squad)
-        {
-            SquadId = squad.SquadId;
-            OwnerProfileId = squad.OwnerProfileId;
-            Name = squad.Name;
-        }
-    }
-
-    public class PaginatedResult<T>
-    {
-        public List<T> Items { get; set; }
-        public int Page { get; set; }
-        public int PageSize { get; set; }
-        public int TotalCount { get; set; }
-        public int TotalPages { get; set; }
-        public bool HasPreviousPage => Page > 1;
-        public bool HasNextPage => Page < TotalPages;
-    }
-
-    public class CursorPaginatedResult<T>
-    {
-        public List<T> Items { get; set; }
-        public string NextCursor { get; set; }
-        public bool HasMore { get; set; }
-        public string Direction { get; set; }
-        public string SortBy { get; set; }
-    }
-
-    public class ProfileUpdateModel
-    {
-        public string ProfileId { get; set; }
-        public string Height { get; set; }
-        public string Weight { get; set; }
-        public string Position { get; set; }
-        public string Bio { get; set; }
-        public string ImageURL { get; set; }
-        public string PlayerArchetype { get; set; }
-        public string City { get; set; }
-        public string Zip { get; set; }
-        public string PlayerNumber { get; set; }
-
-        public void UpdateProfile(Profile profile)
-        {
-            profile.Height = Height;
-            profile.Weight = Weight;
-            profile.Position = Position;
-            profile.Bio = Bio;
-            profile.ImageURL = ImageURL;
-            profile.PlayerArchetype = PlayerArchetype;
-            profile.City = City;
-            profile.Zip = Zip;
-            profile.PlayerNumber = PlayerNumber;
-        }
-    }
-
-    public class UsernameUpdateModel
-    {
-        public string Username { get; set; }
-    }
-
-    public class SettingUpdateModel
-    {
-        public bool AllowComments { get; set; }
-        public bool ShowGameHistory { get; set; }
-        public bool AllowEmailNotification { get; set; }
-
-        public void UpdateSetting(Setting setting)
-        {
-            setting.AllowComments = AllowComments;
-            setting.ShowGameHistory = ShowGameHistory;
-            setting.AllowEmailNotification = AllowEmailNotification;
-        }
-    }
-
-    public class ScoutingReportUpdateModel
-    {
-        public string PlayStyle { get; set; }
-        public string StrengthOne { get; set; }
-        public string StrengthTwo { get; set; }
-        public string WeaknessOne { get; set; }
-        public string WeaknessTwo { get; set; }
-        public string PlayStyleImpactOne { get; set; }
-        public string PlayStyleImpactTwo { get; set; }
-        public string Comparison { get; set; }
-        public string Conclusion { get; set; }
-        public string IdealRole { get; set; }
-
-        public void UpdateScoutingReport(ScoutingReport report)
-        {
-            report.PlayStyle = PlayStyle;
-            report.StrengthOne = StrengthOne;
-            report.StrengthTwo = StrengthTwo;
-            report.WeaknessOne = WeaknessOne;
-            report.WeaknessTwo = WeaknessTwo;
-            report.PlayStyleImpactOne = PlayStyleImpactOne;
-            report.PlayStyleImpactTwo = PlayStyleImpactTwo;
-            report.Comparison = Comparison;
-            report.Conclusion = Conclusion;
-            report.IdealRole = IdealRole;
-        }
-    }
-}

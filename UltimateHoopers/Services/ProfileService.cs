@@ -91,6 +91,36 @@ namespace UltimateHoopers.Services
             }
         }
 
+        public async Task<List<Profile>> GetProfilesWithCursor()
+        {
+            try
+            {
+                // Get token (first from App state, then from secure storage)
+                var token = await GetTokenAsync();
+                if (string.IsNullOrEmpty(token))
+                {
+                    throw new UnauthorizedAccessException("No access token available");
+                }
+
+                // Call the API with the retrieved token
+                var profiles = await _profileApi.GetProfilesWithCursorAsync(token);
+
+
+                return profiles;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error getting posts", ex);
+
+                // For development/testing, return mock data if API fails
+#if DEBUG
+                return null;
+#else
+                throw;
+#endif
+            }
+        }
+
         public async Task<bool> UpdateProfileAsync(Profile profile)
         {
             try

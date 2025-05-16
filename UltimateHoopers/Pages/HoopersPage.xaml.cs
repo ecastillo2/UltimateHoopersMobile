@@ -132,7 +132,7 @@ namespace UltimateHoopers.Pages
                 }
 
                 // Load profiles
-                var profiles = await profileService.GetProfilesAsync();
+                var profiles = await profileService.GetProfilesWithCursor();
 
                 // Convert to view models
                 _allHoopers.Clear();

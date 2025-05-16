@@ -73,7 +73,7 @@ namespace WebAPI.Controllers
                     try
                     {
                         // Get the user's profile
-                        var profile = await repository.GetProfileById(userResult.ProfileId);
+                        var profile = await repository.GetProfileByIdAsync(userResult.ProfileId);
                         if (profile != null)
                         {
                             // Assign the profile to the user object

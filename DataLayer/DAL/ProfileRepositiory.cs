@@ -6,7 +6,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Domain;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace DataLayer.DAL
 {
@@ -16,18 +17,30 @@ namespace DataLayer.DAL
     public class ProfileRepository : IProfileRepository
     {
         private readonly HUDBContext _context;
+        private readonly ILogger<ProfileRepository> _logger;
+        private readonly IConfiguration _configuration;
         private bool _disposed = false;
 
-        public ProfileRepository(HUDBContext context)
+        public ProfileRepository(HUDBContext context, IConfiguration configuration, ILogger<ProfileRepository> logger = null)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _logger = logger;
         }
 
         public async Task<List<Profile>> GetProfilesAsync(CancellationToken cancellationToken = default)
         {
-            return await _context.Profile
-                .AsNoTracking()
-                .ToListAsync(cancellationToken);
+            try
+            {
+                return await _context.Profile
+                    .AsNoTracking()
+                    .ToListAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error retrieving profiles");
+                throw;
+            }
         }
 
         public async Task<(List<Profile> Profiles, int TotalCount, int TotalPages)> GetProfilesPaginatedAsync(
@@ -38,17 +51,25 @@ namespace DataLayer.DAL
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
 
-            var totalCount = await _context.Profile.CountAsync(cancellationToken);
-            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+            try
+            {
+                var totalCount = await _context.Profile.CountAsync(cancellationToken);
+                var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
-            var profiles = await _context.Profile
-                .AsNoTracking()
-                .OrderByDescending(p => p.Points)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync(cancellationToken);
+                var profiles = await _context.Profile
+                    .AsNoTracking()
+                    .OrderByDescending(p => p.Points)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync(cancellationToken);
 
-            return (profiles, totalCount, totalPages);
+                return (profiles, totalCount, totalPages);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error retrieving paginated profiles");
+                throw;
+            }
         }
 
         public async Task<(List<Profile> Profiles, string NextCursor)> GetProfilesWithCursorAsync(
@@ -58,180 +79,198 @@ namespace DataLayer.DAL
             string sortBy = "Points",
             CancellationToken cancellationToken = default)
         {
-            // Default query starting point
-            IQueryable<Profile> query = _context.Profile.AsNoTracking();
-
-            // Parse the cursor if provided
-            CursorData cursorData = null;
-            if (!string.IsNullOrEmpty(cursor))
+            try
             {
-                try
-                {
-                    // Decode and deserialize cursor
-                    var decodedCursor = System.Text.Encoding.UTF8.GetString(
-                        Convert.FromBase64String(cursor));
-                    cursorData = JsonSerializer.Deserialize<CursorData>(decodedCursor);
-                }
-                catch
-                {
-                    // If cursor parsing fails, ignore and start from beginning
-                    cursorData = null;
-                }
-            }
+                // Default query starting point
+                IQueryable<Profile> query = _context.Profile.AsNoTracking();
 
-            // Apply filtering based on cursor and direction
-            if (cursorData != null)
-            {
-                switch (sortBy.ToLowerInvariant())
+                // Parse the cursor if provided
+                CursorData cursorData = null;
+                if (!string.IsNullOrEmpty(cursor))
                 {
-                    case "points":
-                        if (direction.ToLowerInvariant() == "next")
-                        {
-                            query = query.Where(p => p.Points < cursorData.Points ||
-                                (p.Points == cursorData.Points && p.ProfileId.CompareTo(cursorData.Id) < 0));
+                    try
+                    {
+                        // Decode and deserialize cursor
+                        var decodedCursor = System.Text.Encoding.UTF8.GetString(
+                            Convert.FromBase64String(cursor));
+                        cursorData = System.Text.Json.JsonSerializer.Deserialize<CursorData>(decodedCursor);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger?.LogWarning(ex, "Invalid cursor format. Starting from beginning");
+                        // If cursor parsing fails, ignore and start from beginning
+                        cursorData = null;
+                    }
+                }
+
+                // Apply filtering based on cursor and direction
+                if (cursorData != null)
+                {
+                    switch (sortBy.ToLowerInvariant())
+                    {
+                        case "points":
+                            if (direction.ToLowerInvariant() == "next")
+                            {
+                                query = query.Where(p => p.Points < cursorData.Points ||
+                                    (p.Points == cursorData.Points && p.ProfileId.CompareTo(cursorData.Id) < 0));
+                                query = query.OrderByDescending(p => p.Points).ThenByDescending(p => p.ProfileId);
+                            }
+                            else // previous
+                            {
+                                query = query.Where(p => p.Points > cursorData.Points ||
+                                    (p.Points == cursorData.Points && p.ProfileId.CompareTo(cursorData.Id) > 0));
+                                query = query.OrderBy(p => p.Points).ThenBy(p => p.ProfileId);
+                            }
+                            break;
+
+                        case "playernumber":
+                            if (direction.ToLowerInvariant() == "next")
+                            {
+                                query = query.Where(p => p.PlayerNumber.CompareTo(cursorData.PlayerNumber) > 0 ||
+                                    (p.PlayerNumber == cursorData.PlayerNumber && p.ProfileId.CompareTo(cursorData.Id) < 0));
+                                query = query.OrderBy(p => p.PlayerNumber).ThenByDescending(p => p.ProfileId);
+                            }
+                            else // previous
+                            {
+                                query = query.Where(p => p.PlayerNumber.CompareTo(cursorData.PlayerNumber) < 0 ||
+                                    (p.PlayerNumber == cursorData.PlayerNumber && p.ProfileId.CompareTo(cursorData.Id) > 0));
+                                query = query.OrderByDescending(p => p.PlayerNumber).ThenBy(p => p.ProfileId);
+                            }
+                            break;
+
+                        case "username":
+                            if (direction.ToLowerInvariant() == "next")
+                            {
+                                query = query.Where(p => p.UserName.CompareTo(cursorData.UserName) > 0 ||
+                                    (p.UserName == cursorData.UserName && p.ProfileId.CompareTo(cursorData.Id) < 0));
+                                query = query.OrderBy(p => p.UserName).ThenByDescending(p => p.ProfileId);
+                            }
+                            else // previous
+                            {
+                                query = query.Where(p => p.UserName.CompareTo(cursorData.UserName) < 0 ||
+                                    (p.UserName == cursorData.UserName && p.ProfileId.CompareTo(cursorData.Id) > 0));
+                                query = query.OrderByDescending(p => p.UserName).ThenBy(p => p.ProfileId);
+                            }
+                            break;
+
+                        case "status":
+                            if (direction.ToLowerInvariant() == "next")
+                            {
+                                query = query.Where(p => p.Status.CompareTo(cursorData.Status) > 0 ||
+                                    (p.Status == cursorData.Status && p.ProfileId.CompareTo(cursorData.Id) < 0));
+                                query = query.OrderBy(p => p.Status).ThenByDescending(p => p.ProfileId);
+                            }
+                            else // previous
+                            {
+                                query = query.Where(p => p.Status.CompareTo(cursorData.Status) < 0 ||
+                                    (p.Status == cursorData.Status && p.ProfileId.CompareTo(cursorData.Id) > 0));
+                                query = query.OrderByDescending(p => p.Status).ThenBy(p => p.ProfileId);
+                            }
+                            break;
+
+                        default:
+                            // Default to Points
+                            if (direction.ToLowerInvariant() == "next")
+                            {
+                                query = query.Where(p => p.Points < cursorData.Points ||
+                                    (p.Points == cursorData.Points && p.ProfileId.CompareTo(cursorData.Id) < 0));
+                                query = query.OrderByDescending(p => p.Points).ThenByDescending(p => p.ProfileId);
+                            }
+                            else // previous
+                            {
+                                query = query.Where(p => p.Points > cursorData.Points ||
+                                    (p.Points == cursorData.Points && p.ProfileId.CompareTo(cursorData.Id) > 0));
+                                query = query.OrderBy(p => p.Points).ThenBy(p => p.ProfileId);
+                            }
+                            break;
+                    }
+                }
+                else
+                {
+                    // For first page with no cursor
+                    switch (sortBy.ToLowerInvariant())
+                    {
+                        case "points":
                             query = query.OrderByDescending(p => p.Points).ThenByDescending(p => p.ProfileId);
-                        }
-                        else // previous
-                        {
-                            query = query.Where(p => p.Points > cursorData.Points ||
-                                (p.Points == cursorData.Points && p.ProfileId.CompareTo(cursorData.Id) > 0));
-                            query = query.OrderBy(p => p.Points).ThenBy(p => p.ProfileId);
-                        }
-                        break;
-
-                    case "playernumber":
-                        if (direction.ToLowerInvariant() == "next")
-                        {
-                            query = query.Where(p => p.PlayerNumber.CompareTo(cursorData.PlayerNumber) > 0 ||
-                                (p.PlayerNumber == cursorData.PlayerNumber && p.ProfileId.CompareTo(cursorData.Id) < 0));
+                            break;
+                        case "playernumber":
                             query = query.OrderBy(p => p.PlayerNumber).ThenByDescending(p => p.ProfileId);
-                        }
-                        else // previous
-                        {
-                            query = query.Where(p => p.PlayerNumber.CompareTo(cursorData.PlayerNumber) < 0 ||
-                                (p.PlayerNumber == cursorData.PlayerNumber && p.ProfileId.CompareTo(cursorData.Id) > 0));
-                            query = query.OrderByDescending(p => p.PlayerNumber).ThenBy(p => p.ProfileId);
-                        }
-                        break;
-
-                    case "username":
-                        if (direction.ToLowerInvariant() == "next")
-                        {
-                            query = query.Where(p => p.UserName.CompareTo(cursorData.UserName) > 0 ||
-                                (p.UserName == cursorData.UserName && p.ProfileId.CompareTo(cursorData.Id) < 0));
+                            break;
+                        case "username":
                             query = query.OrderBy(p => p.UserName).ThenByDescending(p => p.ProfileId);
-                        }
-                        else // previous
-                        {
-                            query = query.Where(p => p.UserName.CompareTo(cursorData.UserName) < 0 ||
-                                (p.UserName == cursorData.UserName && p.ProfileId.CompareTo(cursorData.Id) > 0));
-                            query = query.OrderByDescending(p => p.UserName).ThenBy(p => p.ProfileId);
-                        }
-                        break;
-
-                    case "status":
-                        if (direction.ToLowerInvariant() == "next")
-                        {
-                            query = query.Where(p => p.Status.CompareTo(cursorData.Status) > 0 ||
-                                (p.Status == cursorData.Status && p.ProfileId.CompareTo(cursorData.Id) < 0));
+                            break;
+                        case "status":
                             query = query.OrderBy(p => p.Status).ThenByDescending(p => p.ProfileId);
-                        }
-                        else // previous
-                        {
-                            query = query.Where(p => p.Status.CompareTo(cursorData.Status) < 0 ||
-                                (p.Status == cursorData.Status && p.ProfileId.CompareTo(cursorData.Id) > 0));
-                            query = query.OrderByDescending(p => p.Status).ThenBy(p => p.ProfileId);
-                        }
-                        break;
-
-                    default:
-                        // Default to Points
-                        if (direction.ToLowerInvariant() == "next")
-                        {
-                            query = query.Where(p => p.Points < cursorData.Points ||
-                                (p.Points == cursorData.Points && p.ProfileId.CompareTo(cursorData.Id) < 0));
+                            break;
+                        default:
                             query = query.OrderByDescending(p => p.Points).ThenByDescending(p => p.ProfileId);
-                        }
-                        else // previous
-                        {
-                            query = query.Where(p => p.Points > cursorData.Points ||
-                                (p.Points == cursorData.Points && p.ProfileId.CompareTo(cursorData.Id) > 0));
-                            query = query.OrderBy(p => p.Points).ThenBy(p => p.ProfileId);
-                        }
-                        break;
+                            break;
+                    }
                 }
-            }
-            else
-            {
-                // For first page with no cursor
-                switch (sortBy.ToLowerInvariant())
+
+                // Execute query with limit
+                var profiles = await query.Take(limit + 1).ToListAsync(cancellationToken);
+
+                // Check if we have a next page by fetching limit+1 items
+                string nextCursor = null;
+                if (profiles.Count > limit)
                 {
-                    case "points":
-                        query = query.OrderByDescending(p => p.Points).ThenByDescending(p => p.ProfileId);
-                        break;
-                    case "playernumber":
-                        query = query.OrderBy(p => p.PlayerNumber).ThenByDescending(p => p.ProfileId);
-                        break;
-                    case "username":
-                        query = query.OrderBy(p => p.UserName).ThenByDescending(p => p.ProfileId);
-                        break;
-                    case "status":
-                        query = query.OrderBy(p => p.Status).ThenByDescending(p => p.ProfileId);
-                        break;
-                    default:
-                        query = query.OrderByDescending(p => p.Points).ThenByDescending(p => p.ProfileId);
-                        break;
+                    // Remove the extra item we retrieved to check for "has next page"
+                    var lastItem = profiles[limit];
+                    profiles.RemoveAt(limit);
+
+                    // Create cursor for next page based on last item properties
+                    var newCursorData = new CursorData
+                    {
+                        Id = lastItem.ProfileId,
+                        Points = lastItem.Points,
+                        PlayerNumber = lastItem.PlayerNumber,
+                        UserName = lastItem.UserName,
+                        Status = lastItem.Status
+                    };
+
+                    var serialized = System.Text.Json.JsonSerializer.Serialize(newCursorData);
+                    nextCursor = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(serialized));
                 }
-            }
 
-            // Execute query with limit
-            var profiles = await query.Take(limit + 1).ToListAsync(cancellationToken);
-
-            // Check if we have a next page by fetching limit+1 items
-            string nextCursor = null;
-            if (profiles.Count > limit)
-            {
-                // Remove the extra item we retrieved to check for "has next page"
-                var lastItem = profiles[limit];
-                profiles.RemoveAt(limit);
-
-                // Create cursor for next page based on last item properties
-                var newCursorData = new CursorData
+                // If we requested previous direction and got results, we need to reverse the order
+                if (direction.ToLowerInvariant() == "previous" && profiles.Any())
                 {
-                    Id = lastItem.ProfileId,
-                    Points = lastItem.Points,
-                    PlayerNumber = lastItem.PlayerNumber,
-                    UserName = lastItem.UserName,
-                    Status = lastItem.Status
-                };
+                    profiles.Reverse();
+                }
 
-                var serialized = JsonSerializer.Serialize(newCursorData);
-                nextCursor = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(serialized));
+                return (profiles, nextCursor);
             }
-
-            // If we requested previous direction and got results, we need to reverse the order
-            if (direction.ToLowerInvariant() == "previous" && profiles.Any())
+            catch (Exception ex)
             {
-                profiles.Reverse();
+                _logger?.LogError(ex, "Error getting profiles with cursor");
+                throw;
             }
-
-            return (profiles, nextCursor);
         }
 
         public async IAsyncEnumerable<Profile> StreamAllProfilesAsync(
-            [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             var batchSize = 100;
             var lastId = string.Empty;
 
             while (true)
             {
-                var batch = await _context.Profile
-                    .AsNoTracking()
-                    .Where(p => string.Compare(p.ProfileId, lastId) > 0)
-                    .OrderBy(p => p.ProfileId)
-                    .Take(batchSize)
-                    .ToListAsync(cancellationToken);
+                List<Profile> batch;
+                try
+                {
+                    batch = await _context.Profile
+                        .AsNoTracking()
+                        .Where(p => string.Compare(p.ProfileId, lastId) > 0)
+                        .OrderBy(p => p.ProfileId)
+                        .Take(batchSize)
+                        .ToListAsync(cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogError(ex, "Error streaming profiles");
+                    throw;
+                }
 
                 if (batch.Count == 0)
                     break;
@@ -251,68 +290,108 @@ namespace DataLayer.DAL
             string profileId,
             CancellationToken cancellationToken = default)
         {
-            var followingIds = await _context.Following
-                .AsNoTracking()
-                .Where(f => f.ProfileId == profileId)
-                .Select(f => f.FollowingProfileId)
-                .ToListAsync(cancellationToken);
+            try
+            {
+                var followingIds = await _context.Following
+                    .AsNoTracking()
+                    .Where(f => f.ProfileId == profileId)
+                    .Select(f => f.FollowingProfileId)
+                    .ToListAsync(cancellationToken);
 
-            if (followingIds.Count == 0)
-                return new List<Profile>();
+                if (followingIds.Count == 0)
+                    return new List<Profile>();
 
-            return await _context.Profile
-                .AsNoTracking()
-                .Where(p => followingIds.Contains(p.ProfileId))
-                .ToListAsync(cancellationToken);
+                return await _context.Profile
+                    .AsNoTracking()
+                    .Where(p => followingIds.Contains(p.ProfileId))
+                    .ToListAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting profiles that {ProfileId} is following", profileId);
+                throw;
+            }
         }
 
         public async Task<List<Profile>> GetFollowerProfilesAsync(
             string profileId,
             CancellationToken cancellationToken = default)
         {
-            var followerIds = await _context.Follower
-                .AsNoTracking()
-                .Where(f => f.ProfileId == profileId)
-                .Select(f => f.FollowerProfileId)
-                .ToListAsync(cancellationToken);
+            try
+            {
+                var followerIds = await _context.Follower
+                    .AsNoTracking()
+                    .Where(f => f.ProfileId == profileId)
+                    .Select(f => f.FollowerProfileId)
+                    .ToListAsync(cancellationToken);
 
-            if (followerIds.Count == 0)
-                return new List<Profile>();
+                if (followerIds.Count == 0)
+                    return new List<Profile>();
 
-            return await _context.Profile
-                .AsNoTracking()
-                .Where(p => followerIds.Contains(p.ProfileId))
-                .ToListAsync(cancellationToken);
+                return await _context.Profile
+                    .AsNoTracking()
+                    .Where(p => followerIds.Contains(p.ProfileId))
+                    .ToListAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting profiles that follow {ProfileId}", profileId);
+                throw;
+            }
         }
 
         public async Task<Profile> GetProfileByIdAsync(
             string profileId,
             CancellationToken cancellationToken = default)
         {
-            return await _context.Profile
-                .AsNoTracking()
-                .Include(p => p.Setting)
-                .FirstOrDefaultAsync(p => p.ProfileId == profileId, cancellationToken);
+            try
+            {
+                return await _context.Profile
+                    .AsNoTracking()
+                    .Include(p => p.Setting)
+                    .FirstOrDefaultAsync(p => p.ProfileId == profileId, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting profile {ProfileId}", profileId);
+                throw;
+            }
         }
 
         public async Task<Profile> GetProfileByUserIdAsync(
             string userId,
             CancellationToken cancellationToken = default)
         {
-            return await _context.Profile
-                .AsNoTracking()
-                .Include(p => p.Setting)
-                .FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
+            try
+            {
+                return await _context.Profile
+                    .AsNoTracking()
+                    .Include(p => p.Setting)
+                    .FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting profile by user ID {UserId}", userId);
+                throw;
+            }
         }
 
         public async Task<Profile> GetProfileByUsernameAsync(
             string username,
             CancellationToken cancellationToken = default)
         {
-            return await _context.Profile
-                .AsNoTracking()
-                .Include(p => p.Setting)
-                .FirstOrDefaultAsync(p => p.UserName == username, cancellationToken);
+            try
+            {
+                return await _context.Profile
+                    .AsNoTracking()
+                    .Include(p => p.Setting)
+                    .FirstOrDefaultAsync(p => p.UserName == username, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting profile by username {Username}", username);
+                throw;
+            }
         }
 
         public async Task<Profile> GetProfileWithTimeoutAsync(
@@ -333,7 +412,13 @@ namespace DataLayer.DAL
             }
             catch (OperationCanceledException ex) when (timeoutCts.Token.IsCancellationRequested)
             {
+                _logger?.LogWarning("Request to get profile {ProfileId} timed out after {Timeout}", profileId, timeout);
                 throw new TimeoutException($"The operation timed out after {timeout}.", ex);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting profile with timeout {ProfileId}", profileId);
+                throw;
             }
         }
 
@@ -341,89 +426,153 @@ namespace DataLayer.DAL
             string profileId,
             CancellationToken cancellationToken = default)
         {
-            // Find all games where this profile participated
-            // This is more complex as we need to check both winner and loser strings
-            var query = _context.Game
-                .AsNoTracking()
-                .Where(g =>
-                    g.WinProfileIdsStatusString.Contains(profileId) ||
-                    g.LoseProfileIdsStatusString.Contains(profileId))
-                .OrderByDescending(g => g.CreatedDate);
+            try
+            {
+                // Find all games where this profile participated
+                // This is more complex as we need to check both winner and loser strings
+                var query = _context.Game
+                    .AsNoTracking()
+                    .Where(g =>
+                        g.WinProfileIdsStatusString.Contains(profileId) ||
+                        g.LoseProfileIdsStatusString.Contains(profileId))
+                    .OrderByDescending(g => g.CreatedDate);
 
-            return await query.ToListAsync(cancellationToken);
+                return await query.ToListAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting game history for profile {ProfileId}", profileId);
+                throw;
+            }
         }
 
         public async Task<GameStatistics> GetProfileGameStatisticsAsync(
             string profileId,
             CancellationToken cancellationToken = default)
         {
-            var games = await GetProfileGameHistoryAsync(profileId, cancellationToken);
-
-            int wins = games.Count(g => g.WinProfileIdsStatusString.Contains(profileId));
-            int losses = games.Count(g => g.LoseProfileIdsStatusString.Contains(profileId));
-
-            return new GameStatistics
+            try
             {
-                TotalGames = games.Count,
-                WinPercentage = games.Count > 0 ? (double)wins / games.Count * 100 : 0,
-                TotalWins = wins.ToString(),
-                TotalLosses = losses.ToString()
-            };
+                var games = await GetProfileGameHistoryAsync(profileId, cancellationToken);
+
+                int wins = games.Count(g => g.WinProfileIdsStatusString.Contains(profileId));
+                int losses = games.Count(g => g.LoseProfileIdsStatusString.Contains(profileId));
+
+                return new GameStatistics
+                {
+                    TotalGames = games.Count,
+                    WinPercentage = games.Count > 0 ? (double)wins / games.Count * 100 : 0,
+                    TotalWins = wins.ToString(),
+                    TotalLosses = losses.ToString()
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error calculating game statistics for profile {ProfileId}", profileId);
+                throw;
+            }
         }
 
         public async Task<ScoutingReport> GetScoutingReportAsync(
             string profileId,
             CancellationToken cancellationToken = default)
         {
-            return await _context.ScoutingReport
-                .AsNoTracking()
-                .FirstOrDefaultAsync(s => s.ProfileId == profileId, cancellationToken);
+            try
+            {
+                return await _context.ScoutingReport
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(s => s.ProfileId == profileId, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting scouting report for profile {ProfileId}", profileId);
+                throw;
+            }
         }
 
         public async Task<Squad> GetProfileSquadAsync(
             string profileId,
             CancellationToken cancellationToken = default)
         {
-            // Check if profile owns a squad
-            var ownedSquad = await _context.Squad
-                .AsNoTracking()
-                .FirstOrDefaultAsync(s => s.OwnerProfileId == profileId, cancellationToken);
+            try
+            {
+                // Check if profile owns a squad
+                var ownedSquad = await _context.Squad
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(s => s.OwnerProfileId == profileId, cancellationToken);
 
-            if (ownedSquad != null)
-                return ownedSquad;
+                if (ownedSquad != null)
+                    return ownedSquad;
 
-            // Check if profile is in a squad team
-            var squadTeam = await _context.SquadTeam
-                .AsNoTracking()
-                .FirstOrDefaultAsync(st => st.ProfileId == profileId, cancellationToken);
+                // Check if profile is in a squad team
+                var squadTeam = await _context.SquadTeam
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(st => st.ProfileId == profileId, cancellationToken);
 
-            if (squadTeam == null)
-                return null;
+                if (squadTeam == null)
+                    return null;
 
-            return await _context.Squad
-                .AsNoTracking()
-                .FirstOrDefaultAsync(s => s.SquadId == squadTeam.SquadId, cancellationToken);
+                return await _context.Squad
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(s => s.SquadId == squadTeam.SquadId, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting squad for profile {ProfileId}", profileId);
+                throw;
+            }
+        }
+
+        public async Task<Setting> GetProfileSettingsAsync(
+            string profileId,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await _context.Setting
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(s => s.ProfileId == profileId, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting settings for profile {ProfileId}", profileId);
+                throw;
+            }
         }
 
         public async Task<bool> UpdateProfileAsync(
             Profile profile,
             CancellationToken cancellationToken = default)
         {
-            _context.Entry(profile).State = EntityState.Modified;
-
-            return await SaveChangesAsync(cancellationToken) > 0;
+            try
+            {
+                _context.Entry(profile).State = EntityState.Modified;
+                return await SaveChangesAsync(cancellationToken) > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error updating profile {ProfileId}", profile.ProfileId);
+                throw;
+            }
         }
 
         public async Task<int> BatchUpdateProfilesAsync(
             IEnumerable<Profile> profiles,
             CancellationToken cancellationToken = default)
         {
-            foreach (var profile in profiles)
+            try
             {
-                _context.Entry(profile).State = EntityState.Modified;
-            }
+                foreach (var profile in profiles)
+                {
+                    _context.Entry(profile).State = EntityState.Modified;
+                }
 
-            return await SaveChangesAsync(cancellationToken);
+                return await SaveChangesAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error batch updating profiles");
+                throw;
+            }
         }
 
         public async Task<bool> UpdateProfilePointsAsync(
@@ -431,15 +580,23 @@ namespace DataLayer.DAL
             int points,
             CancellationToken cancellationToken = default)
         {
-            var profile = await _context.Profile
-                .FindAsync(new object[] { profileId }, cancellationToken);
+            try
+            {
+                var profile = await _context.Profile
+                    .FindAsync(new object[] { profileId }, cancellationToken);
 
-            if (profile == null)
-                return false;
+                if (profile == null)
+                    return false;
 
-            profile.Points += points;
+                profile.Points += points;
 
-            return await SaveChangesAsync(cancellationToken) > 0;
+                return await SaveChangesAsync(cancellationToken) > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error updating points for profile {ProfileId}", profileId);
+                throw;
+            }
         }
 
         public async Task<bool> SetTopRecordStatusAsync(
@@ -447,15 +604,23 @@ namespace DataLayer.DAL
             bool hasTopRecord,
             CancellationToken cancellationToken = default)
         {
-            var profile = await _context.Profile
-                .FindAsync(new object[] { profileId }, cancellationToken);
+            try
+            {
+                var profile = await _context.Profile
+                    .FindAsync(new object[] { profileId }, cancellationToken);
 
-            if (profile == null)
-                return false;
+                if (profile == null)
+                    return false;
 
-            profile.TopRecord = hasTopRecord;
+                profile.TopRecord = hasTopRecord;
 
-            return await SaveChangesAsync(cancellationToken) > 0;
+                return await SaveChangesAsync(cancellationToken) > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error setting top record status for profile {ProfileId}", profileId);
+                throw;
+            }
         }
 
         public async Task<bool> UpdateLastRunDateAsync(
@@ -463,15 +628,23 @@ namespace DataLayer.DAL
             string lastRunDate,
             CancellationToken cancellationToken = default)
         {
-            var profile = await _context.Profile
-                .FindAsync(new object[] { profileId }, cancellationToken);
+            try
+            {
+                var profile = await _context.Profile
+                    .FindAsync(new object[] { profileId }, cancellationToken);
 
-            if (profile == null)
-                return false;
+                if (profile == null)
+                    return false;
 
-            profile.LastRunDate = lastRunDate;
+                profile.LastRunDate = lastRunDate;
 
-            return await SaveChangesAsync(cancellationToken) > 0;
+                return await SaveChangesAsync(cancellationToken) > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error updating last run date for profile {ProfileId}", profileId);
+                throw;
+            }
         }
 
         public async Task<bool> UpdateProfileUserNameAsync(
@@ -479,88 +652,119 @@ namespace DataLayer.DAL
             string newUserName,
             CancellationToken cancellationToken = default)
         {
-            // First check if the username is available
-            bool isAvailable = await IsUserNameAvailableAsync(newUserName, cancellationToken);
-            if (!isAvailable)
-                return false;
+            try
+            {
+                // First check if the username is available
+                bool isAvailable = await IsUserNameAvailableAsync(newUserName, cancellationToken);
+                if (!isAvailable)
+                    return false;
 
-            var profile = await _context.Profile
-                .FindAsync(new object[] { profileId }, cancellationToken);
+                var profile = await _context.Profile
+                    .FindAsync(new object[] { profileId }, cancellationToken);
 
-            if (profile == null)
-                return false;
+                if (profile == null)
+                    return false;
 
-            profile.UserName = newUserName;
+                profile.UserName = newUserName;
 
-            return await SaveChangesAsync(cancellationToken) > 0;
+                return await SaveChangesAsync(cancellationToken) > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error updating username for profile {ProfileId}", profileId);
+                throw;
+            }
         }
 
         public async Task<bool> UpdateSettingAsync(
             Setting setting,
             CancellationToken cancellationToken = default)
         {
-            _context.Entry(setting).State = EntityState.Modified;
+            try
+            {
+                _context.Entry(setting).State = EntityState.Modified;
 
-            return await SaveChangesAsync(cancellationToken) > 0;
+                return await SaveChangesAsync(cancellationToken) > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error updating settings for profile {ProfileId}", setting.ProfileId);
+                throw;
+            }
         }
 
         public async Task<bool> UpsertScoutingReportAsync(
             ScoutingReport scoutingReport,
             CancellationToken cancellationToken = default)
         {
-            var existingReport = await _context.ScoutingReport
-                .FirstOrDefaultAsync(s => s.ProfileId == scoutingReport.ProfileId, cancellationToken);
-
-            if (existingReport != null)
+            try
             {
-                // Update existing report
-                existingReport.PlayStyle = scoutingReport.PlayStyle;
-                existingReport.StrengthOne = scoutingReport.StrengthOne;
-                existingReport.StrengthTwo = scoutingReport.StrengthTwo;
-                existingReport.WeaknessOne = scoutingReport.WeaknessOne;
-                existingReport.WeaknessTwo = scoutingReport.WeaknessTwo;
-                existingReport.PlayStyleImpactOne = scoutingReport.PlayStyleImpactOne;
-                existingReport.PlayStyleImpactTwo = scoutingReport.PlayStyleImpactTwo;
-                existingReport.Comparison = scoutingReport.Comparison;
-                existingReport.Conclusion = scoutingReport.Conclusion;
-                existingReport.IdealRole = scoutingReport.IdealRole;
-                existingReport.Status = scoutingReport.Status;
-                existingReport.LastUpdated = DateTime.UtcNow;
-            }
-            else
-            {
-                // Add new report
-                scoutingReport.CreatedDate = DateTime.UtcNow;
-                scoutingReport.LastUpdated = DateTime.UtcNow;
-                await _context.ScoutingReport.AddAsync(scoutingReport, cancellationToken);
-            }
+                var existingReport = await _context.ScoutingReport
+                    .FirstOrDefaultAsync(s => s.ProfileId == scoutingReport.ProfileId, cancellationToken);
 
-            return await SaveChangesAsync(cancellationToken) > 0;
+                if (existingReport != null)
+                {
+                    // Update existing report
+                    existingReport.PlayStyle = scoutingReport.PlayStyle;
+                    existingReport.StrengthOne = scoutingReport.StrengthOne;
+                    existingReport.StrengthTwo = scoutingReport.StrengthTwo;
+                    existingReport.WeaknessOne = scoutingReport.WeaknessOne;
+                    existingReport.WeaknessTwo = scoutingReport.WeaknessTwo;
+                    existingReport.PlayStyleImpactOne = scoutingReport.PlayStyleImpactOne;
+                    existingReport.PlayStyleImpactTwo = scoutingReport.PlayStyleImpactTwo;
+                    existingReport.Comparison = scoutingReport.Comparison;
+                    existingReport.Conclusion = scoutingReport.Conclusion;
+                    existingReport.IdealRole = scoutingReport.IdealRole;
+                    existingReport.Status = scoutingReport.Status;
+                    existingReport.LastUpdated = DateTime.UtcNow;
+                }
+                else
+                {
+                    // Add new report
+                    scoutingReport.CreatedDate = DateTime.UtcNow;
+                    scoutingReport.LastUpdated = DateTime.UtcNow;
+                    await _context.ScoutingReport.AddAsync(scoutingReport, cancellationToken);
+                }
+
+                return await SaveChangesAsync(cancellationToken) > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error upserting scouting report for profile {ProfileId}", scoutingReport.ProfileId);
+                throw;
+            }
         }
 
         public async Task<bool> IsUserNameAvailableAsync(
             string userName,
             CancellationToken cancellationToken = default)
         {
-            return !await _context.Profile
-                .AnyAsync(p => p.UserName.ToLower() == userName.ToLower(), cancellationToken);
-        }
-
-        public async Task<Setting> GetProfileSettingsAsync(
-            string profileId,
-            CancellationToken cancellationToken = default)
-        {
-            return await _context.Setting
-                .AsNoTracking()
-                .FirstOrDefaultAsync(s => s.ProfileId == profileId, cancellationToken);
+            try
+            {
+                return !await _context.Profile
+                    .AnyAsync(p => p.UserName.ToLower() == userName.ToLower(), cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error checking username availability for {Username}", userName);
+                throw;
+            }
         }
 
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            return await _context.SaveChangesAsync(cancellationToken);
+            try
+            {
+                return await _context.SaveChangesAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error saving changes to database");
+                throw;
+            }
         }
 
-        #region IDisposable Implementation
+        #region IDisposable and IAsyncDisposable Implementation
 
         protected virtual void Dispose(bool disposing)
         {

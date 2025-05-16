@@ -144,6 +144,38 @@ namespace WebAPI
             services.AddDbContextPool<SquadTeamContext>(opitons => opitons.UseSqlServer(UnderGroundhoopersConnectionString));
             services.AddDbContextPool<SquadRequestContext>(opitons => opitons.UseSqlServer(UnderGroundhoopersConnectionString));
 
+
+
+            // Register repositories
+            services.AddScoped<DataLayer.DAL.IProfileRepository, DataLayer.DAL.ProfileRepository>();
+            services.AddScoped<DataLayer.DAL.IUserRepository, DataLayer.DAL.UserRepository>();
+            services.AddScoped<DataLayer.DAL.IGameRepository, DataLayer.DAL.GameRepository>();
+            services.AddScoped<DataLayer.DAL.IPostRepository, DataLayer.DAL.PostRepository>();
+            services.AddScoped<DataLayer.DAL.IFollowingRepository, DataLayer.DAL.FollowingRepository>();
+            services.AddScoped<DataLayer.DAL.IFollowerRepository, DataLayer.DAL.FollowerRepository>();
+            services.AddScoped<DataLayer.DAL.ISavedPostRepository, DataLayer.DAL.SavedPostRepository>();
+            services.AddScoped<DataLayer.DAL.ILikedPostRepository, DataLayer.DAL.LikedPostRepository>();
+            services.AddScoped<DataLayer.DAL.IPlayerCommentRepository, DataLayer.DAL.PlayerCommentRepository>();
+            services.AddScoped<DataLayer.DAL.IPostCommentRepository, DataLayer.DAL.PostCommentRepository>();
+            services.AddScoped<DataLayer.DAL.IPrivateRunRepository, DataLayer.DAL.PrivateRunRepository>();
+            services.AddScoped<DataLayer.DAL.IPrivateRunInviteRepository, DataLayer.DAL.PrivateRunInviteRepository>();
+            services.AddScoped<DataLayer.DAL.ITagRepository, DataLayer.DAL.TagRepository>();
+            services.AddScoped<DataLayer.DAL.IRatingRepository, DataLayer.DAL.RatingRepository>();
+            services.AddScoped<DataLayer.DAL.IErrorExceptionRepository, DataLayer.DAL.ErrorExceptionRepository>();
+            services.AddScoped<DataLayer.DAL.IHistoryRepository, DataLayer.DAL.HistoryRepository>();
+            services.AddScoped<DataLayer.DAL.ISettingRepository, DataLayer.DAL.SettingRepository>();
+            services.AddScoped<DataLayer.DAL.IProductRepository, DataLayer.DAL.ProductRepository>();
+            services.AddScoped<DataLayer.DAL.INotificationRepository, DataLayer.DAL.NotificationRepository>();
+            services.AddScoped<DataLayer.DAL.ICourtRepository, DataLayer.DAL.CourtRepository>();
+            services.AddScoped<DataLayer.DAL.IContactRepository, DataLayer.DAL.ContactRepository>();
+            services.AddScoped<DataLayer.DAL.IPushSubscriptionRepository, DataLayer.DAL.PushSubscriptionRepository>();
+            services.AddScoped<DataLayer.DAL.IOrganizationRepository, DataLayer.DAL.OrganizationRepository>();
+            services.AddScoped<DataLayer.DAL.IThirdPartyServiceRepository, DataLayer.DAL.ThirdPartyServiceRepository>();
+            services.AddScoped<DataLayer.DAL.IProjectManagementRepository, DataLayer.DAL.ProjectManagementRepository>();
+            services.AddScoped<DataLayer.DAL.IOrderRepository, DataLayer.DAL.OrderRepository>();
+            services.AddScoped<DataLayer.DAL.IScoutingReportRepository, DataLayer.DAL.ScoutingReportRepository>();
+            services.AddScoped<DataLayer.DAL.ISquadRepository, DataLayer.DAL.SquadRepository>();
+            services.AddScoped<DataLayer.DAL.IActivityRepository, DataLayer.DAL.ActivityRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -154,32 +186,32 @@ namespace WebAPI
         /// <param name="env"></param>
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            //app.Use(async (context, next) =>
-            //{
-            //    context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
-            //    await next();
-            //});
-
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
+            else
+            {
+                app.UseExceptionHandler("/error");
+                app.UseHsts();
+            }
+
             app.UseCors(policy =>
-    policy.AllowAnyOrigin()
-          .AllowAnyMethod()
-          .AllowAnyHeader());
-            // Enable middleware to serve generated Swagger as a JSON endpoint.  
+                policy.AllowAnyOrigin()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader());
+
+            // Configure Swagger
             app.UseSwagger(c =>
             {
-              
+
             });
-
-            // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.), specifying the Swagger JSON endpoint.  
-
             app.UseSwaggerUI(c =>
             {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ultimate Hoopers API v1");
+                c.RoutePrefix = "swagger";
             });
+
             app.UseStaticFiles();
             app.UseCors("AllowAll");
             app.UseHttpsRedirection();
@@ -188,10 +220,10 @@ namespace WebAPI
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseResponseCompression();
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
-                //endpoints.MapHub<ChatHub>("ChatHub");
             });
         }
 
