@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.13.35931.197
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UltimateHoopers", "UltimateHoopers\UltimateHoopers.csproj", "{9E2D3FAF-5670-409C-87D4-D7C01DC0935B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UltimateHoopers.Mobile", "UltimateHoopers\UltimateHoopers.Mobile.csproj", "{9E2D3FAF-5670-409C-87D4-D7C01DC0935B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebAPI", "WebAPI\WebAPI.csproj", "{C9860E2C-81F3-4990-A085-AD8B61DEDF8D}"
 EndProject
