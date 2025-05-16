@@ -110,7 +110,8 @@
                    TextColor="{StaticResource SecondaryTextColor}"
                    FontSize="14" />
 
-            <Button Text="Create Account"
+            <Button x:Name="CreateAccountButton"
+                    Text="Create Account"
                     BorderColor="{StaticResource PrimaryColor}"
                     TextColor="{StaticResource PrimaryColor}"
                     BackgroundColor="Transparent"

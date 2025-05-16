@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using UltimateHoopers.Services;
+using UltimateHoopers.ViewModels;
 
 namespace UltimateHoopers.Pages
 {
@@ -12,19 +14,28 @@ namespace UltimateHoopers.Pages
         private ObservableCollection<HooperModel> _allHoopers;
         private ObservableCollection<HooperModel> _filteredHoopers;
         private VerticalStackLayout _playersContainer;
+        private readonly ProfileViewModel _viewModel;
 
         public HoopersPage()
         {
             InitializeComponent();
 
-            // Initialize player data
-            InitializePlayerData();
+            // Try to get view model from DI
+            var serviceProvider = MauiProgram.CreateMauiApp().Services;
+            var profileService = serviceProvider.GetService<IProfileService>();
 
-            // Get reference to players container
-            _playersContainer = this.FindByName<VerticalStackLayout>("PlayersContainer");
+            if (profileService != null)
+            {
+                _viewModel = new ProfileViewModel(profileService);
+            }
+            else
+            {
+                // Fallback if service is not available through DI
+                _viewModel = new ProfileViewModel(new ProfileService());
+            }
 
-            // Set the initial data source and display players
-            DisplayPlayers();
+            // Set the binding context
+            BindingContext = _viewModel;
         }
 
         private void InitializePlayerData()
@@ -90,13 +101,15 @@ namespace UltimateHoopers.Pages
             _filteredHoopers = new ObservableCollection<HooperModel>(_allHoopers);
         }
 
-        private void DisplayPlayers()
+        protected override async void OnAppearing()
         {
-            // In a real app, you would use data binding with a CollectionView
-            // For this example, we're demonstrating how the scrolling would work
-
-            // When implementing with a CollectionView, you would simply do:
-            // CollectionView.ItemsSource = _filteredHoopers;
+            base.OnAppearing();
+            // Load posts when page appears
+            var items = await _viewModel.LoadProfilesAsync();
+            // Filter the items if needed
+            _filteredHoopers = FilterItems(items);
+            // Set the collection view's item source
+            CollectionView.ItemsSource = _filteredHoopers;
         }
 
         // Handle search text changes

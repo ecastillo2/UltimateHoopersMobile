@@ -38,7 +38,7 @@
         <ShellContent ContentTemplate="{DataTemplate pages:StatsPage}" Route="statsPage" />
     </FlyoutItem>
 
-    <FlyoutItem Title="Stats" Icon="search.png">
+    <FlyoutItem Title="Find Runs" Icon="search.png">
         <ShellContent ContentTemplate="{DataTemplate pages:FindRunsPage}" Route="rindrunsPage" />
     </FlyoutItem>
 

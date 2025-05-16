@@ -21,6 +21,16 @@ namespace UltimateHoopers.Pages
             _authService = serviceProvider.GetService<IAuthService>();
         }
 
+        public Command<string> CreateAccountCommand => new Command<string>(async (route) => {
+            try
+            {
+                await Shell.Current.GoToAsync(route);
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", $"Could not open registration page: {ex.Message}", "OK");
+            }
+        });
         // Constructor with dependency injection
         public LoginPage(IAuthService authService) : this()
         {
@@ -103,17 +113,42 @@ namespace UltimateHoopers.Pages
         }
 
 
-        private async void OnCreateAccountClicked(object sender, EventArgs e)
+        private void OnCreateAccountClicked(object sender, EventArgs e)
         {
             try
             {
-                // Navigate to the Create Account page
-                await Navigation.PushAsync(new CreateAccountPage());
+                // Disable button to prevent multiple clicks
+                CreateAccountButton.IsEnabled = false;
+
+                // Create the page directly
+                var createAccountPage = new CreateAccountPage();
+
+                // Store the current LoginPage as the previous page
+                createAccountPage.PreviousPage = this;
+
+                // Wrap in NavigationPage to enable back button
+                var navPage = new NavigationPage(createAccountPage);
+
+                // Set as MainPage directly
+                Application.Current.MainPage = navPage;
+
+                Console.WriteLine("Directly set CreateAccountPage as MainPage wrapped in NavigationPage");
             }
             catch (Exception ex)
             {
-                await DisplayAlert("Error", $"Could not open registration page: {ex.Message}", "OK");
+                Console.WriteLine($"Direct navigation error: {ex.Message}");
+                DisplayAlert("Error", "Could not navigate to registration page", "OK");
             }
+            finally
+            {
+                CreateAccountButton.IsEnabled = true;
+            }
+        }
+
+        private async void OnBackClicked(object sender, EventArgs e)
+        {
+            // Use Shell navigation instead of Navigation.PopAsync
+            await Shell.Current.GoToAsync("..");
         }
     }
 }

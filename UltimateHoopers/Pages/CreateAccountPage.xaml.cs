@@ -9,6 +9,9 @@ namespace UltimateHoopers.Pages
     {
         private readonly IAuthService _authService;
 
+        // Property to store the previous page for direct navigation scenarios
+        public Page PreviousPage { get; set; }
+
         // Default constructor for design time and fallback scenarios
         public CreateAccountPage()
         {
@@ -42,11 +45,11 @@ namespace UltimateHoopers.Pages
                     return;
                 }
 
-                if (string.IsNullOrWhiteSpace(FullNameEntry.Text))
-                {
-                    await DisplayAlert("Error", "Please enter your full name", "OK");
-                    return;
-                }
+                //if (string.IsNullOrWhiteSpace(FullNameEntry.Text))
+                //{
+                //    await DisplayAlert("Error", "Please enter your full name", "OK");
+                //    return;
+                //}
 
                 if (string.IsNullOrWhiteSpace(PasswordEntry.Text))
                 {
@@ -78,7 +81,7 @@ namespace UltimateHoopers.Pages
                 await DisplayAlert("Success", "Account created successfully! You can now log in.", "OK");
 
                 // Navigate back to login page
-                await Navigation.PopAsync();
+                ReturnToLoginPage();
             }
             catch (Exception ex)
             {
@@ -92,10 +95,55 @@ namespace UltimateHoopers.Pages
             }
         }
 
-        private async void OnBackClicked(object sender, EventArgs e)
+        private void OnBackClicked(object sender, EventArgs e)
         {
-            // Navigate back to login page
-            await Navigation.PopAsync();
+            ReturnToLoginPage();
+        }
+
+        // Helper method to return to login page
+        private void ReturnToLoginPage()
+        {
+            try
+            {
+                // Check for navigation stack first
+                if (Navigation != null && Navigation.NavigationStack.Count > 1)
+                {
+                    Navigation.PopAsync();
+                    return;
+                }
+
+                // If we have a stored previous page, use it
+                if (PreviousPage != null)
+                {
+                    Application.Current.MainPage = PreviousPage;
+                    return;
+                }
+
+                // Last resort: create a new login page
+                Application.Current.MainPage = new LoginPage();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error returning to login page: {ex.Message}");
+
+                // Ultimate fallback
+                Application.Current.MainPage = new LoginPage();
+            }
+        }
+
+        // Handle hardware back button
+        protected override bool OnBackButtonPressed()
+        {
+            ReturnToLoginPage();
+            return true; // Indicate we've handled it
+        }
+
+        protected override void OnAppearing()
+        {
+            base.OnAppearing();
+
+            // Print diagnostic information
+            Console.WriteLine($"CreateAccountPage.OnAppearing - MainPage type: {Application.Current?.MainPage?.GetType().Name ?? "null"}");
         }
     }
 }

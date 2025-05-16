@@ -162,7 +162,7 @@
                         </VerticalStackLayout>
 
                         <!-- Edit Profile Button -->
-                        <Button Grid.Row="1"
+                        <!--<Button Grid.Row="1"
                 Grid.Column="1"
                 Grid.ColumnSpan="2"
                 Text="Edit Profile"
@@ -173,7 +173,7 @@
                 HeightRequest="40"
                 WidthRequest="120"
                 HorizontalOptions="Start"
-                Clicked="OnEditProfileClicked" />
+                Clicked="OnEditProfileClicked" />-->
                     </Grid>
                 </Frame>
 
