@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Domain;
+using Domain.DtoModel;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Controls;
@@ -38,10 +40,6 @@ namespace UltimateHoopers.Services
             _profileApi = new ProfileApi(httpClient, configuration);
         }
 
-        
-
-       
-
         public async Task<Profile> GetProfileByIdAsync(string profileId)
         {
             try
@@ -74,20 +72,12 @@ namespace UltimateHoopers.Services
 
                 // Call the API with the retrieved token
                 var profiles = await _profileApi.GetProfilesAsync(token);
-                
-
                 return profiles;
             }
             catch (Exception ex)
             {
-                LogError("Error getting posts", ex);
-
-                // For development/testing, return mock data if API fails
-#if DEBUG
-                return null;
-#else
+                LogError("Error getting profiles", ex);
                 throw;
-#endif
             }
         }
 
@@ -102,19 +92,56 @@ namespace UltimateHoopers.Services
                     throw new UnauthorizedAccessException("No access token available");
                 }
 
-                // Call the API with the retrieved token
-                var profiles = await _profileApi.GetProfilesWithCursorAsync(token);
+                // Call the API with the retrieved token to get cursor-paginated results
+                var paginatedResult = await _profileApi.GetProfilesWithCursorAsync(
+                    cursor: null,
+                    limit: 50, // Request a larger batch
+                    direction: "next",
+                    sortBy: "Points",
+                    accessToken: token);
 
+                // Convert ProfileViewModelDto to Profile objects
+                if (paginatedResult != null && paginatedResult.Items != null)
+                {
+                    // Create a list to hold the converted profiles
+                    var profiles = new List<Profile>();
 
-                return profiles;
+                    foreach (var item in paginatedResult.Items)
+                    {
+                        // Map properties from the DTO to a new Profile object
+                        var profile = new Profile
+                        {
+                            ProfileId = item.ProfileId,
+                            //UserName = item.Username,
+                            Position = item.Position,
+                            PlayerNumber = item.PlayerNumber,
+                            City = item.City,
+                            Height = item.Height,
+                            //ImageURL = item.ImageUrl,
+                            //TotalGames = item.TotalGames?.ToString(),
+                            //TotalWins = item.TotalWins?.ToString(),
+                            //TotalLosses = item.TotalLosses?.ToString(),
+                            //WinPercentage = item.WinPercentage,
+                            Ranking = item.Ranking?.ToString(),
+                            StarRating = item.StarRating?.ToString()
+                        };
+
+                        profiles.Add(profile);
+                    }
+
+                    return profiles;
+                }
+
+                // Return empty list if no results
+                return new List<Profile>();
             }
             catch (Exception ex)
             {
-                LogError("Error getting posts", ex);
+                LogError("Error getting profiles with cursor", ex);
 
-                // For development/testing, return mock data if API fails
+                // For development, provide mock data if API fails
 #if DEBUG
-                return null;
+                return CreateMockProfiles();
 #else
                 throw;
 #endif
@@ -175,67 +202,57 @@ namespace UltimateHoopers.Services
         }
 
         // Mock data for development and testing
-        private List<Post> CreateMockPosts()
+        private List<Profile> CreateMockProfiles()
         {
-            return new List<Post>
+            return new List<Profile>
             {
-                new Post
+                new Profile
                 {
-                    PostId = "1",
-                    UserName = "michael_johnson",
-                    Caption = "Looking for players to join our game this Sunday at Downtown Court. We need 2-3 more players. All skill levels welcome! #basketball #pickup #sunday",
-                    PostFileURL = "https://uhblobstorageaccount.blob.core.windows.net/postfile/92a4bc09-eace-48e5-a2f4-73561d3451b9.mp4",
-                    PostType = "video",
-                    Likes = 32,
-                    ThumbnailUrl = "https://uhblobstorageaccount.blob.core.windows.net/postthumbnail/92a4bc09-eace-48e5-a2f4-73561d3451b9.png",
-                    ProfileImageURL = "https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=1000&auto=format&fit=crop",
-                    RelativeTime = "2 hours ago",
-                    PostCommentCount = 12,
-                    LikedPost = false,
-                    SavedPost = false
+                    ProfileId = "1",
+                    UserName = "mike_jordan",
+                    Position = "Shooting Guard",
+                    PlayerNumber = "23",
+                    City = "Chicago",
+                    Height = "6'6\"",
+                    ImageURL = "https://images.unsplash.com/photo-1566492031773-4f4e44671857",
+                    TotalGames = "82",
+                    //TotalWins = "72",
+                    //TotalLosses = "10",
+                    WinPercentage = "87.8%",
+                    Ranking = "1",
+                    StarRating = "5.0"
                 },
-                new Post
+                new Profile
                 {
-                    PostId = "2",
-                    UserName = "sarah_thompson",
-                    Caption = "Just finished my first training session with Coach Williams. His shooting drills are incredible! My three-point percentage has already improved. #basketball #training #threepointer",
-                    PostFileURL = "https://uhblobstorageaccount.blob.core.windows.net/postfile/bd2f7d77-88db-4997-807f-b122ef7bbd0d.webp",
-                    PostType = "image",
-                    Likes = 55,
-                    ProfileImageURL = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1000&auto=format&fit=crop",
-                    RelativeTime = "5 hours ago",
-                    PostCommentCount = 8,
-                    LikedPost = true,
-                    SavedPost = false
+                    ProfileId = "2",
+                    UserName = "magic_johnson",
+                    Position = "Point Guard",
+                    PlayerNumber = "32",
+                    City = "Los Angeles",
+                    Height = "6'9\"",
+                    ImageURL = "https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9",
+                    TotalGames = "78",
+                    //TotalWins = "65",
+                    //TotalLosses = "13",
+                    WinPercentage = "83.3%",
+                    Ranking = "2",
+                    StarRating = "4.9"
                 },
-                new Post
+                new Profile
                 {
-                    PostId = "3",
-                    UserName = "basketball_highlights",
-                    Caption = "Check out this amazing dunk from last night's game! Who says white men can't jump? 🏀🔥 #basketball #dunk #highlights",
-                    PostFileURL = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-                    ThumbnailUrl = "https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?q=80&w=1000&auto=format&fit=crop",
-                    PostType = "video",
-                    Likes = 128,
-                    ProfileImageURL = "https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?q=80&w=1000&auto=format&fit=crop",
-                    RelativeTime = "1 day ago",
-                    PostCommentCount = 24,
-                    LikedPost = false,
-                    SavedPost = true
-                },
-                new Post
-                {
-                    PostId = "4",
-                    UserName = "webp_tester",
-                    Caption = "Testing WEBP image format - this is a high quality but smaller file size format! #webp #basketball",
-                    PostFileURL = "https://www.gstatic.com/webp/gallery/4.webp",
-                    PostType = "image",
-                    Likes = 19,
-                    ProfileImageURL = "https://www.gstatic.com/webp/gallery/5.webp",
-                    RelativeTime = "3 hours ago",
-                    PostCommentCount = 2,
-                    LikedPost = false,
-                    SavedPost = false
+                    ProfileId = "3",
+                    UserName = "kobe_bean",
+                    Position = "Shooting Guard",
+                    PlayerNumber = "24",
+                    City = "Los Angeles",
+                    Height = "6'6\"",
+                    ImageURL = "https://images.unsplash.com/photo-1494790108377-be9c29b29330",
+                    TotalGames = "80",
+                    //TotalWins = "68",
+                    //TotalLosses = "12",
+                    WinPercentage = "85.0%",
+                    Ranking = "3",
+                    StarRating = "4.8"
                 }
             };
         }
