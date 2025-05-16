@@ -38,6 +38,10 @@ namespace UltimateHoopers
 
                 DiagnosticHelper.Log("Basic MAUI app configuration completed");
 
+                // Register custom controls
+                builder.Services.AddTransient<Controls.AutoPlayVideoElement>();
+                DiagnosticHelper.Log("Custom controls registered");
+
                 // Create a configuration object for API client settings
                 var configuration = new ConfigurationBuilder()
                     .AddInMemoryCollection(new Dictionary<string, string>

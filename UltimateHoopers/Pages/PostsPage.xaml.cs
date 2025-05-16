@@ -7,6 +7,7 @@ using UltimateHoopers.Services;
 using UltimateHoopers.ViewModels;
 using Microsoft.Maui.ApplicationModel; // For MainThread
 using System.Threading.Tasks;
+using UltimateHoopers.Controls;
 
 namespace UltimateHoopers.Pages
 {
@@ -18,6 +19,9 @@ namespace UltimateHoopers.Pages
         private double _currentScale = 1;
         private const double _minScale = 1;
         private const double _maxScale = 3;
+
+        // Dictionary to track visible videos
+        private Dictionary<string, bool> _visibleVideos = new Dictionary<string, bool>();
 
         // Default constructor for XAML preview
         public PostsPage()
@@ -79,6 +83,9 @@ namespace UltimateHoopers.Pages
                 Console.WriteLine($"PostsPage loaded {_viewModel.Posts.Count} posts");
                 Debug.WriteLine($"PostsPage loaded {_viewModel.Posts.Count} posts");
 
+                // Set up scrolled event handler for auto-play
+                PostsCollectionView.Scrolled += OnCollectionViewScrolled;
+
                 // If posts were loaded but aren't showing, check binding context
                 if (_viewModel.Posts.Count > 0)
                 {
@@ -92,6 +99,13 @@ namespace UltimateHoopers.Pages
                     BindingContext = null;
                     BindingContext = _viewModel;
                     Console.WriteLine("Binding context reset. This should refresh the UI.");
+
+                    // Initial check for visible videos after layout
+                    MainThread.BeginInvokeOnMainThread(async () => {
+                        // Small delay to ensure UI is ready
+                        await Task.Delay(500);
+                        CheckVisibleVideos();
+                    });
                 }
                 else
                 {
@@ -104,6 +118,201 @@ namespace UltimateHoopers.Pages
                 Debug.WriteLine($"Error in PostsPage.OnAppearing: {ex.Message}");
                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 await DisplayAlert("Error", $"Could not load posts: {ex.Message}", "OK");
+            }
+        }
+
+        protected override void OnDisappearing()
+        {
+            base.OnDisappearing();
+
+            // Clean up event handlers
+            PostsCollectionView.Scrolled -= OnCollectionViewScrolled;
+
+            // Stop all videos when page disappears
+            StopAllVideos();
+        }
+
+        // Event handler for CollectionView scrolling
+        private void OnCollectionViewScrolled(object sender, ItemsViewScrolledEventArgs e)
+        {
+            // Check for visible videos during scrolling
+            CheckVisibleVideos();
+        }
+
+        // Method to check which videos are currently visible in the viewport
+        private void CheckVisibleVideos()
+        {
+            try
+            {
+                if (PostsCollectionView == null) return;
+
+                // Get the visible items in the collection view
+                var visibleItems = GetVisibleItems(PostsCollectionView);
+
+                // Track which videos should be playing
+                Dictionary<string, bool> newVisibleVideos = new Dictionary<string, bool>();
+
+                foreach (var item in visibleItems)
+                {
+                    if (item is Post post && post.PostType?.ToLower() == "video" && !string.IsNullOrEmpty(post.PostId))
+                    {
+                        // Add to tracking dictionary
+                        newVisibleVideos[post.PostId] = true;
+
+                        // Instead of trying to find the control by post ID (which is unreliable),
+                        // we'll find all video elements and update them if their binding context matches
+
+                        var videoElements = PostsCollectionView.FindVisualChildrenByName<AutoPlayVideoElement>("AutoPlayVideo");
+                        foreach (var videoElement in videoElements)
+                        {
+                            if (videoElement.Post is Post videoPost && videoPost.PostId == post.PostId)
+                            {
+                                // Set visibility property to true (which will trigger auto-play)
+                                videoElement.IsVisibleInViewport = true;
+                                break; // Found the matching element, no need to check others
+                            }
+                        }
+                    }
+                }
+
+                // Check for videos that were visible but are no longer visible
+                foreach (var postId in _visibleVideos.Keys)
+                {
+                    if (!newVisibleVideos.ContainsKey(postId))
+                    {
+                        // This video is no longer visible
+                        var videoElements = PostsCollectionView.FindVisualChildrenByName<AutoPlayVideoElement>("AutoPlayVideo");
+                        foreach (var videoElement in videoElements)
+                        {
+                            if (videoElement.Post is Post videoPost && videoPost.PostId == postId)
+                            {
+                                // Set visibility property to false (which will trigger pause)
+                                videoElement.IsVisibleInViewport = false;
+                                break; // Found the matching element, no need to check others
+                            }
+                        }
+                    }
+                }
+
+                // Update tracking dictionary
+                _visibleVideos = newVisibleVideos;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error checking visible videos: {ex.Message}");
+            }
+        }
+
+        // Find video elements by post ID
+        private AutoPlayVideoElement FindAutoPlayVideoElement(string postId)
+        {
+            try
+            {
+                // Get the container for the post
+                var container = PostsCollectionView.FindVisualChildrenByName<VerticalStackLayout>("postContainer")
+                    .FirstOrDefault(c => {
+                        if (c.BindingContext is Post post)
+                            return post.PostId == postId;
+                        return false;
+                    });
+
+                if (container == null)
+                    return null;
+
+                // Find the AutoPlayVideoElement in the container
+                return container.FindVisualChildrenByName<AutoPlayVideoElement>("AutoPlayVideo").FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error finding video element: {ex.Message}");
+                return null;
+            }
+        }
+
+        // Helper method to get visible items in the CollectionView
+        private IEnumerable<object> GetVisibleItems(CollectionView collectionView)
+        {
+            try
+            {
+                // Get all items
+                var allItems = collectionView.ItemsSource?.Cast<object>().ToList();
+                if (allItems == null || !allItems.Any())
+                    return Enumerable.Empty<object>();
+
+                // Since we don't have direct access to scroll position or visible indices in MAUI's CollectionView,
+                // we'll take a different approach to determine visible items
+
+                // Find all post containers in the visual tree
+                var allContainers = collectionView.FindVisualChildrenByName<VerticalStackLayout>("postContainer")
+                    .Where(c => c.BindingContext != null)
+                    .ToList();
+
+                if (!allContainers.Any())
+                {
+                    // Fallback: return first few items since we can't determine visibility
+                    int approximateVisibleItemCount = Math.Max(3, (int)(collectionView.Height / 500));
+                    return allItems.Take(Math.Min(approximateVisibleItemCount, allItems.Count));
+                }
+
+                // Try to estimate which containers are visible
+                // We'll use the container's IsVisible property and Bounds
+                var visibleItems = new List<object>();
+
+                foreach (var container in allContainers)
+                {
+                    // Basic check - if IsVisible is true and container has reasonable height
+                    if (container.IsVisible && container.Height > 0)
+                    {
+                        visibleItems.Add(container.BindingContext);
+                    }
+                }
+
+                // If we couldn't find any visible items, return first few as fallback
+                if (!visibleItems.Any())
+                {
+                    int approximateVisibleItemCount = Math.Max(3, (int)(collectionView.Height / 500));
+                    return allItems.Take(Math.Min(approximateVisibleItemCount, allItems.Count));
+                }
+
+                return visibleItems;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error getting visible items: {ex.Message}");
+
+                // Last resort fallback - return first few items
+                try
+                {
+                    var allItems = collectionView.ItemsSource?.Cast<object>().ToList();
+                    if (allItems != null && allItems.Any())
+                    {
+                        return allItems.Take(Math.Min(3, allItems.Count));
+                    }
+                }
+                catch
+                {
+                    // Ignore any nested exceptions
+                }
+
+                return Enumerable.Empty<object>();
+            }
+        }
+
+        // Handle size changes for post containers to recalculate visibility
+        private void OnPostContainerSizeChanged(object sender, EventArgs e)
+        {
+            // When a post container changes size, recalculate visible videos
+            MainThread.BeginInvokeOnMainThread(() => {
+                CheckVisibleVideos();
+            });
+        }
+
+        // Handle video full-screen requests
+        private async void OnVideoFullScreenRequested(object sender, EventArgs e)
+        {
+            if (sender is AutoPlayVideoElement videoElement && videoElement.Post != null)
+            {
+                await NavigateToVideoPlayer(videoElement.Post);
             }
         }
 
@@ -165,14 +374,6 @@ namespace UltimateHoopers.Pages
             }
         }
 
-        protected override void OnDisappearing()
-        {
-            base.OnDisappearing();
-
-            // Stop all videos when page disappears
-            StopAllVideos();
-        }
-
         // Image post tap handler
         private void OnImagePostTapped(object sender, EventArgs e)
         {
@@ -189,168 +390,6 @@ namespace UltimateHoopers.Pages
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in OnImagePostTapped: {ex.Message}");
-            }
-        }
-
-        // Video post tap handler
-        private async void OnVideoPostTapped(object sender, EventArgs e)
-        {
-            try
-            {
-                var element = sender as VisualElement;
-                if (element != null && element.BindingContext is Post post)
-                {
-                    Debug.WriteLine($"Tapped video post: {post.PostId}, URL: {post.PostFileURL}");
-
-                    if (string.IsNullOrWhiteSpace(post.PostFileURL))
-                    {
-                        await DisplayAlert("Error", "Video URL is not available", "OK");
-                        return;
-                    }
-
-                    // Simply open the video player as a modal page
-                    await Navigation.PushModalAsync(new VideoPlayerPage(post));
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error in OnVideoPostTapped: {ex.Message}");
-                await DisplayAlert("Error", $"Could not play video: {ex.Message}", "OK");
-            }
-        }
-
-        // Handler for video thumbnail tap events
-        private async void OnVideoThumbnailTapped(object sender, EventArgs e)
-        {
-            try
-            {
-                var element = sender as VisualElement;
-                if (element != null && element.BindingContext is Post post)
-                {
-                    Debug.WriteLine($"Tapped video thumbnail: {post.PostId}, URL: {post.PostFileURL}");
-
-                    if (string.IsNullOrWhiteSpace(post.PostFileURL))
-                    {
-                        await DisplayAlert("Error", "Video URL is not available", "OK");
-                        return;
-                    }
-
-                    // Navigate to the video player page
-                    await Navigation.PushModalAsync(new VideoPlayerPage(post));
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error in OnVideoThumbnailTapped: {ex.Message}");
-                await DisplayAlert("Error", $"Could not play video: {ex.Message}", "OK");
-            }
-        }
-
-        // Removed FindVideoPlayer method since InlineVideoPlayer doesn't exist
-
-        // Fallback method to navigate to dedicated video player page
-        private async void NavigateToVideoPlayer(Post post)
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(post.PostFileURL))
-                {
-                    await DisplayAlert("Error", "Video URL is not available", "OK");
-                    return;
-                }
-
-                // Display options for video
-                string action = await DisplayActionSheet(
-                    "View Video",
-                    "Cancel",
-                    null,
-                    "Play in App",
-                    "Open in Browser");
-
-                switch (action)
-                {
-                    case "Play in App":
-                        // Navigate to video player
-                        await Navigation.PushModalAsync(new VideoPlayerPage(post));
-                        break;
-
-                    case "Open in Browser":
-                        // Open in external browser
-                        await Launcher.OpenAsync(new Uri(post.PostFileURL));
-                        break;
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error navigating to video player: {ex.Message}");
-                await DisplayAlert("Error", $"Could not play video: {ex.Message}", "OK");
-            }
-        }
-
-        // Play video directly in the post using WebView
-        private async Task DisplayInlineVideo(Post post)
-        {
-            try
-            {
-                string videoUrl = post.PostFileURL;
-                if (string.IsNullOrWhiteSpace(videoUrl))
-                {
-                    await DisplayAlert("Error", "Video URL is not available", "OK");
-                    return;
-                }
-
-                Console.WriteLine($"Displaying video options for URL: {videoUrl}");
-
-                // Create an action sheet to let the user choose how to view the video
-                string action = await DisplayActionSheet(
-                    "View Video",
-                    "Cancel",
-                    null,
-                    "Play Video",
-                    "Open in Browser");
-
-                switch (action)
-                {
-                    case "Play Video":
-                        Console.WriteLine("User chose to play video");
-                        // Navigate to simplified video player
-                        await Navigation.PushModalAsync(new VideoPlayerPage(post));
-                        break;
-
-                    case "Open in Browser":
-                        Console.WriteLine("User chose to open in browser");
-                        // Open in browser using the device's default browser
-                        await OpenVideoInBrowser(post);
-                        break;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error displaying video: {ex.Message}");
-                await DisplayAlert("Error", $"Could not play video: {ex.Message}", "OK");
-            }
-        }
-
-        // Open video in the device's browser
-        private async Task OpenVideoInBrowser(Post post)
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(post.PostFileURL))
-                {
-                    await DisplayAlert("Error", "Video URL is not available", "OK");
-                    return;
-                }
-
-                Console.WriteLine($"Opening in browser: {post.PostFileURL}");
-
-                // Use the device's browser to open the video
-                await Launcher.OpenAsync(new Uri(post.PostFileURL));
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error opening browser: {ex.Message}");
-                await DisplayAlert("Error", $"Could not open browser: {ex.Message}", "OK");
             }
         }
 
@@ -463,34 +502,40 @@ namespace UltimateHoopers.Pages
             }
         }
 
+        // Navigate to a video player page
+        private async Task NavigateToVideoPlayer(Post post)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(post.PostFileURL))
+                {
+                    await DisplayAlert("Error", "Video URL is not available", "OK");
+                    return;
+                }
+
+                // Navigate to the video player page
+                await Navigation.PushModalAsync(new VideoPlayerPage(post));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error navigating to video player: {ex.Message}");
+                await DisplayAlert("Error", $"Could not play video: {ex.Message}", "OK");
+            }
+        }
+
         private void StopAllVideos()
         {
-            // Since we removed InlineVideoPlayer references, we'll just clear the list
-            _activePlayers.Clear();
-        }
+            // Find all AutoPlayVideoElement controls
+            var videoElements = PostsCollectionView.FindVisualChildrenByName<AutoPlayVideoElement>("AutoPlayVideo");
 
-        // Add this to track active players
-        private void OnVideoStarted(object sender, EventArgs e)
-        {
-            if (sender != null && !_activePlayers.Contains(sender))
+            // Pause each video
+            foreach (var element in videoElements)
             {
-                _activePlayers.Add(sender);
+                element.IsVisibleInViewport = false;
             }
-        }
 
-        // Handler for Image loaded event
-        private void OnImageLoaded(object sender, EventArgs e)
-        {
-            // This method is referenced in the XAML but was missing in the code-behind
-            // It can be used to perform actions when an image finishes loading
-            if (sender is Image image)
-            {
-                // You could add logic here such as:
-                // - Hide a loading indicator
-                // - Adjust layout based on loaded image dimensions
-                // - Log successful image loads
-                Debug.WriteLine($"Image loaded: {image.Source}");
-            }
+            // Clear tracking dictionary
+            _visibleVideos.Clear();
         }
 
         // Navigation handlers
@@ -512,6 +557,30 @@ namespace UltimateHoopers.Pages
         private async void OnProfileClicked(object sender, EventArgs e)
         {
             await DisplayAlert("Profile", "Profile feature coming soon!", "OK");
+        }
+    }
+
+    // Extension methods to find child elements by name
+    public static class VisualElementExtensions
+    {
+        public static IEnumerable<T> FindVisualChildrenByName<T>(this Element element, string name = null) where T : VisualElement
+        {
+            var results = new List<T>();
+
+            if (element is T foundElement && (string.IsNullOrEmpty(name) || foundElement.StyleId == name))
+            {
+                results.Add(foundElement);
+            }
+
+            foreach (var child in element.LogicalChildren)
+            {
+                if (child is Element visualChild)
+                {
+                    results.AddRange(FindVisualChildrenByName<T>(visualChild, name));
+                }
+            }
+
+            return results;
         }
     }
 }

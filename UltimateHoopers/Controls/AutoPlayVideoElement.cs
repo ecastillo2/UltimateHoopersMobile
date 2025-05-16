@@ -258,15 +258,54 @@ namespace UltimateHoopers.Controls
                 // Generate the HTML with silent auto-playing video
                 string videoHtml = GetVideoHtml(VideoUrl);
 
-                // Only load if not already loaded to avoid restarting
+                // Load video source if not already loaded
                 if (!_isVideoLoaded)
                 {
                     _videoPlayer.Source = new HtmlWebViewSource { Html = videoHtml };
                 }
                 else
                 {
-                    // Resume existing player
-                    _videoPlayer.Eval("document.getElementById('videoPlayer').play();");
+                    // Try to resume without reloading
+                    try
+                    {
+                        // Try to resume using JavaScript
+                        // Note: Eval may not be available in all MAUI WebView implementations
+                        if (_videoPlayer.Handler != null)
+                        {
+                            // Try running JavaScript directly in the WebView
+                            MainThread.BeginInvokeOnMainThread(async () => {
+                                try
+                                {
+                                    // Use URL navigation for callbacks as a more reliable mechanism
+                                    await _videoPlayer.EvaluateJavaScriptAsync(
+                                        "var video = document.getElementById('videoPlayer'); " +
+                                        "if(video) { " +
+                                        "  video.play().then(() => { " +
+                                        "    window.location.href = 'maui-callback://videoPlaying'; " +
+                                        "  }).catch(err => { " +
+                                        "    console.log('Play error: ' + err); " +
+                                        "  }); " +
+                                        "}");
+                                }
+                                catch (Exception jsEx)
+                                {
+                                    Debug.WriteLine($"JavaScript evaluation error: {jsEx.Message}");
+                                    // Fall back to reloading the video
+                                    _videoPlayer.Source = new HtmlWebViewSource { Html = videoHtml };
+                                }
+                            });
+                        }
+                        else
+                        {
+                            // If Handler is null, reload the video
+                            _videoPlayer.Source = new HtmlWebViewSource { Html = videoHtml };
+                        }
+                    }
+                    catch
+                    {
+                        // If JavaScript evaluation fails, reload the video
+                        _videoPlayer.Source = new HtmlWebViewSource { Html = videoHtml };
+                    }
                 }
 
                 _videoPlayer.IsVisible = true;
@@ -288,7 +327,22 @@ namespace UltimateHoopers.Controls
             try
             {
                 // Pause the video using JavaScript
-                _videoPlayer.Eval("var video = document.getElementById('videoPlayer'); if(video) video.pause();");
+                if (_videoPlayer.Handler != null)
+                {
+                    MainThread.BeginInvokeOnMainThread(async () => {
+                        try
+                        {
+                            // Use JavaScript to pause the video
+                            await _videoPlayer.EvaluateJavaScriptAsync(
+                                "var video = document.getElementById('videoPlayer'); " +
+                                "if(video) { video.pause(); }");
+                        }
+                        catch (Exception jsEx)
+                        {
+                            Debug.WriteLine($"JavaScript evaluation error during pause: {jsEx.Message}");
+                        }
+                    });
+                }
             }
             catch (Exception ex)
             {

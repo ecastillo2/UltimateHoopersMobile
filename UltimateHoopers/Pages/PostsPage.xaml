@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:controls="clr-namespace:UltimateHoopers.Controls"
              x:Class="UltimateHoopers.Pages.PostsPage"
              xmlns:viewmodels="clr-namespace:UltimateHoopers.ViewModels"
              xmlns:converters="clr-namespace:UltimateHoopers.Converters"
@@ -47,249 +48,184 @@
         <RefreshView Grid.Row="1" 
                     IsRefreshing="{Binding IsRefreshing}" 
                     Command="{Binding RefreshCommand}">
-            <ScrollView>
-                <VerticalStackLayout Spacing="0">
-
-                    <!-- Story Circles -->
-                    <ScrollView Orientation="Horizontal" 
-                                Margin="0,10,0,10"
-                                HorizontalScrollBarVisibility="Never">
-                        <HorizontalStackLayout Spacing="15" Padding="10,0">
-                            <!-- Your Story -->
-                            <VerticalStackLayout HorizontalOptions="Center">
-                                <Frame CornerRadius="35" 
-                                       HeightRequest="70" 
-                                       WidthRequest="70"
-                                       Padding="0"
-                                       BorderColor="{StaticResource PrimaryColor}"
-                                       HasShadow="False">
-                                    <Frame CornerRadius="32"
-                                           HeightRequest="64"
-                                           WidthRequest="64"
-                                           Margin="3"
-                                           Padding="0"
-                                           BorderColor="Transparent"
-                                           HasShadow="False">
-                                        <Label Text="👤" 
-                                               FontSize="34" 
-                                               HorizontalOptions="Center" 
-                                               VerticalOptions="Center" />
-                                    </Frame>
+            <CollectionView x:Name="PostsCollectionView"
+                           ItemsSource="{Binding Posts}" 
+                           SelectionMode="None"
+                           EmptyView="No posts available. Pull to refresh.">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <VerticalStackLayout Spacing="0" 
+                                             x:Name="postContainer"
+                                             SizeChanged="OnPostContainerSizeChanged">
+                            <!-- Post Header -->
+                            <Grid ColumnDefinitions="Auto,*,Auto" 
+                                  Padding="10" 
+                                  BackgroundColor="{StaticResource CardBackgroundColor}">
+                                <Frame Grid.Column="0" 
+                                       CornerRadius="20" 
+                                       HeightRequest="40" 
+                                       WidthRequest="40" 
+                                       Padding="0" 
+                                       HasShadow="False"
+                                       BorderColor="{StaticResource BorderColor}">
+                                    <Image Source="{Binding ProfileImageURL}" 
+                                          HeightRequest="40"
+                                          WidthRequest="40"
+                                          Aspect="AspectFill"
+                                          IsVisible="{Binding ProfileImageURL, Converter={StaticResource StringNotEmptyConverter}}">
+                                        <Image.Clip>
+                                            <EllipseGeometry Center="20,20" RadiusX="20" RadiusY="20" />
+                                        </Image.Clip>
+                                    </Image>
+                                    <Frame.Triggers>
+                                        <DataTrigger TargetType="Frame" Binding="{Binding ProfileImageURL, Converter={StaticResource StringNotEmptyConverter}}" Value="False">
+                                            <Setter Property="Content">
+                                                <Setter.Value>
+                                                    <Label Text="👤" 
+                                                           FontSize="24" 
+                                                           HorizontalOptions="Center" 
+                                                           VerticalOptions="Center" />
+                                                </Setter.Value>
+                                            </Setter>
+                                        </DataTrigger>
+                                    </Frame.Triggers>
                                 </Frame>
-                                <Label Text="Your Story" 
-                                       FontSize="12" 
-                                       HorizontalOptions="Center"
-                                       Margin="0,5,0,0" />
+
+                                <VerticalStackLayout Grid.Column="1" 
+                                                     Margin="10,0,0,0" 
+                                                     VerticalOptions="Center">
+                                    <Label Text="{Binding UserName}" 
+                                           FontAttributes="Bold" 
+                                           FontSize="14" 
+                                           TextColor="{StaticResource PrimaryTextColor}" />
+                                    <Label Text="{Binding RelativeTime}" 
+                                           FontSize="12" 
+                                           TextColor="{StaticResource SecondaryTextColor}" />
+                                </VerticalStackLayout>
+
+                                <Label Grid.Column="2" 
+                                       Text="⋮" 
+                                       FontSize="20" 
+                                       HorizontalOptions="End" 
+                                       VerticalOptions="Center">
+                                    <Label.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:PostsViewModel}}, Path=PostOptionsCommand}"
+                                                              CommandParameter="{Binding .}" />
+                                    </Label.GestureRecognizers>
+                                </Label>
+                            </Grid>
+
+                            <!-- Post Content - Using AutoPlayVideoElement for videos -->
+                            <Grid Background="LightGray" HeightRequest="400">
+                                <!-- Image Post - Only show when PostType is 'image' -->
+                                <Image Source="{Binding PostFileURL}"
+                                       IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='image'}"
+                                       Aspect="AspectFill"
+                                       HorizontalOptions="FillAndExpand"
+                                       VerticalOptions="FillAndExpand">
+                                    <Image.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnImagePostTapped" />
+                                    </Image.GestureRecognizers>
+                                </Image>
+
+                                <!-- Video Post - Only show when PostType is 'video' -->
+                                <controls:AutoPlayVideoElement 
+                                    x:Name="AutoPlayVideo"
+                                    IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='video'}"
+                                    VideoUrl="{Binding PostFileURL}"
+                                    ThumbnailUrl="{Binding ThumbnailUrl}"
+                                    Post="{Binding .}"
+                                    IsVisibleInViewport="False"
+                                    FullScreenRequested="OnVideoFullScreenRequested" />
+
+                                <!-- Fallback for no media -->
+                                <VerticalStackLayout IsVisible="{Binding PostFileURL, Converter={StaticResource StringNotEmptyConverter}, ConverterParameter='negate'}"
+                                                     HorizontalOptions="Center"
+                                                     VerticalOptions="Center">
+                                  
+                                </VerticalStackLayout>
+                            </Grid>
+
+                            <!-- Post Actions -->
+                            <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto" 
+                                  Padding="10" 
+                                  BackgroundColor="{StaticResource CardBackgroundColor}">
+                                <Label Grid.Column="0" 
+                                       Text="{Binding LikedPost, Converter={StaticResource LikedPostToHeartConverter}}" 
+                                       FontSize="24" 
+                                       Margin="0,0,15,0">
+                                    <Label.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:PostsViewModel}}, Path=LikePostCommand}"
+                                                              CommandParameter="{Binding .}" />
+                                    </Label.GestureRecognizers>
+                                </Label>
+                                <Label Grid.Column="1" 
+                                       Text="💬" 
+                                       FontSize="24" 
+                                       Margin="0,0,15,0">
+                                    <Label.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:PostsViewModel}}, Path=CommentPostCommand}"
+                                                              CommandParameter="{Binding .}" />
+                                    </Label.GestureRecognizers>
+                                </Label>
+                                <Label Grid.Column="2" 
+                                       Text="📩" 
+                                       FontSize="24">
+                                    <Label.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:PostsViewModel}}, Path=SharePostCommand}"
+                                                              CommandParameter="{Binding .}" />
+                                    </Label.GestureRecognizers>
+                                </Label>
+                                <Label Grid.Column="4" 
+                                       Text="{Binding SavedPost, Converter={StaticResource SavedPostToBookmarkConverter}}" 
+                                       FontSize="24" 
+                                       HorizontalOptions="End">
+                                    <Label.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:PostsViewModel}}, Path=SavePostCommand}"
+                                                              CommandParameter="{Binding .}" />
+                                    </Label.GestureRecognizers>
+                                </Label>
+                            </Grid>
+
+                            <!-- Likes -->
+                            <Label Text="{Binding Likes, StringFormat='{0} likes'}" 
+                                   FontAttributes="Bold" 
+                                   Margin="10,5,10,0" 
+                                   BackgroundColor="{StaticResource CardBackgroundColor}"
+                                   TextColor="{StaticResource PrimaryTextColor}" />
+
+                            <!-- Caption -->
+                            <VerticalStackLayout Padding="10,5,10,10" 
+                                                 BackgroundColor="{StaticResource CardBackgroundColor}">
+                                <Label TextColor="{StaticResource PrimaryTextColor}">
+                                    <Label.FormattedText>
+                                        <FormattedString>
+                                            <Span Text="{Binding UserName}" FontAttributes="Bold" />
+                                            <Span Text=" " />
+                                            <Span Text="{Binding Caption}" />
+                                        </FormattedString>
+                                    </Label.FormattedText>
+                                </Label>
+
+                                <Label Text="{Binding PostCommentCount, StringFormat='View all {0} comments'}" 
+                                       IsVisible="{Binding PostCommentCount, Converter={StaticResource GreaterThanZeroConverter}}"
+                                       TextColor="{StaticResource SecondaryTextColor}" 
+                                       Margin="0,5,0,0">
+                                    <Label.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:PostsViewModel}}, Path=ViewCommentsCommand}"
+                                                              CommandParameter="{Binding .}" />
+                                    </Label.GestureRecognizers>
+                                </Label>
                             </VerticalStackLayout>
 
-                            <!-- Other Stories will be added dynamically -->
-                        </HorizontalStackLayout>
-                    </ScrollView>
-
-                    <!-- Separator -->
-                    <BoxView Color="{StaticResource BorderColor}" 
-                             HeightRequest="1" 
-                             HorizontalOptions="Fill" />
-
-                    <!-- Posts List -->
-                    <CollectionView ItemsSource="{Binding Posts}" 
-                                   SelectionMode="None"
-                                   EmptyView="No posts available. Pull to refresh.">
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate>
-                                <VerticalStackLayout Spacing="0" x:Name="postContainer">
-                                    <!-- Post Header -->
-                                    <Grid ColumnDefinitions="Auto,*,Auto" 
-                                          Padding="10" 
-                                          BackgroundColor="{StaticResource CardBackgroundColor}">
-                                        <Frame Grid.Column="0" 
-                                               CornerRadius="20" 
-                                               HeightRequest="40" 
-                                               WidthRequest="40" 
-                                               Padding="0" 
-                                               HasShadow="False"
-                                               BorderColor="{StaticResource BorderColor}">
-                                            <Image Source="{Binding ProfileImageURL}" 
-                                                  HeightRequest="40"
-                                                  WidthRequest="40"
-                                                  Aspect="AspectFill"
-                                                  IsVisible="{Binding ProfileImageURL, Converter={StaticResource StringNotEmptyConverter}}">
-                                                <Image.Clip>
-                                                    <EllipseGeometry Center="20,20" RadiusX="20" RadiusY="20" />
-                                                </Image.Clip>
-                                            </Image>
-                                            <Frame.Triggers>
-                                                <DataTrigger TargetType="Frame" Binding="{Binding ProfileImageURL, Converter={StaticResource StringNotEmptyConverter}}" Value="False">
-                                                    <Setter Property="Content">
-                                                        <Setter.Value>
-                                                            <Label Text="👤" 
-                                                                   FontSize="24" 
-                                                                   HorizontalOptions="Center" 
-                                                                   VerticalOptions="Center" />
-                                                        </Setter.Value>
-                                                    </Setter>
-                                                </DataTrigger>
-                                            </Frame.Triggers>
-                                        </Frame>
-
-                                        <VerticalStackLayout Grid.Column="1" 
-                                                             Margin="10,0,0,0" 
-                                                             VerticalOptions="Center">
-                                            <Label Text="{Binding UserName}" 
-                                                   FontAttributes="Bold" 
-                                                   FontSize="14" 
-                                                   TextColor="{StaticResource PrimaryTextColor}" />
-                                            <Label Text="{Binding RelativeTime}" 
-                                                   FontSize="12" 
-                                                   TextColor="{StaticResource SecondaryTextColor}" />
-                                        </VerticalStackLayout>
-
-                                        <Label Grid.Column="2" 
-                                               Text="⋮" 
-                                               FontSize="20" 
-                                               HorizontalOptions="End" 
-                                               VerticalOptions="Center">
-                                            <Label.GestureRecognizers>
-                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:PostsViewModel}}, Path=PostOptionsCommand}"
-                                                                       CommandParameter="{Binding .}" />
-                                            </Label.GestureRecognizers>
-                                        </Label>
-                                    </Grid>
-
-                                    <!-- Post Content -->
-                                    <Grid BackgroundColor="LightGray" HeightRequest="400">
-                                        <!-- Image Post - Only show when PostType is 'image' -->
-                                        <Image Source="{Binding PostFileURL}"
-                                               IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='image'}"
-                                               Aspect="AspectFill"
-                                               HorizontalOptions="FillAndExpand"
-                                               VerticalOptions="FillAndExpand">
-                                            <Image.GestureRecognizers>
-                                                <TapGestureRecognizer Tapped="OnImagePostTapped" />
-                                            </Image.GestureRecognizers>
-                                        </Image>
-
-                                        <!-- Video Post - Only show when PostType is 'video' -->
-                                        <Grid IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='video'}">
-                                            <!-- Video Thumbnail - Use ThumbnailUrl if available, otherwise use PostFileURL -->
-                                            <Image Source="{Binding ThumbnailUrl, TargetNullValue={Binding PostFileURL}}"
-                                                   Aspect="AspectFill"
-                                                   HorizontalOptions="FillAndExpand"
-                                                   VerticalOptions="FillAndExpand" />
-
-                                            <!-- Play Button Overlay -->
-                                            <Frame BackgroundColor="#80000000"
-                                                   CornerRadius="30"
-                                                   HeightRequest="60"
-                                                   WidthRequest="60"
-                                                   HorizontalOptions="Center"
-                                                   VerticalOptions="Center"
-                                                   HasShadow="False">
-                                                <Label Text="▶️"
-                                                       FontSize="32"
-                                                       HorizontalOptions="Center"
-                                                       VerticalOptions="Center"
-                                                       TextColor="White" />
-                                            </Frame>
-
-                                            <Grid.GestureRecognizers>
-                                                <TapGestureRecognizer Tapped="OnVideoThumbnailTapped" />
-                                            </Grid.GestureRecognizers>
-                                        </Grid>
-
-                                        <!-- Fallback for no media -->
-                                        <VerticalStackLayout IsVisible="{Binding PostFileURL, Converter={StaticResource StringNotEmptyConverter}, ConverterParameter='negate'}"
-                                                             HorizontalOptions="Center"
-                                                             VerticalOptions="Center">
-                                            <Label Text="🏀" 
-                                                   FontSize="100" 
-                                                   HorizontalOptions="Center" 
-                                                   VerticalOptions="Center" />
-                                        </VerticalStackLayout>
-                                    </Grid>
-
-                                    <!-- Post Actions -->
-                                    <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto" 
-                                          Padding="10" 
-                                          BackgroundColor="{StaticResource CardBackgroundColor}">
-                                        <Label Grid.Column="0" 
-                                               Text="{Binding LikedPost, Converter={StaticResource LikedPostToHeartConverter}}" 
-                                               FontSize="24" 
-                                               Margin="0,0,15,0">
-                                            <Label.GestureRecognizers>
-                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:PostsViewModel}}, Path=LikePostCommand}"
-                                                                       CommandParameter="{Binding .}" />
-                                            </Label.GestureRecognizers>
-                                        </Label>
-                                        <Label Grid.Column="1" 
-                                               Text="💬" 
-                                               FontSize="24" 
-                                               Margin="0,0,15,0">
-                                            <Label.GestureRecognizers>
-                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:PostsViewModel}}, Path=CommentPostCommand}"
-                                                                       CommandParameter="{Binding .}" />
-                                            </Label.GestureRecognizers>
-                                        </Label>
-                                        <Label Grid.Column="2" 
-                                               Text="📩" 
-                                               FontSize="24">
-                                            <Label.GestureRecognizers>
-                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:PostsViewModel}}, Path=SharePostCommand}"
-                                                                       CommandParameter="{Binding .}" />
-                                            </Label.GestureRecognizers>
-                                        </Label>
-                                        <Label Grid.Column="4" 
-                                               Text="{Binding SavedPost, Converter={StaticResource SavedPostToBookmarkConverter}}" 
-                                               FontSize="24" 
-                                               HorizontalOptions="End">
-                                            <Label.GestureRecognizers>
-                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:PostsViewModel}}, Path=SavePostCommand}"
-                                                                       CommandParameter="{Binding .}" />
-                                            </Label.GestureRecognizers>
-                                        </Label>
-                                    </Grid>
-
-                                    <!-- Likes -->
-                                    <Label Text="{Binding Likes, StringFormat='{0} likes'}" 
-                                           FontAttributes="Bold" 
-                                           Margin="10,5,10,0" 
-                                           BackgroundColor="{StaticResource CardBackgroundColor}"
-                                           TextColor="{StaticResource PrimaryTextColor}" />
-
-                                    <!-- Caption -->
-                                    <VerticalStackLayout Padding="10,5,10,10" 
-                                                         BackgroundColor="{StaticResource CardBackgroundColor}">
-                                        <Label TextColor="{StaticResource PrimaryTextColor}">
-                                            <Label.FormattedText>
-                                                <FormattedString>
-                                                    <Span Text="{Binding UserName}" FontAttributes="Bold" />
-                                                    <Span Text=" " />
-                                                    <Span Text="{Binding Caption}" />
-                                                </FormattedString>
-                                            </Label.FormattedText>
-                                        </Label>
-
-                                        <Label Text="{Binding PostCommentCount, StringFormat='View all {0} comments'}" 
-                                               IsVisible="{Binding PostCommentCount, Converter={StaticResource GreaterThanZeroConverter}}"
-                                               TextColor="{StaticResource SecondaryTextColor}" 
-                                               Margin="0,5,0,0">
-                                            <Label.GestureRecognizers>
-                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:PostsViewModel}}, Path=ViewCommentsCommand}"
-                                                                       CommandParameter="{Binding .}" />
-                                            </Label.GestureRecognizers>
-                                        </Label>
-                                    </VerticalStackLayout>
-
-                                    <!-- Separator -->
-                                    <BoxView Color="{StaticResource BorderColor}" 
-                                             HeightRequest="10" 
-                                             HorizontalOptions="Fill" />
-                                </VerticalStackLayout>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
-                </VerticalStackLayout>
-            </ScrollView>
+                            <!-- Separator -->
+                            <BoxView Color="{StaticResource BorderColor}" 
+                                     HeightRequest="10" 
+                                     HorizontalOptions="Fill" />
+                        </VerticalStackLayout>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
         </RefreshView>
 
         <!-- Navigation Footer -->
