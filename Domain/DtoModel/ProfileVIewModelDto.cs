@@ -2,32 +2,18 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Domain.DtoModel
 {
     public class ProfileViewModelDto
     {
-        public string ProfileId { get; set; }
-        public string UserId { get; set; }
-        public string UserName { get; set; }
-        public string Height { get; set; }
-        public string Weight { get; set; }
-        public string Position { get; set; }
-        public string Ranking { get; set; }
-        public string StarRating { get; set; }
-        public string Bio { get; set; }
-        public string ImageURL { get; set; }
-        public string PlayerArchetype { get; set; }
-        public string City { get; set; }
-        public string Zip { get; set; }
-        public string PlayerNumber { get; set; }
-        public string Status { get; set; }
-        public int? Points { get; set; }
-        public string LastRunDate { get; set; }
-        public bool? TopRecord { get; set; }
-        public bool? OnSquad { get; set; }
+        // Add a parameterless constructor for JSON deserialization
+        [JsonConstructor]
+        public ProfileViewModelDto() { }
 
+        // Existing constructor for mapping from Profile
         public ProfileViewModelDto(Profile profile)
         {
             ProfileId = profile.ProfileId;
@@ -50,5 +36,25 @@ namespace Domain.DtoModel
             TopRecord = profile.TopRecord;
             OnSquad = profile.OnSquad;
         }
+
+        public string ProfileId { get; set; }
+        public string UserId { get; set; }
+        public string UserName { get; set; }
+        public string Height { get; set; }
+        public string Weight { get; set; }
+        public string Position { get; set; }
+        public string Ranking { get; set; }
+        public string StarRating { get; set; }
+        public string Bio { get; set; }
+        public string ImageURL { get; set; }
+        public string PlayerArchetype { get; set; }
+        public string City { get; set; }
+        public string Zip { get; set; }
+        public string PlayerNumber { get; set; }
+        public string Status { get; set; }
+        public int? Points { get; set; }
+        public string LastRunDate { get; set; }
+        public bool? TopRecord { get; set; }
+        public bool? OnSquad { get; set; }
     }
 }

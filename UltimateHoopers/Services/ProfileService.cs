@@ -112,18 +112,24 @@ namespace UltimateHoopers.Services
                         var profile = new Profile
                         {
                             ProfileId = item.ProfileId,
-                            //UserName = item.Username,
+                            UserId = item.UserId,
+                            UserName = item.UserName,
                             Position = item.Position,
                             PlayerNumber = item.PlayerNumber,
                             City = item.City,
                             Height = item.Height,
-                            //ImageURL = item.ImageUrl,
-                            //TotalGames = item.TotalGames?.ToString(),
-                            //TotalWins = item.TotalWins?.ToString(),
-                            //TotalLosses = item.TotalLosses?.ToString(),
-                            //WinPercentage = item.WinPercentage,
-                            Ranking = item.Ranking?.ToString(),
-                            StarRating = item.StarRating?.ToString()
+                            ImageURL = item.ImageURL,
+                            Bio = item.Bio,
+                            Ranking = item.Ranking,
+                            StarRating = item.StarRating,
+                            Weight = item.Weight,
+                            PlayerArchetype = item.PlayerArchetype,
+                            Zip = item.Zip,
+                            Status = item.Status,
+                            Points = item.Points,
+                            LastRunDate = item.LastRunDate,
+                            TopRecord = item.TopRecord,
+                            OnSquad = item.OnSquad
                         };
 
                         profiles.Add(profile);
