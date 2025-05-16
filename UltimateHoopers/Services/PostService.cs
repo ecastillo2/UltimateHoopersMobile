@@ -107,24 +107,61 @@ namespace UltimateHoopers.Services
                 }
 
                 // Call the API with the retrieved token
-                var posts = await _postApi.GetPostsAsync(token);
-                //var posts = (List<Post>?)null;
-                // Add mock data if no posts returned (development/testing only)
-                if (posts == null || posts.Count == 0)
+                var paginatedResult = await _postApi.GetPostsWithCursorAsync(
+                    cursor: null,
+                    limit: 50, // Request a larger batch
+                    direction: "next",
+                    sortBy: "Date",
+                    accessToken: token);
+                // Convert ProfileViewModelDto to Profile objects
+                if (paginatedResult != null && paginatedResult.Items != null)
                 {
-                    // In a real app, you might not want to do this in production
-                    posts = CreateMockPosts();
+                    // Create a list to hold the converted profiles
+                    var posts = new List<Post>();
+
+                    foreach (var item in paginatedResult.Items)
+                    {
+                        // Map properties from the DTO to a new Profile object
+                        var post = new Post
+                        {
+                            PostId = item.PostId,
+                            UserId = item.UserId,
+                            Caption = item.Caption,
+                            PostFileURL = item.PostFileURL,
+                            Type = item.Type,
+                            Status = item.Status,
+                            Likes = item.Likes,
+                            DisLikes = item.DisLikes,
+                            Hearted = item.Hearted,
+                            Views = item.Views,
+                            Shared = item.Shared,
+                            PostedDate = item.PostedDate,
+                            ProfileId = item.ProfileId,
+                            ThumbnailUrl = item.ThumbnailUrl,
+                            PostType = item.PostType,
+                            PostText = item.PostText,
+                            Title = item.Title,
+                            Category = item.Category,
+                            Mention = item.Mention,
+                            MentionUserNames = item.MentionUserNames,
+                        };
+
+                        posts.Add(post);
+                    }
+
+                    return posts;
                 }
 
-                return posts;
+                // Return empty list if no results
+                return new List<Post>();
             }
             catch (Exception ex)
             {
-                LogError("Error getting posts", ex);
+                LogError("Error getting profiles with cursor", ex);
 
-                // For development/testing, return mock data if API fails
+                // For development, provide mock data if API fails
 #if DEBUG
-                return CreateMockPosts();
+                return null;
 #else
                 throw;
 #endif

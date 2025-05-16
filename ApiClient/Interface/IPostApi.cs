@@ -1,4 +1,5 @@
 ﻿using Domain;
+using Domain.DtoModel;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -18,6 +19,15 @@ namespace WebAPI.ApiClients
         /// Get all posts
         /// </summary>
         Task<List<Post>> GetPostsAsync(string accessToken, CancellationToken cancellationToken = default);
+
+       
+        Task<CursorPaginatedResultDto<PostViewModelDto>> GetPostsWithCursorAsync(
+            string cursor = null,
+            int limit = 20,
+            string direction = "next",
+            string sortBy = "Points",
+            string accessToken = null,
+            CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get post by ID
@@ -39,9 +49,6 @@ namespace WebAPI.ApiClients
         /// </summary>
         Task<bool> DeletePostAsync(string postId, string accessToken, CancellationToken cancellationToken = default);
 
-        /// <summary>
-        /// Get blogs with optional filtering
-        /// </summary>
-        Task<List<Blog>> GetBlogsAsync(string accessToken, string filter = null, CancellationToken cancellationToken = default);
+        
     }
 }

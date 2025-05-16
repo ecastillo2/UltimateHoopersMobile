@@ -1,4 +1,5 @@
 ﻿using Domain;
+using Domain.DtoModel;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -45,6 +46,8 @@ namespace WebAPI.ApiClients
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
             return JsonSerializer.Deserialize<List<Post>>(content, _jsonOptions);
         }
+
+
 
         /// <summary>
         /// Get post by ID
@@ -106,24 +109,49 @@ namespace WebAPI.ApiClients
             return response.IsSuccessStatusCode;
         }
 
-        /// <summary>
-        /// Get blogs with optional filtering
-        /// </summary>
-        public async Task<List<Blog>> GetBlogsAsync(string accessToken, string filter = null, CancellationToken cancellationToken = default)
+       
+
+        public async Task<CursorPaginatedResultDto<PostViewModelDto>> GetPostsWithCursorAsync(string cursor = null, int limit = 20, string direction = "next", string sortBy = "Points", string accessToken = null, CancellationToken cancellationToken = default)
         {
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-            string url = $"{_baseUrl}/api/Blog/GetBlogs";
-            if (!string.IsNullOrEmpty(filter))
+            try
             {
-                url += $"?filter={Uri.EscapeDataString(filter)}";
+                // Set authentication header if token is provided
+                if (!string.IsNullOrEmpty(accessToken))
+                {
+                    _httpClient.DefaultRequestHeaders.Authorization =
+                        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+                }
+
+                // Build query string
+                var queryParams = new List<string>();
+                if (!string.IsNullOrEmpty(cursor))
+                    queryParams.Add($"cursor={Uri.EscapeDataString(cursor)}");
+
+                queryParams.Add($"limit={limit}");
+                queryParams.Add($"direction={Uri.EscapeDataString(direction)}");
+                queryParams.Add($"sortBy={Uri.EscapeDataString(sortBy)}");
+
+                var queryString = string.Join("&", queryParams);
+                var requestUrl = $"{_baseUrl}/api/Post/cursor{(queryParams.Any() ? "?" + queryString : "")}";
+
+                // Make the request
+                var response = await _httpClient.GetAsync(requestUrl, cancellationToken);
+                response.EnsureSuccessStatusCode();
+
+                // Deserialize the response
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+                return JsonSerializer.Deserialize<CursorPaginatedResultDto<PostViewModelDto>>(content, _jsonOptions);
             }
-
-            var response = await _httpClient.GetAsync(url, cancellationToken);
-            response.EnsureSuccessStatusCode();
-
-            var content = await response.Content.ReadAsStringAsync(cancellationToken);
-            return JsonSerializer.Deserialize<List<Blog>>(content, _jsonOptions);
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"API request error: {ex.Message}");
+                throw;
+            }
+            catch (JsonException ex)
+            {
+                Console.WriteLine($"JSON parsing error: {ex.Message}");
+                throw;
+            }
         }
     }
 }
