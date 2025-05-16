@@ -3,7 +3,6 @@ using Domain.DtoModel;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Controls;
-using SixLabors.ImageSharp;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -31,7 +30,6 @@ namespace UltimateHoopers.Services
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _logger = logger;
-            _postApi = new PostApi(httpClient, configuration);
 
             // Get base URL from configuration or use default
             _baseUrl = _configuration["ApiSettings:BaseUrl"] ?? "https://ultimatehoopersapi.azurewebsites.net/";
@@ -47,6 +45,9 @@ namespace UltimateHoopers.Services
             _httpClient.DefaultRequestHeaders.Accept.Clear();
             _httpClient.DefaultRequestHeaders.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("application/json"));
+
+            // Create the API client last, so it has the properly configured HttpClient
+            _postApi = new PostApi(_httpClient, _configuration);
 
             LogInfo($"PostService initialized with base URL: {_baseUrl}");
         }
@@ -70,8 +71,10 @@ namespace UltimateHoopers.Services
             _httpClient.DefaultRequestHeaders.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("application/json"));
 
-            LogInfo($"PostService initialized with base URL: {_baseUrl} (non-DI constructor)");
+            // Create the API client after HttpClient is configured
             _postApi = new PostApi(_httpClient, _configuration);
+
+            LogInfo($"PostService initialized with base URL: {_baseUrl} (non-DI constructor)");
         }
 
         public async Task<Post> CreatePostAsync(Post post)
@@ -151,75 +154,103 @@ namespace UltimateHoopers.Services
                 }
 
                 // Call the API with the retrieved token
-                var paginatedResult = await _postApi.GetPostsWithCursorAsync(
-                    cursor: null,
-                    limit: 50, // Request a larger batch
-                    direction: "next",
-                    sortBy: "Date",
-                    accessToken: token);
+                LogInfo($"Calling API with token. Base URL: {_httpClient.BaseAddress}");
 
-                LogInfo($"API call completed. Result: {(paginatedResult != null ? "Success" : "Null")}");
-                LogInfo($"Items count: {paginatedResult?.Items?.Count ?? 0}");
-
-                // Convert items to Post objects
-                if (paginatedResult != null && paginatedResult.Items != null && paginatedResult.Items.Count > 0)
+                // Additional debug logging for the actual request
+                try
                 {
-                    // Create a list to hold the converted posts
-                    var posts = new List<Post>();
-
-                    foreach (var item in paginatedResult.Items)
-                    {
-                        try
-                        {
-                            // Map properties from the DTO to a new Post object
-                            var post = new Post
-                            {
-                                PostId = item.PostId,
-                                UserId = item.UserId,
-                                Caption = item.Caption,
-                                PostFileURL = item.PostFileURL,
-                                Type = item.Type,
-                                Status = item.Status,
-                                Likes = item.Likes,
-                                DisLikes = item.DisLikes,
-                                Hearted = item.Hearted,
-                                Views = item.Views,
-                                Shared = item.Shared,
-                                PostedDate = item.PostedDate,
-                                ProfileId = item.ProfileId,
-                                ThumbnailUrl = item.ThumbnailUrl,
-                                PostType = item.PostType,
-                                PostText = item.PostText,
-                                Title = item.Title,
-                                Category = item.Category,
-                                Mention = item.Mention,
-                                MentionUserNames = item.MentionUserNames,
-
-                                // Add these properties for the UI
-                                UserName = "Unknown User",
-                                RelativeTime = "2 hours ago",
-                                ProfileImageURL = item.ThumbnailUrl,
-                                PostCommentCount =  0,
-                                LikedPost =  false,
-                                SavedPost =  false
-                            };
-
-                            posts.Add(post);
-                            LogInfo($"Added post: {post.PostId}");
-                        }
-                        catch (Exception ex)
-                        {
-                            LogError($"Error mapping post {item.PostId}", ex);
-                        }
-                    }
-
-                    LogInfo($"Returning {posts.Count} posts from API");
-                    return posts;
+                    _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    LogInfo($"Set Authorization header: Bearer {token.Substring(0, Math.Min(10, token.Length))}...");
                 }
-                else
+                catch (Exception ex)
                 {
-                    LogInfo("No posts returned from API, returning empty list");
-                    return new List<Post>();
+                    LogError("Error setting authorization header", ex);
+                }
+
+                try
+                {
+                    var paginatedResult = await _postApi.GetPostsWithCursorAsync(
+                        cursor: null,
+                        limit: 50, // Request a larger batch
+                        direction: "next",
+                        sortBy: "Date",
+                        accessToken: token);
+
+                    LogInfo($"API call completed. Result: {(paginatedResult != null ? "Success" : "Null")}");
+                    LogInfo($"Items count: {paginatedResult?.Items?.Count ?? 0}");
+
+                    // Convert items to Post objects
+                    if (paginatedResult != null && paginatedResult.Items != null && paginatedResult.Items.Count > 0)
+                    {
+                        // Create a list to hold the converted posts
+                        var posts = new List<Post>();
+
+                        foreach (var item in paginatedResult.Items)
+                        {
+                            try
+                            {
+                                // Map properties from the DTO to a new Post object
+                                var post = new Post
+                                {
+                                    PostId = item.PostId,
+                                    UserId = item.UserId,
+                                    Caption = item.Caption,
+                                    PostFileURL = item.PostFileURL,
+                                    Type = item.Type,
+                                    Status = item.Status,
+                                    Likes = item.Likes,
+                                    DisLikes = item.DisLikes,
+                                    Hearted = item.Hearted,
+                                    Views = item.Views,
+                                    Shared = item.Shared,
+                                    PostedDate = item.PostedDate,
+                                    ProfileId = item.ProfileId,
+                                    ThumbnailUrl = item.ThumbnailUrl,
+                                    PostType = DeterminePostType(item.PostFileURL),
+                                    PostText = item.PostText,
+                                    Title = item.Title,
+                                    Category = item.Category,
+                                    Mention = item.Mention,
+                                    MentionUserNames = item.MentionUserNames,
+
+                                    // Add these properties for the UI with non-null defaults
+                                    UserName =  "Unknown User",
+                                    RelativeTime = FormatRelativeTime(item.PostedDate),
+                                    ProfileImageURL = item.ThumbnailUrl ?? item.PostFileURL,
+                                    PostCommentCount = 0,
+                                    LikedPost = false,
+                                    SavedPost = false
+                                };
+
+                                // Fix URLs by ensuring they have a protocol
+                                post.PostFileURL = FixUrl(post.PostFileURL);
+                                post.ThumbnailUrl = FixUrl(post.ThumbnailUrl);
+                                post.ProfileImageURL = FixUrl(post.ProfileImageURL);
+
+                                posts.Add(post);
+                                LogInfo($"Added post: {post.PostId}, URL: {post.PostFileURL}, Type: {post.PostType}");
+                            }
+                            catch (Exception ex)
+                            {
+                                LogError($"Error mapping post {item.PostId}", ex);
+                                // Continue with the next post instead of failing the entire process
+                            }
+                        }
+
+                        LogInfo($"Returning {posts.Count} posts from API");
+                        return posts;
+                    }
+                    else
+                    {
+                        LogInfo("No posts returned from API, returning empty list");
+                        return new List<Post>();
+                    }
+                }
+                catch (Exception apiEx)
+                {
+                    LogError("Error calling API", apiEx);
+                    // Fall through to return mock data in development mode
+                    throw;
                 }
             }
             catch (UnauthorizedAccessException)
@@ -236,7 +267,7 @@ namespace UltimateHoopers.Services
                 LogInfo("Returning mock posts for testing due to API error");
                 return CreateMockPosts();
 #else
-        throw;
+                throw;
 #endif
             }
         }
@@ -264,6 +295,48 @@ namespace UltimateHoopers.Services
             }
 
             return "Recently";
+        }
+
+        // Helper to ensure URL has a protocol
+        private string FixUrl(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                return url;
+
+            if (!url.StartsWith("http://") && !url.StartsWith("https://"))
+            {
+                url = "https://" + url.TrimStart('/');
+                LogInfo($"Fixed URL: {url}");
+            }
+
+            return url;
+        }
+
+        // Helper to determine post type from URL
+        private string DeterminePostType(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                return "image"; // Default to image
+
+            string lowercaseUrl = url.ToLower();
+
+            // Check for common video extensions
+            if (lowercaseUrl.EndsWith(".mp4") ||
+                lowercaseUrl.EndsWith(".mov") ||
+                lowercaseUrl.EndsWith(".avi") ||
+                lowercaseUrl.EndsWith(".webm") ||
+                lowercaseUrl.EndsWith(".mkv") ||
+                lowercaseUrl.EndsWith(".mpg") ||
+                lowercaseUrl.EndsWith(".mpeg") ||
+                lowercaseUrl.Contains("video") ||
+                lowercaseUrl.Contains("mp4") ||
+                lowercaseUrl.Contains("commondatastorage.googleapis.com/gtv-videos-bucket"))
+            {
+                return "video";
+            }
+
+            // Default to image for all other formats
+            return "image";
         }
 
         public async Task<bool> UpdatePostAsync(Post post)

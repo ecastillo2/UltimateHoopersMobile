@@ -279,69 +279,85 @@ namespace UltimateHoopers.ViewModels
         // Helper to ensure all post fields have valid values
         private void SanitizePost(Post post)
         {
-            // Required fields
-            post.PostId = string.IsNullOrWhiteSpace(post.PostId) ? Guid.NewGuid().ToString() : post.PostId;
+            try
+            {
+                // Required fields
+                post.PostId = string.IsNullOrWhiteSpace(post.PostId) ? Guid.NewGuid().ToString() : post.PostId;
 
-            // Handle null PostFileURL - critical field
-            if (string.IsNullOrWhiteSpace(post.PostFileURL))
-            {
-                Debug.WriteLine($"Warning: Post {post.PostId} has null/empty PostFileURL. Setting a placeholder.");
-                post.PostFileURL = "https://via.placeholder.com/300";
-                post.PostType = "image"; // Default to image for empty URLs
-            }
-            else
-            {
-                // Ensure URL has a protocol (http or https)
-                if (!post.PostFileURL.StartsWith("http://") && !post.PostFileURL.StartsWith("https://"))
+                // Handle null PostFileURL - critical field
+                if (string.IsNullOrWhiteSpace(post.PostFileURL))
                 {
-                    // Add https protocol if missing
-                    post.PostFileURL = "https://" + post.PostFileURL.TrimStart('/');
-                    Debug.WriteLine($"Fixed URL by adding protocol: {post.PostFileURL}");
+                    Debug.WriteLine($"Warning: Post {post.PostId} has null/empty PostFileURL. Setting a placeholder.");
+                    post.PostFileURL = "https://via.placeholder.com/300";
+                    post.PostType = "image"; // Default to image for empty URLs
                 }
-            }
-
-            // If PostType is null or empty, detect it from the URL
-            if (string.IsNullOrWhiteSpace(post.PostType))
-            {
-                post.PostType = DeterminePostType(post.PostFileURL);
-                Debug.WriteLine($"Auto-detected post type: {post.PostType} for URL: {post.PostFileURL}");
-            }
-
-            // For video posts, ensure there's a thumbnail URL
-            if (post.PostType.ToLower() == "video" && string.IsNullOrWhiteSpace(post.ThumbnailUrl))
-            {
-                // Set a default thumbnail or generate one from video
-                Debug.WriteLine($"Video post {post.PostId} has no thumbnail URL. Setting a placeholder.");
-                post.ThumbnailUrl = "https://via.placeholder.com/300/333333/FFFFFF?text=Video";
-            }
-            else if (!string.IsNullOrWhiteSpace(post.ThumbnailUrl))
-            {
-                // Ensure thumbnail URL has a protocol
-                if (!post.ThumbnailUrl.StartsWith("http://") && !post.ThumbnailUrl.StartsWith("https://"))
+                else
                 {
-                    post.ThumbnailUrl = "https://" + post.ThumbnailUrl.TrimStart('/');
-                    Debug.WriteLine($"Fixed thumbnail URL: {post.ThumbnailUrl}");
+                    // Ensure URL has a protocol (http or https)
+                    if (!post.PostFileURL.StartsWith("http://") && !post.PostFileURL.StartsWith("https://"))
+                    {
+                        // Add https protocol if missing
+                        post.PostFileURL = "https://" + post.PostFileURL.TrimStart('/');
+                        Debug.WriteLine($"Fixed URL by adding protocol: {post.PostFileURL}");
+                    }
                 }
-            }
 
-            // Ensure profile image URL has a protocol if it exists
-            if (!string.IsNullOrWhiteSpace(post.ProfileImageURL))
-            {
-                if (!post.ProfileImageURL.StartsWith("http://") && !post.ProfileImageURL.StartsWith("https://"))
+                // If PostType is null or empty, detect it from the URL
+                if (string.IsNullOrWhiteSpace(post.PostType))
                 {
-                    post.ProfileImageURL = "https://" + post.ProfileImageURL.TrimStart('/');
-                    Debug.WriteLine($"Fixed profile image URL: {post.ProfileImageURL}");
+                    post.PostType = DeterminePostType(post.PostFileURL);
+                    Debug.WriteLine($"Auto-detected post type: {post.PostType} for URL: {post.PostFileURL}");
                 }
-            }
 
-            // Set default values for other fields
-            post.UserName = post.UserName ?? "Anonymous";
-            post.Caption = post.Caption ?? "";
-            post.RelativeTime = post.RelativeTime ?? "Recently";
-            post.Likes = post.Likes ?? 0;
-            post.LikedPost = post.LikedPost ?? false;
-            post.SavedPost = post.SavedPost ?? false;
-            post.PostCommentCount = post.PostCommentCount ?? 0;
+                // For video posts, ensure there's a thumbnail URL
+                if (post.PostType?.ToLower() == "video" && string.IsNullOrWhiteSpace(post.ThumbnailUrl))
+                {
+                    // Set a default thumbnail or generate one from video
+                    Debug.WriteLine($"Video post {post.PostId} has no thumbnail URL. Setting a placeholder.");
+                    post.ThumbnailUrl = "https://via.placeholder.com/300/333333/FFFFFF?text=Video";
+                }
+                else if (!string.IsNullOrWhiteSpace(post.ThumbnailUrl))
+                {
+                    // Ensure thumbnail URL has a protocol
+                    if (!post.ThumbnailUrl.StartsWith("http://") && !post.ThumbnailUrl.StartsWith("https://"))
+                    {
+                        post.ThumbnailUrl = "https://" + post.ThumbnailUrl.TrimStart('/');
+                        Debug.WriteLine($"Fixed thumbnail URL: {post.ThumbnailUrl}");
+                    }
+                }
+
+                // Ensure profile image URL has a protocol if it exists
+                if (!string.IsNullOrWhiteSpace(post.ProfileImageURL))
+                {
+                    if (!post.ProfileImageURL.StartsWith("http://") && !post.ProfileImageURL.StartsWith("https://"))
+                    {
+                        post.ProfileImageURL = "https://" + post.ProfileImageURL.TrimStart('/');
+                        Debug.WriteLine($"Fixed profile image URL: {post.ProfileImageURL}");
+                    }
+                }
+                else
+                {
+                    // If no profile image is available, try to use the thumbnail as fallback
+                    if (!string.IsNullOrWhiteSpace(post.ThumbnailUrl))
+                    {
+                        post.ProfileImageURL = post.ThumbnailUrl;
+                    }
+                }
+
+                // Set default values for other fields
+                post.UserName = post.UserName ?? "Anonymous";
+                post.Caption = post.Caption ?? "";
+                post.RelativeTime = post.RelativeTime ?? "Recently";
+                post.Likes = post.Likes ?? 0;
+                post.LikedPost = post.LikedPost ?? false;
+                post.SavedPost = post.SavedPost ?? false;
+                post.PostCommentCount = post.PostCommentCount ?? 0;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error during post sanitization: {ex.Message}");
+                // Don't rethrow - try to continue with the post as-is
+            }
         }
 
         // Helper to determine post type from URL
@@ -350,31 +366,25 @@ namespace UltimateHoopers.ViewModels
             if (string.IsNullOrWhiteSpace(url))
                 return "image"; // Default to image
 
+            string lowercaseUrl = url.ToLower();
+
             // Check for common video extensions
-            if (IsVideoUrl(url))
+            if (lowercaseUrl.EndsWith(".mp4") ||
+                lowercaseUrl.EndsWith(".mov") ||
+                lowercaseUrl.EndsWith(".avi") ||
+                lowercaseUrl.EndsWith(".webm") ||
+                lowercaseUrl.EndsWith(".mkv") ||
+                lowercaseUrl.EndsWith(".mpg") ||
+                lowercaseUrl.EndsWith(".mpeg") ||
+                lowercaseUrl.Contains("video") ||
+                lowercaseUrl.Contains("mp4") ||
+                lowercaseUrl.Contains("commondatastorage.googleapis.com/gtv-videos-bucket"))
+            {
                 return "video";
+            }
 
             // Default to image for all other formats
             return "image";
-        }
-
-        // Helper to check if a URL points to a video
-        private bool IsVideoUrl(string url)
-        {
-            if (string.IsNullOrWhiteSpace(url))
-                return false;
-
-            string lowercaseUrl = url.ToLower();
-            return lowercaseUrl.EndsWith(".mp4") ||
-                   lowercaseUrl.EndsWith(".mov") ||
-                   lowercaseUrl.EndsWith(".avi") ||
-                   lowercaseUrl.EndsWith(".webm") ||
-                   lowercaseUrl.EndsWith(".mkv") ||
-                   lowercaseUrl.EndsWith(".mpg") ||
-                   lowercaseUrl.EndsWith(".mpeg") ||
-                   lowercaseUrl.Contains("video") ||
-                   lowercaseUrl.Contains("mp4") ||
-                   lowercaseUrl.Contains("commondatastorage.googleapis.com/gtv-videos-bucket");
         }
 
         // Command handlers
