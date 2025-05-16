@@ -1,18 +1,17 @@
-﻿
-using Domain;
-using Microsoft.Maui.Controls;
+﻿using Microsoft.Maui.Controls;
 using System;
+using System.Threading.Tasks;
 using System.Diagnostics;
-using Microsoft.Maui.Controls.Xaml;
+using UltimateHoopers.Services;
 using UltimateHoopers.ViewModels;
 
 namespace UltimateHoopers.Pages
 {
-    [XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class VideoPlayerPage : ContentPage
     {
-        private readonly Post _post;
+        private readonly Domain.Post _post;
         private bool _isVideoLoaded = false;
+        private bool _isMuted = false; // Track mute state, default to unmuted for fullscreen video
 
         // Default constructor for design time and XAML previews
         public VideoPlayerPage()
@@ -21,7 +20,7 @@ namespace UltimateHoopers.Pages
         }
 
         // Constructor with post parameter
-        public VideoPlayerPage(Post post)
+        public VideoPlayerPage(Domain.Post post)
         {
             InitializeComponent();
             _post = post ?? throw new ArgumentNullException(nameof(post));
@@ -52,6 +51,9 @@ namespace UltimateHoopers.Pages
                 fallbackGrid.IsVisible = true;
                 videoWebView.IsVisible = false;
                 loadingIndicator.IsVisible = false;
+
+                // Show volume button with appropriate icon
+                UpdateVolumeButtonIcon();
 
                 // Debug output
                 Debug.WriteLine($"VideoPlayerPage created for post: {_post.PostId}");
@@ -183,28 +185,7 @@ namespace UltimateHoopers.Pages
             }
         }
 
-        // Close button handler
-        private async void OnCloseClicked(object sender, EventArgs e)
-        {
-            try
-            {
-                // Clean up resources if needed
-                Debug.WriteLine("Closing video player");
-
-                // Use Navigation to go back/dismiss the modal
-                await Navigation.PopModalAsync();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error closing video player: {ex.Message}");
-                // Fallback if navigation fails
-                if (Application.Current != null)
-                {
-                    Application.Current.MainPage = new AppShell();
-                }
-            }
-        }
-
+        // HTML template for video player
         private string GetVideoHtml(string videoUrl)
         {
             // Add cache busting parameter
@@ -249,7 +230,7 @@ namespace UltimateHoopers.Pages
 </head>
 <body>
     <div class='video-container'>
-        <video id='videoPlayer' controls autoplay playsinline>
+        <video id='videoPlayer' controls autoplay playsinline" + (_isMuted ? " muted" : "") + @">
             <source src='" + urlWithCacheBusting + @"' type='video/mp4'>
             Your browser does not support HTML5 video.
         </video>
@@ -258,6 +239,9 @@ namespace UltimateHoopers.Pages
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Video player loaded');
             var video = document.getElementById('videoPlayer');
+            
+            // Set initial mute state
+            video.muted = " + (_isMuted ? "true" : "false") + @";
             
             video.addEventListener('canplay', function() {
                 console.log('Video can play');
@@ -376,6 +360,81 @@ namespace UltimateHoopers.Pages
                     playButtonFrame.IsVisible = true;
                     loadingIndicator.IsVisible = false;
                 });
+            }
+        }
+
+        // Toggle mute state
+        private void OnVolumeButtonClicked(object sender, EventArgs e)
+        {
+            _isMuted = !_isMuted;
+
+            // Update the volume button icon
+            UpdateVolumeButtonIcon();
+
+            // Update the video mute state if it's loaded
+            if (_isVideoLoaded && videoWebView.Handler != null)
+            {
+                try
+                {
+                    MainThread.BeginInvokeOnMainThread(async () => {
+                        try
+                        {
+                            await videoWebView.EvaluateJavaScriptAsync(
+                                $"var video = document.getElementById('videoPlayer'); " +
+                                $"if(video) {{ video.muted = {(_isMuted ? "true" : "false")}; }}");
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"JavaScript evaluation error updating mute state: {ex.Message}");
+
+                            // If JavaScript fails, try reloading the video with the new mute state
+                            if (!string.IsNullOrEmpty(_post?.PostFileURL))
+                            {
+                                videoWebView.Source = new HtmlWebViewSource { Html = GetVideoHtml(_post.PostFileURL) };
+                            }
+                        }
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error updating mute state: {ex.Message}");
+                }
+            }
+            else if (!_isVideoLoaded && fallbackGrid.IsVisible)
+            {
+                // If video isn't loaded yet, we'll apply the mute state when it loads
+                Debug.WriteLine("Mute state will be applied when video loads");
+            }
+        }
+
+        // Update the volume button icon based on current mute state
+        private void UpdateVolumeButtonIcon()
+        {
+            if (volumeButton != null && volumeIcon != null)
+            {
+                volumeIcon.Text = _isMuted ? "🔇" : "🔊";
+            }
+        }
+
+        // Close button handler
+        private async void OnCloseClicked(object sender, EventArgs e)
+        {
+            try
+            {
+                // Clean up resources if needed
+                Debug.WriteLine("Closing video player");
+
+                // Use Navigation to go back/dismiss the modal
+                await Navigation.PopModalAsync();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error closing video player: {ex.Message}");
+                // Fallback if navigation fails
+                if (Application.Current != null)
+                {
+                    Application.Current.MainPage = new AppShell();
+                }
             }
         }
 

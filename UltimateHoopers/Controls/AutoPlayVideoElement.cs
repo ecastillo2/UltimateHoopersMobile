@@ -24,6 +24,11 @@ namespace UltimateHoopers.Controls
             BindableProperty.Create(nameof(IsVisibleInViewport), typeof(bool), typeof(AutoPlayVideoElement), false,
                 propertyChanged: OnIsVisibleInViewportChanged);
 
+        // Mute state of the video
+        public static readonly BindableProperty IsMutedProperty =
+            BindableProperty.Create(nameof(IsMuted), typeof(bool), typeof(AutoPlayVideoElement), true,
+                propertyChanged: OnIsMutedChanged);
+
         // Post object for reference
         public static readonly BindableProperty PostProperty =
             BindableProperty.Create(nameof(Post), typeof(Domain.Post), typeof(AutoPlayVideoElement), null);
@@ -67,6 +72,13 @@ namespace UltimateHoopers.Controls
             set => SetValue(IsVisibleInViewportProperty, value);
         }
 
+        // Get/set muted state
+        public bool IsMuted
+        {
+            get => (bool)GetValue(IsMutedProperty);
+            set => SetValue(IsMutedProperty, value);
+        }
+
         // Get/set post object
         public Domain.Post Post
         {
@@ -76,6 +88,9 @@ namespace UltimateHoopers.Controls
 
         // Event to notify when tapping for full-screen playback
         public event EventHandler<EventArgs> FullScreenRequested;
+
+        // Event to notify when the mute state changes
+        public event EventHandler<bool> MuteStateChanged;
 
         // Constructor
         public AutoPlayVideoElement()
@@ -183,6 +198,45 @@ namespace UltimateHoopers.Controls
                 {
                     control.Pause();
                 }
+            }
+        }
+
+        // Called when mute state changes
+        private static void OnIsMutedChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            if (bindable is AutoPlayVideoElement videoElement)
+            {
+                videoElement.UpdateMuteState();
+            }
+        }
+
+        // Method to update the mute state of the video
+        private void UpdateMuteState()
+        {
+            if (!_isVideoLoaded || _videoPlayer == null || _videoPlayer.Handler == null)
+                return;
+
+            try
+            {
+                MainThread.BeginInvokeOnMainThread(async () => {
+                    try
+                    {
+                        await _videoPlayer.EvaluateJavaScriptAsync(
+                            $"var video = document.getElementById('videoPlayer'); " +
+                            $"if(video) {{ video.muted = {(IsMuted ? "true" : "false")}; }}");
+
+                        // Notify about mute state change
+                        MuteStateChanged?.Invoke(this, IsMuted);
+                    }
+                    catch (Exception jsEx)
+                    {
+                        Debug.WriteLine($"JavaScript evaluation error updating mute state: {jsEx.Message}");
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error updating mute state: {ex.Message}");
             }
         }
 
@@ -319,6 +373,12 @@ namespace UltimateHoopers.Controls
             }
         }
 
+        // Toggle mute state
+        public void ToggleMute()
+        {
+            IsMuted = !IsMuted;
+        }
+
         // Pause the video when scrolled out of view
         public void Pause()
         {
@@ -392,7 +452,7 @@ namespace UltimateHoopers.Controls
 </head>
 <body>
     <div class='video-container'>
-        <video id='videoPlayer' playsinline loop muted autoplay>
+        <video id='videoPlayer' playsinline loop " + (IsMuted ? "muted" : "") + @" autoplay>
             <source src='" + urlWithCacheBusting + @"' type='video/mp4'>
             Your browser does not support HTML5 video.
         </video>
@@ -401,8 +461,8 @@ namespace UltimateHoopers.Controls
         document.addEventListener('DOMContentLoaded', function() {
             var video = document.getElementById('videoPlayer');
             
-            // Make sure video is muted
-            video.muted = true;
+            // Set initial mute state
+            video.muted = " + (IsMuted ? "true" : "false") + @";
             
             video.addEventListener('canplay', function() {
                 window.location.href = 'maui-callback://videoCanPlay';
@@ -426,13 +486,6 @@ namespace UltimateHoopers.Controls
                     console.log('Autoplay prevented:', error);
                 });
             }
-            
-            // Handle click to unmute/mute
-            video.addEventListener('click', function() {
-                // In the feed view we don't want to enable sound on tap
-                // That would be handled in the full-screen view
-                video.muted = true;
-            });
         });
     </script>
 </body>

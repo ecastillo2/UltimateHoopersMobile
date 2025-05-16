@@ -86,6 +86,28 @@
                         </Frame.GestureRecognizers>
                     </Frame>
                 </Grid>
+
+                <!-- Volume Control Button - Positioned on top of the video -->
+                <Frame x:Name="volumeButton"
+                       BackgroundColor="#80000000"
+                       CornerRadius="20"
+                       HeightRequest="40"
+                       WidthRequest="40"
+                       HorizontalOptions="End"
+                       VerticalOptions="End"
+                       Margin="0,0,15,15"
+                       Padding="0"
+                       HasShadow="False">
+                    <Label x:Name="volumeIcon"
+                           Text="🔊"
+                           FontSize="20"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"
+                           TextColor="White" />
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnVolumeButtonClicked" />
+                    </Frame.GestureRecognizers>
+                </Frame>
             </Grid>
 
             <!-- Social Controls Bottom -->

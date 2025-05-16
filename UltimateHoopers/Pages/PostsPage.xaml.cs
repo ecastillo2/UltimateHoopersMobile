@@ -8,6 +8,7 @@ using UltimateHoopers.ViewModels;
 using Microsoft.Maui.ApplicationModel; // For MainThread
 using System.Threading.Tasks;
 using UltimateHoopers.Controls;
+using System.Linq;
 
 namespace UltimateHoopers.Pages
 {
@@ -111,6 +112,9 @@ namespace UltimateHoopers.Pages
                 {
                     Console.WriteLine("No posts were loaded from the service.");
                 }
+
+                // Subscribe to mute events
+                SubscribeToMuteEvents();
             }
             catch (Exception ex)
             {
@@ -130,6 +134,103 @@ namespace UltimateHoopers.Pages
 
             // Stop all videos when page disappears
             StopAllVideos();
+
+            // Unsubscribe from mute events
+            UnsubscribeFromMuteEvents();
+        }
+
+        // Subscribe to AutoPlayVideoElement mute events
+        private void SubscribeToMuteEvents()
+        {
+            // Find all video elements in the collection view
+            var videoElements = PostsCollectionView.FindVisualChildrenByName<AutoPlayVideoElement>("AutoPlayVideo");
+
+            foreach (var videoElement in videoElements)
+            {
+                videoElement.MuteStateChanged += OnVideoMuteStateChanged;
+            }
+        }
+
+        // Unsubscribe from events to prevent memory leaks
+        private void UnsubscribeFromMuteEvents()
+        {
+            var videoElements = PostsCollectionView.FindVisualChildrenByName<AutoPlayVideoElement>("AutoPlayVideo");
+
+            foreach (var videoElement in videoElements)
+            {
+                videoElement.MuteStateChanged -= OnVideoMuteStateChanged;
+            }
+        }
+
+        // Handle mute state changes
+        private void OnVideoMuteStateChanged(object sender, bool isMuted)
+        {
+            if (sender is AutoPlayVideoElement videoElement)
+            {
+                // Find the parent grid of the video element
+                var parent = videoElement.Parent;
+                while (parent != null && !(parent is Grid))
+                {
+                    parent = parent.Parent;
+                }
+
+                if (parent is Grid grid)
+                {
+                    // Find the volume button frame
+                    var volumeFrame = grid.Children.OfType<Frame>()
+                        .FirstOrDefault(f => f.StyleId == "VolumeButton" || f.ClassId == "VolumeButton");
+
+                    if (volumeFrame != null && volumeFrame.Content is Label volumeIcon)
+                    {
+                        // Update the icon based on current mute state
+                        MainThread.BeginInvokeOnMainThread(() => {
+                            volumeIcon.Text = isMuted ? "🔇" : "🔊";
+                        });
+                    }
+                }
+            }
+        }
+
+        // Handle volume button tap
+        private void OnVolumeButtonTapped(object sender, EventArgs e)
+        {
+            try
+            {
+                if (sender is Element element)
+                {
+                    // Find the parent layout containing both the volume button and video element
+                    var parentLayout = element.Parent;
+                    while (parentLayout != null && !(parentLayout is Grid))
+                    {
+                        parentLayout = parentLayout.Parent;
+                    }
+
+                    if (parentLayout is Grid grid)
+                    {
+                        // Find the AutoPlayVideoElement within the same grid
+                        var videoElement = grid.Children.OfType<AutoPlayVideoElement>().FirstOrDefault();
+                        if (videoElement != null)
+                        {
+                            // Toggle mute state
+                            videoElement.ToggleMute();
+
+                            // Find and update the volume icon
+                            var volumeFrame = grid.Children.OfType<Frame>()
+                                .FirstOrDefault(f => f.StyleId == "VolumeButton" || f.ClassId == "VolumeButton");
+
+                            if (volumeFrame != null && volumeFrame.Content is Label volumeIcon)
+                            {
+                                // Update the icon based on mute state
+                                volumeIcon.Text = videoElement.IsMuted ? "🔇" : "🔊";
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error toggling volume: {ex.Message}");
+            }
         }
 
         // Event handler for CollectionView scrolling

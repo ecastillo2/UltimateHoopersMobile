@@ -129,20 +129,43 @@
                                 </Image>
 
                                 <!-- Video Post - Only show when PostType is 'video' -->
-                                <controls:AutoPlayVideoElement 
-                                    x:Name="AutoPlayVideo"
-                                    IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='video'}"
-                                    VideoUrl="{Binding PostFileURL}"
-                                    ThumbnailUrl="{Binding ThumbnailUrl}"
-                                    Post="{Binding .}"
-                                    IsVisibleInViewport="False"
-                                    FullScreenRequested="OnVideoFullScreenRequested" />
+                                <Grid IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='video'}">
+                                    <controls:AutoPlayVideoElement 
+                                        x:Name="AutoPlayVideo"
+                                        VideoUrl="{Binding PostFileURL}"
+                                        ThumbnailUrl="{Binding ThumbnailUrl}"
+                                        Post="{Binding .}"
+                                        IsVisibleInViewport="False"
+                                        IsMuted="True"
+                                        FullScreenRequested="OnVideoFullScreenRequested" />
+
+                                    <!-- Volume Control Button -->
+                                    <Frame StyleId="VolumeButton"
+                                           BackgroundColor="#80000000"
+                                           CornerRadius="15"
+                                           HeightRequest="30"
+                                           WidthRequest="30"
+                                           HorizontalOptions="End"
+                                           VerticalOptions="End"
+                                           Margin="0,0,10,10"
+                                           Padding="0"
+                                           HasShadow="False">
+                                        <Label Text="🔇" 
+                                               FontSize="16" 
+                                               HorizontalOptions="Center" 
+                                               VerticalOptions="Center" 
+                                               TextColor="White" />
+                                        <Frame.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnVolumeButtonTapped" />
+                                        </Frame.GestureRecognizers>
+                                    </Frame>
+                                </Grid>
 
                                 <!-- Fallback for no media -->
                                 <VerticalStackLayout IsVisible="{Binding PostFileURL, Converter={StaticResource StringNotEmptyConverter}, ConverterParameter='negate'}"
                                                      HorizontalOptions="Center"
                                                      VerticalOptions="Center">
-                                  
+
                                 </VerticalStackLayout>
                             </Grid>
 
