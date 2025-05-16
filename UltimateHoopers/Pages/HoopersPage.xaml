@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+﻿
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="UltimateHoopers.Pages.HoopersPage"
@@ -131,16 +131,194 @@
             </ScrollView>
 
             <!-- Scrollable Players List Section -->
+           
             <ScrollView x:Name="PlayersScrollView" Grid.Row="2" Margin="0,0,0,0">
                 <VerticalStackLayout x:Name="PlayersContainer" Spacing="15">
                     <!-- Hoopers List Title -->
                     <Label Text="Featured Hoopers" 
-                           FontSize="20"
-                           FontAttributes="Bold" 
-                           Margin="0,0,0,0" />
+               FontSize="20"
+               FontAttributes="Bold" 
+               Margin="0,0,0,0" />
 
-                    <!-- Player cards will be added here programmatically -->
+                    <!-- Template for Player Cards -->
+                    <CollectionView x:Name="HoopersCollection" 
+                       ItemsSource="{Binding FilteredHoopers}"
+                       SelectionMode="None"
+                       EmptyView="No players found. Try another search."
+                       Margin="0,0,0,0">
 
+                        <!-- Add ItemsSpacing property for space between items -->
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
+                        </CollectionView.ItemsLayout>
+
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Frame 
+                           Padding="0"
+                           BorderColor="{StaticResource BorderColor}"
+                           CornerRadius="10"
+                           HasShadow="True"
+                           BackgroundColor="{StaticResource CardBackgroundColor}"
+                           Margin="0,0,0,0">
+                                    <Grid RowSpacing="0" ColumnSpacing="10">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Profile Picture -->
+                                        <Frame Grid.Column="0" 
+                                   Grid.RowSpan="2"
+                                   HeightRequest="70" 
+                                   WidthRequest="70"
+                                   CornerRadius="35"
+                                   Padding="0"
+                                   IsClippedToBounds="True"
+                                   BorderColor="{StaticResource PrimaryColor}"
+                                   Margin="15">
+                                            <Grid>
+                                                <!-- Profile Image Placeholder (ColorBox with Initials) -->
+                                                <Rectangle x:Name="ProfileColorPlaceholder" 
+                                               Fill="{Binding InitialsColor}"
+                                               VerticalOptions="Fill"
+                                               HorizontalOptions="Fill" />
+
+                                                <!-- Initials on Placeholder -->
+                                                <Label Text="{Binding Initials}"
+                                           TextColor="White"
+                                           FontSize="24"
+                                           FontAttributes="Bold"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center" />
+
+                                                <!-- Actual Profile Image (if available) -->
+                                                <Image Source="{Binding ProfileImage}" 
+                                           Aspect="AspectFill"
+                                           IsVisible="{Binding HasValidImage}"
+                                           HorizontalOptions="Fill"
+                                           VerticalOptions="Fill" />
+                                            </Grid>
+                                        </Frame>
+
+                                        <!-- Player Info Section -->
+                                        <VerticalStackLayout Grid.Column="1" 
+                                               Grid.Row="0"
+                                               Spacing="0"
+                                               Margin="0,15,0,0">
+
+                                            <!-- Username and Rank -->
+                                            <HorizontalStackLayout>
+                                                <Label Text="{Binding UsernameDisplay}"
+                                           FontSize="18"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource PrimaryColor}" />
+
+                                                <!-- Rank Badge -->
+                                                <Frame BackgroundColor="{StaticResource PrimaryColor}"
+                                           CornerRadius="10"
+                                           HeightRequest="20"
+                                           Padding="5,0"
+                                           Margin="10,0,0,0">
+                                                    <HorizontalStackLayout>
+                                                        <Label Text="#" 
+                                                   FontSize="12"
+                                                   TextColor="White"
+                                                   VerticalOptions="Center" />
+                                                        <Label Text="{Binding Rank}"
+                                                   FontSize="12"
+                                                   FontAttributes="Bold"
+                                                   TextColor="White"
+                                                   VerticalOptions="Center" />
+                                                    </HorizontalStackLayout>
+                                                </Frame>
+                                            </HorizontalStackLayout>
+
+                                            <!-- Position and Location - WITHOUT any bottom margin -->
+                                            <Label Text="{Binding PositionLocation}"
+                                       FontSize="14"
+                                       Margin="0,0,0,0"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
+
+                                            <!-- Stats Row - WITH negative top margin to move it up -->
+                                            <HorizontalStackLayout Spacing="15" 
+                                                      Margin="0,3,0,10">
+                                                <!-- Games Stat -->
+                                                <VerticalStackLayout HorizontalOptions="Start">
+                                                    <Label Text="{Binding GamesPlayed}"
+                                               FontAttributes="Bold"
+                                               HorizontalOptions="Center"
+                                               TextColor="{StaticResource PrimaryColor}" />
+                                                    <Label Text="Games"
+                                               FontSize="12"
+                                               HorizontalOptions="Center"
+                                               TextColor="{StaticResource SecondaryTextColor}" />
+                                                </VerticalStackLayout>
+
+                                                <!-- Record Stat -->
+                                                <VerticalStackLayout>
+                                                    <Label Text="{Binding Record}"
+                                               FontAttributes="Bold"
+                                               HorizontalOptions="Center"
+                                               TextColor="{StaticResource PrimaryColor}" />
+                                                    <Label Text="Record"
+                                               FontSize="12"
+                                               HorizontalOptions="Center"
+                                               TextColor="{StaticResource SecondaryTextColor}" />
+                                                </VerticalStackLayout>
+
+                                                <!-- Win % Stat -->
+                                                <VerticalStackLayout>
+                                                    <Label Text="{Binding WinPercentage}"
+                                               FontAttributes="Bold"
+                                               HorizontalOptions="Center"
+                                               TextColor="{StaticResource PrimaryColor}" />
+                                                    <Label Text="Win %"
+                                               FontSize="12"
+                                               HorizontalOptions="Center"
+                                               TextColor="{StaticResource SecondaryTextColor}" />
+                                                </VerticalStackLayout>
+
+                                                <!-- Rating Stat -->
+                                                <VerticalStackLayout>
+                                                    <HorizontalStackLayout HorizontalOptions="Center">
+                                                        <Label Text="{Binding RatingDisplay}"
+                                                   FontAttributes="Bold"
+                                                   TextColor="{StaticResource PrimaryColor}" />
+                                                        <Label Text="⭐"
+                                                   FontSize="12"
+                                                   TextColor="{StaticResource PrimaryColor}"
+                                                   Margin="2,0,0,0" />
+                                                    </HorizontalStackLayout>
+                                                    <Label Text="Rating"
+                                               FontSize="12"
+                                               HorizontalOptions="Center"
+                                               TextColor="{StaticResource SecondaryTextColor}" />
+                                                </VerticalStackLayout>
+                                            </HorizontalStackLayout>
+                                        </VerticalStackLayout>
+
+                                        <!-- Connect Button -->
+                                        <Button Grid.Column="2"
+                                    Grid.Row="0"
+                                    Text="Connect"
+                                    BackgroundColor="{StaticResource PrimaryColor}"
+                                    TextColor="White"
+                                    CornerRadius="20"
+                                    HeightRequest="40"
+                                    WidthRequest="100"
+                                    Margin="0,15,15,0"
+                                    CommandParameter="{Binding .}"
+                                    Clicked="OnConnectButtonClicked" />
+                                    </Grid>
+                                </Frame>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
                 </VerticalStackLayout>
             </ScrollView>
         </Grid>
@@ -154,17 +332,17 @@
               Padding="0,5,0,20">
 
             <VerticalStackLayout Grid.Column="0"
-                         HorizontalOptions="Center"
-                         VerticalOptions="Center"
-                         Spacing="2">
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Spacing="2">
                 <Label Text="🏠"
-               FontSize="20"
-               HorizontalOptions="Center"
-               TextColor="{StaticResource SecondaryTextColor}" />
+                       FontSize="20"
+                       HorizontalOptions="Center"
+                       TextColor="{StaticResource SecondaryTextColor}" />
                 <Label Text="Home"
-               FontSize="12"
-               TextColor="{StaticResource SecondaryTextColor}"
-               HorizontalOptions="Center" />
+                       FontSize="12"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
 
                 <VerticalStackLayout.GestureRecognizers>
                     <TapGestureRecognizer Tapped="OnHomeNavigationClicked" />
@@ -172,46 +350,46 @@
             </VerticalStackLayout>
 
             <VerticalStackLayout Grid.Column="1"
-                         HorizontalOptions="Center"
-                         VerticalOptions="Center"
-                         Spacing="2">
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Spacing="2">
                 <Label Text="👥"
-               FontSize="20"
-               HorizontalOptions="Center"
-               TextColor="{StaticResource PrimaryColor}" />
+                       FontSize="20"
+                       HorizontalOptions="Center"
+                       TextColor="{StaticResource PrimaryColor}" />
                 <Label Text="Hoopers"
-               FontSize="12"
-               TextColor="{StaticResource PrimaryColor}"
-               FontAttributes="Bold"
-               HorizontalOptions="Center" />
+                       FontSize="12"
+                       TextColor="{StaticResource PrimaryColor}"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center" />
             </VerticalStackLayout>
 
             <VerticalStackLayout Grid.Column="2"
-                         HorizontalOptions="Center"
-                         VerticalOptions="Center"
-                         Spacing="2"
-                         Opacity="0.6">
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Spacing="2"
+                                 Opacity="0.6">
                 <Label Text="🏀"
-               FontSize="20"
-               HorizontalOptions="Center" />
+                       FontSize="20"
+                       HorizontalOptions="Center" />
                 <Label Text="Games"
-               FontSize="12"
-               TextColor="{StaticResource SecondaryTextColor}"
-               HorizontalOptions="Center" />
+                       FontSize="12"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
             </VerticalStackLayout>
 
             <VerticalStackLayout Grid.Column="3"
-                         HorizontalOptions="Center"
-                         VerticalOptions="Center"
-                         Spacing="2"
-                         Opacity="0.6">
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Spacing="2"
+                                 Opacity="0.6">
                 <Label Text="👤"
-               FontSize="20"
-               HorizontalOptions="Center" />
+                       FontSize="20"
+                       HorizontalOptions="Center" />
                 <Label Text="Profile"
-               FontSize="12"
-               TextColor="{StaticResource SecondaryTextColor}"
-               HorizontalOptions="Center" />
+                       FontSize="12"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
             </VerticalStackLayout>
         </Grid>
     </Grid>
