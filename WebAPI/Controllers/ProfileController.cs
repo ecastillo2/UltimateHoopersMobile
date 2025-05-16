@@ -1,736 +1,829 @@
-﻿using DataLayer;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using DataLayer.DAL;
 using Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Net;
-using System.Threading.Tasks;
+using ProfileService.Models;
 
 namespace WebAPI.Controllers
 {
-    /// <summary>
-    /// Profile Controller with improved performance, error handling, and validation
-    /// </summary>
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     public class ProfileController : ControllerBase
     {
-        private readonly HUDBContext _context;
-        private readonly IConfiguration _configuration;
+        private readonly IProfileRepository _profileRepository;
         private readonly ILogger<ProfileController> _logger;
 
-        /// <summary>
-        /// Profile Controller constructor with dependency injection
-        /// </summary>
-        /// <param name="context">Database context</param>
-        /// <param name="configuration">Application configuration</param>
-        /// <param name="logger">Logger instance</param>
-        public ProfileController(
-            HUDBContext context,
-            IConfiguration configuration,
-            ILogger<ProfileController> logger)
+        public ProfileController(IProfileRepository profileRepository, ILogger<ProfileController> logger)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _profileRepository = profileRepository ?? throw new ArgumentNullException(nameof(profileRepository));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         /// <summary>
-        /// Get all profiles - simplified fallback implementation
+        /// Get all profiles
         /// </summary>
-        /// <returns>List of profiles</returns>
-        [HttpGet("GetProfiles")]
-        [ProducesResponseType(typeof(List<Profile>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<List<Profile>>> GetProfiles()
+        [HttpGet]
+        [ProducesResponseType(typeof(IEnumerable<ProfileViewModel>), 200)]
+        public async Task<IActionResult> GetProfiles(CancellationToken cancellationToken)
         {
             try
             {
-                _logger.LogInformation("Fetching all profiles");
+                var profiles = await _profileRepository.GetProfilesAsync(cancellationToken);
+                var viewModels = profiles.Select(p => new ProfileViewModel(p));
 
-                // Direct query to database - simplified to ensure it works
-                var profiles = await _context.Profile
-                    .AsNoTracking()
-                    .Take(100) // Limit to first 100 profiles for performance
-                    .ToListAsync();
-
-                _logger.LogInformation("Retrieved {Count} profiles", profiles.Count);
-
-                return Ok(profiles);
+                return Ok(viewModels);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error retrieving profiles");
-                return StatusCode(500, new { message = "An error occurred while retrieving profiles" });
+                return StatusCode(500, "An error occurred while retrieving profiles");
+            }
+        }
+
+        /// <summary>
+        /// Get profiles with standard pagination
+        /// </summary>
+        [HttpGet("paginated")]
+        [ProducesResponseType(typeof(PaginatedResult<ProfileViewModel>), 200)]
+        public async Task<IActionResult> GetProfilesPaginated(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var (profiles, totalCount, totalPages) = await _profileRepository
+                    .GetProfilesPaginatedAsync(page, pageSize, cancellationToken);
+
+                var viewModels = profiles.Select(p => new ProfileViewModel(p)).ToList();
+
+                var result = new PaginatedResult<ProfileViewModel>
+                {
+                    Items = viewModels,
+                    Page = page,
+                    PageSize = pageSize,
+                    TotalCount = totalCount,
+                    TotalPages = totalPages
+                };
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving paginated profiles");
+                return StatusCode(500, "An error occurred while retrieving paginated profiles");
+            }
+        }
+
+        /// <summary>
+        /// Get profiles with cursor-based pagination for efficient scrolling
+        /// </summary>
+        [HttpGet("cursor")]
+        [ProducesResponseType(typeof(CursorPaginatedResult<ProfileViewModel>), 200)]
+        public async Task<IActionResult> GetProfilesWithCursor(
+            [FromQuery] string cursor = null,
+            [FromQuery] int limit = 20,
+            [FromQuery] string direction = "next",
+            [FromQuery] string sortBy = "Points",
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var (profiles, nextCursor) = await _profileRepository
+                    .GetProfilesWithCursorAsync(cursor, limit, direction, sortBy, cancellationToken);
+
+                var viewModels = profiles.Select(p => new ProfileViewModel(p)).ToList();
+
+                var result = new CursorPaginatedResult<ProfileViewModel>
+                {
+                    Items = viewModels,
+                    NextCursor = nextCursor,
+                    HasMore = !string.IsNullOrEmpty(nextCursor),
+                    Direction = direction,
+                    SortBy = sortBy
+                };
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving cursor-based profiles");
+                return StatusCode(500, "An error occurred while retrieving cursor-based profiles");
             }
         }
 
         /// <summary>
         /// Get profile by ID
         /// </summary>
-        /// <param name="profileId">The profile ID to retrieve</param>
-        /// <returns>The profile</returns>
-        [HttpGet("GetProfileById")]
-        [ProducesResponseType(typeof(Profile), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<Profile>> GetProfileById(string profileId)
+        [HttpGet("{id}")]
+        [ProducesResponseType(typeof(ProfileDetailViewModel), 200)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> GetProfileById(string id, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrEmpty(profileId))
-            {
-                return BadRequest(new { message = "Profile ID is required" });
-            }
-
             try
             {
-                _logger.LogInformation("Fetching profile with ID: {ProfileId}", profileId);
-
-                // Direct query to get profile with essential information
-                var profile = await _context.Profile
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(p => p.ProfileId == profileId);
+                var profile = await _profileRepository.GetProfileByIdAsync(id, cancellationToken);
 
                 if (profile == null)
+                    return NotFound();
+
+                // Get additional profile data
+                var setting = await _profileRepository.GetProfileSettingsAsync(id, cancellationToken);
+                var scoutingReport = await _profileRepository.GetScoutingReportAsync(id, cancellationToken);
+                var gameStats = await _profileRepository.GetProfileGameStatisticsAsync(id, cancellationToken);
+
+                var viewModel = new ProfileDetailViewModel(profile)
                 {
-                    _logger.LogWarning("Profile not found: {ProfileId}", profileId);
-                    return NotFound(new { message = $"Profile with ID {profileId} not found" });
-                }
+                    Setting = setting != null ? new SettingViewModel(setting) : null,
+                    ScoutingReport = scoutingReport != null ? new ScoutingReportViewModel(scoutingReport) : null,
+                    GameStatistics = gameStats
+                };
 
-                // Get user information with a separate query
-                var user = await _context.User
-                    .AsNoTracking()
-                    .Where(u => u.UserId == profile.UserId)
-                    .Select(u => new {
-                        u.FirstName,
-                        u.LastName,
-                        u.Email,
-                        u.Status,
-                        u.LastLoginDate
-                    })
-                    .FirstOrDefaultAsync();
-
-                if (user != null)
-                {
-                    profile.FirstName = user.FirstName;
-                    profile.LastName = user.LastName;
-                    profile.Email = user.Email;
-                    profile.Status = user.Status;
-                    profile.LastLoginDate = user.LastLoginDate;
-                }
-
-                _logger.LogInformation("Successfully retrieved profile: {ProfileId}", profileId);
-
-                return Ok(profile);
+                return Ok(viewModel);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving profile {ProfileId}", profileId);
-                return StatusCode(500, new { message = "An error occurred while retrieving the profile" });
+                _logger.LogError(ex, "Error retrieving profile {ProfileId}", id);
+                return StatusCode(500, "An error occurred while retrieving the profile");
             }
         }
 
         /// <summary>
-        /// Get follower profiles by profile ID
+        /// Get profile by username
         /// </summary>
-        /// <param name="profileId">The profile ID to get followers for</param>
-        /// <returns>List of follower profiles</returns>
-        [HttpGet("GetFollowerProfilesByProfileId")]
-        [Authorize]
-        [ProducesResponseType(typeof(List<Profile>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<List<Profile>>> GetFollowerProfilesByProfileId(string profileId)
+        [HttpGet("username/{username}")]
+        [ProducesResponseType(typeof(ProfileDetailViewModel), 200)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> GetProfileByUsername(string username, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrEmpty(profileId))
-            {
-                return BadRequest(new { message = "Profile ID is required" });
-            }
-
             try
             {
-                _logger.LogInformation("Fetching followers for profile: {ProfileId}", profileId);
+                var profile = await _profileRepository.GetProfileByUsernameAsync(username, cancellationToken);
 
-                // Get follower profile IDs
-                var followerIds = await _context.Follower
-                    .AsNoTracking()
-                    .Where(f => f.ProfileId == profileId)
-                    .Select(f => f.FollowerProfileId)
-                    .ToListAsync();
+                if (profile == null)
+                    return NotFound();
 
-                if (!followerIds.Any())
+                // Get additional profile data
+                var setting = await _profileRepository.GetProfileSettingsAsync(profile.ProfileId, cancellationToken);
+                var scoutingReport = await _profileRepository.GetScoutingReportAsync(profile.ProfileId, cancellationToken);
+                var gameStats = await _profileRepository.GetProfileGameStatisticsAsync(profile.ProfileId, cancellationToken);
+
+                var viewModel = new ProfileDetailViewModel(profile)
                 {
-                    return Ok(new List<Profile>());
-                }
+                    Setting = setting != null ? new SettingViewModel(setting) : null,
+                    ScoutingReport = scoutingReport != null ? new ScoutingReportViewModel(scoutingReport) : null,
+                    GameStatistics = gameStats
+                };
 
-                // Get follower profiles
-                var followers = await _context.Profile
-                    .AsNoTracking()
-                    .Where(p => followerIds.Contains(p.ProfileId))
-                    .ToListAsync();
-
-                _logger.LogInformation("Retrieved {Count} followers for profile: {ProfileId}",
-                    followers.Count, profileId);
-
-                return Ok(followers);
+                return Ok(viewModel);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving followers for profile {ProfileId}", profileId);
-                return StatusCode(500, new { message = "An error occurred while retrieving followers" });
+                _logger.LogError(ex, "Error retrieving profile by username {Username}", username);
+                return StatusCode(500, "An error occurred while retrieving the profile");
             }
         }
 
         /// <summary>
-        /// Get following profiles by profile ID
+        /// Get following profiles for a profile
         /// </summary>
-        /// <param name="profileId">The profile ID to get following profiles for</param>
-        /// <returns>List of following profiles</returns>
-        [HttpGet("GetFollowingProfilesByProfileId")]
-        [Authorize]
-        [ProducesResponseType(typeof(List<Profile>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<List<Profile>>> GetFollowingProfilesByProfileId(string profileId)
+        [HttpGet("{id}/following")]
+        [ProducesResponseType(typeof(IEnumerable<ProfileViewModel>), 200)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> GetFollowingProfiles(string id, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrEmpty(profileId))
-            {
-                return BadRequest(new { message = "Profile ID is required" });
-            }
-
             try
             {
-                _logger.LogInformation("Fetching following profiles for profile: {ProfileId}", profileId);
+                // First verify profile exists
+                var profile = await _profileRepository.GetProfileByIdAsync(id, cancellationToken);
 
-                // Get following profile IDs
-                var followingIds = await _context.Following
-                    .AsNoTracking()
-                    .Where(f => f.ProfileId == profileId)
-                    .Select(f => f.FollowingProfileId)
-                    .ToListAsync();
+                if (profile == null)
+                    return NotFound($"Profile with ID {id} not found");
 
-                if (!followingIds.Any())
-                {
-                    return Ok(new List<Profile>());
-                }
+                var followingProfiles = await _profileRepository.GetFollowingProfilesAsync(id, cancellationToken);
+                var viewModels = followingProfiles.Select(p => new ProfileViewModel(p));
 
-                // Get following profiles
-                var following = await _context.Profile
-                    .AsNoTracking()
-                    .Where(p => followingIds.Contains(p.ProfileId))
-                    .ToListAsync();
-
-                _logger.LogInformation("Retrieved {Count} following profiles for profile: {ProfileId}",
-                    following.Count, profileId);
-
-                return Ok(following);
+                return Ok(viewModels);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving following profiles for profile {ProfileId}", profileId);
-                return StatusCode(500, new { message = "An error occurred while retrieving following profiles" });
+                _logger.LogError(ex, "Error retrieving following profiles for {ProfileId}", id);
+                return StatusCode(500, "An error occurred while retrieving following profiles");
             }
         }
 
         /// <summary>
-        /// Get profile game history
+        /// Get follower profiles for a profile
         /// </summary>
-        /// <param name="profileId">The profile ID to get game history for</param>
-        /// <returns>List of games</returns>
-        [HttpGet("GetProfileGameHistory")]
-        [Authorize]
-        [ProducesResponseType(typeof(List<Game>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<List<Game>>> GetProfileGameHistory(string profileId)
+        [HttpGet("{id}/followers")]
+        [ProducesResponseType(typeof(IEnumerable<ProfileViewModel>), 200)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> GetFollowerProfiles(string id, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrEmpty(profileId))
-            {
-                return BadRequest(new { message = "Profile ID is required" });
-            }
-
             try
             {
-                _logger.LogInformation("Fetching game history for profile: {ProfileId}", profileId);
+                // First verify profile exists
+                var profile = await _profileRepository.GetProfileByIdAsync(id, cancellationToken);
 
-                // Get games where the profile was a winner or loser
-                var games = await _context.Game
-                    .AsNoTracking()
-                    .Where(g =>
-                        (!string.IsNullOrEmpty(g.WinProfileIdsStatusString) && g.WinProfileIdsStatusString.Contains(profileId)) ||
-                        (!string.IsNullOrEmpty(g.LoseProfileIdsStatusString) && g.LoseProfileIdsStatusString.Contains(profileId)))
-                    .OrderByDescending(g => g.CreatedDate)
-                    .Take(20) // Limit to most recent 20 games
-                    .ToListAsync();
+                if (profile == null)
+                    return NotFound($"Profile with ID {id} not found");
 
-                _logger.LogInformation("Retrieved {Count} games for profile: {ProfileId}",
-                    games.Count, profileId);
+                var followerProfiles = await _profileRepository.GetFollowerProfilesAsync(id, cancellationToken);
+                var viewModels = followerProfiles.Select(p => new ProfileViewModel(p));
 
-                return Ok(games);
+                return Ok(viewModels);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving game history for profile {ProfileId}", profileId);
-                return StatusCode(500, new { message = "An error occurred while retrieving game history" });
+                _logger.LogError(ex, "Error retrieving follower profiles for {ProfileId}", id);
+                return StatusCode(500, "An error occurred while retrieving follower profiles");
+            }
+        }
+
+        /// <summary>
+        /// Get game history for a profile
+        /// </summary>
+        [HttpGet("{id}/games")]
+        [ProducesResponseType(typeof(IEnumerable<GameViewModel>), 200)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> GetProfileGameHistory(string id, CancellationToken cancellationToken)
+        {
+            try
+            {
+                // First verify profile exists
+                var profile = await _profileRepository.GetProfileByIdAsync(id, cancellationToken);
+
+                if (profile == null)
+                    return NotFound($"Profile with ID {id} not found");
+
+                var games = await _profileRepository.GetProfileGameHistoryAsync(id, cancellationToken);
+                var viewModels = games.Select(g => new GameViewModel(g));
+
+                return Ok(viewModels);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving game history for {ProfileId}", id);
+                return StatusCode(500, "An error occurred while retrieving game history");
+            }
+        }
+
+        /// <summary>
+        /// Get game statistics for a profile
+        /// </summary>
+        [HttpGet("{id}/statistics")]
+        [ProducesResponseType(typeof(GameStatistics), 200)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> GetProfileGameStatistics(string id, CancellationToken cancellationToken)
+        {
+            try
+            {
+                // First verify profile exists
+                var profile = await _profileRepository.GetProfileByIdAsync(id, cancellationToken);
+
+                if (profile == null)
+                    return NotFound($"Profile with ID {id} not found");
+
+                var statistics = await _profileRepository.GetProfileGameStatisticsAsync(id, cancellationToken);
+
+                return Ok(statistics);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving game statistics for {ProfileId}", id);
+                return StatusCode(500, "An error occurred while retrieving game statistics");
+            }
+        }
+
+        /// <summary>
+        /// Get scouting report for a profile
+        /// </summary>
+        [HttpGet("{id}/scouting-report")]
+        [ProducesResponseType(typeof(ScoutingReportViewModel), 200)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> GetScoutingReport(string id, CancellationToken cancellationToken)
+        {
+            try
+            {
+                // First verify profile exists
+                var profile = await _profileRepository.GetProfileByIdAsync(id, cancellationToken);
+
+                if (profile == null)
+                    return NotFound($"Profile with ID {id} not found");
+
+                var scoutingReport = await _profileRepository.GetScoutingReportAsync(id, cancellationToken);
+
+                if (scoutingReport == null)
+                    return NotFound($"No scouting report found for profile with ID {id}");
+
+                return Ok(new ScoutingReportViewModel(scoutingReport));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving scouting report for {ProfileId}", id);
+                return StatusCode(500, "An error occurred while retrieving the scouting report");
+            }
+        }
+
+        /// <summary>
+        /// Get squad details for a profile
+        /// </summary>
+        [HttpGet("{id}/squad")]
+        [ProducesResponseType(typeof(SquadViewModel), 200)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> GetProfileSquad(string id, CancellationToken cancellationToken)
+        {
+            try
+            {
+                // First verify profile exists
+                var profile = await _profileRepository.GetProfileByIdAsync(id, cancellationToken);
+
+                if (profile == null)
+                    return NotFound($"Profile with ID {id} not found");
+
+                var squad = await _profileRepository.GetProfileSquadAsync(id, cancellationToken);
+
+                if (squad == null)
+                    return NotFound($"No squad found for profile with ID {id}");
+
+                return Ok(new SquadViewModel(squad));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving squad for {ProfileId}", id);
+                return StatusCode(500, "An error occurred while retrieving the squad");
             }
         }
 
         /// <summary>
         /// Update profile
         /// </summary>
-        /// <param name="profile">The profile to update</param>
-        /// <returns>Success or error response</returns>
-        [HttpPut("UpdateProfile")]
+        [HttpPut("{id}")]
         [Authorize]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateProfile([FromBody] Profile profile)
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> UpdateProfile(string id, ProfileUpdateModel model, CancellationToken cancellationToken)
         {
-            if (profile == null)
-            {
-                return BadRequest(new { message = "Profile is required" });
-            }
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-            if (string.IsNullOrEmpty(profile.ProfileId))
-            {
-                return BadRequest(new { message = "Profile ID is required" });
-            }
+            if (id != model.ProfileId)
+                return BadRequest("Profile ID mismatch");
 
             try
             {
-                _logger.LogInformation("Updating profile: {ProfileId}", profile.ProfileId);
-
-                // Get existing profile
-                var existingProfile = await _context.Profile
-                    .FirstOrDefaultAsync(p => p.ProfileId == profile.ProfileId);
-
-                if (existingProfile == null)
-                {
-                    _logger.LogWarning("Profile not found for update: {ProfileId}", profile.ProfileId);
-                    return NotFound(new { message = $"Profile with ID {profile.ProfileId} not found" });
-                }
-
-                // Update only provided fields
-                if (profile.Height != null) existingProfile.Height = profile.Height;
-                if (profile.Weight != null) existingProfile.Weight = profile.Weight;
-                if (profile.Position != null) existingProfile.Position = profile.Position;
-                if (profile.Zip != null) existingProfile.Zip = profile.Zip;
-                if (profile.QRCode != null) existingProfile.QRCode = profile.QRCode;
-                if (profile.Bio != null) existingProfile.Bio = profile.Bio;
-                if (profile.PlayerArchetype != null) existingProfile.PlayerArchetype = profile.PlayerArchetype;
-                if (profile.City != null) existingProfile.City = profile.City;
-
-                await _context.SaveChangesAsync();
-
-                _logger.LogInformation("Successfully updated profile: {ProfileId}", profile.ProfileId);
-
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error updating profile {ProfileId}", profile.ProfileId);
-                return StatusCode(500, new { message = "An error occurred while updating the profile" });
-            }
-        }
-
-        /// <summary>
-        /// Update profile username
-        /// </summary>
-        /// <param name="profile">The profile with updated username</param>
-        /// <returns>Success or error response</returns>
-        [HttpPut("UpdateProfileUserName")]
-        [Authorize]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status409Conflict)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateProfileUserName([FromBody] Profile profile)
-        {
-            if (profile == null)
-            {
-                return BadRequest(new { message = "Profile is required" });
-            }
-
-            if (string.IsNullOrEmpty(profile.ProfileId))
-            {
-                return BadRequest(new { message = "Profile ID is required" });
-            }
-
-            if (string.IsNullOrEmpty(profile.UserName))
-            {
-                return BadRequest(new { message = "Username is required" });
-            }
-
-            try
-            {
-                _logger.LogInformation("Updating username for profile: {ProfileId}", profile.ProfileId);
-
-                // Check if the username is already taken by another profile
-                var existingProfile = await _context.Profile
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(p => p.UserName == profile.UserName && p.ProfileId != profile.ProfileId);
-
-                if (existingProfile != null)
-                {
-                    _logger.LogWarning("Username {UserName} is already taken by profile {ExistingProfileId}",
-                        profile.UserName, existingProfile.ProfileId);
-                    return Conflict(new { message = "Username is already taken" });
-                }
-
-                // Get the profile to update
-                var profileToUpdate = await _context.Profile
-                    .FirstOrDefaultAsync(p => p.ProfileId == profile.ProfileId);
-
-                if (profileToUpdate == null)
-                {
-                    _logger.LogWarning("Profile not found for username update: {ProfileId}", profile.ProfileId);
-                    return NotFound(new { message = $"Profile with ID {profile.ProfileId} not found" });
-                }
-
-                // Update username
-                profileToUpdate.UserName = profile.UserName;
-                await _context.SaveChangesAsync();
-
-                _logger.LogInformation("Successfully updated username for profile: {ProfileId}", profile.ProfileId);
-
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error updating username for profile {ProfileId}", profile.ProfileId);
-                return StatusCode(500, new { message = "An error occurred while updating the username" });
-            }
-        }
-
-        /// <summary>
-        /// Update profile settings
-        /// </summary>
-        /// <param name="setting">The settings to update</param>
-        /// <returns>Success or error response</returns>
-        [HttpPut("UpdateSetting")]
-        [Authorize]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateSetting([FromBody] Setting setting)
-        {
-            if (setting == null)
-            {
-                return BadRequest(new { message = "Setting is required" });
-            }
-
-            if (string.IsNullOrEmpty(setting.ProfileId))
-            {
-                return BadRequest(new { message = "Profile ID is required" });
-            }
-
-            try
-            {
-                _logger.LogInformation("Updating settings for profile: {ProfileId}", setting.ProfileId);
-
-                // Check if the setting exists
-                var existingSetting = await _context.Setting
-                    .FirstOrDefaultAsync(s => s.ProfileId == setting.ProfileId);
-
-                if (existingSetting != null)
-                {
-                    // Update existing settings
-                    existingSetting.AllowComments = setting.AllowComments;
-                    existingSetting.ShowGameHistory = setting.ShowGameHistory;
-                    existingSetting.AllowEmailNotification = setting.AllowEmailNotification;
-
-                    await _context.SaveChangesAsync();
-                }
-                else
-                {
-                    // Create new settings
-                    setting.SettingId = Guid.NewGuid().ToString();
-                    await _context.Setting.AddAsync(setting);
-                    await _context.SaveChangesAsync();
-                }
-
-                _logger.LogInformation("Successfully updated settings for profile: {ProfileId}", setting.ProfileId);
-
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error updating settings for profile {ProfileId}", setting.ProfileId);
-                return StatusCode(500, new { message = "An error occurred while updating the settings" });
-            }
-        }
-
-        /// <summary>
-        /// Update last run date for a profile
-        /// </summary>
-        /// <param name="profileId">The profile ID to update</param>
-        /// <param name="lastRunDate">The new last run date</param>
-        /// <returns>Success or error response</returns>
-        [HttpPut("UpdateLastRunDate")]
-        [Authorize]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateLastRunDate(
-            [Required][FromQuery] string profileId,
-            [Required][FromQuery] string lastRunDate)
-        {
-            if (string.IsNullOrEmpty(profileId))
-            {
-                return BadRequest(new { message = "Profile ID is required" });
-            }
-
-            if (string.IsNullOrEmpty(lastRunDate))
-            {
-                return BadRequest(new { message = "Last run date is required" });
-            }
-
-            try
-            {
-                _logger.LogInformation("Updating last run date for profile: {ProfileId}", profileId);
-
-                // Get the profile to update
-                var profile = await _context.Profile
-                    .FirstOrDefaultAsync(p => p.ProfileId == profileId);
+                var profile = await _profileRepository.GetProfileByIdAsync(id, cancellationToken);
 
                 if (profile == null)
-                {
-                    _logger.LogWarning("Profile not found for last run date update: {ProfileId}", profileId);
-                    return NotFound(new { message = $"Profile with ID {profileId} not found" });
-                }
+                    return NotFound($"Profile with ID {id} not found");
 
-                // Update last run date
-                profile.LastRunDate = lastRunDate;
-                await _context.SaveChangesAsync();
+                // Update profile properties from model
+                model.UpdateProfile(profile);
 
-                _logger.LogInformation("Successfully updated last run date for profile: {ProfileId}", profileId);
+                var success = await _profileRepository.UpdateProfileAsync(profile, cancellationToken);
+
+                if (!success)
+                    return StatusCode(500, "Failed to update profile");
 
                 return NoContent();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating last run date for profile {ProfileId}", profileId);
-                return StatusCode(500, new { message = "An error occurred while updating the last run date" });
+                _logger.LogError(ex, "Error updating profile {ProfileId}", id);
+                return StatusCode(500, "An error occurred while updating the profile");
             }
         }
 
         /// <summary>
-        /// Update winner points for a profile
+        /// Update username
         /// </summary>
-        /// <param name="profileId">The profile ID to update</param>
-        /// <returns>Success or error response</returns>
-        [HttpPut("UpdateWinnerPoints")]
+        [HttpPut("{id}/username")]
         [Authorize]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateWinnerPoints([Required][FromQuery] string profileId)
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> UpdateUsername(string id, [FromBody] UsernameUpdateModel model, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrEmpty(profileId))
-            {
-                return BadRequest(new { message = "Profile ID is required" });
-            }
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
             try
             {
-                _logger.LogInformation("Updating winner points for profile: {ProfileId}", profileId);
-
-                // Get the profile to update
-                var profile = await _context.Profile
-                    .FirstOrDefaultAsync(p => p.ProfileId == profileId);
+                // Verify the profile exists
+                var profile = await _profileRepository.GetProfileByIdAsync(id, cancellationToken);
 
                 if (profile == null)
-                {
-                    _logger.LogWarning("Profile not found for winner points update: {ProfileId}", profileId);
-                    return NotFound(new { message = $"Profile with ID {profileId} not found" });
-                }
+                    return NotFound($"Profile with ID {id} not found");
 
-                // Update points
-                profile.Points = (profile.Points ?? 0) + 2;
-                await _context.SaveChangesAsync();
+                // Check if the username is available
+                var isAvailable = await _profileRepository.IsUserNameAvailableAsync(model.Username, cancellationToken);
 
-                _logger.LogInformation("Successfully updated winner points for profile: {ProfileId}", profileId);
+                if (!isAvailable)
+                    return BadRequest("Username is already taken");
+
+                var success = await _profileRepository.UpdateProfileUserNameAsync(id, model.Username, cancellationToken);
+
+                if (!success)
+                    return StatusCode(500, "Failed to update username");
 
                 return NoContent();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating winner points for profile {ProfileId}", profileId);
-                return StatusCode(500, new { message = "An error occurred while updating the winner points" });
+                _logger.LogError(ex, "Error updating username for {ProfileId}", id);
+                return StatusCode(500, "An error occurred while updating the username");
             }
         }
 
         /// <summary>
-        /// Set profile with best record flag
+        /// Update settings
         /// </summary>
-        /// <param name="profileId">The profile ID to update</param>
-        /// <returns>Success or error response</returns>
-        [HttpPut("UpdateSetProfileWithBestRecord")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateSetProfileWithBestRecord([Required][FromQuery] string profileId)
+        [HttpPut("{id}/settings")]
+        [Authorize]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> UpdateSettings(string id, [FromBody] SettingUpdateModel model, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrEmpty(profileId))
-            {
-                return BadRequest(new { message = "Profile ID is required" });
-            }
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
             try
             {
-                _logger.LogInformation("Setting best record flag for profile: {ProfileId}", profileId);
-
-                // Get the profile to update
-                var profile = await _context.Profile
-                    .FirstOrDefaultAsync(p => p.ProfileId == profileId);
+                // Verify the profile exists
+                var profile = await _profileRepository.GetProfileByIdAsync(id, cancellationToken);
 
                 if (profile == null)
+                    return NotFound($"Profile with ID {id} not found");
+
+                var setting = await _profileRepository.GetProfileSettingsAsync(id, cancellationToken);
+
+                if (setting == null)
                 {
-                    _logger.LogWarning("Profile not found for best record flag update: {ProfileId}", profileId);
-                    return NotFound(new { message = $"Profile with ID {profileId} not found" });
+                    // Create new settings if none exist
+                    setting = new Setting
+                    {
+                        SettingId = Guid.NewGuid().ToString(),
+                        ProfileId = id
+                    };
                 }
 
-                // Update flag
-                profile.TopRecord = true;
-                await _context.SaveChangesAsync();
+                // Update settings from model
+                model.UpdateSetting(setting);
 
-                _logger.LogInformation("Successfully set best record flag for profile: {ProfileId}", profileId);
+                var success = await _profileRepository.UpdateSettingAsync(setting, cancellationToken);
+
+                if (!success)
+                    return StatusCode(500, "Failed to update settings");
 
                 return NoContent();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error setting best record flag for profile {ProfileId}", profileId);
-                return StatusCode(500, new { message = "An error occurred while updating the best record flag" });
+                _logger.LogError(ex, "Error updating settings for {ProfileId}", id);
+                return StatusCode(500, "An error occurred while updating the settings");
             }
         }
 
         /// <summary>
-        /// Set profile with best record flag to false
+        /// Update or create scouting report
         /// </summary>
-        /// <param name="profileId">The profile ID to update</param>
-        /// <returns>Success or error response</returns>
-        [HttpPut("UpdateSetProfileWithBestRecordToFalse")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateSetProfileWithBestRecordToFalse([Required][FromQuery] string profileId)
+        [HttpPut("{id}/scouting-report")]
+        [Authorize]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> UpsertScoutingReport(string id, [FromBody] ScoutingReportUpdateModel model, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrEmpty(profileId))
-            {
-                return BadRequest(new { message = "Profile ID is required" });
-            }
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
             try
             {
-                _logger.LogInformation("Setting best record flag to false for profile: {ProfileId}", profileId);
-
-                // Get the profile to update
-                var profile = await _context.Profile
-                    .FirstOrDefaultAsync(p => p.ProfileId == profileId);
+                // Verify the profile exists
+                var profile = await _profileRepository.GetProfileByIdAsync(id, cancellationToken);
 
                 if (profile == null)
+                    return NotFound($"Profile with ID {id} not found");
+
+                var scoutingReport = await _profileRepository.GetScoutingReportAsync(id, cancellationToken);
+
+                if (scoutingReport == null)
                 {
-                    _logger.LogWarning("Profile not found for best record flag update: {ProfileId}", profileId);
-                    return NotFound(new { message = $"Profile with ID {profileId} not found" });
+                    // Create new scouting report if none exists
+                    scoutingReport = new ScoutingReport
+                    {
+                        ScoutingReportId = Guid.NewGuid().ToString(),
+                        ProfileId = id,
+                        Status = "Active"
+                    };
                 }
 
-                // Update flag
-                profile.TopRecord = false;
-                await _context.SaveChangesAsync();
+                // Update scouting report from model
+                model.UpdateScoutingReport(scoutingReport);
 
-                _logger.LogInformation("Successfully set best record flag to false for profile: {ProfileId}", profileId);
+                var success = await _profileRepository.UpsertScoutingReportAsync(scoutingReport, cancellationToken);
+
+                if (!success)
+                    return StatusCode(500, "Failed to update scouting report");
 
                 return NoContent();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error setting best record flag to false for profile {ProfileId}", profileId);
-                return StatusCode(500, new { message = "An error occurred while updating the best record flag" });
+                _logger.LogError(ex, "Error updating scouting report for {ProfileId}", id);
+                return StatusCode(500, "An error occurred while updating the scouting report");
             }
         }
 
         /// <summary>
-        /// Check if a username is available
+        /// Check if username is available
         /// </summary>
-        /// <param name="userName">The username to check</param>
-        /// <returns>True if the username is available, false if it's already taken</returns>
-        [HttpGet("IsUserNameAvailable")]
-        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<bool>> IsUserNameAvailable([Required][FromQuery] string userName)
+        [HttpGet("checkUsername")]
+        [ProducesResponseType(typeof(bool), 200)]
+        public async Task<IActionResult> CheckUsernameAvailability([FromQuery] string username, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrEmpty(userName))
-            {
-                return BadRequest(new { message = "Username is required" });
-            }
-
             try
             {
-                _logger.LogInformation("Checking if username is available: {UserName}", userName);
+                if (string.IsNullOrWhiteSpace(username))
+                    return BadRequest("Username is required");
 
-                // Check if the username exists
-                bool exists = await _context.Profile
-                    .AsNoTracking()
-                    .AnyAsync(p => p.UserName == userName);
+                var isAvailable = await _profileRepository.IsUserNameAvailableAsync(username, cancellationToken);
 
-                _logger.LogInformation("Username {UserName} is {Result}",
-                    userName, exists ? "taken" : "available");
-
-                // Return true if available (not exists)
-                return Ok(!exists);
+                return Ok(isAvailable);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error checking username availability: {UserName}", userName);
-                return StatusCode(500, new { message = "An error occurred while checking username availability" });
+                _logger.LogError(ex, "Error checking username availability");
+                return StatusCode(500, "An error occurred while checking username availability");
             }
         }
+    }
+}
 
-        /// <summary>
-        /// Check if an email is available
-        /// </summary>
-        /// <param name="email">The email to check</param>
-        /// <returns>True if the email is available, false if it's already taken</returns>
-        [HttpGet("IsEmailAvailable")]
-        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<bool>> IsEmailAvailable(
-            [Required][FromQuery][EmailAddress] string email)
+// View models for the controller responses
+
+namespace ProfileService.Models
+{
+    public class ProfileViewModel
+    {
+        public string ProfileId { get; set; }
+        public string UserId { get; set; }
+        public string UserName { get; set; }
+        public string Height { get; set; }
+        public string Weight { get; set; }
+        public string Position { get; set; }
+        public string Ranking { get; set; }
+        public string StarRating { get; set; }
+        public string Bio { get; set; }
+        public string ImageURL { get; set; }
+        public string PlayerArchetype { get; set; }
+        public string City { get; set; }
+        public string Zip { get; set; }
+        public string PlayerNumber { get; set; }
+        public string Status { get; set; }
+        public int? Points { get; set; }
+        public string LastRunDate { get; set; }
+        public bool? TopRecord { get; set; }
+        public bool? OnSquad { get; set; }
+
+        public ProfileViewModel(Profile profile)
         {
-            if (string.IsNullOrEmpty(email))
-            {
-                return BadRequest(new { message = "Email is required" });
-            }
+            ProfileId = profile.ProfileId;
+            UserId = profile.UserId;
+            UserName = profile.UserName;
+            Height = profile.Height;
+            Weight = profile.Weight;
+            Position = profile.Position;
+            Ranking = profile.Ranking;
+            StarRating = profile.StarRating;
+            Bio = profile.Bio;
+            ImageURL = profile.ImageURL;
+            PlayerArchetype = profile.PlayerArchetype;
+            City = profile.City;
+            Zip = profile.Zip;
+            PlayerNumber = profile.PlayerNumber;
+            Status = profile.Status;
+            Points = profile.Points;
+            LastRunDate = profile.LastRunDate;
+            TopRecord = profile.TopRecord;
+            OnSquad = profile.OnSquad;
+        }
+    }
 
-            try
-            {
-                _logger.LogInformation("Checking if email is available: {Email}", email);
+    public class ProfileDetailViewModel : ProfileViewModel
+    {
+        public SettingViewModel Setting { get; set; }
+        public ScoutingReportViewModel ScoutingReport { get; set; }
+        public GameStatistics GameStatistics { get; set; }
+        public string FollowersCount { get; set; }
+        public string FollowingCount { get; set; }
 
-                // Check if the email exists
-                bool exists = await _context.User
-                    .AsNoTracking()
-                    .AnyAsync(u => u.Email == email);
+        public ProfileDetailViewModel(Profile profile) : base(profile)
+        {
+            FollowersCount = profile.FollowersCount;
+            FollowingCount = profile.FollowingCount;
+        }
+    }
 
-                _logger.LogInformation("Email {Email} is {Result}",
-                    email, exists ? "taken" : "available");
+    public class GameViewModel
+    {
+        public string GameId { get; set; }
+        public string CourtId { get; set; }
+        public string PrivateRunId { get; set; }
+        public string CreatedDate { get; set; }
+        public string WinProfileIdsStatusString { get; set; }
+        public string LoseProfileIdsStatusString { get; set; }
+        public string PrivateRunNumber { get; set; }
+        public string Location { get; set; }
+        public string GameNumber { get; set; }
+        public string Status { get; set; }
+        public string UserWinOrLose { get; set; }
 
-                // Return true if available (not exists)
-                return Ok(!exists);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error checking email availability: {Email}", email);
-                return StatusCode(500, new { message = "An error occurred while checking email availability" });
-            }
+        public GameViewModel(Game game)
+        {
+            GameId = game.GameId;
+            CourtId = game.CourtId;
+            PrivateRunId = game.PrivateRunId;
+            CreatedDate = game.CreatedDate;
+            WinProfileIdsStatusString = game.WinProfileIdsStatusString;
+            LoseProfileIdsStatusString = game.LoseProfileIdsStatusString;
+            PrivateRunNumber = game.PrivateRunNumber;
+            Location = game.Location;
+            GameNumber = game.GameNumber;
+            Status = game.Status;
+            UserWinOrLose = game.UserWinOrLose;
+        }
+    }
+
+    public class SettingViewModel
+    {
+        public string SettingId { get; set; }
+        public string ProfileId { get; set; }
+        public bool AllowComments { get; set; }
+        public bool ShowGameHistory { get; set; }
+        public bool AllowEmailNotification { get; set; }
+
+        public SettingViewModel(Setting setting)
+        {
+            SettingId = setting.SettingId;
+            ProfileId = setting.ProfileId;
+            AllowComments = setting.AllowComments;
+            ShowGameHistory = setting.ShowGameHistory;
+            AllowEmailNotification = setting.AllowEmailNotification;
+        }
+    }
+
+    public class ScoutingReportViewModel
+    {
+        public string ScoutingReportId { get; set; }
+        public string ProfileId { get; set; }
+        public string PlayStyle { get; set; }
+        public string StrengthOne { get; set; }
+        public string StrengthTwo { get; set; }
+        public string WeaknessOne { get; set; }
+        public string WeaknessTwo { get; set; }
+        public string PlayStyleImpactOne { get; set; }
+        public string PlayStyleImpactTwo { get; set; }
+        public string Comparison { get; set; }
+        public string Conclusion { get; set; }
+        public string Status { get; set; }
+        public string IdealRole { get; set; }
+        public DateTime? CreatedDate { get; set; }
+        public DateTime? LastUpdated { get; set; }
+
+        public ScoutingReportViewModel(ScoutingReport report)
+        {
+            ScoutingReportId = report.ScoutingReportId;
+            ProfileId = report.ProfileId;
+            PlayStyle = report.PlayStyle;
+            StrengthOne = report.StrengthOne;
+            StrengthTwo = report.StrengthTwo;
+            WeaknessOne = report.WeaknessOne;
+            WeaknessTwo = report.WeaknessTwo;
+            PlayStyleImpactOne = report.PlayStyleImpactOne;
+            PlayStyleImpactTwo = report.PlayStyleImpactTwo;
+            Comparison = report.Comparison;
+            Conclusion = report.Conclusion;
+            Status = report.Status;
+            IdealRole = report.IdealRole;
+            CreatedDate = report.CreatedDate;
+            LastUpdated = report.LastUpdated;
+        }
+    }
+
+    public class SquadViewModel
+    {
+        public string SquadId { get; set; }
+        public string OwnerProfileId { get; set; }
+        public string Name { get; set; }
+
+        public SquadViewModel(Squad squad)
+        {
+            SquadId = squad.SquadId;
+            OwnerProfileId = squad.OwnerProfileId;
+            Name = squad.Name;
+        }
+    }
+
+    public class PaginatedResult<T>
+    {
+        public List<T> Items { get; set; }
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public int TotalCount { get; set; }
+        public int TotalPages { get; set; }
+        public bool HasPreviousPage => Page > 1;
+        public bool HasNextPage => Page < TotalPages;
+    }
+
+    public class CursorPaginatedResult<T>
+    {
+        public List<T> Items { get; set; }
+        public string NextCursor { get; set; }
+        public bool HasMore { get; set; }
+        public string Direction { get; set; }
+        public string SortBy { get; set; }
+    }
+
+    public class ProfileUpdateModel
+    {
+        public string ProfileId { get; set; }
+        public string Height { get; set; }
+        public string Weight { get; set; }
+        public string Position { get; set; }
+        public string Bio { get; set; }
+        public string ImageURL { get; set; }
+        public string PlayerArchetype { get; set; }
+        public string City { get; set; }
+        public string Zip { get; set; }
+        public string PlayerNumber { get; set; }
+
+        public void UpdateProfile(Profile profile)
+        {
+            profile.Height = Height;
+            profile.Weight = Weight;
+            profile.Position = Position;
+            profile.Bio = Bio;
+            profile.ImageURL = ImageURL;
+            profile.PlayerArchetype = PlayerArchetype;
+            profile.City = City;
+            profile.Zip = Zip;
+            profile.PlayerNumber = PlayerNumber;
+        }
+    }
+
+    public class UsernameUpdateModel
+    {
+        public string Username { get; set; }
+    }
+
+    public class SettingUpdateModel
+    {
+        public bool AllowComments { get; set; }
+        public bool ShowGameHistory { get; set; }
+        public bool AllowEmailNotification { get; set; }
+
+        public void UpdateSetting(Setting setting)
+        {
+            setting.AllowComments = AllowComments;
+            setting.ShowGameHistory = ShowGameHistory;
+            setting.AllowEmailNotification = AllowEmailNotification;
+        }
+    }
+
+    public class ScoutingReportUpdateModel
+    {
+        public string PlayStyle { get; set; }
+        public string StrengthOne { get; set; }
+        public string StrengthTwo { get; set; }
+        public string WeaknessOne { get; set; }
+        public string WeaknessTwo { get; set; }
+        public string PlayStyleImpactOne { get; set; }
+        public string PlayStyleImpactTwo { get; set; }
+        public string Comparison { get; set; }
+        public string Conclusion { get; set; }
+        public string IdealRole { get; set; }
+
+        public void UpdateScoutingReport(ScoutingReport report)
+        {
+            report.PlayStyle = PlayStyle;
+            report.StrengthOne = StrengthOne;
+            report.StrengthTwo = StrengthTwo;
+            report.WeaknessOne = WeaknessOne;
+            report.WeaknessTwo = WeaknessTwo;
+            report.PlayStyleImpactOne = PlayStyleImpactOne;
+            report.PlayStyleImpactTwo = PlayStyleImpactTwo;
+            report.Comparison = Comparison;
+            report.Conclusion = Conclusion;
+            report.IdealRole = IdealRole;
         }
     }
 }
