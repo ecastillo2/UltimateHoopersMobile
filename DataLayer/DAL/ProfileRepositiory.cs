@@ -296,111 +296,325 @@ namespace DataLayer.DAL
         }
 
         /// <summary>
-        /// Get Profiles
+        /// Get all profiles with optimized cursor-based pagination
         /// </summary>
-        /// <returns></returns>
+        /// <returns>List of all profiles</returns>
         public async Task<List<Profile>> GetProfiles()
         {
             using (var context = _context)
             {
                 try
                 {
-                    // Query to join Profile with User and get the Profile with user's details
-                    var query = await (from p in _context.Profile
-                                          join u in _context.User
-                                          on p.UserId equals u.UserId
-                                      where u.Status == "Active"
-                                          select new Profile
-                                          {
-                                              ProfileId = p.ProfileId,
-                                              UserId = p.UserId,
-                                              UserName = p.UserName,
-                                              Height = p.Height,
-                                              Weight = p.Weight,
-                                              Position = p.Position,
-                                              Ranking = p.Ranking,
-                                              StarRating = p.StarRating,
-                                              QRCode = p.QRCode,
-                                              Bio = p.Bio,
-                                              TopRecord = p.TopRecord,
-                                              ImageURL = p.ImageURL,
-                                              PlayerArchetype = p.PlayerArchetype,
-                                              City = p.City,
-                                              Zip = p.Zip,
-                                              PlayerNumber = p.PlayerNumber,
-                                              Points = p.Points,
-                                              Status = u.Status,
-                                              FirstName = u.FirstName,
-                                              LastName = u.LastName,
-                                              Email = u.Email,
-                                              FullName = u.FirstName +" "+ u.LastName,
-                                              LastLoginDate = u.LastLoginDate,
-                                              
-                                          }).ToListAsync();
+                    const int batchSize = 100; // Adjust batch size based on your needs
+                    List<Profile> allProfiles = new List<Profile>();
+                    string cursor = null;
+                    bool hasMore = true;
 
-
-
-
-                    foreach (var item in query)
+                    // Use the existing GetProfilesWithCursor method to fetch profiles in batches
+                    while (hasMore)
                     {
-                        item.Ranking = RankingSuffix.GetOrdinalSuffix(Convert.ToInt32(item.Ranking));
-                       
-                        //item.StarRating = await GetAverageStarRatingByProfileId(item.ProfileId);
+                        (List<Profile> profiles, string nextCursor) = await GetProfilesWithCursor(cursor, batchSize);
 
-                        // Get followers count
-                        var scoutingReport = await context.ScoutingReport
-                            .Where(f => f.ProfileId == item.ProfileId)
-                            .FirstOrDefaultAsync() ?? new ScoutingReport();
+                        if (profiles.Any())
+                        {
+                            allProfiles.AddRange(profiles);
+                        }
 
+                        // If nextCursor is null or empty, we've reached the end
+                        if (string.IsNullOrEmpty(nextCursor))
+                        {
+                            hasMore = false;
+                        }
+                        else
+                        {
+                            cursor = nextCursor;
+                        }
 
-
-                        // Get followers count
-                        var followersCount = await context.Follower
-                            .Where(f => f.FollowerProfileId == item.ProfileId)
-                            .CountAsync();
-
-                        // Get following count
-                        var followingCount = await context.Following
-                            .Where(f => f.ProfileId == item.ProfileId)
-                            .CountAsync();
-
-                        // Assign counts to profile properties
-                        item.FollowersCount = followersCount > 0 ? followersCount.ToString() : "0";
-                        item.FollowingCount = followingCount > 0 ? followingCount.ToString() : "0";
-
-                        // Query the Rating table for the specified ProfileId
-                        //var count = await  (from rating in context.Rating
-                        //                   where rating.ProfileId == item.ProfileId
-                        //                   select rating.StarRating).ToListAsync();
-
-
-                        //item.RatedCount = count.Count().ToString();
-
-
-                        // Calculate Win/Loss statistics
-                        var totalGames = await GetTotalGames(item.ProfileId); // Total games played
-                        var winPercentage = await GetWinPercentage(item.ProfileId); // Win percentage
-                        item.TotalGames = totalGames.ToString();
-                        item.WinPercentage = winPercentage.ToString("F2"); // Formatting the percentage to 2 decimal places
-                        item.ScoutingReport = scoutingReport;
-
-                        var data = await GetWinPercentageAndTotalLosses(item.ProfileId);
-
-                        item.TotalWins = data.totalWins;
-                        item.TotalLosses = data.totalLosses;
-
+                        // Safety check - if we didn't get any profiles or got fewer than requested,
+                        // we've likely reached the end
+                        if (profiles.Count < batchSize)
+                        {
+                            hasMore = false;
+                        }
                     }
 
-
-                    return query;
+                    return allProfiles;
                 }
                 catch (Exception ex)
                 {
-                    // Log the exception or handle it as needed
-                    return null;
+                    // Log the exception
+                    Console.WriteLine($"Error fetching profiles: {ex.Message}");
+                    return new List<Profile>(); // Return empty list instead of null for better error handling
                 }
             }
         }
+
+        /// <summary>
+        /// Get Profiles with cursor-based pagination for high performance with large datasets
+        /// </summary>
+        /// <param name="cursor">Cursor for pagination (null for first page)</param>
+        /// <param name="limit">Number of profiles to retrieve per page</param>
+        /// <returns>A tuple containing the list of profiles and the next cursor</returns>
+        public async Task<(List<Profile> Profiles, string NextCursor)> GetProfilesWithCursor(string cursor = null, int limit = 10)
+        {
+            using (var context = _context)
+            {
+                try
+                {
+                    // Start with a base query
+                    IQueryable<Profile> baseQuery = from p in context.Profile
+                                                    join u in context.User
+                                                    on p.UserId equals u.UserId
+                                                    where u.Status == "Active"
+                                                    orderby p.UserName
+                                                    select new Profile
+                                                    {
+                                                        ProfileId = p.ProfileId,
+                                                        UserId = p.UserId,
+                                                        UserName = p.UserName,
+                                                        Height = p.Height,
+                                                        Weight = p.Weight,
+                                                        Position = p.Position,
+                                                        Ranking = p.Ranking,
+                                                        StarRating = p.StarRating,
+                                                        QRCode = p.QRCode,
+                                                        Bio = p.Bio,
+                                                        TopRecord = p.TopRecord,
+                                                        ImageURL = p.ImageURL,
+                                                        PlayerArchetype = p.PlayerArchetype,
+                                                        City = p.City,
+                                                        Zip = p.Zip,
+                                                        PlayerNumber = p.PlayerNumber,
+                                                        Points = p.Points,
+                                                        Status = u.Status,
+                                                        FirstName = u.FirstName,
+                                                        LastName = u.LastName,
+                                                        Email = u.Email,
+                                                        FullName = u.FirstName + " " + u.LastName,
+                                                        LastLoginDate = u.LastLoginDate,
+                                                    };
+
+                    // Apply cursor if provided
+                    if (!string.IsNullOrEmpty(cursor))
+                    {
+                        // Note: cursor represents a UserName value
+                        baseQuery = baseQuery.Where(p => string.Compare(p.UserName, cursor) > 0);
+                    }
+
+                    // Execute query with limit - use AsNoTracking for better performance on read-only operations
+                    var profiles = await baseQuery
+                        .AsNoTracking()
+                        .Take(limit + 1) // Take one extra to determine if there are more results
+                        .ToListAsync();
+
+                    // Determine if there are more results
+                    string nextCursor = null;
+                    if (profiles.Count > limit)
+                    {
+                        var lastProfile = profiles[limit - 1];
+                        nextCursor = lastProfile.UserName; // Use the last profile's UserName as the next cursor
+                        profiles.RemoveAt(limit); // Remove the extra item
+                    }
+
+                    // Now, in a separate operation, enrich the profiles with additional data
+                    if (profiles.Any())
+                    {
+                        // Get the profile IDs to fetch related data efficiently 
+                        var profileIds = profiles.Select(p => Guid.Parse(p.ProfileId)).ToList();
+                        await EnrichProfilesWithRelatedData(profiles, profileIds);
+                    }
+
+                    return (profiles, nextCursor);
+                }
+                catch (Exception ex)
+                {
+                    // Log exception
+                    Console.WriteLine($"Error in GetProfilesWithCursor: {ex.Message}");
+                    return (new List<Profile>(), null);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets game statistics for multiple profiles efficiently
+        /// </summary>
+        /// <param name="profileIds">List of profile IDs as Guids</param>
+        /// <returns>Dictionary mapping profile IDs to their game statistics</returns>
+        private async Task<Dictionary<Guid, GameStatistics>> GetBatchGameStatistics(List<Guid> profileIds)
+        {
+            var result = new Dictionary<Guid, GameStatistics>();
+
+            if (!profileIds.Any())
+                return result;
+
+            try
+            {
+                // Create a set of profile ID strings for faster lookups
+                var profileIdStrings = profileIds.Select(id => id.ToString()).ToHashSet();
+
+                // Fetch all games in a single query
+                var games = await _context.Game
+                    .AsNoTracking()
+                    .ToListAsync();
+
+                // Calculate win/loss statistics for all profiles in one pass
+                var winCounts = new Dictionary<Guid, int>();
+                var lossCounts = new Dictionary<Guid, int>();
+
+                // Initialize counters for all profiles
+                foreach (var id in profileIds)
+                {
+                    winCounts[id] = 0;
+                    lossCounts[id] = 0;
+                }
+
+                // Process each game once
+                foreach (var game in games)
+                {
+                    // Process winners
+                    if (!string.IsNullOrEmpty(game.WinProfileIdsStatusString))
+                    {
+                        foreach (var id in profileIds)
+                        {
+                            string idString = id.ToString();
+                            if (game.WinProfileIdsStatusString.Contains(idString))
+                            {
+                                winCounts[id]++;
+                            }
+                        }
+                    }
+
+                    // Process losers
+                    if (!string.IsNullOrEmpty(game.LoseProfileIdsStatusString))
+                    {
+                        foreach (var id in profileIds)
+                        {
+                            string idString = id.ToString();
+                            if (game.LoseProfileIdsStatusString.Contains(idString))
+                            {
+                                lossCounts[id]++;
+                            }
+                        }
+                    }
+                }
+
+                // Calculate final statistics
+                foreach (var id in profileIds)
+                {
+                    int wins = winCounts[id];
+                    int losses = lossCounts[id];
+                    int totalGames = wins + losses;
+                    double winPercentage = totalGames > 0 ? (double)wins / totalGames * 100 : 0;
+
+                    result[id] = new GameStatistics
+                    {
+                        TotalGames = totalGames,
+                        WinPercentage = winPercentage,
+                        TotalWins = wins.ToString(),
+                        TotalLosses = losses.ToString()
+                    };
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                // Log error
+                Console.WriteLine($"Error in GetBatchGameStatistics: {ex.Message}");
+
+                // Return empty stats for all profiles
+                foreach (var id in profileIds)
+                {
+                    result[id] = new GameStatistics
+                    {
+                        TotalGames = 0,
+                        WinPercentage = 0,
+                        TotalWins = "0",
+                        TotalLosses = "0"
+                    };
+                }
+
+                return result;
+            }
+        }
+        /// <summary>
+        /// Enriches profile objects with related data (scouting reports, follower counts, game stats)
+        /// </summary>
+        /// <param name="profiles">List of profiles to enrich</param>
+        /// <param name="profileIds">List of profile IDs as Guids</param>
+        /// <returns>Async task</returns>
+        private async Task EnrichProfilesWithRelatedData(List<Profile> profiles, List<Guid> profileIds)
+        {
+            if (!profiles.Any() || !profileIds.Any())
+                return;
+
+            try
+            {
+                // Batch query for scouting reports
+                var scoutingReports = await _context.ScoutingReport
+                    .AsNoTracking()
+                    .Where(s => profileIds.Contains(Guid.Parse(s.ProfileId)))
+                    .ToDictionaryAsync(s => s.ProfileId);
+
+                // Batch query for follower counts - using a single GroupBy operation
+                var followerCounts = await _context.Follower
+                    .AsNoTracking()
+                    .Where(f => profileIds.Contains(Guid.Parse(f.FollowerProfileId)))
+                    .GroupBy(f => f.FollowerProfileId)
+                    .Select(g => new { ProfileId = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(x => x.ProfileId, x => x.Count);
+
+                // Batch query for following counts
+                var followingCounts = await _context.Following
+                    .AsNoTracking()
+                    .Where(f => profileIds.Contains(Guid.Parse(f.ProfileId)))
+                    .GroupBy(f => f.ProfileId)
+                    .Select(g => new { ProfileId = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(x => x.ProfileId, x => x.Count);
+
+                // Get game statistics in a single query using optimized methods
+                var gameStats = await GetBatchGameStatistics(profileIds);
+
+                // Process each profile
+                foreach (var profile in profiles)
+                {
+                    profile.Ranking = RankingSuffix.GetOrdinalSuffix(Convert.ToInt32(profile.Ranking));
+
+                    // Assign scouting report
+                    if (scoutingReports.TryGetValue(profile.ProfileId, out var report))
+                    {
+                        profile.ScoutingReport = report;
+                    }
+                    else
+                    {
+                        profile.ScoutingReport = new ScoutingReport();
+                    }
+
+                    // Assign follower/following counts
+                    profile.FollowersCount = followerCounts.TryGetValue(profile.ProfileId, out var followers)
+                        ? followers.ToString() : "0";
+
+                    profile.FollowingCount = followingCounts.TryGetValue(profile.ProfileId, out var following)
+                        ? following.ToString() : "0";
+
+                    // Assign game statistics
+                    if (gameStats.TryGetValue(Guid.Parse(profile.ProfileId), out var stats))
+                    {
+                        profile.TotalGames = stats.TotalGames.ToString();
+                        profile.WinPercentage = stats.WinPercentage.ToString("F2");
+                        profile.TotalWins = Convert.ToInt32( stats.TotalWins);
+                        profile.TotalLosses = Convert.ToInt32(stats.TotalLosses);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log exception but don't fail the entire operation
+                Console.WriteLine($"Error enriching profiles with related data: {ex.Message}");
+            }
+        }
+
+
 
         /// <summary>
         /// Update Profile
