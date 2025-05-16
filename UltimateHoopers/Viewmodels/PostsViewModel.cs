@@ -14,6 +14,7 @@ namespace UltimateHoopers.ViewModels
     {
         private readonly IPostService _postService;
         private bool _isRefreshing;
+        private bool _isLoading = false;
 
         public ObservableCollection<Post> Posts { get; } = new ObservableCollection<Post>();
 
@@ -23,6 +24,16 @@ namespace UltimateHoopers.ViewModels
             set
             {
                 _isRefreshing = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool IsLoading
+        {
+            get => _isLoading;
+            set
+            {
+                _isLoading = value;
                 OnPropertyChanged();
             }
         }
@@ -40,7 +51,7 @@ namespace UltimateHoopers.ViewModels
         public PostsViewModel(IPostService postService)
         {
             _postService = postService ?? throw new ArgumentNullException(nameof(postService));
-            Console.WriteLine("PostsViewModel created with postService: " + (postService != null));
+            Debug.WriteLine("PostsViewModel created with postService: " + (postService != null));
 
             // Initialize commands
             RefreshCommand = new Command(async () => await LoadPostsAsync());
@@ -51,37 +62,55 @@ namespace UltimateHoopers.ViewModels
             ViewCommentsCommand = new Command<Post>(async (post) => await NavigateToComments(post));
             PostOptionsCommand = new Command<Post>(async (post) => await ShowPostOptions(post));
             PlayVideoCommand = new Command<Post>(async (post) => await PlayVideo(post));
+
+            // Load posts automatically when ViewModel is created
+            MainThread.BeginInvokeOnMainThread(async () =>
+            {
+                await LoadPostsAsync();
+            });
         }
 
         public async Task LoadPostsAsync()
         {
-            if (IsRefreshing)
+            if (IsRefreshing || IsLoading)
                 return;
 
             try
             {
                 IsRefreshing = true;
-                Console.WriteLine("Loading posts...");
+                IsLoading = true;
+                Debug.WriteLine("Loading posts...");
 
                 // Clear current posts
                 Posts.Clear();
 
                 // Get posts from API
                 var posts = await _postService.GetPostsAsync();
-                Console.WriteLine($"Received {posts?.Count ?? 0} posts from service");
+                Debug.WriteLine($"Received {posts?.Count ?? 0} posts from service");
 
                 // Debug post data
                 if (posts != null && posts.Count > 0)
                 {
-                    Console.WriteLine("First post details:");
-                    Console.WriteLine($"  ID: {posts[0].PostId}");
-                    Console.WriteLine($"  Username: {posts[0].UserName}");
-                    Console.WriteLine($"  URL: {posts[0].PostFileURL}");
-                    Console.WriteLine($"  Type: {posts[0].PostType}");
+                    Debug.WriteLine("First post details:");
+                    Debug.WriteLine($"  ID: {posts[0].PostId}");
+                    Debug.WriteLine($"  Username: {posts[0].UserName}");
+                    Debug.WriteLine($"  URL: {posts[0].PostFileURL}");
+                    Debug.WriteLine($"  Type: {posts[0].PostType}");
                 }
                 else
                 {
-                    Console.WriteLine("No posts returned from service or list is empty");
+                    Debug.WriteLine("No posts returned from service or list is empty");
+
+                    // Show feedback to the user
+                    await MainThread.InvokeOnMainThreadAsync(async () =>
+                    {
+                        await Application.Current.MainPage.DisplayAlert(
+                            "No Posts Found",
+                            "There are no posts available at this time. Please try again later.",
+                            "OK");
+                    });
+
+                    return;
                 }
 
                 // Add posts to collection with robust null handling
@@ -101,25 +130,41 @@ namespace UltimateHoopers.ViewModels
                             // Skip completely invalid posts (null or missing required field)
                             if (post == null)
                             {
-                                Console.WriteLine("Skipping null post");
+                                Debug.WriteLine("Skipping null post");
                                 skippedPostCount++;
                                 continue;
                             }
 
+                            // For posts with missing video/image URLs, try to find them in other properties
                             if (string.IsNullOrWhiteSpace(post.PostFileURL))
                             {
-                                Console.WriteLine($"Skipping post {post.PostId}: Missing PostFileURL");
-                                skippedPostCount++;
-                                continue;
+                                // Try to repair the post by checking other properties
+                                if (!string.IsNullOrWhiteSpace(post.PostText))
+                                {
+                                    Debug.WriteLine($"Post {post.PostId} has no PostFileURL but has PostText");
+                                    post.PostType = "text"; // Mark as text post
+                                }
+                                else if (!string.IsNullOrWhiteSpace(post.ThumbnailUrl))
+                                {
+                                    Debug.WriteLine($"Post {post.PostId} has no PostFileURL but has ThumbnailUrl. Using as PostFileURL.");
+                                    post.PostFileURL = post.ThumbnailUrl;
+                                    post.PostType = "image";
+                                }
+                                else
+                                {
+                                    Debug.WriteLine($"Skipping post {post.PostId}: Missing critical media URL");
+                                    skippedPostCount++;
+                                    continue;
+                                }
                             }
 
                             // Sanitize the post by ensuring all fields have valid values
                             SanitizePost(post);
 
                             // Log the post after sanitization
-                            Console.WriteLine($"Adding sanitized post: {post.PostId}, Type: {post.PostType}, URL: {post.PostFileURL}");
+                            Debug.WriteLine($"Adding sanitized post: {post.PostId}, Type: {post.PostType}, URL: {post.PostFileURL}");
 
-                            // Add to the collection
+                            // Add to the collection on the UI thread
                             MainThread.BeginInvokeOnMainThread(() =>
                             {
                                 Posts.Add(post);
@@ -128,45 +173,81 @@ namespace UltimateHoopers.ViewModels
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine($"Error processing post: {ex.Message}");
+                            Debug.WriteLine($"Error processing post: {ex.Message}");
                             skippedPostCount++;
                         }
                     }
 
-                    Console.WriteLine($"Added {validPostCount} valid posts, skipped {skippedPostCount} invalid posts");
-                    Console.WriteLine($"Final Posts collection count: {Posts.Count}");
+                    Debug.WriteLine($"Added {validPostCount} valid posts, skipped {skippedPostCount} invalid posts");
+                    Debug.WriteLine($"Final Posts collection count: {Posts.Count}");
+
+                    // Show user feedback if many posts were skipped
+                    if (validPostCount == 0 && skippedPostCount > 0)
+                    {
+                        await MainThread.InvokeOnMainThreadAsync(async () =>
+                        {
+                            await Application.Current.MainPage.DisplayAlert(
+                                "Post Display Issue",
+                                "We found posts but couldn't display them. This may be due to formatting issues. Our team is working on a fix.",
+                                "OK");
+                        });
+                    }
 
                     // Force property changed notification for the collection
                     OnPropertyChanged(nameof(Posts));
                 }
                 else
                 {
-                    Console.WriteLine("No posts were returned from the service");
+                    Debug.WriteLine("No posts were returned from the service");
                 }
             }
             catch (UnauthorizedAccessException ex)
             {
-                Console.WriteLine($"Authentication error: {ex.Message}");
+                Debug.WriteLine($"Authentication error: {ex.Message}");
 
-                // Use Application.Current.MainPage instead of Shell.Current.DisplayAlert
                 await MainThread.InvokeOnMainThreadAsync(async () =>
                 {
-                    await Application.Current.MainPage.DisplayAlert("Authentication Error", "Please log in to view posts", "OK");
+                    var result = await Application.Current.MainPage.DisplayAlert(
+                        "Authentication Error",
+                        "Your session has expired. Please log in again.",
+                        "Log in", "Cancel");
+
+                    if (result)
+                    {
+                        // Navigate to login page
+                        Application.Current.MainPage = new LoginPage();
+                    }
+                });
+            }
+            catch (HttpRequestException ex)
+            {
+                Debug.WriteLine($"Network error: {ex.Message}");
+
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    await Application.Current.MainPage.DisplayAlert(
+                        "Network Error",
+                        "Could not connect to the server. Please check your internet connection and try again.",
+                        "OK");
                 });
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error loading posts: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                Debug.WriteLine($"Error loading posts: {ex.Message}");
+                Debug.WriteLine($"Stack trace: {ex.StackTrace}");
 
                 await MainThread.InvokeOnMainThreadAsync(async () =>
                 {
-                    await Application.Current.MainPage.DisplayAlert("Error", $"An error occurred: {ex.Message}", "OK");
+                    await Application.Current.MainPage.DisplayAlert(
+                        "Error",
+                        $"Something went wrong while loading posts. Please try again later.",
+                        "OK");
                 });
             }
             finally
             {
                 IsRefreshing = false;
+                IsLoading = false;
             }
         }
 
@@ -175,27 +256,24 @@ namespace UltimateHoopers.ViewModels
         {
             if (post == null)
             {
-                Console.WriteLine("Post is null");
+                Debug.WriteLine("Post is null");
                 return;
             }
 
-            Console.WriteLine("=== Raw Post Details ===");
-            Console.WriteLine($"PostId: {post.PostId ?? "null"}");
-            Console.WriteLine($"UserName: {post.UserName ?? "null"}");
-            Console.WriteLine($"FirstName: {post.FirstName ?? "null"}");
-            Console.WriteLine($"LastName: {post.LastName ?? "null"}");
-            Console.WriteLine($"Caption: {post.Caption ?? "null"}");
-            Console.WriteLine($"PostFileURL: {post.PostFileURL ?? "null"}");
-            Console.WriteLine($"ThumbnailUrl: {post.ThumbnailUrl ?? "null"}");
-            Console.WriteLine($"ProfileImageURL: {post.ProfileImageURL ?? "null"}");
-            Console.WriteLine($"PostType: {post.PostType ?? "null"}");
-            Console.WriteLine($"Likes: {post.Likes?.ToString() ?? "null"}");
-            Console.WriteLine($"LikedPost: {post.LikedPost?.ToString() ?? "null"}");
-            Console.WriteLine($"SavedPost: {post.SavedPost?.ToString() ?? "null"}");
-            Console.WriteLine($"PostCommentCount: {post.PostCommentCount?.ToString() ?? "null"}");
-            Console.WriteLine($"RelativeTime: {post.RelativeTime ?? "null"}");
-            Console.WriteLine($"PostedDate: {post.PostedDate ?? "null"}");
-            Console.WriteLine("=======================");
+            Debug.WriteLine("=== Raw Post Details ===");
+            Debug.WriteLine($"PostId: {post.PostId ?? "null"}");
+            Debug.WriteLine($"UserName: {post.UserName ?? "null"}");
+            Debug.WriteLine($"Caption: {post.Caption ?? "null"}");
+            Debug.WriteLine($"PostFileURL: {post.PostFileURL ?? "null"}");
+            Debug.WriteLine($"ThumbnailUrl: {post.ThumbnailUrl ?? "null"}");
+            Debug.WriteLine($"ProfileImageURL: {post.ProfileImageURL ?? "null"}");
+            Debug.WriteLine($"PostType: {post.PostType ?? "null"}");
+            Debug.WriteLine($"Likes: {post.Likes?.ToString() ?? "null"}");
+            Debug.WriteLine($"LikedPost: {post.LikedPost?.ToString() ?? "null"}");
+            Debug.WriteLine($"SavedPost: {post.SavedPost?.ToString() ?? "null"}");
+            Debug.WriteLine($"PostCommentCount: {post.PostCommentCount?.ToString() ?? "null"}");
+            Debug.WriteLine($"RelativeTime: {post.RelativeTime ?? "null"}");
+            Debug.WriteLine("=======================");
         }
 
         // Helper to ensure all post fields have valid values
@@ -204,95 +282,62 @@ namespace UltimateHoopers.ViewModels
             // Required fields
             post.PostId = string.IsNullOrWhiteSpace(post.PostId) ? Guid.NewGuid().ToString() : post.PostId;
 
-            // Validate PostFileURL (already checked for null/empty before this method is called)
-            if (!string.IsNullOrWhiteSpace(post.PostFileURL))
+            // Handle null PostFileURL - critical field
+            if (string.IsNullOrWhiteSpace(post.PostFileURL))
             {
-                try
+                Debug.WriteLine($"Warning: Post {post.PostId} has null/empty PostFileURL. Setting a placeholder.");
+                post.PostFileURL = "https://via.placeholder.com/300";
+                post.PostType = "image"; // Default to image for empty URLs
+            }
+            else
+            {
+                // Ensure URL has a protocol (http or https)
+                if (!post.PostFileURL.StartsWith("http://") && !post.PostFileURL.StartsWith("https://"))
                 {
-                    // Ensure URL has a protocol (http or https)
-                    if (!post.PostFileURL.StartsWith("http://") && !post.PostFileURL.StartsWith("https://"))
-                    {
-                        // Add https protocol if missing
-                        post.PostFileURL = "https://" + post.PostFileURL.TrimStart('/');
-                        Console.WriteLine($"Fixed URL by adding protocol: {post.PostFileURL}");
-                    }
-
-                    // Validate by creating a URI object (will throw if invalid)
-                    var uri = new Uri(post.PostFileURL);
-                }
-                catch (UriFormatException ex)
-                {
-                    Console.WriteLine($"Invalid URL format: {post.PostFileURL}, Error: {ex.Message}");
-                    // If URL is invalid but not empty, don't clear it yet - let the converter handle it
+                    // Add https protocol if missing
+                    post.PostFileURL = "https://" + post.PostFileURL.TrimStart('/');
+                    Debug.WriteLine($"Fixed URL by adding protocol: {post.PostFileURL}");
                 }
             }
 
-            // Accurately determine PostType based on file extension
+            // If PostType is null or empty, detect it from the URL
             if (string.IsNullOrWhiteSpace(post.PostType))
             {
                 post.PostType = DeterminePostType(post.PostFileURL);
-                Console.WriteLine($"Auto-detected post type: {post.PostType} for URL: {post.PostFileURL}");
+                Debug.WriteLine($"Auto-detected post type: {post.PostType} for URL: {post.PostFileURL}");
             }
 
-            // If PostType is already set but doesn't match the URL, prioritize the content type
-            else if (post.PostType.ToLower() != DeterminePostType(post.PostFileURL))
+            // For video posts, ensure there's a thumbnail URL
+            if (post.PostType.ToLower() == "video" && string.IsNullOrWhiteSpace(post.ThumbnailUrl))
             {
-                string autoDetectedType = DeterminePostType(post.PostFileURL);
-                Console.WriteLine($"PostType mismatch - Existing: {post.PostType}, Detected: {autoDetectedType} for URL: {post.PostFileURL}");
-
-                // Only override if we can confidently determine it's a video from the URL
-                if (autoDetectedType == "video" && IsVideoUrl(post.PostFileURL))
-                {
-                    post.PostType = "video";
-                    Console.WriteLine($"Changed post type to video based on URL extension: {post.PostFileURL}");
-                }
+                // Set a default thumbnail or generate one from video
+                Debug.WriteLine($"Video post {post.PostId} has no thumbnail URL. Setting a placeholder.");
+                post.ThumbnailUrl = "https://via.placeholder.com/300/333333/FFFFFF?text=Video";
             }
-
-            // Validate ThumbnailUrl if present (for video posts)
-            if (post.PostType.ToLower() == "video")
+            else if (!string.IsNullOrWhiteSpace(post.ThumbnailUrl))
             {
-                // If it's a video but no thumbnail, use a logic to determine one
-                if (string.IsNullOrWhiteSpace(post.ThumbnailUrl))
+                // Ensure thumbnail URL has a protocol
+                if (!post.ThumbnailUrl.StartsWith("http://") && !post.ThumbnailUrl.StartsWith("https://"))
                 {
-                    // You could set a default video thumbnail here if needed
-                    Console.WriteLine($"Video post {post.PostId} has no thumbnail URL");
-                }
-                else
-                {
-                    // Validate and fix the thumbnail URL
-                    try
-                    {
-                        if (!post.ThumbnailUrl.StartsWith("http://") && !post.ThumbnailUrl.StartsWith("https://"))
-                        {
-                            post.ThumbnailUrl = "https://" + post.ThumbnailUrl.TrimStart('/');
-                            Console.WriteLine($"Fixed thumbnail URL: {post.ThumbnailUrl}");
-                        }
-
-                        // Validate by creating a URI object
-                        var uri = new Uri(post.ThumbnailUrl);
-                    }
-                    catch (UriFormatException ex)
-                    {
-                        Console.WriteLine($"Invalid thumbnail URL: {post.ThumbnailUrl}, Error: {ex.Message}");
-                    }
+                    post.ThumbnailUrl = "https://" + post.ThumbnailUrl.TrimStart('/');
+                    Debug.WriteLine($"Fixed thumbnail URL: {post.ThumbnailUrl}");
                 }
             }
 
-            // Fill other optional fields with defaults if missing
-            post.UserName = string.IsNullOrWhiteSpace(post.UserName) ?
-                (string.IsNullOrWhiteSpace(post.FirstName) && string.IsNullOrWhiteSpace(post.LastName) ?
-                    "Anonymous User" :
-                    $"{post.FirstName ?? ""} {post.LastName ?? ""}".Trim()) :
-                post.UserName;
+            // Ensure profile image URL has a protocol if it exists
+            if (!string.IsNullOrWhiteSpace(post.ProfileImageURL))
+            {
+                if (!post.ProfileImageURL.StartsWith("http://") && !post.ProfileImageURL.StartsWith("https://"))
+                {
+                    post.ProfileImageURL = "https://" + post.ProfileImageURL.TrimStart('/');
+                    Debug.WriteLine($"Fixed profile image URL: {post.ProfileImageURL}");
+                }
+            }
 
-            post.Caption = post.Caption ?? ""; // Empty string instead of null
-            post.RelativeTime = string.IsNullOrWhiteSpace(post.RelativeTime) ?
-                (string.IsNullOrWhiteSpace(post.PostedDate) ?
-                    "Recently" :
-                    FormatRelativeTime(post.PostedDate)) :
-                post.RelativeTime;
-
-            // Numeric fields
+            // Set default values for other fields
+            post.UserName = post.UserName ?? "Anonymous";
+            post.Caption = post.Caption ?? "";
+            post.RelativeTime = post.RelativeTime ?? "Recently";
             post.Likes = post.Likes ?? 0;
             post.LikedPost = post.LikedPost ?? false;
             post.SavedPost = post.SavedPost ?? false;
@@ -325,44 +370,11 @@ namespace UltimateHoopers.ViewModels
                    lowercaseUrl.EndsWith(".avi") ||
                    lowercaseUrl.EndsWith(".webm") ||
                    lowercaseUrl.EndsWith(".mkv") ||
+                   lowercaseUrl.EndsWith(".mpg") ||
+                   lowercaseUrl.EndsWith(".mpeg") ||
                    lowercaseUrl.Contains("video") ||
                    lowercaseUrl.Contains("mp4") ||
-                   lowercaseUrl.Contains("youtu");
-        }
-
-        private string FormatRelativeTime(string postedDateStr)
-        {
-            try
-            {
-                // Attempt to parse the posted date
-                if (DateTime.TryParse(postedDateStr, out DateTime postedDate))
-                {
-                    var now = DateTime.Now;
-                    var difference = now - postedDate;
-
-                    if (difference.TotalMinutes < 1)
-                        return "Just now";
-                    if (difference.TotalMinutes < 60)
-                        return $"{(int)difference.TotalMinutes}m ago";
-                    if (difference.TotalHours < 24)
-                        return $"{(int)difference.TotalHours}h ago";
-                    if (difference.TotalDays < 7)
-                        return $"{(int)difference.TotalDays}d ago";
-                    if (difference.TotalDays < 30)
-                        return $"{(int)(difference.TotalDays / 7)}w ago";
-                    if (difference.TotalDays < 365)
-                        return $"{(int)(difference.TotalDays / 30)}mo ago";
-
-                    return $"{(int)(difference.TotalDays / 365)}y ago";
-                }
-
-                // If we couldn't parse the date, return the original string
-                return postedDateStr;
-            }
-            catch
-            {
-                return postedDateStr;
-            }
+                   lowercaseUrl.Contains("commondatastorage.googleapis.com/gtv-videos-bucket");
         }
 
         // Command handlers
@@ -384,25 +396,15 @@ namespace UltimateHoopers.ViewModels
                 }
 
                 // Trigger UI update
-                var index = Posts.IndexOf(post);
-                if (index >= 0)
-                {
-                    Posts[index] = post;
-                }
+                OnPropertyChanged(nameof(Posts));
 
-                // TODO: Implement API call to like/unlike post
-                // await _postService.LikePostAsync(post.PostId, post.LikedPost ?? false);
-
-                // For now, just show a message
-                await MainThread.InvokeOnMainThreadAsync(async () =>
-                {
-                    await Application.Current.MainPage.DisplayAlert("Like Post",
-                        post.LikedPost == true ? "Post liked!" : "Post unliked!",
-                        "OK");
-                });
+                // In a real app, you would update the like status on the server
+                // await _postService.LikePostAsync(post.PostId, post.LikedPost.Value);
             }
             catch (Exception ex)
             {
+                Debug.WriteLine($"Error liking post: {ex.Message}");
+
                 await MainThread.InvokeOnMainThreadAsync(async () =>
                 {
                     await Application.Current.MainPage.DisplayAlert("Error", $"Failed to like post: {ex.Message}", "OK");
@@ -418,25 +420,21 @@ namespace UltimateHoopers.ViewModels
                 post.SavedPost = !(post.SavedPost ?? false);
 
                 // Trigger UI update
-                var index = Posts.IndexOf(post);
-                if (index >= 0)
-                {
-                    Posts[index] = post;
-                }
+                OnPropertyChanged(nameof(Posts));
 
-                // TODO: Implement API call to save/unsave post
-                // await _postService.SavePostAsync(post.PostId, post.SavedPost ?? false);
+                // In a real app, you would update the save status on the server
+                // await _postService.SavePostAsync(post.PostId, post.SavedPost.Value);
 
-                // For now, just show a message
+                string message = post.SavedPost == true ? "Post saved" : "Post unsaved";
                 await MainThread.InvokeOnMainThreadAsync(async () =>
                 {
-                    await Application.Current.MainPage.DisplayAlert("Save Post",
-                        post.SavedPost == true ? "Post saved!" : "Post unsaved!",
-                        "OK");
+                    await Application.Current.MainPage.DisplayAlert("Save Post", message, "OK");
                 });
             }
             catch (Exception ex)
             {
+                Debug.WriteLine($"Error saving post: {ex.Message}");
+
                 await MainThread.InvokeOnMainThreadAsync(async () =>
                 {
                     await Application.Current.MainPage.DisplayAlert("Error", $"Failed to save post: {ex.Message}", "OK");
@@ -463,39 +461,46 @@ namespace UltimateHoopers.ViewModels
 
         private async Task ShowPostOptions(Post post)
         {
-            string result = await MainThread.InvokeOnMainThreadAsync<string>(async () =>
+            try
             {
-                return await Application.Current.MainPage.DisplayActionSheet(
-                    "Post Options",
-                    "Cancel",
-                    null,
-                    "Report",
-                    "Copy Link",
-                    "Share to...",
-                    "Hide");
-            });
+                string result = await MainThread.InvokeOnMainThreadAsync<string>(async () =>
+                {
+                    return await Application.Current.MainPage.DisplayActionSheet(
+                        "Post Options",
+                        "Cancel",
+                        null,
+                        "Report",
+                        "Copy Link",
+                        "Share to...",
+                        "Hide");
+                });
 
-            // Handle the selected option
-            switch (result)
+                // Handle the selected option
+                switch (result)
+                {
+                    case "Report":
+                        await MainThread.InvokeOnMainThreadAsync(async () => {
+                            await Application.Current.MainPage.DisplayAlert("Report", "Report feature coming soon!", "OK");
+                        });
+                        break;
+                    case "Copy Link":
+                        await MainThread.InvokeOnMainThreadAsync(async () => {
+                            await Application.Current.MainPage.DisplayAlert("Copy Link", "Link copied to clipboard", "OK");
+                        });
+                        break;
+                    case "Share to...":
+                        await SharePost(post);
+                        break;
+                    case "Hide":
+                        await MainThread.InvokeOnMainThreadAsync(async () => {
+                            await Application.Current.MainPage.DisplayAlert("Hide", "Post hidden", "OK");
+                        });
+                        break;
+                }
+            }
+            catch (Exception ex)
             {
-                case "Report":
-                    await MainThread.InvokeOnMainThreadAsync(async () => {
-                        await Application.Current.MainPage.DisplayAlert("Report", "Report feature coming soon!", "OK");
-                    });
-                    break;
-                case "Copy Link":
-                    await MainThread.InvokeOnMainThreadAsync(async () => {
-                        await Application.Current.MainPage.DisplayAlert("Copy Link", "Link copied to clipboard", "OK");
-                    });
-                    break;
-                case "Share to...":
-                    await SharePost(post);
-                    break;
-                case "Hide":
-                    await MainThread.InvokeOnMainThreadAsync(async () => {
-                        await Application.Current.MainPage.DisplayAlert("Hide", "Post hidden", "OK");
-                    });
-                    break;
+                Debug.WriteLine($"Error showing post options: {ex.Message}");
             }
         }
 
@@ -511,27 +516,37 @@ namespace UltimateHoopers.ViewModels
                     return;
                 }
 
-                Console.WriteLine($"Playing video: {post.PostFileURL}");
+                Debug.WriteLine($"Playing video: {post.PostFileURL}");
 
                 // Navigate directly to the video player page
                 await MainThread.InvokeOnMainThreadAsync(async () => {
-                    // We need to check what type of Page we're on for proper navigation
-                    if (Application.Current.MainPage is Shell shell)
+                    try
                     {
-                        await shell.Navigation.PushModalAsync(new VideoPlayerPage(post));
+                        // We need to check what type of Page we're on for proper navigation
+                        if (Application.Current.MainPage is Shell shell)
+                        {
+                            await shell.Navigation.PushModalAsync(new VideoPlayerPage(post));
+                        }
+                        else if (Application.Current.MainPage.Navigation != null)
+                        {
+                            await Application.Current.MainPage.Navigation.PushModalAsync(new VideoPlayerPage(post));
+                        }
+                        else
+                        {
+                            await Application.Current.MainPage.DisplayAlert("Error", "Navigation not available", "OK");
+                        }
                     }
-                    else if (Application.Current.MainPage.Navigation != null)
+                    catch (Exception ex)
                     {
-                        await Application.Current.MainPage.Navigation.PushModalAsync(new VideoPlayerPage(post));
-                    }
-                    else
-                    {
-                        await Application.Current.MainPage.DisplayAlert("Error", "Navigation not available", "OK");
+                        Debug.WriteLine($"Error navigating to video player: {ex.Message}");
+                        await Application.Current.MainPage.DisplayAlert("Error", $"Navigation error: {ex.Message}", "OK");
                     }
                 });
             }
             catch (Exception ex)
             {
+                Debug.WriteLine($"Error playing video: {ex.Message}");
+
                 await MainThread.InvokeOnMainThreadAsync(async () => {
                     await Application.Current.MainPage.DisplayAlert("Error", $"Could not play video: {ex.Message}", "OK");
                 });

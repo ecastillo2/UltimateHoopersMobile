@@ -17,7 +17,8 @@ namespace UltimateHoopers.Controls
 
         // Thumbnail URL to display before playing
         public static readonly BindableProperty ThumbnailUrlProperty =
-            BindableProperty.Create(nameof(ThumbnailUrl), typeof(string), typeof(AutoPlayVideoElement), null);
+            BindableProperty.Create(nameof(ThumbnailUrl), typeof(string), typeof(AutoPlayVideoElement), null,
+                propertyChanged: OnThumbnailUrlChanged);
 
         // Whether the video is currently visible in the viewport
         public static readonly BindableProperty IsVisibleInViewportProperty =
@@ -44,6 +45,9 @@ namespace UltimateHoopers.Controls
 
         // Loading indicator
         private ActivityIndicator _loadingIndicator;
+
+        // Error indicator
+        private Label _errorLabel;
 
         // Track if video is loaded
         private bool _isVideoLoaded = false;
@@ -95,91 +99,132 @@ namespace UltimateHoopers.Controls
         // Constructor
         public AutoPlayVideoElement()
         {
-            // Create a grid to hold all elements
-            var grid = new Grid
+            try
             {
-                HeightRequest = 400
-            };
-
-            // Create thumbnail image
-            _thumbnailImage = new Image
-            {
-                Aspect = Aspect.AspectFill,
-                HorizontalOptions = LayoutOptions.FillAndExpand,
-                VerticalOptions = LayoutOptions.FillAndExpand
-            };
-
-            // Create WebView for video playing
-            _videoPlayer = new WebView
-            {
-                IsVisible = false,
-                HorizontalOptions = LayoutOptions.FillAndExpand,
-                VerticalOptions = LayoutOptions.FillAndExpand,
-                BackgroundColor = Colors.Black,
-                Opacity = 0.0 // Start invisible and fade in
-            };
-
-            // Add WebView navigated event
-            _videoPlayer.Navigated += VideoPlayer_Navigated;
-
-            // Loading indicator
-            _loadingIndicator = new ActivityIndicator
-            {
-                IsRunning = false,
-                IsVisible = false,
-                HorizontalOptions = LayoutOptions.Center,
-                VerticalOptions = LayoutOptions.Center,
-                Color = Colors.White
-            };
-
-            // Play button
-            _playButtonOverlay = new Frame
-            {
-                BackgroundColor = new Color(0, 0, 0, 0.5f),
-                CornerRadius = 30,
-                HeightRequest = 60,
-                WidthRequest = 60,
-                HorizontalOptions = LayoutOptions.Center,
-                VerticalOptions = LayoutOptions.Center,
-                HasShadow = false,
-                Content = new Label
+                // Create a grid to hold all elements
+                var grid = new Grid
                 {
-                    Text = "▶️",
-                    FontSize = 32,
+                    HeightRequest = 400
+                };
+
+                // Create thumbnail image
+                _thumbnailImage = new Image
+                {
+                    Aspect = Aspect.AspectFill,
+                    HorizontalOptions = LayoutOptions.FillAndExpand,
+                    VerticalOptions = LayoutOptions.FillAndExpand
+                };
+
+                // Create WebView for video playing
+                _videoPlayer = new WebView
+                {
+                    IsVisible = false,
+                    HorizontalOptions = LayoutOptions.FillAndExpand,
+                    VerticalOptions = LayoutOptions.FillAndExpand,
+                    BackgroundColor = Colors.Black,
+                    Opacity = 0.0 // Start invisible and fade in
+                };
+
+                // Add WebView navigated event
+                _videoPlayer.Navigated += VideoPlayer_Navigated;
+
+                // Loading indicator
+                _loadingIndicator = new ActivityIndicator
+                {
+                    IsRunning = false,
+                    IsVisible = false,
                     HorizontalOptions = LayoutOptions.Center,
                     VerticalOptions = LayoutOptions.Center,
-                    TextColor = Colors.White
-                }
-            };
+                    Color = Colors.White,
+                    Scale = 1.5
+                };
 
-            // Add tap gesture to entire control for entering full screen
-            var tapGesture = new TapGestureRecognizer();
-            tapGesture.Tapped += OnTapped;
-            grid.GestureRecognizers.Add(tapGesture);
+                // Error label
+                _errorLabel = new Label
+                {
+                    Text = "Error loading video",
+                    TextColor = Colors.White,
+                    HorizontalOptions = LayoutOptions.Center,
+                    VerticalOptions = LayoutOptions.Center,
+                    IsVisible = false
+                };
 
-            // Add all elements to the grid
-            grid.Add(_thumbnailImage);
-            grid.Add(_videoPlayer);
-            grid.Add(_loadingIndicator);
-            grid.Add(_playButtonOverlay);
+                // Play button
+                _playButtonOverlay = new Frame
+                {
+                    BackgroundColor = new Color(0, 0, 0, 0.5f),
+                    CornerRadius = 30,
+                    HeightRequest = 60,
+                    WidthRequest = 60,
+                    HorizontalOptions = LayoutOptions.Center,
+                    VerticalOptions = LayoutOptions.Center,
+                    HasShadow = false,
+                    Content = new Label
+                    {
+                        Text = "▶️",
+                        FontSize = 32,
+                        HorizontalOptions = LayoutOptions.Center,
+                        VerticalOptions = LayoutOptions.Center,
+                        TextColor = Colors.White
+                    }
+                };
 
-            // Set content
-            Content = grid;
+                // Add tap gesture to entire control for entering full screen
+                var tapGesture = new TapGestureRecognizer();
+                tapGesture.Tapped += OnTapped;
+                grid.GestureRecognizers.Add(tapGesture);
+
+                // Add a semi-transparent overlay for better visibility
+                var overlay = new BoxView
+                {
+                    Color = Colors.Black,
+                    Opacity = 0.3,
+                    IsVisible = true
+                };
+
+                // Add all elements to the grid
+                grid.Add(_thumbnailImage);
+                grid.Add(overlay);
+                grid.Add(_videoPlayer);
+                grid.Add(_loadingIndicator);
+                grid.Add(_errorLabel);
+                grid.Add(_playButtonOverlay);
+
+                // Set content
+                Content = grid;
+
+                Debug.WriteLine("AutoPlayVideoElement initialized successfully");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error in AutoPlayVideoElement constructor: {ex.Message}");
+            }
         }
 
         // Handle taps on the video
         private void OnTapped(object sender, EventArgs e)
         {
             // Trigger the full screen event to let the page handle it
+            Debug.WriteLine("Video tapped, requesting full screen");
             FullScreenRequested?.Invoke(this, e);
         }
 
         // Called when the video URL changes
         private static void OnVideoUrlChanged(BindableObject bindable, object oldValue, object newValue)
         {
-            var control = (AutoPlayVideoElement)bindable;
-            if (newValue is string url && !string.IsNullOrEmpty(url))
+            if (bindable is AutoPlayVideoElement control && newValue is string url && !string.IsNullOrEmpty(url))
             {
+                Debug.WriteLine($"Video URL changed to: {url}");
+                control.SetThumbnail();
+            }
+        }
+
+        // Called when the thumbnail URL changes
+        private static void OnThumbnailUrlChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            if (bindable is AutoPlayVideoElement control && newValue is string thumbnailUrl && !string.IsNullOrEmpty(thumbnailUrl))
+            {
+                Debug.WriteLine($"Thumbnail URL changed to: {thumbnailUrl}");
                 control.SetThumbnail();
             }
         }
@@ -187,15 +232,16 @@ namespace UltimateHoopers.Controls
         // Called when viewport visibility changes
         private static void OnIsVisibleInViewportChanged(BindableObject bindable, object oldValue, object newValue)
         {
-            var control = (AutoPlayVideoElement)bindable;
-            if (newValue is bool isVisible)
+            if (bindable is AutoPlayVideoElement control && newValue is bool isVisible)
             {
                 if (isVisible)
                 {
+                    Debug.WriteLine("Video is now visible in viewport, attempting to play");
                     control.AutoPlay();
                 }
                 else
                 {
+                    Debug.WriteLine("Video is no longer visible in viewport, pausing");
                     control.Pause();
                 }
             }
@@ -206,6 +252,7 @@ namespace UltimateHoopers.Controls
         {
             if (bindable is AutoPlayVideoElement videoElement)
             {
+                Debug.WriteLine($"Mute state changed to: {newValue}");
                 videoElement.UpdateMuteState();
             }
         }
@@ -232,13 +279,6 @@ namespace UltimateHoopers.Controls
                     return;
                 }
 
-                // If the WebView handler isn't available, we can't update the video
-                if (_videoPlayer == null || _videoPlayer.Handler == null)
-                {
-                    Debug.WriteLine("WebView handler not available");
-                    return;
-                }
-
                 // Execute JavaScript to update the mute state
                 MainThread.BeginInvokeOnMainThread(async () => {
                     try
@@ -252,6 +292,7 @@ namespace UltimateHoopers.Controls
                             $"var video = document.getElementById('videoPlayer');" +
                             $"if(video) {{ " +
                             $"  video.muted = {(IsMuted ? "true" : "false")}; " +
+                            $"  video.volume = 1.0; " +
                             $"  console.log('Video muted state set to ' + video.muted); " +
                             $"  video.muted.toString(); " +
                             $"}} else {{ " +
@@ -300,12 +341,27 @@ namespace UltimateHoopers.Controls
                         thumbnailSource = "https://" + thumbnailSource.TrimStart('/');
                     }
 
-                    // Set image source
-                    _thumbnailImage.Source = ImageSource.FromUri(new Uri(thumbnailSource));
+                    Debug.WriteLine($"Setting thumbnail image: {thumbnailSource}");
+
+                    // Handle potential URI exceptions
+                    try
+                    {
+                        // Validate URI format
+                        var uri = new Uri(thumbnailSource);
+
+                        // Set image source
+                        _thumbnailImage.Source = ImageSource.FromUri(uri);
+                    }
+                    catch (UriFormatException)
+                    {
+                        Debug.WriteLine($"Invalid thumbnail URI format: {thumbnailSource}");
+                        _thumbnailImage.Source = "dotnet_bot.png";
+                    }
                 }
                 else
                 {
                     // Fallback to placeholder
+                    Debug.WriteLine("No thumbnail available, using default image");
                     _thumbnailImage.Source = "dotnet_bot.png";
                 }
             }
@@ -317,7 +373,6 @@ namespace UltimateHoopers.Controls
         }
 
         // WebView loaded event handler
-        // Update the VideoPlayer_Navigated method to properly handle the video loading completion
         private void VideoPlayer_Navigated(object sender, WebNavigatedEventArgs e)
         {
             if (e.Result == WebNavigationResult.Success)
@@ -327,8 +382,7 @@ namespace UltimateHoopers.Controls
                 // Set flag
                 _isVideoLoaded = true;
 
-                // Instead of waiting for JavaScript callbacks which might be unreliable,
-                // we'll use a short delay and then show the video directly
+                // Use a short delay and then show the video directly
                 MainThread.BeginInvokeOnMainThread(async () => {
                     try
                     {
@@ -338,6 +392,7 @@ namespace UltimateHoopers.Controls
                         // Hide loading indicator
                         _loadingIndicator.IsVisible = false;
                         _loadingIndicator.IsRunning = false;
+                        _errorLabel.IsVisible = false;
 
                         // Show the video with a fade effect
                         await _videoPlayer.FadeTo(1.0, 300);
@@ -368,8 +423,6 @@ namespace UltimateHoopers.Controls
             {
                 Debug.WriteLine($"WebView navigation failed: {e.Result}");
                 _isVideoLoaded = false;
-
-                // Show error state
                 ShowErrorState();
             }
         }
@@ -379,6 +432,7 @@ namespace UltimateHoopers.Controls
             MainThread.BeginInvokeOnMainThread(() => {
                 _loadingIndicator.IsVisible = false;
                 _loadingIndicator.IsRunning = false;
+                _errorLabel.IsVisible = true;
                 _playButtonOverlay.IsVisible = true;
                 _thumbnailImage.IsVisible = true;
                 _videoPlayer.IsVisible = false;
@@ -401,7 +455,7 @@ namespace UltimateHoopers.Controls
                         $"  'Video element not found'; " +
                         $"}}");
 
-                    Debug.WriteLine($"Mute JS result: {jsResult}");
+                    Debug.WriteLine($"Applied mute state: {jsResult}");
                 }
             }
             catch (Exception ex)
@@ -413,14 +467,21 @@ namespace UltimateHoopers.Controls
         // Auto play the video when in viewport
         public void AutoPlay()
         {
-            if (_isManuallyPaused || string.IsNullOrEmpty(VideoUrl)) return;
+            if (_isManuallyPaused || string.IsNullOrEmpty(VideoUrl))
+            {
+                Debug.WriteLine("AutoPlay aborted: video is manually paused or URL is empty");
+                return;
+            }
 
             try
             {
+                Debug.WriteLine("AutoPlay starting");
+
                 // Show loading state
                 _loadingIndicator.IsVisible = true;
                 _loadingIndicator.IsRunning = true;
                 _playButtonOverlay.IsVisible = false;
+                _errorLabel.IsVisible = false;
 
                 // Make sure the thumbnail is visible during loading
                 _thumbnailImage.IsVisible = true;
@@ -431,8 +492,8 @@ namespace UltimateHoopers.Controls
 
                 Debug.WriteLine($"Starting video playback for URL: {VideoUrl}");
 
-                // Generate HTML with simpler, more reliable video playback
-                string videoHtml = GetSimplifiedVideoHtml(VideoUrl);
+                // Generate HTML with simplified, more reliable video playback
+                string videoHtml = GetVideoHtml(VideoUrl);
 
                 // Set the source - this is a fresh load each time to avoid caching issues
                 _videoPlayer.Source = new HtmlWebViewSource { Html = videoHtml };
@@ -440,30 +501,43 @@ namespace UltimateHoopers.Controls
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error auto-playing video: {ex.Message}");
-                _loadingIndicator.IsVisible = false;
-                _loadingIndicator.IsRunning = false;
-                _playButtonOverlay.IsVisible = true;
+                ShowErrorState();
             }
         }
 
-        private string GetSimplifiedVideoHtml(string videoUrl)
+        // HTML template for video playback
+        private string GetVideoHtml(string videoUrl)
         {
-            // Clean the URL
-            if (!videoUrl.StartsWith("http://") && !videoUrl.StartsWith("https://"))
+            try
             {
-                videoUrl = "https://" + videoUrl.TrimStart('/');
-            }
+                // Clean the URL
+                if (!videoUrl.StartsWith("http://") && !videoUrl.StartsWith("https://"))
+                {
+                    videoUrl = "https://" + videoUrl.TrimStart('/');
+                }
 
-            // Add cache busting
-            string timestamp = DateTime.Now.Ticks.ToString();
-            string finalUrl = videoUrl.Contains("?")
-                ? $"{videoUrl}&cb={timestamp}"
-                : $"{videoUrl}?cb={timestamp}";
+                // Add cache busting parameter
+                string timestamp = DateTime.Now.Ticks.ToString();
+                string finalUrl = videoUrl.Contains("?")
+                    ? $"{videoUrl}&cb={timestamp}"
+                    : $"{videoUrl}?cb={timestamp}";
 
-            Debug.WriteLine($"Video URL with cache busting: {finalUrl}");
+                Debug.WriteLine($"Preparing video HTML with URL: {finalUrl}");
 
-            // Create a simpler HTML with fewer event listeners to avoid callback issues
-            return $@"
+                // Determine video type based on URL extension
+                string videoType = "video/mp4";  // Default
+                if (videoUrl.EndsWith(".webm", StringComparison.OrdinalIgnoreCase))
+                {
+                    videoType = "video/webm";
+                }
+                else if (videoUrl.EndsWith(".ogg", StringComparison.OrdinalIgnoreCase) ||
+                         videoUrl.EndsWith(".ogv", StringComparison.OrdinalIgnoreCase))
+                {
+                    videoType = "video/ogg";
+                }
+
+                // Create a simpler HTML with better error handling
+                return $@"
 <!DOCTYPE html>
 <html>
 <head>
@@ -474,25 +548,119 @@ namespace UltimateHoopers.Controls
             padding: 0;
             width: 100%;
             height: 100%;
-            background-color: transparent;
+            background-color: #000;
             overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }}
         #videoPlayer {{
             width: 100%;
             height: 100%;
-            object-fit: cover;
-            background-color: transparent;
+            object-fit: contain;
+            background-color: #000;
+        }}
+        #errorMessage {{
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            display: none;
+            padding: 20px;
+        }}
+        #playButton {{
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 12px 24px;
+            background-color: #512BD4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            display: none;
+            font-family: Arial, sans-serif;
+            z-index: 10;
         }}
     </style>
 </head>
 <body>
     <video id='videoPlayer' playsinline autoplay loop {(IsMuted ? "muted" : "")}>
-        <source src='{finalUrl}' type='video/mp4'>
+        <source src='{finalUrl}' type='{videoType}'>
+        Your browser does not support HTML5 video.
     </video>
+    <div id='errorMessage'>Error loading video. Please try again.</div>
+    <button id='playButton'>Play Video</button>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {{
+            console.log('Video player initialized');
+            var video = document.getElementById('videoPlayer');
+            var errorMessage = document.getElementById('errorMessage');
+            var playButton = document.getElementById('playButton');
+            
+            if (video) {{
+                // Set volume and mute state
+                video.volume = 1.0;
+                video.muted = {(IsMuted ? "true" : "false")};
+                
+                // Handle video errors
+                video.addEventListener('error', function(e) {{
+                    console.log('Video error: ' + (video.error ? video.error.code : 'unknown'));
+                    errorMessage.style.display = 'block';
+                    video.style.display = 'none';
+                }});
+                
+                // Force load the video
+                video.load();
+                
+                // Try to play with error handling
+                var playPromise = video.play();
+                if (playPromise !== undefined) {{
+                    playPromise.catch(function(e) {{
+                        console.log('Error playing video: ' + e);
+                        // Show play button for user interaction if autoplay fails
+                        playButton.style.display = 'block';
+                    }});
+                }}
+                
+                // Play button event handler
+                playButton.addEventListener('click', function() {{
+                    video.play()
+                        .then(function() {{
+                            playButton.style.display = 'none';
+                        }})
+                        .catch(function(e) {{
+                            console.log('Play failed after button click: ' + e);
+                            errorMessage.style.display = 'block';
+                        }});
+                }});
+                
+                // Check if video is playing after a delay
+                setTimeout(function() {{
+                    if (video.paused) {{
+                        playButton.style.display = 'block';
+                    }}
+                }}, 1000);
+            }}
+        }});
+    </script>
 </body>
 </html>";
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error generating video HTML: {ex.Message}");
+                return $@"
+<!DOCTYPE html>
+<html>
+<body style='background-color: black; color: white; text-align: center; padding-top: 100px; font-family: Arial, sans-serif;'>
+    <p>Error loading video: {ex.Message}</p>
+</body>
+</html>";
+            }
         }
-
 
         public void HandleVideoPlaying()
         {
@@ -535,6 +703,8 @@ namespace UltimateHoopers.Controls
 
             try
             {
+                Debug.WriteLine("Pausing video");
+
                 // Pause the video using JavaScript
                 if (_videoPlayer.Handler != null)
                 {
@@ -557,126 +727,6 @@ namespace UltimateHoopers.Controls
             {
                 Debug.WriteLine($"Error pausing video: {ex.Message}");
             }
-        }
-
-        // HTML template for silent auto-playing videos in WebView
-        private string GetVideoHtml(string videoUrl)
-        {
-            // Add cache busting parameter
-            string cacheBustParam = DateTime.Now.Ticks.ToString();
-            string urlWithCacheBusting = videoUrl.Contains("?")
-                ? $"{videoUrl}&cb={cacheBustParam}"
-                : $"{videoUrl}?cb={cacheBustParam}";
-
-            // Log the HTML generation
-            Debug.WriteLine($"Generating HTML for video: {urlWithCacheBusting}, IsMuted: {IsMuted}");
-
-            return @"<!DOCTYPE html>
-<html>
-<head>
-    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: transparent;
-            height: 100vh;
-            width: 100vw;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
-        .video-container {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        video {
-            width: 100%;
-            height: 100%;
-            max-height: 100vh;
-            object-fit: cover;
-        }
-    </style>
-</head>
-<body>
-    <div class='video-container'>
-        <video id='videoPlayer' playsinline loop " + (IsMuted ? "muted" : "") + @" autoplay>
-            <source src='" + urlWithCacheBusting + @"' type='video/mp4'>
-            Your browser does not support HTML5 video.
-        </video>
-    </div>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Video player initialized');
-            var video = document.getElementById('videoPlayer');
-            
-            // Set initial mute state and log it for debugging
-            video.muted = " + (IsMuted ? "true" : "false") + @";
-            console.log('Initial muted state set to: ' + video.muted);
-            
-            // Add event listeners for debugging
-            video.addEventListener('volumechange', function() {
-                console.log('Volume changed. Muted: ' + video.muted + ', Volume: ' + video.volume);
-            });
-            
-            video.addEventListener('loadstart', function() {
-                console.log('Video load started');
-            });
-            
-            video.addEventListener('loadeddata', function() {
-                console.log('Video data loaded');
-                window.location.href = 'maui-callback://videoLoaded';
-            });
-            
-            video.addEventListener('canplay', function() {
-                console.log('Video can play');
-                window.location.href = 'maui-callback://videoCanPlay';
-            });
-            
-            video.addEventListener('error', function(e) {
-                console.log('Video error: ' + (e.target.error ? e.target.error.code : 'unknown'));
-                window.location.href = 'maui-callback://videoError';
-            });
-            
-            video.addEventListener('playing', function() {
-                console.log('Video playing');
-                window.location.href = 'maui-callback://videoPlaying';
-            });
-            
-            video.addEventListener('waiting', function() {
-                console.log('Video waiting/buffering');
-                window.location.href = 'maui-callback://videoWaiting';
-            });
-            
-            // Force load
-            video.load();
-            
-            // Try autoplay
-            var playPromise = video.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(function(error) {
-                    console.log('Autoplay prevented:', error);
-                });
-            }
-        });
-        
-        // Helper function to toggle mute (can be called from MAUI)
-        function toggleMute() {
-            var video = document.getElementById('videoPlayer');
-            if(video) {
-                video.muted = !video.muted;
-                console.log('Muted toggled to: ' + video.muted);
-                return video.muted;
-            }
-            return null;
-        }
-    </script>
-</body>
-</html>";
         }
 
         // Clean up resources
