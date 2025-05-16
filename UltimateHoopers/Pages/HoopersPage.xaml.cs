@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
 using UltimateHoopers.Services;
 using UltimateHoopers.ViewModels;
 
@@ -14,6 +15,7 @@ namespace UltimateHoopers.Pages
         private ObservableCollection<HooperModel> _allHoopers;
         private ObservableCollection<HooperModel> _filteredHoopers;
         private readonly ProfileViewModel _viewModel;
+        private ActivityIndicator _loadingIndicator;
 
         public HoopersPage()
         {
@@ -36,10 +38,77 @@ namespace UltimateHoopers.Pages
             // Set the binding context
             BindingContext = _viewModel;
 
-            
+            // Initialize collections
+            _allHoopers = new ObservableCollection<HooperModel>();
+            _filteredHoopers = new ObservableCollection<HooperModel>();
+
+            // Create and configure the loading indicator
+            _loadingIndicator = new ActivityIndicator
+            {
+                IsRunning = false,
+                Color = (Color)Application.Current.Resources["PrimaryColor"],
+                HorizontalOptions = LayoutOptions.Center,
+                VerticalOptions = LayoutOptions.Center,
+                HeightRequest = 50,
+                WidthRequest = 50,
+                Scale = 1.5,
+                IsVisible = false
+            };
+
+            // Add the loading indicator to the page
+            AddLoadingIndicator();
         }
 
-      
+        private void AddLoadingIndicator()
+        {
+            try
+            {
+                // Find the ScrollView containing player cards
+                var scrollView = this.FindByName<ScrollView>("PlayersScrollView");
+                if (scrollView == null)
+                {
+                    // If we can't find the named ScrollView, try to find it by type and position
+                    var contentGrid = (this.Content as Grid);
+                    if (contentGrid != null && contentGrid.Children.Count > 1)
+                    {
+                        var mainGrid = contentGrid.Children[1] as Grid;
+                        if (mainGrid != null && mainGrid.Children.Count > 2)
+                        {
+                            scrollView = mainGrid.Children[2] as ScrollView;
+                        }
+                    }
+                }
+
+                if (scrollView != null && scrollView.Content is VerticalStackLayout stackLayout)
+                {
+                    // Create a grid to hold both the content and the loading indicator
+                    var gridContainer = new Grid
+                    {
+                        RowDefinitions = new RowDefinitionCollection
+                        {
+                            new RowDefinition { Height = GridLength.Star }
+                        }
+                    };
+
+                    // Add the existing content to the grid
+                    gridContainer.Add(stackLayout, 0, 0);
+
+                    // Add the loading indicator to the grid
+                    gridContainer.Add(_loadingIndicator, 0, 0);
+
+                    // Replace the ScrollView's content with the grid
+                    scrollView.Content = gridContainer;
+                }
+                else
+                {
+                    Console.WriteLine("Could not find a suitable location to add the loading indicator");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error adding loading indicator: {ex.Message}");
+            }
+        }
 
         protected override async void OnAppearing()
         {
@@ -47,12 +116,18 @@ namespace UltimateHoopers.Pages
 
             try
             {
+                // Show the loading indicator
+                ShowLoading(true);
+
                 // Load profiles from the API when the page appears
                 await _viewModel.LoadProfilesAsync();
 
                 // Access the loaded profiles from the ViewModel's Profiles collection
                 // and convert them to HooperModel objects if needed
                 var hooperModels = ConvertProfilesToHooperModels(_viewModel.Profiles);
+
+                // Store all hoopers for filtering later
+                _allHoopers = new ObservableCollection<HooperModel>(hooperModels);
 
                 // Use the filtered items for display
                 _filteredHoopers = FilterItems(hooperModels);
@@ -63,8 +138,29 @@ namespace UltimateHoopers.Pages
             catch (Exception ex)
             {
                 Console.WriteLine($"Error loading profiles: {ex.Message}");
-                // Fall back to sample data if profiles couldn't be loaded
-                UpdatePlayersUI();
+                await DisplayAlert("Error", "Could not load player data. Please try again later.", "OK");
+
+                // Initialize empty collections if they're null
+                if (_allHoopers == null)
+                    _allHoopers = new ObservableCollection<HooperModel>();
+
+                if (_filteredHoopers == null)
+                    _filteredHoopers = new ObservableCollection<HooperModel>();
+            }
+            finally
+            {
+                // Hide the loading indicator when done
+                ShowLoading(false);
+            }
+        }
+
+        // Helper method to show or hide the loading indicator
+        private void ShowLoading(bool isLoading)
+        {
+            if (_loadingIndicator != null)
+            {
+                _loadingIndicator.IsRunning = isLoading;
+                _loadingIndicator.IsVisible = isLoading;
             }
         }
 
@@ -75,8 +171,8 @@ namespace UltimateHoopers.Pages
 
             if (profiles == null || profiles.Count == 0)
             {
-                // If no profiles were loaded, use the sample data instead
-                return _allHoopers.ToList();
+                Console.WriteLine("No profiles found to convert");
+                return hooperModels; // Return empty list
             }
 
             foreach (var profile in profiles)
@@ -86,14 +182,15 @@ namespace UltimateHoopers.Pages
                     hooperModels.Add(new HooperModel
                     {
                         Username = profile.UserName ?? "",
-                        //DisplayName = profile.DisplayName ?? profile.UserName ?? "Unknown Player",
+                        DisplayName = profile.UserName ?? "Unknown Player",
                         Position = profile.Position ?? "Unknown",
                         Location = profile.City ?? "Unknown Location",
                         Rank = int.TryParse(profile.Ranking, out int rank) ? rank : 99,
                         GamesPlayed = int.TryParse(profile.TotalGames, out int games) ? games : 0,
                         Record = $"{profile.TotalWins.ToString() ?? "0"}-{profile.TotalLosses.ToString() ?? "0"}",
                         WinPercentage = profile.WinPercentage ?? "0%",
-                        Rating = double.TryParse(profile.StarRating, out double rating) ? rating : 0.0
+                        Rating = double.TryParse(profile.StarRating, out double rating) ? rating : 0.0,
+                        ProfileImage = profile.ImageURL
                     });
                 }
                 catch (Exception ex)
@@ -132,11 +229,19 @@ namespace UltimateHoopers.Pages
                     return;
                 }
 
-                // Get the VerticalStackLayout that will contain all player cards
-                var stackLayout = scrollView.Content as VerticalStackLayout;
+                // Get the container that holds the content and loading indicator
+                var container = scrollView.Content as Grid;
+                if (container == null || container.Children.Count == 0)
+                {
+                    Console.WriteLine("ScrollView's content structure is unexpected");
+                    return;
+                }
+
+                // Get the VerticalStackLayout that contains player cards
+                var stackLayout = container.Children[0] as VerticalStackLayout;
                 if (stackLayout == null)
                 {
-                    Console.WriteLine("ScrollView's content is not a VerticalStackLayout");
+                    Console.WriteLine("Cannot find the VerticalStackLayout for player cards");
                     return;
                 }
 
@@ -149,12 +254,27 @@ namespace UltimateHoopers.Pages
                     stackLayout.Add(title);
                 }
 
-                // Add each player to the UI
-                foreach (var player in _filteredHoopers)
+                // If there are no players to display, show a message
+                if (_filteredHoopers == null || _filteredHoopers.Count == 0)
                 {
-                    // Create a new player card for each player
-                    var playerCard = CreatePlayerCard(player);
-                    stackLayout.Add(playerCard);
+                    stackLayout.Add(new Label
+                    {
+                        Text = "No players found",
+                        FontSize = 16,
+                        TextColor = (Color)Application.Current.Resources["SecondaryTextColor"],
+                        HorizontalOptions = LayoutOptions.Center,
+                        Margin = new Thickness(0, 20, 0, 0)
+                    });
+                }
+                else
+                {
+                    // Add each player to the UI
+                    foreach (var player in _filteredHoopers)
+                    {
+                        // Create a new player card for each player
+                        var playerCard = CreatePlayerCard(player);
+                        stackLayout.Add(playerCard);
+                    }
                 }
 
                 Console.WriteLine($"Updated UI with {_filteredHoopers.Count} players");
@@ -423,7 +543,7 @@ namespace UltimateHoopers.Pages
         private ObservableCollection<HooperModel> FilterItems(IEnumerable<HooperModel> items)
         {
             if (items == null || !items.Any())
-                return new ObservableCollection<HooperModel>(_allHoopers);
+                return new ObservableCollection<HooperModel>();
 
             // If you want to apply a default filter, you can do so here
             // For example, only show players with a certain minimum rating
@@ -436,6 +556,9 @@ namespace UltimateHoopers.Pages
         // Handle search text changes
         private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
         {
+            if (_allHoopers == null || _allHoopers.Count == 0)
+                return;
+
             string searchText = e.NewTextValue?.ToLower() ?? "";
 
             // Remove @ symbol if user entered it at the beginning
@@ -444,28 +567,39 @@ namespace UltimateHoopers.Pages
                 searchText = searchText.Substring(1);
             }
 
-            if (string.IsNullOrWhiteSpace(searchText))
-            {
-                // If search is empty, show all players
-                _filteredHoopers.Clear();
-                foreach (var player in _allHoopers)
-                {
-                    _filteredHoopers.Add(player);
-                }
-            }
-            else
-            {
-                // Filter players ONLY by username
-                _filteredHoopers.Clear();
-                foreach (var player in _allHoopers.Where(p =>
-                    p.Username.ToLower().Contains(searchText)))
-                {
-                    _filteredHoopers.Add(player);
-                }
-            }
+            // Show loading indicator during filtering
+            ShowLoading(true);
 
-            // Update the UI with the filtered players
-            UpdatePlayersUI();
+            try
+            {
+                if (string.IsNullOrWhiteSpace(searchText))
+                {
+                    // If search is empty, show all players
+                    _filteredHoopers.Clear();
+                    foreach (var player in _allHoopers)
+                    {
+                        _filteredHoopers.Add(player);
+                    }
+                }
+                else
+                {
+                    // Filter players ONLY by username
+                    _filteredHoopers.Clear();
+                    foreach (var player in _allHoopers.Where(p =>
+                        p.Username.ToLower().Contains(searchText)))
+                    {
+                        _filteredHoopers.Add(player);
+                    }
+                }
+
+                // Update the UI with the filtered players
+                UpdatePlayersUI();
+            }
+            finally
+            {
+                // Hide loading indicator when done
+                ShowLoading(false);
+            }
         }
 
         // Event handler for the Connect button
@@ -478,24 +612,68 @@ namespace UltimateHoopers.Pages
         // Filter methods
         private void OnFilterGuardsClicked(object sender, EventArgs e)
         {
-            FilterByPosition("Guard");
+            if (_allHoopers == null || _allHoopers.Count == 0)
+                return;
+
+            ShowLoading(true);
+            try
+            {
+                FilterByPosition("Guard");
+            }
+            finally
+            {
+                ShowLoading(false);
+            }
         }
 
         private void OnFilterForwardsClicked(object sender, EventArgs e)
         {
-            FilterByPosition("Forward");
+            if (_allHoopers == null || _allHoopers.Count == 0)
+                return;
+
+            ShowLoading(true);
+            try
+            {
+                FilterByPosition("Forward");
+            }
+            finally
+            {
+                ShowLoading(false);
+            }
         }
 
         private void OnFilterCentersClicked(object sender, EventArgs e)
         {
-            FilterByPosition("Center");
+            if (_allHoopers == null || _allHoopers.Count == 0)
+                return;
+
+            ShowLoading(true);
+            try
+            {
+                FilterByPosition("Center");
+            }
+            finally
+            {
+                ShowLoading(false);
+            }
         }
 
         private void OnFilterNearbyClicked(object sender, EventArgs e)
         {
-            // In a real app, this would filter by geolocation
-            // For now, just filter to players in a specific location
-            FilterByLocation("Atlanta, GA");
+            if (_allHoopers == null || _allHoopers.Count == 0)
+                return;
+
+            ShowLoading(true);
+            try
+            {
+                // In a real app, this would filter by geolocation
+                // For now, just filter to players in a specific location
+                FilterByLocation("Atlanta, GA");
+            }
+            finally
+            {
+                ShowLoading(false);
+            }
         }
 
         private void FilterByPosition(string position)
@@ -545,6 +723,7 @@ namespace UltimateHoopers.Pages
             public int GamesPlayed { get; set; }
             public string Record { get; set; }
             public string WinPercentage { get; set; }
+            public string ProfileImage { get; set; }
             public double Rating { get; set; }
         }
     }
