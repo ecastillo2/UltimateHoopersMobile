@@ -109,6 +109,9 @@
 		<MauiXaml Update="Pages\HoopersPage.xaml">
 		  <Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
+		<MauiXaml Update="Pages\PlayerProfilePage.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
 		<MauiXaml Update="Pages\PostsPage.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
@@ -127,6 +130,10 @@
 
 	<ItemGroup>
 		<Folder Include="Models\" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Include="Pages\PlayerProfilePage.xaml" />
 	</ItemGroup>
 
 </Project>

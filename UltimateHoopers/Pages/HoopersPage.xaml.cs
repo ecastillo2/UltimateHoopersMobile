@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using UltimateHoopers.Services;
 using UltimateHoopers.ViewModels;
 
+
 namespace UltimateHoopers.Pages
 {
     public partial class HoopersPage : ContentPage
@@ -190,6 +191,30 @@ namespace UltimateHoopers.Pages
             }
         }
 
+        // New handler for tapping on the player card
+        // New handler for tapping on the player card
+        private async void OnPlayerCardTapped(object sender, TappedEventArgs e)
+        {
+            try
+            {
+                // Get the hooper from the command parameter
+                if (e.Parameter is HooperViewModel hooper)
+                {
+                    Console.WriteLine($"Player card tapped: {hooper.Username}");
+
+                    // Navigate to the player profile page
+                    await Navigation.PushAsync(new PlayerProfilePage(hooper));
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error handling card tap: {ex.Message}");
+                await DisplayAlert("Error", "Could not load player profile. Please try again.", "OK");
+            }
+        }
+
+
+
         public void FilterHoopers(string searchText)
         {
             if (_allHoopers == null || _allHoopers.Count == 0)
@@ -229,80 +254,5 @@ namespace UltimateHoopers.Pages
         }
     }
 
-    public class HooperViewModel : BindableObject
-    {
-        // Base properties
-        public string Username { get; set; }
-        public string DisplayName { get; set; }
-        public string Position { get; set; }
-        public string Location { get; set; }
-        public int Rank { get; set; }
-        public int GamesPlayed { get; set; }
-        public string Record { get; set; }
-        public string WinPercentage { get; set; }
-        public double Rating { get; set; }
-        public string ProfileImage { get; set; }
-
-        // Computed properties
-        public string UsernameDisplay => $"@{Username}";
-        public string PositionLocation => $"{Position} • {Location}";
-        public string RatingDisplay => Rating.ToString("0.0");
-
-        // Profile image handling
-        public bool HasValidImage => !string.IsNullOrEmpty(ProfileImage) &&
-                                     (ProfileImage.StartsWith("http://") ||
-                                      ProfileImage.StartsWith("https://"));
-
-        // Placeholder coloring
-        public string Initials { get; private set; }
-        public Color InitialsColor { get; private set; }
-
-        public void InitProperties()
-        {
-            // Generate initials from username
-            Initials = !string.IsNullOrEmpty(Username) && Username.Length > 0
-                ? Username.Substring(0, Math.Min(2, Username.Length)).ToUpper()
-                : "?";
-
-            // Generate consistent color based on username
-            InitialsColor = GetUsernameColor(Username);
-
-            // Call property changed for computed properties
-            OnPropertyChanged(nameof(UsernameDisplay));
-            OnPropertyChanged(nameof(PositionLocation));
-            OnPropertyChanged(nameof(RatingDisplay));
-            OnPropertyChanged(nameof(HasValidImage));
-            OnPropertyChanged(nameof(Initials));
-            OnPropertyChanged(nameof(InitialsColor));
-        }
-
-        private Color GetUsernameColor(string username)
-        {
-            if (string.IsNullOrEmpty(username))
-                return Colors.Purple;
-
-            // Generate hash from username for consistent color
-            int hash = 0;
-            foreach (char c in username)
-            {
-                hash = (hash * 31) + c;
-            }
-
-            // Define pleasant colors
-            var colors = new List<Color>
-            {
-                Color.FromArgb("#512BD4"), // Purple (primary color)
-                Color.FromArgb("#3498db"), // Blue
-                Color.FromArgb("#2ecc71"), // Green
-                Color.FromArgb("#e74c3c"), // Red
-                Color.FromArgb("#f39c12"), // Orange
-                Color.FromArgb("#9b59b6"), // Violet
-                Color.FromArgb("#1abc9c"), // Teal
-                Color.FromArgb("#34495e")  // Dark Blue
-            };
-
-            // Pick color based on hash
-            return colors[Math.Abs(hash) % colors.Count];
-        }
-    }
+   
 }

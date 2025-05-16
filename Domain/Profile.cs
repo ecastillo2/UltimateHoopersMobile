@@ -90,7 +90,7 @@ namespace Domain
         public int? TotalWins { get; set; }
         [NotMapped]
         public int? TotalLosses { get; set; }
-        [NotMapped]
+       
         public Setting? Setting { get; set; }
         [NotMapped]
         public ScoutingReport? ScoutingReport { get; set; }

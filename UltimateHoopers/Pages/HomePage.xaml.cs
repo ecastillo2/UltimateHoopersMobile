@@ -15,27 +15,49 @@ namespace UltimateHoopers.Pages
 
         private void InitializeUserProfile()
         {
-            //UsernameText.Text = App.User.Profile.UserName;
-            //PositionHeightText.Text = $"{App.User.Profile.Position} • {App.User.Profile.Height}";
-            //PlayerNumberText.Text = App.User.Profile.PlayerNumber;
-            //GamesText.Text = App.User.Profile.TotalGames;
-            //RecordText.Text = $"{App.User.Profile.TotalWins} - {App.User.Profile.TotalLosses}";
-            //WinPercentageText.Text = App.User.Profile.WinPercentage;
-
-
-
-            // Load profile image if available
-            if (!string.IsNullOrEmpty(App.User.Profile.ImageURL))
+            try
             {
-                try
+                // Check if App.User exists
+                if (App.User == null)
                 {
-                    ProfileImage.Source = App.User.Profile.ImageURL;
-                    ProfileImage.IsVisible = true;
+                    Console.WriteLine("App.User is null. User may not be logged in.");
+                    return;
                 }
-                catch (Exception ex)
+
+                // Check if App.User.Profile exists
+                if (App.User.Profile == null)
                 {
-                    Console.WriteLine($"Error loading profile image: {ex.Message}");
+                    Console.WriteLine("App.User.Profile is null. User profile hasn't been loaded yet.");
+                    return;
                 }
+
+                // Load profile image if available
+                if (!string.IsNullOrEmpty(App.User.Profile.ImageURL))
+                {
+                    try
+                    {
+                        ProfileImage.Source = App.User.Profile.ImageURL;
+                        ProfileImage.IsVisible = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error loading profile image: {ex.Message}");
+                        // Optionally set a default image
+                        // ProfileImage.Source = "default_profile.png";
+                        ProfileImage.IsVisible = false;
+                    }
+                }
+                else
+                {
+                    // No image URL is available, ensure image is not visible
+                    ProfileImage.IsVisible = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log any unexpected errors
+                Console.WriteLine($"Error in InitializeUserProfile: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
             }
         }
 
