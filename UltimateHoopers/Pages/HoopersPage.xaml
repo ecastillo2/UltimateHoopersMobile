@@ -148,6 +148,7 @@
                         <!-- Hoopers List Title -->
                         <Label Text="Featured Hoopers" 
                                FontSize="20"
+                               TextColor="Black"
                                FontAttributes="Bold" 
                                Margin="0,0,0,0" />
 
@@ -190,7 +191,7 @@
                                                    CornerRadius="35"
                                                    Padding="0"
                                                    IsClippedToBounds="True"
-                                                   BorderColor="{StaticResource PrimaryColor}"
+                                                  
                                                    Margin="15">
                                                 <Grid>
                                                     <!-- Profile Image Placeholder (ColorBox with Initials) -->
