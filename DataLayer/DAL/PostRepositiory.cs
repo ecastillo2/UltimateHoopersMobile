@@ -3,7 +3,6 @@ using Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
-
 namespace DataLayer.DAL
 {
     public class PostRepository : IPostRepository, IDisposable
@@ -1052,6 +1051,16 @@ namespace DataLayer.DAL
         public async Task<int> Save()
         {
             return await _context.SaveChangesAsync();
+        }
+
+        public Task<(List<Post> Posts, string NextCursor, bool HasMore)> GetPostsWithCursorAsync(string cursor = null, int limit = 10, string timeZone = "America/New_York", CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void InvalidateCache()
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -84,6 +84,27 @@ namespace UltimateHoopers.Pages
                 await DisplayAlert("Connect", $"Connecting with @{hooper.Username}", "OK");
             }
         }
+
+        // New handler for tapping on the player card
+        private async void OnPlayerCardTapped(object sender, TappedEventArgs e)
+        {
+            try
+            {
+                // Get the hooper from the command parameter
+                if (e.Parameter is HooperViewModel hooper)
+                {
+                    Console.WriteLine($"Player card tapped: {hooper.Username}");
+
+                    // Navigate to the player profile page
+                    await Navigation.PushAsync(new PlayerProfilePage(hooper));
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error handling card tap: {ex.Message}");
+                await DisplayAlert("Error", "Could not load player profile. Please try again.", "OK");
+            }
+        }
     }
 
     public class HoopersViewModel : BindableObject
@@ -183,37 +204,13 @@ namespace UltimateHoopers.Pages
             catch (Exception ex)
             {
                 Console.WriteLine($"Error loading profiles: {ex.Message}");
-                await Application.Current.MainPage.DisplayAlert("Error", "Could not load player data. Please try again later.", "OK");
+                throw; // Let the page handle this exception
             }
             finally
             {
                 IsLoading = false;
             }
         }
-
-        // New handler for tapping on the player card
-        // New handler for tapping on the player card
-        private async void OnPlayerCardTapped(object sender, TappedEventArgs e)
-        {
-            try
-            {
-                // Get the hooper from the command parameter
-                if (e.Parameter is HooperViewModel hooper)
-                {
-                    Console.WriteLine($"Player card tapped: {hooper.Username}");
-
-                    // Navigate to the player profile page
-                    await Navigation.PushAsync(new PlayerProfilePage(hooper));
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error handling card tap: {ex.Message}");
-                await DisplayAlert("Error", "Could not load player profile. Please try again.", "OK");
-            }
-        }
-
-
 
         public void FilterHoopers(string searchText)
         {
@@ -253,6 +250,4 @@ namespace UltimateHoopers.Pages
             FilteredHoopers = new ObservableCollection<HooperViewModel>(filtered);
         }
     }
-
-   
 }

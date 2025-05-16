@@ -54,7 +54,9 @@
             <VerticalStackLayout Spacing="20">
 
                 <!-- Profile Header Card -->
-                <Frame Style="{StaticResource CardStyle}">
+                <Frame Style="{StaticResource CardStyle}"
+                       BackgroundColor="LightGrey"
+BorderColor="{StaticResource BorderColor}">
                     <Grid RowDefinitions="Auto,Auto"
                           ColumnDefinitions="Auto,*">
 
@@ -66,7 +68,7 @@
                                WidthRequest="100"
                                Padding="0"
                                BorderColor="{StaticResource PrimaryColor}"
-                               BorderWidth="3"
+                            
                                HasShadow="False"
                                IsClippedToBounds="True"
                                Margin="0,0,15,0">
@@ -171,7 +173,9 @@
                 </Frame>
 
                 <!-- Stats Card -->
-                <Frame Style="{StaticResource CardStyle}">
+                <Frame Style="{StaticResource CardStyle}"
+                       BackgroundColor="LightGrey"
+BorderColor="{StaticResource BorderColor}">
                     <VerticalStackLayout Spacing="15">
                         <Label Text="Performance Stats"
                                FontSize="18"
@@ -331,22 +335,26 @@
                 </Frame>
 
                 <!-- Bio Card -->
-                <Frame Style="{StaticResource CardStyle}">
+                <Frame Style="{StaticResource CardStyle}"
+                       BackgroundColor="LightGrey"
+                       BorderColor="{StaticResource BorderColor}">
                     <VerticalStackLayout Spacing="10">
-                        <Label Text="Player Bio"
+                        <Label Text="Scouting Report"
                                FontSize="18"
                                FontAttributes="Bold"
                                TextColor="{StaticResource PrimaryTextColor}" />
 
                         <Label x:Name="BioLabel"
                                Text="Point guard with excellent vision and passing ability. I focus on getting teammates involved and running the offense efficiently. Looking to improve my outside shooting and defensive quickness. I've been playing competitively for 8 years and am always looking for good pickup games in the Atlanta area."
-                               TextColor="{StaticResource PrimaryTextColor}"
+                               TextColor="Black"
                                LineBreakMode="WordWrap" />
                     </VerticalStackLayout>
                 </Frame>
 
                 <!-- Recent Games Card -->
-                <Frame Style="{StaticResource CardStyle}">
+                <Frame Style="{StaticResource CardStyle}"
+                       BackgroundColor="LightGrey"
+BorderColor="{StaticResource BorderColor}">
                     <VerticalStackLayout Spacing="10">
                         <Label Text="Recent Games"
                                FontSize="18"

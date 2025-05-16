@@ -1,7 +1,8 @@
-﻿using Domain;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
+using Domain;
 
 namespace DataLayer.DAL
 {
@@ -14,6 +15,25 @@ namespace DataLayer.DAL
         /// Get all posts with timezone for relative time calculation
         /// </summary>
         Task<List<Post>> GetPosts(string timezone);
+
+        /// <summary>
+        /// Get posts with cursor-based pagination optimized for mobile scrolling
+        /// </summary>
+        /// <param name="cursor">Optional cursor for pagination</param>
+        /// <param name="limit">Number of posts to return</param>
+        /// <param name="timeZone">Timezone for relative time calculation</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>Tuple containing posts, next cursor, and whether more posts exist</returns>
+        Task<(List<Post> Posts, string NextCursor, bool HasMore)> GetPostsWithCursorAsync(
+            string cursor = null,
+            int limit = 10,
+            string timeZone = "America/New_York",
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Invalidate the posts cache
+        /// </summary>
+        void InvalidateCache();
 
         /// <summary>
         /// Get all posts including draft and archived posts
