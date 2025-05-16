@@ -109,19 +109,23 @@ namespace UltimateHoopers.Pages
             }
         }
 
-        protected override void OnAppearing()
+        // Override this method to help with audio playback on appearing
+        protected override async void OnAppearing()
         {
             base.OnAppearing();
 
             // Automatically start playing when the page appears
-            MainThread.BeginInvokeOnMainThread(() =>
+            MainThread.BeginInvokeOnMainThread(async () =>
             {
                 // Small delay to ensure the UI is ready
-                Device.StartTimer(TimeSpan.FromMilliseconds(500), () =>
-                {
-                    OnPlayButtonTapped(this, EventArgs.Empty);
-                    return false; // Don't repeat
-                });
+                await Task.Delay(500);
+
+                // Start playback
+                OnPlayButtonTapped(this, EventArgs.Empty);
+
+                // After another short delay, try to ensure audio is properly initialized
+                await Task.Delay(1000);
+                TryResumeAudioContext();
             });
         }
 
@@ -187,6 +191,7 @@ namespace UltimateHoopers.Pages
         }
 
         // Toggle mute state
+        // Toggle mute state
         private void OnVolumeButtonClicked(object sender, EventArgs e)
         {
             try
@@ -195,7 +200,7 @@ namespace UltimateHoopers.Pages
                 _isMuted = !_isMuted;
                 Debug.WriteLine($"Volume button clicked. New mute state: {_isMuted}");
 
-                // Update the volume button icon
+                // Update the volume button icon immediately for UI feedback
                 UpdateVolumeButtonIcon();
 
                 // Update the video mute state if it's loaded
@@ -204,32 +209,69 @@ namespace UltimateHoopers.Pages
                     MainThread.BeginInvokeOnMainThread(async () => {
                         try
                         {
-                            // Execute the JavaScript to toggle muting with enhanced error checking
-                            string result = await videoWebView.EvaluateJavaScriptAsync(
-                                $"console.log('Setting muted to {(_isMuted ? "true" : "false")}');" +
-                                $"var video = document.getElementById('videoPlayer');" +
-                                $"if(video) {{ " +
-                                $"  video.muted = {(_isMuted ? "true" : "false")}; " +
-                                $"  console.log('Video muted set to: ' + video.muted); " +
-                                $"  video.volume = 1.0; " + // Set volume to maximum
-                                $"  console.log('Video volume set to: ' + video.volume); " +
-                                $"  video.muted.toString(); " +
-                                $"}} else {{ " +
-                                $"  console.log('Video element not found'); " +
-                                $"  'Video element not found'; " +
-                                $"}}");
+                            // Execute stronger JavaScript to control volume
+                            // This directly targets the video element and forces volume to 1.0 when unmuted
+                            string js = @"
+                        (function() {
+                            try {
+                                var video = document.getElementById('videoPlayer');
+                                if (video) {
+                                    // Set muted property
+                                    video.muted = " + (_isMuted ? "true" : "false") + @";
+                                    
+                                    // When unmuting, explicitly set volume to 1
+                                    " + (!_isMuted ? "video.volume = 1.0;" : "") + @"
+                                    
+                                    // Try to wake up audio context if needed
+                                    if (!video.muted) {
+                                        // Create a user gesture interaction to help browsers enable sound
+                                        var context = new (window.AudioContext || window.webkitAudioContext)();
+                                        context.resume().then(() => console.log('AudioContext resumed'));
+                                        
+                                        // Force play to re-engage audio
+                                        var playPromise = video.play();
+                                        if (playPromise !== undefined) {
+                                            playPromise.catch(e => {
+                                                console.log('Play failed after unmute: ' + e);
+                                                // Try once more with user interaction context
+                                                video.play();
+                                            });
+                                        }
+                                    }
+                                    
+                                    console.log('Volume and mute settings applied. Muted: ' + video.muted + ', Volume: ' + video.volume);
+                                    return {muted: video.muted, volume: video.volume};
+                                } else {
+                                    console.error('Video element not found');
+                                    return {error: 'Video element not found'};
+                                }
+                            } catch(e) {
+                                console.error('Error in volume control JS: ' + e);
+                                return {error: e.toString()};
+                            }
+                        })();
+                    ";
 
-                            Debug.WriteLine($"JavaScript result: {result}");
+                            string result = await videoWebView.EvaluateJavaScriptAsync(js);
+                            Debug.WriteLine($"JavaScript volume control result: {result}");
+
+                            // If unmuting, try a second approach after a short delay to ensure it takes effect
+                            if (!_isMuted)
+                            {
+                                await Task.Delay(300);
+                                await videoWebView.EvaluateJavaScriptAsync(
+                                    "var video = document.getElementById('videoPlayer'); " +
+                                    "if(video) { video.volume = 1.0; video.muted = false; }");
+                            }
                         }
                         catch (Exception jsEx)
                         {
                             Debug.WriteLine($"JavaScript evaluation error: {jsEx.Message}");
 
                             // If JavaScript fails, try reloading the video with the new mute state
-                            Debug.WriteLine("Reloading video with new mute state after JavaScript error");
-
                             if (!string.IsNullOrEmpty(_post?.PostFileURL))
                             {
+                                Debug.WriteLine("Reloading video with new mute state after JavaScript error");
                                 videoWebView.Source = new HtmlWebViewSource { Html = GetVideoHtml(_post.PostFileURL) };
                             }
                         }
@@ -323,6 +365,21 @@ namespace UltimateHoopers.Pages
                 console.log('Initial muted state: ' + video.muted);
                 console.log('Initial volume: ' + video.volume);
                 
+                // Enable audio context to help with audio playback
+                try {
+                    window.addEventListener('click', function() {
+                        // Create audio context on first user interaction
+                        var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                        if (audioCtx.state === 'suspended') {
+                            audioCtx.resume().then(function() {
+                                console.log('AudioContext resumed successfully');
+                            });
+                        }
+                    }, { once: true });
+                } catch(e) {
+                    console.log('AudioContext not supported: ' + e);
+                }
+                
                 // Monitor volume changes for debugging
                 video.addEventListener('volumechange', function() {
                     console.log('Volume changed. Muted: ' + video.muted + ', Volume: ' + video.volume);
@@ -342,21 +399,71 @@ namespace UltimateHoopers.Pages
                 video.addEventListener('playing', function() {
                     console.log('Video now playing');
                     window.location.href = 'maui-callback://videoPlaying';
+                    
+                    // Set volume after start playing
+                    video.muted = " + (_isMuted ? "true" : "false") + @";
+                    video.volume = 1.0;
                 });
                 
                 // Force load the video
                 video.load();
                 
-                // Try to autoplay (this may be blocked by browser policies)
+                // Try to autoplay with sound if not muted
                 setTimeout(function() {
                     console.log('Attempting to play video...');
+                    
+                    // Add this code to help with audio permissions
+                    if (!" + (_isMuted ? "true" : "false") + @") {
+                        // If not muted, try to wake audio context
+                        try {
+                            var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                            audioCtx.resume();
+                        } catch(e) {}
+                    }
+                    
                     var playPromise = video.play();
                     
                     if (playPromise !== undefined) {
                         playPromise.then(function() {
                             console.log('Autoplay started successfully');
+                            // Set volume again after successful play
+                            video.volume = 1.0;
+                            video.muted = " + (_isMuted ? "true" : "false") + @";
                         }).catch(function(error) {
                             console.log('Autoplay prevented: ' + error);
+                            
+                            // If autoplay fails, add a play button that will help trigger play with user gesture
+                            if (!document.getElementById('manual-play-button')) {
+                                var playButton = document.createElement('button');
+                                playButton.id = 'manual-play-button';
+                                playButton.innerText = 'Play Video';
+                                playButton.style.position = 'absolute';
+                                playButton.style.top = '50%';
+                                playButton.style.left = '50%';
+                                playButton.style.transform = 'translate(-50%, -50%)';
+                                playButton.style.zIndex = '1000';
+                                playButton.style.padding = '10px 20px';
+                                playButton.style.backgroundColor = '#512BD4';
+                                playButton.style.color = 'white';
+                                playButton.style.border = 'none';
+                                playButton.style.borderRadius = '4px';
+                                playButton.style.cursor = 'pointer';
+                                
+                                playButton.onclick = function() {
+                                    video.play()
+                                        .then(function() {
+                                            console.log('Video played via button click');
+                                            video.volume = 1.0;
+                                            video.muted = " + (_isMuted ? "true" : "false") + @";
+                                            playButton.style.display = 'none';
+                                        })
+                                        .catch(function(e) {
+                                            console.log('Play via button still failed: ' + e);
+                                        });
+                                };
+                                
+                                document.body.appendChild(playButton);
+                            }
                         });
                     }
                 }, 500);
@@ -369,81 +476,85 @@ namespace UltimateHoopers.Pages
 </html>";
         }
 
+        private async void TryResumeAudioContext()
+        {
+            try
+            {
+                // Execute JavaScript to try to wake up any audio context
+                if (videoWebView.Handler != null)
+                {
+                    string result = await videoWebView.EvaluateJavaScriptAsync(@"
+                (function() {
+                    try {
+                        var video = document.getElementById('videoPlayer');
+                        if (video) {
+                            // Create and resume audio context
+                            var context = new (window.AudioContext || window.webkitAudioContext)();
+                            context.resume().then(() => console.log('AudioContext resumed'));
+                            
+                            // Unmute and set volume if needed
+                            if (!" + (_isMuted ? "true" : "false") + @") {
+                                video.muted = false;
+                                video.volume = 1.0;
+                                
+                                // Try play again
+                                video.play().catch(e => console.log('Play error: ' + e));
+                            }
+                            return 'Audio context resumed';
+                        }
+                        return 'Video element not found';
+                    } catch(e) {
+                        return 'Error: ' + e;
+                    }
+                })();
+            ");
+
+                    Debug.WriteLine($"Audio context resume result: {result}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error resuming audio context: {ex.Message}");
+            }
+        }
+
         // WebView navigation event handlers
         private void VideoWebView_Navigating(object sender, WebNavigatingEventArgs e)
         {
             if (e.Url.StartsWith("maui-callback://"))
             {
-                e.Cancel = true; // Cancel the navigation
+                e.Cancel = true; // Cancel the navigation to prevent page from changing
 
-                if (e.Url == "maui-callback://videoCanPlay")
+                if (e.Url == "maui-callback://videoLoaded")
+                {
+                    Debug.WriteLine("Video loaded callback received");
+                    // Data is loaded but video may not be playing yet
+                }
+                else if (e.Url == "maui-callback://videoCanPlay")
                 {
                     Debug.WriteLine("Video can play callback received");
-                    // You could add additional handling here if needed
-                }
-                else if (e.Url == "maui-callback://videoError")
-                {
-                    Debug.WriteLine("Video error callback received");
-                    MainThread.BeginInvokeOnMainThread(async () =>
-                    {
-                        bool openExternal = await DisplayAlert(
-                            "Playback Issue",
-                            "The video couldn't be played in the app. Would you like to open it in your browser?",
-                            "Open in Browser",
-                            "Cancel");
-
-                        if (openExternal && _post != null && !string.IsNullOrWhiteSpace(_post.PostFileURL))
-                        {
-                            await Launcher.OpenAsync(new Uri(_post.PostFileURL));
-                        }
-                        else
-                        {
-                            // Reset UI if user cancels
-                            fallbackGrid.IsVisible = true;
-                            playButtonFrame.IsVisible = true;
-                            loadingIndicator.IsVisible = false;
-                        }
-                    });
+                    // Video is ready to play but hasn't necessarily started playing
                 }
                 else if (e.Url == "maui-callback://videoPlaying")
                 {
                     Debug.WriteLine("Video playing callback received");
-                    MainThread.BeginInvokeOnMainThread(async () =>
+
+                    // Now that the video is actually playing, we can handle video element visibility
+                    if (sender is WebView webView && webView.Parent is AutoPlayVideoElement videoElement)
                     {
-                        // Hide fallback once playing
-                        fallbackGrid.IsVisible = false;
-                        loadingIndicator.IsVisible = false;
-
-                        // Short delay before applying mute state again to ensure video is fully initialized
-                        await Task.Delay(300);
-
-                        if (_isVideoLoaded && videoWebView.Handler != null)
-                        {
-                            try
-                            {
-                                // Reapply mute state to ensure it takes effect
-                                string result = await videoWebView.EvaluateJavaScriptAsync(
-                                    $"console.log('Reapplying muted state to {(_isMuted ? "true" : "false")}');" +
-                                    $"var video = document.getElementById('videoPlayer');" +
-                                    $"if(video) {{ " +
-                                    $"  video.volume = 1.0; " + // Ensure volume is at maximum
-                                    $"  video.muted = {(_isMuted ? "true" : "false")}; " +
-                                    $"  console.log('Muted state reapplied: ' + video.muted); " +
-                                    $"  console.log('Volume is: ' + video.volume); " +
-                                    $"  true; " +
-                                    $"}} else {{ " +
-                                    $"  console.log('Video element not found'); " +
-                                    $"  false; " +
-                                    $"}}");
-
-                                Debug.WriteLine($"Reapplied mute state, result: {result}");
-                            }
-                            catch (Exception ex)
-                            {
-                                Debug.WriteLine($"Error reapplying mute state: {ex.Message}");
-                            }
-                        }
-                    });
+                        // Tell the video element to handle the playing state
+                        videoElement.HandleVideoPlaying();
+                    }
+                }
+                else if (e.Url == "maui-callback://videoError")
+                {
+                    Debug.WriteLine("Video error callback received");
+                    // Show error state in UI if needed
+                }
+                else if (e.Url == "maui-callback://videoWaiting")
+                {
+                    Debug.WriteLine("Video waiting/buffering callback received");
+                    // Could show a buffering indicator here if needed
                 }
             }
         }

@@ -317,31 +317,96 @@ namespace UltimateHoopers.Controls
         }
 
         // WebView loaded event handler
+        // Update the VideoPlayer_Navigated method to properly handle the video loading completion
         private void VideoPlayer_Navigated(object sender, WebNavigatedEventArgs e)
         {
             if (e.Result == WebNavigationResult.Success)
             {
+                Debug.WriteLine("WebView navigated successfully");
+
+                // Set flag
                 _isVideoLoaded = true;
-                _loadingIndicator.IsVisible = false;
-                _loadingIndicator.IsRunning = false;
 
-                // Fade in the video player
+                // Instead of waiting for JavaScript callbacks which might be unreliable,
+                // we'll use a short delay and then show the video directly
                 MainThread.BeginInvokeOnMainThread(async () => {
-                    await _videoPlayer.FadeTo(1.0, 300);
-                    _playButtonOverlay.IsVisible = false;
+                    try
+                    {
+                        // Short delay to give the video time to initialize
+                        await Task.Delay(500);
 
-                    // Apply mute state after loading (just to be sure)
-                    await Task.Delay(500); // Short delay to ensure video is initialized
-                    UpdateMuteState();
+                        // Hide loading indicator
+                        _loadingIndicator.IsVisible = false;
+                        _loadingIndicator.IsRunning = false;
+
+                        // Show the video with a fade effect
+                        await _videoPlayer.FadeTo(1.0, 300);
+
+                        // Hide the play button
+                        _playButtonOverlay.IsVisible = false;
+
+                        // Apply the mute state directly through JavaScript
+                        await ApplyMuteState();
+
+                        // Optional: Hide thumbnail after video appears
+                        // Only hide if we're sure the video is visible
+                        if (_videoPlayer.Opacity > 0.9)
+                        {
+                            _thumbnailImage.IsVisible = false;
+                        }
+
+                        Debug.WriteLine("Video playback started");
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Error showing video after navigation: {ex.Message}");
+                        ShowErrorState();
+                    }
                 });
             }
             else
             {
-                Debug.WriteLine($"Video navigation failed: {e.Result}");
+                Debug.WriteLine($"WebView navigation failed: {e.Result}");
                 _isVideoLoaded = false;
+
+                // Show error state
+                ShowErrorState();
+            }
+        }
+
+        private void ShowErrorState()
+        {
+            MainThread.BeginInvokeOnMainThread(() => {
                 _loadingIndicator.IsVisible = false;
                 _loadingIndicator.IsRunning = false;
                 _playButtonOverlay.IsVisible = true;
+                _thumbnailImage.IsVisible = true;
+                _videoPlayer.IsVisible = false;
+            });
+        }
+
+        private async Task ApplyMuteState()
+        {
+            try
+            {
+                if (_videoPlayer.Handler != null)
+                {
+                    string jsResult = await _videoPlayer.EvaluateJavaScriptAsync(
+                        $"var video = document.getElementById('videoPlayer');" +
+                        $"if(video) {{ " +
+                        $"  video.muted = {(IsMuted ? "true" : "false")}; " +
+                        $"  video.volume = 1.0; " +
+                        $"  'Mute applied'; " +
+                        $"}} else {{ " +
+                        $"  'Video element not found'; " +
+                        $"}}");
+
+                    Debug.WriteLine($"Mute JS result: {jsResult}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error applying mute state: {ex.Message}");
             }
         }
 
@@ -357,60 +422,20 @@ namespace UltimateHoopers.Controls
                 _loadingIndicator.IsRunning = true;
                 _playButtonOverlay.IsVisible = false;
 
-                // Generate the HTML with silent auto-playing video
-                string videoHtml = GetVideoHtml(VideoUrl);
+                // Make sure the thumbnail is visible during loading
+                _thumbnailImage.IsVisible = true;
 
-                // Load video source if not already loaded
-                if (!_isVideoLoaded)
-                {
-                    _videoPlayer.Source = new HtmlWebViewSource { Html = videoHtml };
-                }
-                else
-                {
-                    // Try to resume without reloading
-                    try
-                    {
-                        // Try to resume using JavaScript
-                        // Note: Eval may not be available in all MAUI WebView implementations
-                        if (_videoPlayer.Handler != null)
-                        {
-                            // Try running JavaScript directly in the WebView
-                            MainThread.BeginInvokeOnMainThread(async () => {
-                                try
-                                {
-                                    // Use URL navigation for callbacks as a more reliable mechanism
-                                    await _videoPlayer.EvaluateJavaScriptAsync(
-                                        "var video = document.getElementById('videoPlayer'); " +
-                                        "if(video) { " +
-                                        "  video.play().then(() => { " +
-                                        "    window.location.href = 'maui-callback://videoPlaying'; " +
-                                        "  }).catch(err => { " +
-                                        "    console.log('Play error: ' + err); " +
-                                        "  }); " +
-                                        "}");
-                                }
-                                catch (Exception jsEx)
-                                {
-                                    Debug.WriteLine($"JavaScript evaluation error: {jsEx.Message}");
-                                    // Fall back to reloading the video
-                                    _videoPlayer.Source = new HtmlWebViewSource { Html = videoHtml };
-                                }
-                            });
-                        }
-                        else
-                        {
-                            // If Handler is null, reload the video
-                            _videoPlayer.Source = new HtmlWebViewSource { Html = videoHtml };
-                        }
-                    }
-                    catch
-                    {
-                        // If JavaScript evaluation fails, reload the video
-                        _videoPlayer.Source = new HtmlWebViewSource { Html = videoHtml };
-                    }
-                }
-
+                // Make WebView invisible initially but enable it
+                _videoPlayer.Opacity = 0;
                 _videoPlayer.IsVisible = true;
+
+                Debug.WriteLine($"Starting video playback for URL: {VideoUrl}");
+
+                // Generate HTML with simpler, more reliable video playback
+                string videoHtml = GetSimplifiedVideoHtml(VideoUrl);
+
+                // Set the source - this is a fresh load each time to avoid caching issues
+                _videoPlayer.Source = new HtmlWebViewSource { Html = videoHtml };
             }
             catch (Exception ex)
             {
@@ -421,11 +446,86 @@ namespace UltimateHoopers.Controls
             }
         }
 
+        private string GetSimplifiedVideoHtml(string videoUrl)
+        {
+            // Clean the URL
+            if (!videoUrl.StartsWith("http://") && !videoUrl.StartsWith("https://"))
+            {
+                videoUrl = "https://" + videoUrl.TrimStart('/');
+            }
+
+            // Add cache busting
+            string timestamp = DateTime.Now.Ticks.ToString();
+            string finalUrl = videoUrl.Contains("?")
+                ? $"{videoUrl}&cb={timestamp}"
+                : $"{videoUrl}?cb={timestamp}";
+
+            Debug.WriteLine($"Video URL with cache busting: {finalUrl}");
+
+            // Create a simpler HTML with fewer event listeners to avoid callback issues
+            return $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <style>
+        body, html {{
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: transparent;
+            overflow: hidden;
+        }}
+        #videoPlayer {{
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background-color: transparent;
+        }}
+    </style>
+</head>
+<body>
+    <video id='videoPlayer' playsinline autoplay loop {(IsMuted ? "muted" : "")}>
+        <source src='{finalUrl}' type='video/mp4'>
+    </video>
+</body>
+</html>";
+        }
+
+
+        public void HandleVideoPlaying()
+        {
+            MainThread.BeginInvokeOnMainThread(async () => {
+                // Hide loading indicator and thumbnail
+                _loadingIndicator.IsVisible = false;
+                _loadingIndicator.IsRunning = false;
+                _playButtonOverlay.IsVisible = false;
+
+                // Fade in the video, which will hide the thumbnail beneath it
+                await _videoPlayer.FadeTo(1.0, 300);
+
+                // Once the fade is complete, we can safely hide the thumbnail to save resources
+                _thumbnailImage.IsVisible = false;
+            });
+        }
+
         // Toggle mute state
         public void ToggleMute()
         {
             Debug.WriteLine($"Toggling mute from {IsMuted} to {!IsMuted}");
             IsMuted = !IsMuted;
+
+            // Apply the change immediately if video is loaded
+            if (_isVideoLoaded)
+            {
+                MainThread.BeginInvokeOnMainThread(async () => {
+                    await ApplyMuteState();
+                });
+            }
+
+            // Notify about mute state change
+            MuteStateChanged?.Invoke(this, IsMuted);
         }
 
         // Pause the video when scrolled out of view
@@ -462,7 +562,7 @@ namespace UltimateHoopers.Controls
         // HTML template for silent auto-playing videos in WebView
         private string GetVideoHtml(string videoUrl)
         {
-            // Add cache busting to avoid caching issues
+            // Add cache busting parameter
             string cacheBustParam = DateTime.Now.Ticks.ToString();
             string urlWithCacheBusting = videoUrl.Contains("?")
                 ? $"{videoUrl}&cb={cacheBustParam}"
@@ -479,7 +579,7 @@ namespace UltimateHoopers.Controls
         body {
             margin: 0;
             padding: 0;
-            background-color: #000;
+            background-color: transparent;
             height: 100vh;
             width: 100vw;
             display: flex;
@@ -523,6 +623,15 @@ namespace UltimateHoopers.Controls
                 console.log('Volume changed. Muted: ' + video.muted + ', Volume: ' + video.volume);
             });
             
+            video.addEventListener('loadstart', function() {
+                console.log('Video load started');
+            });
+            
+            video.addEventListener('loadeddata', function() {
+                console.log('Video data loaded');
+                window.location.href = 'maui-callback://videoLoaded';
+            });
+            
             video.addEventListener('canplay', function() {
                 console.log('Video can play');
                 window.location.href = 'maui-callback://videoCanPlay';
@@ -536,6 +645,11 @@ namespace UltimateHoopers.Controls
             video.addEventListener('playing', function() {
                 console.log('Video playing');
                 window.location.href = 'maui-callback://videoPlaying';
+            });
+            
+            video.addEventListener('waiting', function() {
+                console.log('Video waiting/buffering');
+                window.location.href = 'maui-callback://videoWaiting';
             });
             
             // Force load

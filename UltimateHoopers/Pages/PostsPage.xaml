@@ -115,58 +115,51 @@
                                 </Label>
                             </Grid>
 
-                            <!-- Post Content - Using AutoPlayVideoElement for videos -->
-                            <Grid Background="LightGray" HeightRequest="400">
-                                <!-- Image Post - Only show when PostType is 'image' -->
-                                <Image Source="{Binding PostFileURL}"
-                                       IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='image'}"
-                                       Aspect="AspectFill"
-                                       HorizontalOptions="FillAndExpand"
-                                       VerticalOptions="FillAndExpand">
-                                    <Image.GestureRecognizers>
-                                        <TapGestureRecognizer Tapped="OnImagePostTapped" />
-                                    </Image.GestureRecognizers>
-                                </Image>
+                            <!-- Video Post - Only show when PostType is 'video' -->
+                            <Grid IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='video'}"
+      Background="Black"
+      HeightRequest="400">
+                                <controls:AutoPlayVideoElement 
+        x:Name="AutoPlayVideo"
+        VideoUrl="{Binding PostFileURL}"
+        ThumbnailUrl="{Binding ThumbnailUrl}"
+        Post="{Binding .}"
+        IsVisibleInViewport="False"
+        IsMuted="True"
+        FullScreenRequested="OnVideoFullScreenRequested"
+        HeightRequest="400"
+        VerticalOptions="FillAndExpand"
+        HorizontalOptions="FillAndExpand" />
 
-                                <!-- Video Post - Only show when PostType is 'video' -->
-                                <Grid IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='video'}">
-                                    <controls:AutoPlayVideoElement 
-                                        x:Name="AutoPlayVideo"
-                                        VideoUrl="{Binding PostFileURL}"
-                                        ThumbnailUrl="{Binding ThumbnailUrl}"
-                                        Post="{Binding .}"
-                                        IsVisibleInViewport="False"
-                                        IsMuted="True"
-                                        FullScreenRequested="OnVideoFullScreenRequested" />
+                                <!-- Loading Indicator (initially visible) -->
+                                <ActivityIndicator 
+        IsRunning="True"
+        Color="White"
+        HorizontalOptions="Center"
+        VerticalOptions="Center" 
+        Scale="1.5"
+        IsVisible="True" />
 
-                                    <!-- Volume Control Button -->
-                                    <Frame StyleId="VolumeButton"
-                                           BackgroundColor="#80000000"
-                                           CornerRadius="15"
-                                           HeightRequest="30"
-                                           WidthRequest="30"
-                                           HorizontalOptions="End"
-                                           VerticalOptions="End"
-                                           Margin="0,0,10,10"
-                                           Padding="0"
-                                           HasShadow="False">
-                                        <Label Text="🔇" 
-                                               FontSize="16" 
-                                               HorizontalOptions="Center" 
-                                               VerticalOptions="Center" 
-                                               TextColor="White" />
-                                        <Frame.GestureRecognizers>
-                                            <TapGestureRecognizer Tapped="OnVolumeButtonTapped" />
-                                        </Frame.GestureRecognizers>
-                                    </Frame>
-                                </Grid>
-
-                                <!-- Fallback for no media -->
-                                <VerticalStackLayout IsVisible="{Binding PostFileURL, Converter={StaticResource StringNotEmptyConverter}, ConverterParameter='negate'}"
-                                                     HorizontalOptions="Center"
-                                                     VerticalOptions="Center">
-
-                                </VerticalStackLayout>
+                                <!-- Volume Control Button -->
+                                <Frame StyleId="VolumeButton"
+           BackgroundColor="#80000000"
+           CornerRadius="15"
+           HeightRequest="30"
+           WidthRequest="30"
+           HorizontalOptions="End"
+           VerticalOptions="End"
+           Margin="0,0,10,10"
+           Padding="0"
+           HasShadow="False">
+                                    <Label Text="🔇" 
+               FontSize="16" 
+               HorizontalOptions="Center" 
+               VerticalOptions="Center" 
+               TextColor="White" />
+                                    <Frame.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnVolumeButtonTapped" />
+                                    </Frame.GestureRecognizers>
+                                </Frame>
                             </Grid>
 
                             <!-- Post Actions -->

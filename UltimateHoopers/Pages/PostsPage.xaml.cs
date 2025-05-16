@@ -9,6 +9,7 @@ using Microsoft.Maui.ApplicationModel; // For MainThread
 using System.Threading.Tasks;
 using UltimateHoopers.Controls;
 using System.Linq;
+using UltimateHoopers.Extensions;
 
 namespace UltimateHoopers.Pages
 {
@@ -59,69 +60,24 @@ namespace UltimateHoopers.Pages
             BindingContext = _viewModel;
         }
 
-        protected override async void OnAppearing()
+        protected override void OnAppearing()
         {
             base.OnAppearing();
 
             try
             {
-                // Add verbose logging
-                Console.WriteLine("PostsPage.OnAppearing - About to load posts");
-                Debug.WriteLine("PostsPage.OnAppearing - About to load posts");
-
-                // Check ViewModel availability
-                if (_viewModel == null)
-                {
-                    Console.WriteLine("ERROR: ViewModel is null!");
-                    await DisplayAlert("Error", "ViewModel is not initialized", "OK");
-                    return;
-                }
-
-                // Load posts when page appears
-                await _viewModel.LoadPostsAsync();
-
-                // Verbose logging for post count
-                Console.WriteLine($"PostsPage loaded {_viewModel.Posts.Count} posts");
-                Debug.WriteLine($"PostsPage loaded {_viewModel.Posts.Count} posts");
-
                 // Set up scrolled event handler for auto-play
                 PostsCollectionView.Scrolled += OnCollectionViewScrolled;
 
-                // If posts were loaded but aren't showing, check binding context
-                if (_viewModel.Posts.Count > 0)
-                {
-                    Console.WriteLine("Posts were loaded but may not be displaying. Checking binding context...");
-                    Console.WriteLine($"Current binding context: {BindingContext}");
-
-                    // Apply direct image source conversion for each post if needed
-                    ProcessPostImages();
-
-                    // Force refresh the binding
-                    BindingContext = null;
-                    BindingContext = _viewModel;
-                    Console.WriteLine("Binding context reset. This should refresh the UI.");
-
-                    // Initial check for visible videos after layout
-                    MainThread.BeginInvokeOnMainThread(async () => {
-                        // Small delay to ensure UI is ready
-                        await Task.Delay(500);
-                        CheckVisibleVideos();
-                    });
-                }
-                else
-                {
-                    Console.WriteLine("No posts were loaded from the service.");
-                }
-
-                // Subscribe to mute events
-                SubscribeToMuteEvents();
+                // Check for visible videos after a short delay to ensure layout is done
+                MainThread.BeginInvokeOnMainThread(async () => {
+                    await Task.Delay(500);
+                    CheckVisibleVideos();
+                });
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error in PostsPage.OnAppearing: {ex.Message}");
                 Debug.WriteLine($"Error in PostsPage.OnAppearing: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
-                await DisplayAlert("Error", $"Could not load posts: {ex.Message}", "OK");
             }
         }
 
@@ -129,14 +85,22 @@ namespace UltimateHoopers.Pages
         {
             base.OnDisappearing();
 
-            // Clean up event handlers
-            PostsCollectionView.Scrolled -= OnCollectionViewScrolled;
+            try
+            {
+                // Remove event handler
+                PostsCollectionView.Scrolled -= OnCollectionViewScrolled;
 
-            // Stop all videos when page disappears
-            StopAllVideos();
-
-            // Unsubscribe from mute events
-            UnsubscribeFromMuteEvents();
+                // Stop all videos
+                var videoElements = PostsCollectionView.FindVisualChildrenByName<AutoPlayVideoElement>("AutoPlayVideo");
+                foreach (var element in videoElements)
+                {
+                    element.IsVisibleInViewport = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error in PostsPage.OnDisappearing: {ex.Message}");
+            }
         }
 
         // Subscribe to AutoPlayVideoElement mute events
@@ -236,8 +200,11 @@ namespace UltimateHoopers.Pages
         // Event handler for CollectionView scrolling
         private void OnCollectionViewScrolled(object sender, ItemsViewScrolledEventArgs e)
         {
-            // Check for visible videos during scrolling
-            CheckVisibleVideos();
+            // Debounce technique to avoid too many checks
+            MainThread.BeginInvokeOnMainThread(async () => {
+                await Task.Delay(100); // Short delay to avoid excessive processing
+                CheckVisibleVideos();
+            });
         }
 
         // Method to check which videos are currently visible in the viewport
@@ -247,62 +214,45 @@ namespace UltimateHoopers.Pages
             {
                 if (PostsCollectionView == null) return;
 
-                // Get the visible items in the collection view
-                var visibleItems = GetVisibleItems(PostsCollectionView);
+                // Get visible elements directly rather than using binding context
+                var videoElements = PostsCollectionView.FindVisualChildrenByName<AutoPlayVideoElement>("AutoPlayVideo")
+                    .ToList();
 
-                // Track which videos should be playing
-                Dictionary<string, bool> newVisibleVideos = new Dictionary<string, bool>();
-
-                foreach (var item in visibleItems)
+                // Nothing to do if no videos found
+                if (!videoElements.Any())
                 {
-                    if (item is Post post && post.PostType?.ToLower() == "video" && !string.IsNullOrEmpty(post.PostId))
-                    {
-                        // Add to tracking dictionary
-                        newVisibleVideos[post.PostId] = true;
-
-                        // Instead of trying to find the control by post ID (which is unreliable),
-                        // we'll find all video elements and update them if their binding context matches
-
-                        var videoElements = PostsCollectionView.FindVisualChildrenByName<AutoPlayVideoElement>("AutoPlayVideo");
-                        foreach (var videoElement in videoElements)
-                        {
-                            if (videoElement.Post is Post videoPost && videoPost.PostId == post.PostId)
-                            {
-                                // Set visibility property to true (which will trigger auto-play)
-                                videoElement.IsVisibleInViewport = true;
-                                break; // Found the matching element, no need to check others
-                            }
-                        }
-                    }
+                    return;
                 }
 
-                // Check for videos that were visible but are no longer visible
-                foreach (var postId in _visibleVideos.Keys)
+                System.Diagnostics.Debug.WriteLine($"Found {videoElements.Count} video elements in the collection");
+
+                // For each video element, determine if it's visible
+                foreach (var videoElement in videoElements)
                 {
-                    if (!newVisibleVideos.ContainsKey(postId))
+                    try
                     {
-                        // This video is no longer visible
-                        var videoElements = PostsCollectionView.FindVisualChildrenByName<AutoPlayVideoElement>("AutoPlayVideo");
-                        foreach (var videoElement in videoElements)
+                        // Use the IsVisibleInViewport extension method
+                        bool isElementVisible = videoElement.IsVisibleInViewport(PostsCollectionView, 0.3);
+
+                        // Set visibility property which will trigger auto-play or pause
+                        if (isElementVisible != videoElement.IsVisibleInViewport)
                         {
-                            if (videoElement.Post is Post videoPost && videoPost.PostId == postId)
-                            {
-                                // Set visibility property to false (which will trigger pause)
-                                videoElement.IsVisibleInViewport = false;
-                                break; // Found the matching element, no need to check others
-                            }
+                            System.Diagnostics.Debug.WriteLine($"Setting video visibility to {isElementVisible}");
+                            videoElement.IsVisibleInViewport = isElementVisible;
                         }
                     }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error checking video element visibility: {ex.Message}");
+                    }
                 }
-
-                // Update tracking dictionary
-                _visibleVideos = newVisibleVideos;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error checking visible videos: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error in CheckVisibleVideos: {ex.Message}");
             }
         }
+
 
         // Find video elements by post ID
         private AutoPlayVideoElement FindAutoPlayVideoElement(string postId)
@@ -413,7 +363,15 @@ namespace UltimateHoopers.Pages
         {
             if (sender is AutoPlayVideoElement videoElement && videoElement.Post != null)
             {
-                await NavigateToVideoPlayer(videoElement.Post);
+                try
+                {
+                    Debug.WriteLine($"Video full screen requested for {videoElement.Post.PostId}");
+                    await NavigateToVideoPlayer(videoElement.Post);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error navigating to video player: {ex.Message}");
+                }
             }
         }
 
@@ -660,6 +618,9 @@ namespace UltimateHoopers.Pages
             await DisplayAlert("Profile", "Profile feature coming soon!", "OK");
         }
     }
+
+    
+
 
     // Extension methods to find child elements by name
     public static class VisualElementExtensions
