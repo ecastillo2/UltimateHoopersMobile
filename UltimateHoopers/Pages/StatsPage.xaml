@@ -256,7 +256,7 @@
                                 </VerticalStackLayout>
                             </Frame>
 
-                            <!-- Points Per Game -->
+                            <!-- Points Per Game --><!--
                             <Frame Grid.Row="1"
                                    Grid.Column="0"
                                    BorderColor="{StaticResource BorderColor}"
@@ -274,10 +274,10 @@
                                            TextColor="{StaticResource SecondaryTextColor}"
                                            HorizontalOptions="Center" />
                                 </VerticalStackLayout>
-                            </Frame>
+                            </Frame>-->
 
                             <!-- Assists Per Game -->
-                            <Frame Grid.Row="1"
+                            <!--<Frame Grid.Row="1"
                                    Grid.Column="1"
                                    BorderColor="{StaticResource BorderColor}"
                                    CornerRadius="10"
@@ -294,10 +294,10 @@
                                            TextColor="{StaticResource SecondaryTextColor}"
                                            HorizontalOptions="Center" />
                                 </VerticalStackLayout>
-                            </Frame>
+                            </Frame>-->
 
                             <!-- Rebounds Per Game -->
-                            <Frame Grid.Row="1"
+                            <!--<Frame Grid.Row="1"
                                    Grid.Column="2"
                                    BorderColor="{StaticResource BorderColor}"
                                    CornerRadius="10"
@@ -314,7 +314,7 @@
                                            TextColor="{StaticResource SecondaryTextColor}"
                                            HorizontalOptions="Center" />
                                 </VerticalStackLayout>
-                            </Frame>
+                            </Frame>-->
 
                             <!-- 3-Point % -->
                             <!--<Frame Grid.Row="2"

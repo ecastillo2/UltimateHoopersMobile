@@ -1,5 +1,7 @@
-﻿using Microsoft.Maui.Controls;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Maui.Controls;
 using System;
+using UltimateHoopers.Services;
 
 namespace UltimateHoopers.Pages
 {
@@ -8,19 +10,31 @@ namespace UltimateHoopers.Pages
         public StatsPage()
         {
             InitializeComponent();
-            InitializeUserProfile();
+            _ = InitializeUserProfile();
         }
 
-        private void InitializeUserProfile()
+        private async Task InitializeUserProfile()
         {
             UsernameText.Text = App.User.Profile.UserName;
             PositionHeightText.Text = $"{App.User.Profile.Position} • {App.User.Profile.Height}";
             PlayerNumberText.Text = App.User.Profile.PlayerNumber;
-            GamesText.Text = App.User.Profile.TotalGames;
-            RecordText.Text = $"{App.User.Profile.TotalWins} - {App.User.Profile.TotalLosses}";
-            WinPercentageText.Text = App.User.Profile.WinPercentage;
+            //GamesText.Text = App.User.Profile.TotalGames;
+            
+            
 
+            var serviceProvider = MauiProgram.CreateMauiApp().Services;
+            var profileService = serviceProvider.GetService<IProfileService>();
+            if (profileService == null)
+            {
+                // Fallback if service is not available through DI
+                profileService = new ProfileService();
+            }
 
+            // Load profiles
+            var profile = await profileService.GetProfileByIdAsync(App.User.Profile.ProfileId);
+            GamesText.Text = profile.GameStatistics.TotalGames.ToString();
+            RecordText.Text = $"{profile.GameStatistics.TotalWins.ToString()} - {profile.GameStatistics.TotalLosses.ToString()}";
+            WinPercentageText.Text = profile.GameStatistics.WinPercentage.ToString();
 
             // Load profile image if available
             if (!string.IsNullOrEmpty(App.User.Profile.ImageURL))

@@ -1,166 +1,285 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.EntityFrameworkCore;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 using Domain;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace DataLayer.DAL
 {
-    public class CourtRepository : ICourtRepository, IDisposable
+    /// <summary>
+    /// Implementation of the Court repository with optimized query methods
+    /// </summary>
+    public class CourtRepository : ICourtRepository
     {
-        public IConfiguration Configuration { get; }
-        private HUDBContext _context;
-       
-        public CourtRepository(HUDBContext context)
-        {
-            this._context = context;
+        private readonly HUDBContext _context;
+        private readonly ILogger<CourtRepository> _logger;
+        private readonly IConfiguration _configuration;
+        private bool _disposed = false;
 
+        public CourtRepository(HUDBContext context, IConfiguration configuration, ILogger<CourtRepository> logger = null)
+        {
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _logger = logger;
         }
 
-        /// <summary>
-        /// Get Court By Id
-        /// </summary>
-        /// <param name="TagId"></param>
-        /// <returns></returns>
-        public async Task<Court> GetCourtById(string CourtId)
+        public async Task<List<Court>> GetCourtsAsync(CancellationToken cancellationToken = default)
         {
-            using (var context = _context)
+            try
             {
-                try
-                {
-                    // Use LINQ to query for the Post with the matching PostId
-                    var query = await (from model in context.Court
-                                       where model.CourtId == CourtId
-                                       select model).FirstOrDefaultAsync();
-
-                    return query;
-                }
-                catch (Exception ex)
-                {
-                    // Handle the exception or log it as needed
-                    return null;
-                }
+                return await _context.Court
+                    .AsNoTracking()
+                    .ToListAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error retrieving Courts");
+                throw;
             }
         }
 
-        /// <summary>
-        /// Get Courts
-        /// </summary>
-        /// <returns></returns>
-        public async Task<List<Court>> GetCourts()
+        public async Task<(List<Court> Courts, int TotalCount, int TotalPages)> GetCourtsPaginatedAsync(
+            int page = 1,
+            int pageSize = 20,
+            CancellationToken cancellationToken = default)
         {
-            using (var context = _context)
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 20;
+
+            try
             {
-                try
-                {
-                    // Use LINQ to select all tags and include the post count for each tag
-                    var query = await context.Court.ToListAsync();
+                var totalCount = await _context.Court.CountAsync(cancellationToken);
+                var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
-                    return query;
-                }
-                catch (Exception ex)
-                {
-                    // Log the exception or handle it as needed
-                    return null;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Insert Tag
-        /// </summary>
-        /// <param name="model"></param>
-        /// <returns></returns>
-        public async Task InsertCourt(Court model)
-        {
-            using (var context = _context)
-            {
-                try
-                {
-
-                    string fileType = string.Empty;
-                    fileType = ".webp";
-
-                    model.ImageURL = "https://uhblobstorageaccount.blob.core.windows.net/courtimage/" + model.CourtId + fileType;
+                var courts = await _context.Court
+                    .AsNoTracking()
                     
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync(cancellationToken);
 
-                    await context.Court.AddAsync(model);
+                return (courts, totalCount, totalPages);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error retrieving paginated Courts");
+                throw;
+            }
+        }
+
+        public async Task<(List<Court> Courts, string NextCursor)> GetCourtsWithCursorAsync(
+            string cursor = null,
+            int limit = 20,
+            string direction = "next",
+            string sortBy = "Points",
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                // Default query starting point
+                IQueryable<Court> query = _context.Court.AsNoTracking();
+
+                // Parse the cursor if provided
+                CursorData cursorData = null;
+                if (!string.IsNullOrEmpty(cursor))
+                {
+                    try
+                    {
+                        // Decode and deserialize cursor
+                        var decodedCursor = System.Text.Encoding.UTF8.GetString(
+                            Convert.FromBase64String(cursor));
+                        cursorData = System.Text.Json.JsonSerializer.Deserialize<CursorData>(decodedCursor);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger?.LogWarning(ex, "Invalid cursor format. Starting from beginning");
+                        // If cursor parsing fails, ignore and start from beginning
+                        cursorData = null;
+                    }
+                }
+
+              
+                // Execute query with limit
+                var courts = await query.Take(limit + 1).ToListAsync(cancellationToken);
+
+                // Check if we have a next page by fetching limit+1 items
+                string nextCursor = null;
+                if (courts.Count > limit)
+                {
+                    // Remove the extra item we retrieved to check for "has next page"
+                    var lastItem = courts[limit];
+                    courts.RemoveAt(limit);
+
+                    // Create cursor for next page based on last item properties
+                    var newCursorData = new CourtCursorData
+                    {
+                        Id = lastItem.CourtId,
+                        Zip = lastItem.Zip,
+                        Status = lastItem.Status
+                    };
+
+                    var serialized = System.Text.Json.JsonSerializer.Serialize(newCursorData);
+                    nextCursor = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(serialized));
+                }
+
+                // If we requested previous direction and got results, we need to reverse the order
+                if (direction.ToLowerInvariant() == "previous" && courts.Any())
+                {
+                    courts.Reverse();
+                }
+
+                return (courts, nextCursor);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting Courts with cursor");
+                throw;
+            }
+        }
+
+        public async IAsyncEnumerable<Court> StreamAllCourtsAsync(
+    [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            var batchSize = 100;
+            var lastId = string.Empty;
+
+            while (true)
+            {
+                List<Court> batch;
+                try
+                {
+                    batch = await _context.Court
+                        .AsNoTracking()
+                        .Where(p => string.Compare(p.CourtId, lastId) > 0)
+                        .OrderBy(p => p.CourtId)
+                        .Take(batchSize)
+                        .ToListAsync(cancellationToken);
                 }
                 catch (Exception ex)
                 {
-
+                    _logger?.LogError(ex, "Error streaming Courts");
+                    throw;
                 }
-                await Save();
-            }
-        }
 
-        /// <summary>
-        /// Update Post
-        /// </summary>
-        /// <param name="model"></param>
-        /// <returns></returns>
-        public async Task UpdateCourt(Court model)
-        {
-            using (var context = _context)
-            {
-                var existingItem = context.Court.Where(s => s.CourtId == model.CourtId).FirstOrDefault<Court>();
+                if (batch.Count == 0)
+                    break;
 
-                if (existingItem != null)
+                foreach (var court in batch)
                 {
-                    existingItem.Name = model.Name;
-                    existingItem.Latitude = model.Latitude;
-                    existingItem.Longitude = model.Longitude;
-                    existingItem.Address = model.Address;
-                    existingItem.Status = model.Status;
-                    existingItem.NumberOfCourts = model.NumberOfCourts;
-                    existingItem.RentalCostPerHour = model.RentalCostPerHour;
-                    existingItem.Url = model.Url;
-                    existingItem.CourtSize = model.CourtSize;
-                    existingItem.CourtNumber = model.CourtNumber;
-
-                    context.Court.Update(existingItem);
-                    await Save();
+                    yield return court;
+                    lastId = court.CourtId;
                 }
-                else
-                {
 
-                }
+                if (batch.Count < batchSize)
+                    break;
             }
         }
 
-        /// <summary>
-        /// Delete Court
-        /// </summary>
-        /// <param name="CourtId"></param>
-        /// <returns></returns>
-        public async Task DeleteCourt(string CourtId)
+       
+        public async Task<Court> GetCourtByIdAsync(
+            string courtId,
+            CancellationToken cancellationToken = default)
         {
-            using (var context = _context)
+            try
             {
-                Court obj = (from u in context.Court
-                             where u.CourtId == CourtId
-                             select u).FirstOrDefault();
-
-                _context.Court.Remove(obj);
-                await Save();
+                return await _context.Court
+                    .AsNoTracking()
+                   
+                    .FirstOrDefaultAsync(p => p.CourtId == courtId, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting Court {CourtId}", courtId);
+                throw;
             }
         }
 
-        /// <summary>
-        /// Save
-        /// </summary>
-        /// <returns></returns>
-        public async Task<int> Save()
+
+
+
+        public async Task<bool> UpdateCourtAsync(
+            Court court,
+            CancellationToken cancellationToken = default)
         {
-            return await _context.SaveChangesAsync();
+            try
+            {
+                _context.Entry(court).State = EntityState.Modified;
+                return await SaveChangesAsync(cancellationToken) > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error updating Court {CourtId}", court.CourtId);
+                throw;
+            }
         }
 
-        /// <summary>
-        /// Dispose
-        /// </summary>
-        /// <exception cref="NotImplementedException"></exception>
+      
+
+        public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await _context.SaveChangesAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error saving changes to database");
+                throw;
+            }
+        }
+
+        #region IDisposable and IAsyncDisposable Implementation
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    _context.Dispose();
+                }
+
+                _disposed = true;
+            }
+        }
+
         public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            if (!_disposed)
+            {
+                await _context.DisposeAsync();
+                _disposed = true;
+            }
+
+            GC.SuppressFinalize(this);
+        }
+
+        public Task<int> BatchUpdateCourtsAsync(IEnumerable<Court> Courts, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
 
+        #endregion
+    }
+
+    /// <summary>
+    /// Helper class for cursor-based pagination
+    /// </summary>
+    internal class CourtCursorData
+    {
+        public string Id { get; set; }
+        public string Zip { get; set; }
+        public string Status { get; set; }
     }
 }

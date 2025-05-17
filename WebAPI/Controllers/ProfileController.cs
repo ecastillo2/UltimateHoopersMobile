@@ -63,6 +63,7 @@ namespace WebAPI.Controllers
 
                 var viewModels = profiles.Select(p => new ProfileViewModelDto(p)).ToList();
 
+
                 var result = new PaginatedResultDto<ProfileViewModelDto>
                 {
                     Items = viewModels,
@@ -83,9 +84,11 @@ namespace WebAPI.Controllers
 
         /// <summary>
         /// Get profiles with cursor-based pagination for efficient scrolling
+        /// <summary>
+        /// Get profiles with cursor-based pagination for efficient scrolling
         /// </summary>
         [HttpGet("cursor")]
-        [ProducesResponseType(typeof(CursorPaginatedResultDto<ProfileViewModelDto>), 200)]
+        [ProducesResponseType(typeof(CursorPaginatedResultDto<ProfileDetailViewModelDto>), 200)]
         public async Task<IActionResult> GetProfilesWithCursor(
             [FromQuery] string cursor = null,
             [FromQuery] int limit = 20,
@@ -98,11 +101,35 @@ namespace WebAPI.Controllers
                 var (profiles, nextCursor) = await _profileRepository
                     .GetProfilesWithCursorAsync(cursor, limit, direction, sortBy, cancellationToken);
 
-                var viewModels = profiles.Select(p => new ProfileViewModelDto(p)).ToList();
+                // Create a list to hold our detailed profile view models
+                var detailedViewModels = new List<ProfileDetailViewModelDto>();
 
-                var result = new CursorPaginatedResultDto<ProfileViewModelDto>
+                // Enrich each profile with additional data
+                foreach (var profile in profiles)
                 {
-                    Items = viewModels,
+                    // Get additional profile data using the profile's ID
+                    var profileId = profile.ProfileId;
+                    var setting = await _profileRepository.GetProfileSettingsAsync(profileId, cancellationToken);
+                    var scoutingReport = await _profileRepository.GetScoutingReportAsync(profileId, cancellationToken);
+                    var gameStats = await _profileRepository.GetProfileGameStatisticsAsync(profileId, cancellationToken);
+
+                    // Create a detailed view model with all the additional data
+                    var detailedViewModel = new ProfileDetailViewModelDto(profile)
+                    {
+                        Setting = setting != null ? new SettingViewModelDto(setting) : null,
+                        ScoutingReport = scoutingReport != null ? new ScoutingReportViewModelDto(scoutingReport) : null,
+                        GameStatistics = gameStats,
+                        Profile = profile,
+                    };
+
+                    // Add to our list
+                    detailedViewModels.Add(detailedViewModel);
+                }
+
+                // Create the result with our detailed view models
+                var result = new CursorPaginatedResultDto<ProfileDetailViewModelDto>
+                {
+                    Items = detailedViewModels,
                     NextCursor = nextCursor,
                     HasMore = !string.IsNullOrEmpty(nextCursor),
                     Direction = direction,
@@ -142,7 +169,8 @@ namespace WebAPI.Controllers
                 {
                     Setting = setting != null ? new SettingViewModelDto(setting) : null,
                     ScoutingReport = scoutingReport != null ? new ScoutingReportViewModelDto(scoutingReport) : null,
-                    GameStatistics = gameStats
+                    GameStatistics = gameStats,
+                    Profile = profile,
                 };
 
                 return Ok(viewModel);

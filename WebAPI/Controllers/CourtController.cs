@@ -1,130 +1,194 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using DataLayer.DAL;
-using DataLayer;
 using Domain;
+using Domain.DtoModel;
 using Microsoft.AspNetCore.Authorization;
-using System.Net;
+using Microsoft.AspNetCore.Mvc;
+
 
 namespace WebAPI.Controllers
 {
-    /// <summary>
-    /// Court Controller
-    /// </summary>
+    [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
-    public class CourtController : Controller
+    public class CourtController : ControllerBase
     {
-        HttpResponseMessage returnMessage = new HttpResponseMessage();
-        private ICourtRepository repository;        
-        private readonly IConfiguration _configuration;
+        private readonly ICourtRepository _courtRepository;
+        private readonly ILogger<CourtController> _logger;
 
-        /// <summary>
-        /// Court Controller
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="configuration"></param>
-        public CourtController(HUDBContext context, IConfiguration configuration)
+        public CourtController(ICourtRepository courtRepository, ILogger<CourtController> logger)
         {
-           
-            this._configuration = configuration;
-            this.repository = new CourtRepository(context);
-
+            _courtRepository = courtRepository ?? throw new ArgumentNullException(nameof(courtRepository));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         /// <summary>
-        /// Get Courts
+        /// Get all Courts
         /// </summary>
-        /// <returns></returns>
-        [HttpGet("GetCourts")]
-        //[Authorize]
-        public async Task<List<Court>> GetCourts()
-        {
-            return await repository.GetCourts();
-
-        }
-
-        /// <summary>
-        /// Get Court By Id
-        /// </summary>
-        /// <param name="tagId"></param>
-        /// <returns></returns>
-        //[Authorize]
-        [HttpGet("GetCourtById")]
-        public async Task<Court> GetCourtById(string courtId)
+        [HttpGet]
+        [ProducesResponseType(typeof(IEnumerable<CourtViewModelDto>), 200)]
+        public async Task<IActionResult> GetCourts(CancellationToken cancellationToken)
         {
             try
             {
-                return await repository.GetCourtById(courtId);
-            }
-            catch(Exception ex)
-            {
-                throw ex;
-            }
+                var courts = await _courtRepository.GetCourtsAsync(cancellationToken);
+                var viewModels = courts.Select(p => new CourtViewModelDto(p));
 
-        }
-
-        /// <summary>
-        /// Create Court
-        /// </summary>
-        /// <param name="tag"></param>
-        /// <returns></returns>
-        [HttpPost("CreateCourt")]
-        public async Task CreateCourt([FromBody] Court court)
-        {
-            
-            try
-            {
-                  await  repository.InsertCourt(court);
+                return Ok(viewModels);
             }
             catch (Exception ex)
             {
-                var x = ex;
+                _logger.LogError(ex, "Error retrieving Courts");
+                return StatusCode(500, "An error occurred while retrieving Courts");
             }
-
         }
 
         /// <summary>
-        /// Update User
+        /// Get Courts with standard pagination
         /// </summary>
-        /// <param name="user"></param>
-        /// <returns></returns>
-        [HttpPost("UpdateCourt")]
-        public async Task UpdateCourt([FromBody] Court court)
-        {
-
-            try
-            {
-                await repository.UpdateCourt(court);
-
-            }
-            catch
-            {
-                var message = new HttpResponseMessage(HttpStatusCode.BadRequest);
-            }
-
-        }
-
-        /// <summary>
-        /// Delete Court
-        /// </summary>
-        /// <param name="tagId"></param>
-        /// <returns></returns>
-        [HttpDelete("DeleteCourt")]
-        public async Task<HttpResponseMessage> DeleteCourt(string courtId)
+        [HttpGet("paginated")]
+        [ProducesResponseType(typeof(PaginatedResultDto<CourtViewModelDto>), 200)]
+        public async Task<IActionResult> GetCourtsPaginated(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20,
+            CancellationToken cancellationToken = default)
         {
             try
             {
-                await repository.DeleteCourt(courtId);
+                var (courts, totalCount, totalPages) = await _courtRepository
+                    .GetCourtsPaginatedAsync(page, pageSize, cancellationToken);
 
-                returnMessage.RequestMessage = new HttpRequestMessage(HttpMethod.Post, "DeleteCourt");
+                var viewModels = courts.Select(p => new CourtViewModelDto(p)).ToList();
 
-                return await Task.FromResult(returnMessage);
+                var result = new PaginatedResultDto<CourtViewModelDto>
+                {
+                    Items = viewModels,
+                    Page = page,
+                    PageSize = pageSize,
+                    TotalCount = totalCount,
+                    TotalPages = totalPages
+                };
+
+                return Ok(result);
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.ToString());
+                _logger.LogError(ex, "Error retrieving paginated profiles");
+                return StatusCode(500, "An error occurred while retrieving paginated profiles");
             }
-            return await Task.FromResult(returnMessage);
         }
+
+        /// <summary>
+        /// Get profiles with cursor-based pagination for efficient scrolling
+        /// </summary>
+        [HttpGet("cursor")]
+        [ProducesResponseType(typeof(CursorPaginatedResultDto<CourtViewModelDto>), 200)]
+        public async Task<IActionResult> GetProfilesWithCursor(
+            [FromQuery] string cursor = null,
+            [FromQuery] int limit = 20,
+            [FromQuery] string direction = "next",
+            [FromQuery] string sortBy = "Points",
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var (courts, nextCursor) = await _courtRepository
+                    .GetCourtsWithCursorAsync(cursor, limit, direction, sortBy, cancellationToken);
+
+                var viewModels = courts.Select(p => new CourtViewModelDto(p)).ToList();
+
+                var result = new CursorPaginatedResultDto<CourtViewModelDto>
+                {
+                    Items = viewModels,
+                    NextCursor = nextCursor,
+                    HasMore = !string.IsNullOrEmpty(nextCursor),
+                    Direction = direction,
+                    SortBy = sortBy
+                };
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving cursor-based profiles");
+                return StatusCode(500, "An error occurred while retrieving cursor-based profiles");
+            }
+        }
+
+        /// <summary>
+        /// Get profile by ID
+        /// </summary>
+        [HttpGet("{id}")]
+        [ProducesResponseType(typeof(CourtDetailViewModelDto), 200)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> GetCourtById(string id, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var court = await _courtRepository.GetCourtByIdAsync(id, cancellationToken);
+
+                if (court == null)
+                    return NotFound();
+
+                return Ok(court);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving profile {ProfileId}", id);
+                return StatusCode(500, "An error occurred while retrieving the profile");
+            }
+        }
+
+     
+
+
+        /// <summary>
+        /// Update Court
+        /// </summary>
+        [HttpPut("{id}")]
+        [Authorize]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> UpdateCourt(string id, CourtUpdateModelDto model, CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (id != model.CourtId)
+                return BadRequest("Court ID mismatch");
+
+            try
+            {
+                var court = await _courtRepository.GetCourtByIdAsync(id, cancellationToken);
+
+                if (court == null)
+                    return NotFound($"Court with ID {id} not found");
+
+                // Update Court properties from model
+                model.UpdateCourt(court);
+
+                var success = await _courtRepository.UpdateCourtAsync(court, cancellationToken);
+
+                if (!success)
+                    return StatusCode(500, "Failed to update Court");
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating profile {ProfileId}", id);
+                return StatusCode(500, "An error occurred while updating the profile");
+            }
+        }
+
+       
+
+      
+
     }
 }
+

@@ -454,8 +454,12 @@ namespace DataLayer.DAL
             {
                 var games = await GetProfileGameHistoryAsync(profileId, cancellationToken);
 
-                int wins = games.Count(g => g.WinProfileIdsStatusString.Contains(profileId));
-                int losses = games.Count(g => g.LoseProfileIdsStatusString.Contains(profileId));
+                // Add null checks for WinProfileIdsStatusString and LoseProfileIdsStatusString
+                int wins = games.Count(g => g.WinProfileIdsStatusString != null &&
+                                            g.WinProfileIdsStatusString.Contains(profileId));
+
+                int losses = games.Count(g => g.LoseProfileIdsStatusString != null &&
+                                              g.LoseProfileIdsStatusString.Contains(profileId));
 
                 return new GameStatistics
                 {

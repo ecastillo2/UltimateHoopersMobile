@@ -96,12 +96,12 @@ namespace UltimateHoopers.Services
                 var paginatedResult = await _profileApi.GetProfilesWithCursorAsync(
                     cursor: null,
                     limit: 50, // Request a larger batch
-                    direction: "next",
-                    sortBy: "Points",
+                    
+                   
                     accessToken: token);
 
                 // Convert ProfileViewModelDto to Profile objects
-                if (paginatedResult != null && paginatedResult.Items != null)
+                if (paginatedResult != null && paginatedResult != null)
                 {
                     // Create a list to hold the converted profiles
                     var profiles = new List<Profile>();
@@ -129,7 +129,9 @@ namespace UltimateHoopers.Services
                             Points = item.Points,
                             LastRunDate = item.LastRunDate,
                             TopRecord = item.TopRecord,
-                            OnSquad = item.OnSquad
+                            OnSquad = item.OnSquad,
+                            GameStatistics = item.GameStatistics,
+                            
                         };
 
                         profiles.Add(profile);

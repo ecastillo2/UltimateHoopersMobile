@@ -179,9 +179,9 @@ namespace UltimateHoopers.Pages
                                 Position = profile.Position ?? "Unknown",
                                 Location = profile.City ?? "Unknown Location",
                                 Rank = int.TryParse(profile.Ranking, out int rank) ? rank : 99,
-                                GamesPlayed = int.TryParse(profile.TotalGames, out int games) ? games : 0,
-                                Record = $"{profile.TotalWins.ToString() ?? "0"}-{profile.TotalLosses.ToString() ?? "0"}",
-                                WinPercentage = profile.WinPercentage ?? "0%",
+                                GamesPlayed = int.TryParse(profile.GameStatistics.TotalGames.ToString(), out int games) ? games : 0,
+                                Record = $"{profile.GameStatistics.TotalWins.ToString() ?? "0"}-{profile.GameStatistics.TotalLosses.ToString() ?? "0"}",
+                                WinPercentage = profile.GameStatistics.WinPercentage.ToString() ?? "0%",
                                 Rating = double.TryParse(profile.StarRating, out double rating) ? rating : 0.0,
                                 ProfileImage = profile.ImageURL
                             };

@@ -23,35 +23,163 @@ namespace WebAPI.ApiClients
             };
         }
 
-        public Task<bool> DeleteProfileAsync(string profileId, string accessToken, CancellationToken cancellationToken = default)
+        public async Task<bool> DeleteProfileAsync(string profileId, string accessToken, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            try
+            {
+                // Set authentication header
+                if (!string.IsNullOrEmpty(accessToken))
+                {
+                    _httpClient.DefaultRequestHeaders.Authorization =
+                        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+                }
+
+                // Build request URL
+                var requestUrl = $"{_baseUrl}/api/Profile/{profileId}";
+
+                // Make the DELETE request
+                var response = await _httpClient.DeleteAsync(requestUrl, cancellationToken);
+
+                // Return true if successful, false otherwise
+                return response.IsSuccessStatusCode;
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"API request error: {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting profile: {ex.Message}");
+                throw;
+            }
         }
 
-        public Task<Profile> GetProfileByIdAsync(string profileId, string accessToken, CancellationToken cancellationToken = default)
+        public async Task<Profile> GetProfileByIdAsync(string profileId, string accessToken, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            try
+            {
+                // Set authentication header
+                if (!string.IsNullOrEmpty(accessToken))
+                {
+                    _httpClient.DefaultRequestHeaders.Authorization =
+                        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+                }
+
+                // Build request URL
+                var requestUrl = $"{_baseUrl}/api/Profile/{profileId}";
+
+                // Make the request
+                var response = await _httpClient.GetAsync(requestUrl, cancellationToken);
+                response.EnsureSuccessStatusCode();
+
+                // Deserialize the response
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+                var profile = JsonSerializer.Deserialize<Profile>(content, _jsonOptions);
+
+                return profile;
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"API request error: {ex.Message}");
+                throw;
+            }
+            catch (JsonException ex)
+            {
+                Console.WriteLine($"JSON parsing error: {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting profile: {ex.Message}");
+                throw;
+            }
         }
 
- 
-
-        public Task<bool> UpdateProfileAsync(Profile profile, string accessToken, CancellationToken cancellationToken = default)
+        public async Task<bool> UpdateProfileAsync(Profile profile, string accessToken, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            try
+            {
+                // Set authentication header
+                if (!string.IsNullOrEmpty(accessToken))
+                {
+                    _httpClient.DefaultRequestHeaders.Authorization =
+                        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+                }
+
+                // Build request URL
+                var requestUrl = $"{_baseUrl}/api/Profile";
+
+                // Serialize the profile object
+                var content = JsonSerializer.Serialize(profile, _jsonOptions);
+                var httpContent = new StringContent(content, System.Text.Encoding.UTF8, "application/json");
+
+                // Make the PUT request
+                var response = await _httpClient.PutAsync(requestUrl, httpContent, cancellationToken);
+
+                // Return true if successful, false otherwise
+                return response.IsSuccessStatusCode;
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"API request error: {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating profile: {ex.Message}");
+                throw;
+            }
         }
 
-        public Task<List<Profile>> GetProfilesAsync(string accessToken, CancellationToken cancellationToken = default)
+        public async Task<List<Profile>> GetProfilesAsync(string accessToken, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            try
+            {
+                // Set authentication header
+                if (!string.IsNullOrEmpty(accessToken))
+                {
+                    _httpClient.DefaultRequestHeaders.Authorization =
+                        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+                }
+
+                // Build request URL
+                var requestUrl = $"{_baseUrl}/api/Profile";
+
+                // Make the request
+                var response = await _httpClient.GetAsync(requestUrl, cancellationToken);
+                response.EnsureSuccessStatusCode();
+
+                // Deserialize the response
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+                var profiles = JsonSerializer.Deserialize<List<Profile>>(content, _jsonOptions);
+
+                return profiles;
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"API request error: {ex.Message}");
+                throw;
+            }
+            catch (JsonException ex)
+            {
+                Console.WriteLine($"JSON parsing error: {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting profiles: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task<CursorPaginatedResultDto<ProfileViewModelDto>> GetProfilesWithCursorAsync(
-       string cursor = null,
-       int limit = 20,
-       string direction = "next",
-       string sortBy = "Points",
-       string accessToken = null,
-       CancellationToken cancellationToken = default)
+            string cursor = null,
+            int limit = 20,
+            string direction = "next",
+            string sortBy = "Points",
+            string accessToken = null,
+            CancellationToken cancellationToken = default)
         {
             try
             {
@@ -80,6 +208,7 @@ namespace WebAPI.ApiClients
 
                 // Deserialize the response
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
                 return JsonSerializer.Deserialize<CursorPaginatedResultDto<ProfileViewModelDto>>(content, _jsonOptions);
             }
             catch (HttpRequestException ex)

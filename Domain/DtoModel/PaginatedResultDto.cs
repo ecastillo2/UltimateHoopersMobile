@@ -20,6 +20,21 @@ namespace Domain.DtoModel
         public int TotalCount { get; set; }
 
         /// <summary>
+        /// The total number of items across all pages
+        /// </summary>
+        public int Page { get; set; }
+
+        /// <summary>
+        /// The total number of items across all pages
+        /// </summary>
+        public int PageSize { get; set; }
+
+        /// <summary>
+        /// The total number of items across all pages
+        /// </summary>
+        public int TotalPages { get; set; }
+
+        /// <summary>
         /// The cursor for the next page, if any
         /// </summary>
         public string NextCursor { get; set; }

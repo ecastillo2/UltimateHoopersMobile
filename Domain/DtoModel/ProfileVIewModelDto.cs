@@ -35,6 +35,10 @@ namespace Domain.DtoModel
             LastRunDate = profile.LastRunDate;
             TopRecord = profile.TopRecord;
             OnSquad = profile.OnSquad;
+            GameStatistics = profile.GameStatistics;
+            
+          
+
         }
 
         public string ProfileId { get; set; }
@@ -56,5 +60,12 @@ namespace Domain.DtoModel
         public string LastRunDate { get; set; }
         public bool? TopRecord { get; set; }
         public bool? OnSquad { get; set; }
+        public Profile Profile { get; set; }
+        public SettingViewModelDto Setting { get; set; }
+        public ScoutingReportViewModelDto ScoutingReport { get; set; }
+        public GameStatistics GameStatistics { get; set; }
+        public string FollowersCount { get; set; }
+        public string FollowingCount { get; set; }
+
     }
 }

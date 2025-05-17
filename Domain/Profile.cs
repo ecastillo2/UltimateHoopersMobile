@@ -27,6 +27,7 @@ namespace Domain
         public string? LastRunDate { get; set; }
         public bool? TopRecord { get; set; }
         public bool? OnSquad { get; set; }
+       
 
         [NotMapped]
         public Squad? Squad { get; set; }
@@ -94,6 +95,8 @@ namespace Domain
         public Setting? Setting { get; set; }
         [NotMapped]
         public ScoutingReport? ScoutingReport { get; set; }
+        [NotMapped]
+        public GameStatistics GameStatistics { get; set; }
         [NotMapped]
         public string? AcceptedInvite { get; set; }
         [NotMapped]

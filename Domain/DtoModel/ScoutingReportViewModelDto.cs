@@ -1,29 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.Json.Serialization;
 
 namespace Domain.DtoModel
 {
     public class ScoutingReportViewModelDto
     {
-        public string ScoutingReportId { get; set; }
-        public string ProfileId { get; set; }
-        public string PlayStyle { get; set; }
-        public string StrengthOne { get; set; }
-        public string StrengthTwo { get; set; }
-        public string WeaknessOne { get; set; }
-        public string WeaknessTwo { get; set; }
-        public string PlayStyleImpactOne { get; set; }
-        public string PlayStyleImpactTwo { get; set; }
-        public string Comparison { get; set; }
-        public string Conclusion { get; set; }
-        public string Status { get; set; }
-        public string IdealRole { get; set; }
-        public DateTime? CreatedDate { get; set; }
-        public DateTime? LastUpdated { get; set; }
+        // Add a parameterless constructor for JSON deserialization
+        [JsonConstructor]
+        public ScoutingReportViewModelDto() { }
 
+        // Existing constructor for mapping from ScoutingReport
         public ScoutingReportViewModelDto(ScoutingReport report)
         {
             ScoutingReportId = report.ScoutingReportId;
@@ -42,5 +28,21 @@ namespace Domain.DtoModel
             CreatedDate = report.CreatedDate;
             LastUpdated = report.LastUpdated;
         }
+
+        public string ScoutingReportId { get; set; }
+        public string ProfileId { get; set; }
+        public string PlayStyle { get; set; }
+        public string StrengthOne { get; set; }
+        public string StrengthTwo { get; set; }
+        public string WeaknessOne { get; set; }
+        public string WeaknessTwo { get; set; }
+        public string PlayStyleImpactOne { get; set; }
+        public string PlayStyleImpactTwo { get; set; }
+        public string Comparison { get; set; }
+        public string Conclusion { get; set; }
+        public string Status { get; set; }
+        public string IdealRole { get; set; }
+        public DateTime? CreatedDate { get; set; }
+        public DateTime? LastUpdated { get; set; }
     }
 }
