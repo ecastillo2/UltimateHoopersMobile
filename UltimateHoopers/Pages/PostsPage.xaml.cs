@@ -69,6 +69,11 @@ namespace UltimateHoopers.Pages
                 // Set up scrolled event handler for auto-play
                 PostsCollectionView.Scrolled += OnCollectionViewScrolled;
 
+                // Subscribe to MessagingCenter for full-screen image requests
+                MessagingCenter.Subscribe<PostsViewModel, Post>(this, "ShowFullscreenImage", (sender, post) => {
+                    ShowFullscreenImage(post);
+                });
+
                 // Check for visible videos after a short delay to ensure layout is done
                 MainThread.BeginInvokeOnMainThread(async () => {
                     await Task.Delay(500);
@@ -90,6 +95,9 @@ namespace UltimateHoopers.Pages
                 // Remove event handler
                 PostsCollectionView.Scrolled -= OnCollectionViewScrolled;
 
+                // Unsubscribe from the MessagingCenter
+                MessagingCenter.Unsubscribe<PostsViewModel, Post>(this, "ShowFullscreenImage");
+
                 // Stop all videos
                 var videoElements = PostsCollectionView.FindVisualChildrenByName<AutoPlayVideoElement>("AutoPlayVideo");
                 foreach (var element in videoElements)
@@ -100,6 +108,72 @@ namespace UltimateHoopers.Pages
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error in PostsPage.OnDisappearing: {ex.Message}");
+            }
+        }
+
+        // Image loading event handlers
+        private void OnImageLoaded(object sender, EventArgs e)
+        {
+            try
+            {
+                if (sender is Image image)
+                {
+                    // Find the parent grid containing this image
+                    var parent = image.Parent;
+                    while (parent != null && !(parent is Grid))
+                    {
+                        parent = parent.Parent;
+                    }
+
+                    if (parent is Grid grid)
+                    {
+                        // Find the loading indicator in the same grid
+                        var loadingIndicator = grid.Children.OfType<ActivityIndicator>().FirstOrDefault();
+                        if (loadingIndicator != null)
+                        {
+                            // Hide the loading indicator
+                            loadingIndicator.IsVisible = false;
+                            loadingIndicator.IsRunning = false;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error handling image loaded event: {ex.Message}");
+            }
+        }
+
+        private void OnImageLoadingFailed(object sender, EventArgs e)
+        {
+            try
+            {
+                if (sender is Image image)
+                {
+                    // Set a fallback image
+                    image.Source = "dotnet_bot.png";
+
+                    // Find and hide the loading indicator
+                    var parent = image.Parent;
+                    while (parent != null && !(parent is Grid))
+                    {
+                        parent = parent.Parent;
+                    }
+
+                    if (parent is Grid grid)
+                    {
+                        var loadingIndicator = grid.Children.OfType<ActivityIndicator>().FirstOrDefault();
+                        if (loadingIndicator != null)
+                        {
+                            loadingIndicator.IsVisible = false;
+                            loadingIndicator.IsRunning = false;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error handling image loading failed event: {ex.Message}");
             }
         }
 
@@ -253,7 +327,6 @@ namespace UltimateHoopers.Pages
             }
         }
 
-
         // Find video elements by post ID
         private AutoPlayVideoElement FindAutoPlayVideoElement(string postId)
         {
@@ -375,72 +448,14 @@ namespace UltimateHoopers.Pages
             }
         }
 
-        // Helper method to process post images directly
-        private void ProcessPostImages()
-        {
-            try
-            {
-                foreach (var post in _viewModel.Posts)
-                {
-                    // Make sure PostFileURL is a valid URI
-                    if (!string.IsNullOrWhiteSpace(post.PostFileURL))
-                    {
-                        try
-                        {
-                            // Ensure URL has a protocol (http or https)
-                            if (!post.PostFileURL.StartsWith("http://") && !post.PostFileURL.StartsWith("https://"))
-                            {
-                                // Add https protocol if missing
-                                post.PostFileURL = "https://" + post.PostFileURL.TrimStart('/');
-                                Console.WriteLine($"Fixed URL by adding protocol: {post.PostFileURL}");
-                            }
-
-                            // Test creating a URI object to validate
-                            var uri = new Uri(post.PostFileURL);
-                            Console.WriteLine($"Valid URI: {uri}");
-                        }
-                        catch (UriFormatException ex)
-                        {
-                            Console.WriteLine($"Invalid URL format: {post.PostFileURL}, Error: {ex.Message}");
-                        }
-                    }
-
-                    // Do the same for ThumbnailUrl
-                    if (!string.IsNullOrWhiteSpace(post.ThumbnailUrl))
-                    {
-                        try
-                        {
-                            if (!post.ThumbnailUrl.StartsWith("http://") && !post.ThumbnailUrl.StartsWith("https://"))
-                            {
-                                post.ThumbnailUrl = "https://" + post.ThumbnailUrl.TrimStart('/');
-                                Console.WriteLine($"Fixed thumbnail URL: {post.ThumbnailUrl}");
-                            }
-
-                            // Test creating a URI object
-                            var uri = new Uri(post.ThumbnailUrl);
-                            Console.WriteLine($"Valid thumbnail URI: {uri}");
-                        }
-                        catch (UriFormatException ex)
-                        {
-                            Console.WriteLine($"Invalid thumbnail URL: {post.ThumbnailUrl}, Error: {ex.Message}");
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error in ProcessPostImages: {ex.Message}");
-            }
-        }
-
-        // Image post tap handler
+        // Handle image post taps
         private void OnImagePostTapped(object sender, EventArgs e)
         {
             try
             {
                 if (sender is Image image && image.BindingContext is Post post)
                 {
-                    Console.WriteLine($"Tapped image post: {post.PostId}, URL: {post.PostFileURL}");
+                    Debug.WriteLine($"Tapped image post: {post.PostId}, URL: {post.PostFileURL}");
 
                     // Show full screen image viewer
                     ShowFullscreenImage(post);
@@ -448,7 +463,7 @@ namespace UltimateHoopers.Pages
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error in OnImagePostTapped: {ex.Message}");
+                Debug.WriteLine($"Error in OnImagePostTapped: {ex.Message}");
             }
         }
 
@@ -616,33 +631,6 @@ namespace UltimateHoopers.Pages
         private async void OnProfileClicked(object sender, EventArgs e)
         {
             await DisplayAlert("Profile", "Profile feature coming soon!", "OK");
-        }
-    }
-
-    
-
-
-    // Extension methods to find child elements by name
-    public static class VisualElementExtensions
-    {
-        public static IEnumerable<T> FindVisualChildrenByName<T>(this Element element, string name = null) where T : VisualElement
-        {
-            var results = new List<T>();
-
-            if (element is T foundElement && (string.IsNullOrEmpty(name) || foundElement.StyleId == name))
-            {
-                results.Add(foundElement);
-            }
-
-            foreach (var child in element.LogicalChildren)
-            {
-                if (child is Element visualChild)
-                {
-                    results.AddRange(FindVisualChildrenByName<T>(visualChild, name));
-                }
-            }
-
-            return results;
         }
     }
 }

@@ -115,47 +115,71 @@
                                 </Label>
                             </Grid>
 
+                            <!-- Image Post - Only show when PostType is 'image' -->
+                            <Grid IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='image'}"
+                                  HeightRequest="400">
+                                <!-- Image Content -->
+                                <Image Source="{Binding PostFileURL}"
+                                       Aspect="AspectFill"
+                                       HorizontalOptions="FillAndExpand"
+                                       VerticalOptions="FillAndExpand"
+                                       Loaded="OnImageLoaded"
+                                       >
+                                    <Image.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnImagePostTapped" />
+                                    </Image.GestureRecognizers>
+                                </Image>
+
+                                <!-- Loading Indicator (initially visible) -->
+                                <ActivityIndicator IsRunning="True"
+                                                  Color="Gray"
+                                                  HorizontalOptions="Center"
+                                                  VerticalOptions="Center" 
+                                                  Scale="1.5"
+                                                  x:Name="ImageLoadingIndicator" />
+                            </Grid>
+
                             <!-- Video Post - Only show when PostType is 'video' -->
                             <Grid IsVisible="{Binding PostType, Converter={StaticResource PostTypeToVisibilityConverter}, ConverterParameter='video'}"
-      Background="Black"
-      HeightRequest="400">
+                                  Background="Black"
+                                  HeightRequest="400">
                                 <controls:AutoPlayVideoElement 
-        x:Name="AutoPlayVideo"
-        VideoUrl="{Binding PostFileURL}"
-        ThumbnailUrl="{Binding ThumbnailUrl}"
-        Post="{Binding .}"
-        IsVisibleInViewport="False"
-        IsMuted="True"
-        FullScreenRequested="OnVideoFullScreenRequested"
-        HeightRequest="400"
-        VerticalOptions="FillAndExpand"
-        HorizontalOptions="FillAndExpand" />
+                                    x:Name="AutoPlayVideo"
+                                    VideoUrl="{Binding PostFileURL}"
+                                    ThumbnailUrl="{Binding ThumbnailUrl}"
+                                    Post="{Binding .}"
+                                    IsVisibleInViewport="False"
+                                    IsMuted="True"
+                                    FullScreenRequested="OnVideoFullScreenRequested"
+                                    HeightRequest="400"
+                                    VerticalOptions="FillAndExpand"
+                                    HorizontalOptions="FillAndExpand" />
 
                                 <!-- Loading Indicator (initially visible) -->
                                 <ActivityIndicator 
-        IsRunning="True"
-        Color="White"
-        HorizontalOptions="Center"
-        VerticalOptions="Center" 
-        Scale="1.5"
-        IsVisible="True" />
+                                    IsRunning="True"
+                                    Color="White"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center" 
+                                    Scale="1.5"
+                                    IsVisible="True" />
 
                                 <!-- Volume Control Button -->
                                 <Frame StyleId="VolumeButton"
-           BackgroundColor="#80000000"
-           CornerRadius="15"
-           HeightRequest="30"
-           WidthRequest="30"
-           HorizontalOptions="End"
-           VerticalOptions="End"
-           Margin="0,0,10,10"
-           Padding="0"
-           HasShadow="False">
+                                       BackgroundColor="#80000000"
+                                       CornerRadius="15"
+                                       HeightRequest="30"
+                                       WidthRequest="30"
+                                       HorizontalOptions="End"
+                                       VerticalOptions="End"
+                                       Margin="0,0,10,10"
+                                       Padding="0"
+                                       HasShadow="False">
                                     <Label Text="🔇" 
-               FontSize="16" 
-               HorizontalOptions="Center" 
-               VerticalOptions="Center" 
-               TextColor="White" />
+                                           FontSize="16" 
+                                           HorizontalOptions="Center" 
+                                           VerticalOptions="Center" 
+                                           TextColor="White" />
                                     <Frame.GestureRecognizers>
                                         <TapGestureRecognizer Tapped="OnVolumeButtonTapped" />
                                     </Frame.GestureRecognizers>

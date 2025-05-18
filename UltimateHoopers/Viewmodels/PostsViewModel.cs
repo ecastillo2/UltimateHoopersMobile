@@ -47,6 +47,7 @@ namespace UltimateHoopers.ViewModels
         public ICommand ViewCommentsCommand { get; }
         public ICommand PostOptionsCommand { get; }
         public ICommand PlayVideoCommand { get; }
+        public ICommand ViewImageCommand { get; }
 
         public PostsViewModel(IPostService postService)
         {
@@ -61,7 +62,20 @@ namespace UltimateHoopers.ViewModels
             SharePostCommand = new Command<Post>(async (post) => await SharePost(post));
             ViewCommentsCommand = new Command<Post>(async (post) => await NavigateToComments(post));
             PostOptionsCommand = new Command<Post>(async (post) => await ShowPostOptions(post));
-            PlayVideoCommand = new Command<Post>(async (post) => await PlayVideo(post));
+
+            // Update PlayVideoCommand to handle both images and videos
+            PlayVideoCommand = new Command<Post>(async (post) => {
+                if (post.PostType?.ToLower() == "image")
+                {
+                    await HandleImageTap(post);
+                }
+                else
+                {
+                    await PlayVideo(post);
+                }
+            });
+
+            ViewImageCommand = new Command<Post>(async (post) => await HandleImageTap(post));
 
             // Load posts automatically when ViewModel is created
             MainThread.BeginInvokeOnMainThread(async () =>
@@ -385,6 +399,33 @@ namespace UltimateHoopers.ViewModels
 
             // Default to image for all other formats
             return "image";
+        }
+
+        // Handler for image taps
+        public async Task HandleImageTap(Post post)
+        {
+            try
+            {
+                if (post == null || string.IsNullOrEmpty(post.PostFileURL))
+                {
+                    await MainThread.InvokeOnMainThreadAsync(async () => {
+                        await Application.Current.MainPage.DisplayAlert("Error", "Image URL is not available", "OK");
+                    });
+                    return;
+                }
+
+                Debug.WriteLine($"Image tapped: {post.PostFileURL}");
+
+                // Use MessageCenter to request the page to show the fullscreen image
+                MessagingCenter.Send(this, "ShowFullscreenImage", post);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error handling image tap: {ex.Message}");
+                await MainThread.InvokeOnMainThreadAsync(async () => {
+                    await Application.Current.MainPage.DisplayAlert("Error", $"Could not display image: {ex.Message}", "OK");
+                });
+            }
         }
 
         // Command handlers
