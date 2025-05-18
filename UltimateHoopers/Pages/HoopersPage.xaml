@@ -73,62 +73,7 @@
                 </Grid>
             </Frame>
 
-            <!-- Filter Options -->
-            <ScrollView Grid.Row="1"
-                        Orientation="Horizontal" 
-                        Margin="0,0,0,0"
-                        HorizontalScrollBarVisibility="Never">
-                <HorizontalStackLayout Spacing="10">
-                    <Frame Padding="15,8" 
-                           CornerRadius="20" 
-                           BackgroundColor="{StaticResource PrimaryColor}">
-                        <Label Text="All Users" 
-                               TextColor="White" 
-                               FontAttributes="Bold" />
-                    </Frame>
-                    <Frame Padding="15,8" 
-                           CornerRadius="20" 
-                           BackgroundColor="{StaticResource CardBackgroundColor}"
-                           BorderColor="{StaticResource BorderColor}">
-                        <Label Text="@Guards" 
-                               TextColor="{StaticResource PrimaryTextColor}" />
-                        <Frame.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnFilterGuardsClicked" />
-                        </Frame.GestureRecognizers>
-                    </Frame>
-                    <Frame Padding="15,8" 
-                           CornerRadius="20" 
-                           BackgroundColor="{StaticResource CardBackgroundColor}"
-                           BorderColor="{StaticResource BorderColor}">
-                        <Label Text="@Forwards" 
-                               TextColor="{StaticResource PrimaryTextColor}" />
-                        <Frame.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnFilterForwardsClicked" />
-                        </Frame.GestureRecognizers>
-                    </Frame>
-                    <Frame Padding="15,8" 
-                           CornerRadius="20" 
-                           BackgroundColor="{StaticResource CardBackgroundColor}"
-                           BorderColor="{StaticResource BorderColor}">
-                        <Label Text="@Centers" 
-                               TextColor="{StaticResource PrimaryTextColor}" />
-                        <Frame.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnFilterCentersClicked" />
-                        </Frame.GestureRecognizers>
-                    </Frame>
-                    <Frame Padding="15,8" 
-                           CornerRadius="20" 
-                           BackgroundColor="{StaticResource CardBackgroundColor}"
-                           BorderColor="{StaticResource BorderColor}">
-                        <Label Text="@Nearby" 
-                               TextColor="{StaticResource PrimaryTextColor}" />
-                        <Frame.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnFilterNearbyClicked" />
-                        </Frame.GestureRecognizers>
-                    </Frame>
-                </HorizontalStackLayout>
-            </ScrollView>
-
+            
             <!-- Scrollable Players List Section with Loading Indicator -->
             <Grid Grid.Row="2">
                 <!-- Loading Indicator-->
@@ -145,12 +90,7 @@
                 <ScrollView x:Name="PlayersScrollView" 
                           IsVisible="{Binding IsNotLoading}">
                     <VerticalStackLayout x:Name="PlayersContainer" Spacing="15">
-                        <!-- Hoopers List Title -->
-                        <Label Text="Featured Hoopers" 
-                               FontSize="20"
-                               TextColor="{StaticResource PrimaryTextColor}"
-                               FontAttributes="Bold" 
-                               Margin="0,0,0,0" />
+                       
 
                         <!-- Template for Player Cards -->
                         <CollectionView x:Name="HoopersCollection" 
