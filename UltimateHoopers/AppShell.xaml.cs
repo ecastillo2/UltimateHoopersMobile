@@ -52,6 +52,10 @@ namespace UltimateHoopers
 
             // Set binding context to this to use the commands
             BindingContext = this;
+
+            // CHANGE: Set the Posts page as the initial page
+            // Use the safer method to find and set the Posts page
+            SetInitialPage(this);
         }
 
         private void RegisterRoutes()
@@ -151,7 +155,84 @@ namespace UltimateHoopers
             }
         }
 
+        private void SetInitialPage(Shell shell)
+        {
+            try
+            {
+                if (shell == null || shell.Items == null || shell.Items.Count == 0)
+                    return;
 
+                // First look for a matching tab/flyout item with the exact route
+                var postsItem = shell.Items.FirstOrDefault(item =>
+                    item != null &&
+                    "PostsPage".Equals(item.Route, StringComparison.OrdinalIgnoreCase));
+
+                if (postsItem != null)
+                {
+                    shell.CurrentItem = postsItem;
+                    System.Diagnostics.Debug.WriteLine("Set shell.CurrentItem to PostsPage directly");
+                    return;
+                }
+
+                // Then look for an item containing a tab with the route
+                foreach (var item in shell.Items)
+                {
+                    if (item?.Items != null)
+                    {
+                        var tab = item.Items.FirstOrDefault(si =>
+                            si != null &&
+                            "PostsPage".Equals(si.Route, StringComparison.OrdinalIgnoreCase));
+
+                        if (tab != null)
+                        {
+                            shell.CurrentItem = item;
+                            if (item.CurrentItem != tab)
+                            {
+                                item.CurrentItem = tab;
+                            }
+                            System.Diagnostics.Debug.WriteLine("Set shell.CurrentItem to item containing PostsPage tab");
+                            return;
+                        }
+                    }
+                }
+
+                // If we didn't find a Posts page specifically, try to find any page that has "Posts" in its name
+                foreach (var item in shell.Items)
+                {
+                    if (item?.Route != null && item.Route.Contains("Posts", StringComparison.OrdinalIgnoreCase))
+                    {
+                        shell.CurrentItem = item;
+                        System.Diagnostics.Debug.WriteLine($"Set shell.CurrentItem to item with route containing 'Posts': {item.Route}");
+                        return;
+                    }
+
+                    if (item?.Items != null)
+                    {
+                        var tab = item.Items.FirstOrDefault(si =>
+                            si?.Route != null &&
+                            si.Route.Contains("Posts", StringComparison.OrdinalIgnoreCase));
+
+                        if (tab != null)
+                        {
+                            shell.CurrentItem = item;
+                            if (item.CurrentItem != tab)
+                            {
+                                item.CurrentItem = tab;
+                            }
+                            System.Diagnostics.Debug.WriteLine($"Set shell.CurrentItem to item containing tab with route containing 'Posts': {tab.Route}");
+                            return;
+                        }
+                    }
+                }
+
+                System.Diagnostics.Debug.WriteLine("Could not find Posts page in shell items");
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't crash the app if setting initial page fails
+                System.Diagnostics.Debug.WriteLine($"Error setting initial page to Posts: {ex.Message}");
+            }
+        }
 
 
         // These methods can be used for tap gesture recognizers in Shell

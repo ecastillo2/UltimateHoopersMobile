@@ -63,6 +63,85 @@ namespace UltimateHoopers
             }
         }
 
+        private void SetInitialPage(Shell shell)
+        {
+            try
+            {
+                if (shell == null || shell.Items == null || shell.Items.Count == 0)
+                    return;
+
+                // First look for a matching tab/flyout item with the exact route
+                var postsItem = shell.Items.FirstOrDefault(item =>
+                    item != null &&
+                    "PostsPage".Equals(item.Route, StringComparison.OrdinalIgnoreCase));
+
+                if (postsItem != null)
+                {
+                    shell.CurrentItem = postsItem;
+                    DiagnosticHelper.Log("Set shell.CurrentItem to PostsPage directly");
+                    return;
+                }
+
+                // Then look for an item containing a tab with the route
+                foreach (var item in shell.Items)
+                {
+                    if (item?.Items != null)
+                    {
+                        var tab = item.Items.FirstOrDefault(si =>
+                            si != null &&
+                            "PostsPage".Equals(si.Route, StringComparison.OrdinalIgnoreCase));
+
+                        if (tab != null)
+                        {
+                            shell.CurrentItem = item;
+                            if (item.CurrentItem != tab)
+                            {
+                                item.CurrentItem = tab;
+                            }
+                            DiagnosticHelper.Log("Set shell.CurrentItem to item containing PostsPage tab");
+                            return;
+                        }
+                    }
+                }
+
+                // If we didn't find a Posts page specifically, try to find any page that has "Posts" in its name
+                foreach (var item in shell.Items)
+                {
+                    if (item?.Route != null && item.Route.Contains("Posts", StringComparison.OrdinalIgnoreCase))
+                    {
+                        shell.CurrentItem = item;
+                        DiagnosticHelper.Log($"Set shell.CurrentItem to item with route containing 'Posts': {item.Route}");
+                        return;
+                    }
+
+                    if (item?.Items != null)
+                    {
+                        var tab = item.Items.FirstOrDefault(si =>
+                            si?.Route != null &&
+                            si.Route.Contains("Posts", StringComparison.OrdinalIgnoreCase));
+
+                        if (tab != null)
+                        {
+                            shell.CurrentItem = item;
+                            if (item.CurrentItem != tab)
+                            {
+                                item.CurrentItem = tab;
+                            }
+                            DiagnosticHelper.Log($"Set shell.CurrentItem to item containing tab with route containing 'Posts': {tab.Route}");
+                            return;
+                        }
+                    }
+                }
+
+                DiagnosticHelper.Log("Could not find Posts page in shell items");
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't crash the app if setting initial page fails
+                DiagnosticHelper.LogException(ex, "SetInitialPage");
+            }
+        }
+
         private async void InitializeAsync()
         {
             try
@@ -98,15 +177,23 @@ namespace UltimateHoopers
 
                             if (appShell != null)
                             {
+                                // Set the main page to the shell
                                 MainPage = appShell;
                                 DiagnosticHelper.Log("Set MainPage to AppShell from DI");
+
+                                // Safely set the Posts page as the current page
+                                SetInitialPage(appShell);
                             }
                             else
                             {
                                 // Fallback if DI can't resolve the AppShell
                                 DiagnosticHelper.Log("Creating new AppShell with auth service");
-                                MainPage = new AppShell(authService);
+                                var shell = new AppShell(authService);
+                                MainPage = shell;
                                 DiagnosticHelper.Log("Set MainPage to new AppShell");
+
+                                // Safely set the Posts page as the current page
+                                SetInitialPage(shell);
                             }
                         }
                         else

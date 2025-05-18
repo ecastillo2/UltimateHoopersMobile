@@ -37,6 +37,78 @@ namespace UltimateHoopers.Pages
             _authService = authService ?? throw new ArgumentNullException(nameof(authService));
         }
 
+        private void SetInitialPage(Shell shell)
+        {
+            try
+            {
+                if (shell == null || shell.Items == null || shell.Items.Count == 0)
+                    return;
+
+                // First look for a matching tab/flyout item with the exact route
+                var postsItem = shell.Items.FirstOrDefault(item =>
+                    item != null &&
+                    "PostsPage".Equals(item.Route, StringComparison.OrdinalIgnoreCase));
+
+                if (postsItem != null)
+                {
+                    shell.CurrentItem = postsItem;
+                    return;
+                }
+
+                // Then look for an item containing a tab with the route
+                foreach (var item in shell.Items)
+                {
+                    if (item?.Items != null)
+                    {
+                        var tab = item.Items.FirstOrDefault(si =>
+                            si != null &&
+                            "PostsPage".Equals(si.Route, StringComparison.OrdinalIgnoreCase));
+
+                        if (tab != null)
+                        {
+                            shell.CurrentItem = item;
+                            if (item.CurrentItem != tab)
+                            {
+                                item.CurrentItem = tab;
+                            }
+                            return;
+                        }
+                    }
+                }
+
+                // If we didn't find a Posts page specifically, try to find any page that has "Posts" in its name
+                foreach (var item in shell.Items)
+                {
+                    if (item?.Route != null && item.Route.Contains("Posts", StringComparison.OrdinalIgnoreCase))
+                    {
+                        shell.CurrentItem = item;
+                        return;
+                    }
+
+                    if (item?.Items != null)
+                    {
+                        var tab = item.Items.FirstOrDefault(si =>
+                            si?.Route != null &&
+                            si.Route.Contains("Posts", StringComparison.OrdinalIgnoreCase));
+
+                        if (tab != null)
+                        {
+                            shell.CurrentItem = item;
+                            if (item.CurrentItem != tab)
+                            {
+                                item.CurrentItem = tab;
+                            }
+                            return;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't crash the app if setting initial page fails
+                System.Diagnostics.Debug.WriteLine($"Error setting initial page to Posts: {ex.Message}");
+            }
+        }
         private async void OnLoginClicked(object sender, EventArgs e)
         {
             try
@@ -72,12 +144,20 @@ namespace UltimateHoopers.Pages
                         // Set the main page to AppShell
                         if (appShell != null)
                         {
+                            // Set the AppShell as the main page
                             Application.Current.MainPage = appShell;
+
+                            // Safely set the Posts page as the current page
+                            SetInitialPage(appShell);
                         }
                         else
                         {
                             // Fallback if DI fails
-                            Application.Current.MainPage = new AppShell(_authService);
+                            var shell = new AppShell(_authService);
+                            Application.Current.MainPage = shell;
+
+                            // Safely set the Posts page as the current page
+                            SetInitialPage(shell);
                         }
                     }
                     else
@@ -96,6 +176,9 @@ namespace UltimateHoopers.Pages
 
                     // Navigate to main app
                     Application.Current.MainPage = new AppShell();
+
+                    // CHANGE: Navigate to Posts page after authentication
+                    await Shell.Current.GoToAsync("//PostsPage");
 
                     await DisplayAlert("Demo Mode", "Logged in with simulated credentials. Auth service not available.", "OK");
                 }
