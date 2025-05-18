@@ -68,7 +68,7 @@
                                        Padding="0" 
                                        HasShadow="False"
                                        BorderColor="{StaticResource BorderColor}">
-                                    <Image Source="{Binding ProfileImageURL}" 
+                                    <Image Source="logo_uh.png" 
                                           HeightRequest="40"
                                           WidthRequest="40"
                                           Aspect="AspectFill"
