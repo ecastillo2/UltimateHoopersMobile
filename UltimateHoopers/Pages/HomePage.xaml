@@ -9,42 +9,39 @@
           Padding="20">
 
         <!-- Header with Profile Icon -->
+        <!-- Header with Logo -->
         <Grid Grid.Row="0" 
-              ColumnDefinitions="*,Auto,Auto"
-              Margin="0,10,0,20">
+      ColumnDefinitions="Auto,*,Auto"
+      Margin="0,10,0,20">
 
-            <VerticalStackLayout Grid.Column="0">
-                <Label Text="Ultimate Hoopers"
-                       FontSize="28"
-                       FontAttributes="Bold"
-                       TextColor="{StaticResource PrimaryColor}" />
+            <!-- Logo Image -->
+            <Image Grid.Column="0"
+           Source="logo_uh.png"
+           HeightRequest="60"
+           WidthRequest="60"
+           Margin="0,0,15,0" />
 
-                <Label Text="Welcome to your basketball hub"
-                       FontSize="16"
-                       TextColor="{StaticResource SecondaryTextColor}" />
-            </VerticalStackLayout>
+            
 
             <!-- Profile Icon -->
-            <Frame Grid.Column="1"
-                   CornerRadius="25"
-                   HeightRequest="50"
-                   WidthRequest="50"
-                   Padding="0"
-                   BorderColor="{StaticResource BorderColor}"
-                   BackgroundColor="{StaticResource CardBackgroundColor}"
-                   HasShadow="True"
-                   Margin="0,0,10,0">
+            <Frame Grid.Column="2"
+           CornerRadius="25"
+           HeightRequest="50"
+           WidthRequest="50"
+           Padding="0"
+           BorderColor="{StaticResource BorderColor}"
+           BackgroundColor="{StaticResource CardBackgroundColor}"
+           HasShadow="True">
                 <Label Text="👤" 
-            FontSize="24" 
-            HorizontalOptions="Center" 
-            VerticalOptions="Center" />
+               FontSize="24" 
+               HorizontalOptions="Center" 
+               VerticalOptions="Center" />
                 <!-- Image (visible when available) -->
                 <Image x:Name="ProfileImage"
-IsVisible="False"
-Aspect="AspectFill"
-HorizontalOptions="FillAndExpand"
-VerticalOptions="FillAndExpand" />
-
+               IsVisible="False"
+               Aspect="AspectFill"
+               HorizontalOptions="FillAndExpand"
+               VerticalOptions="FillAndExpand" />
                 <Frame.GestureRecognizers>
                     <TapGestureRecognizer Tapped="OnProfileClicked" />
                 </Frame.GestureRecognizers>

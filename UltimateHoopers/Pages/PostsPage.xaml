@@ -26,12 +26,12 @@
               Padding="10,10,10,10"
               HeightRequest="60">
 
-            <Label Text="Ultimate Hoopers"
-                   FontSize="22"
-                   FontAttributes="Bold"
-                   TextColor="{StaticResource PrimaryColor}"
-                   HorizontalOptions="Center"
-                   VerticalOptions="Center" />
+            <!-- Logo Image -->
+            <Image Grid.Column="0"
+           Source="logo_uh.png"
+           HeightRequest="60"
+           WidthRequest="60"
+           Margin="0,0,15,0" />
 
             <HorizontalStackLayout HorizontalOptions="End"
                                   VerticalOptions="Center">
