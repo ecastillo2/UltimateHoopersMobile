@@ -1,4 +1,6 @@
-﻿using Microsoft.Maui.Controls;
+﻿using Domain;
+using Domain.DtoModel;
+using Microsoft.Maui.Controls;
 using System;
 using System.Collections.Generic;
 
@@ -22,6 +24,14 @@ namespace UltimateHoopers.ViewModels
         public string Weight { get; set; }
         public string PlayerNumber { get; set; }
         public string Bio { get; set; }
+        public string StyleOfPlay { get; set; }
+
+        //public Profile Profile { get; set; }
+        public SettingViewModelDto? Setting { get; set; }
+        public ScoutingReport? ScoutingReport { get; set; }
+        public GameStatistics? GameStatistics { get; set; }
+        public string? FollowersCount { get; set; }
+        public string? FollowingCount { get; set; }
 
         // Computed properties
         public string UsernameDisplay => $"@{Username}";

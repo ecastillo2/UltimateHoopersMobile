@@ -145,10 +145,10 @@ namespace UltimateHoopers.Pages
             WinPercentageLabel.Text = hooper.WinPercentage;
             RatingLabel.Text = hooper.RatingDisplay;
 
+
             // Set bio
-            BioLabel.Text = !string.IsNullOrEmpty(hooper.Bio) ?
-                hooper.Bio :
-                "No bio information available for this player.";
+            BioLabel.Text = hooper.StyleOfPlay;
+                
 
             // Set profile image
             if (hooper.HasValidImage)

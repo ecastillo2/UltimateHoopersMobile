@@ -131,7 +131,9 @@ namespace UltimateHoopers.Services
                             TopRecord = item.TopRecord,
                             OnSquad = item.OnSquad,
                             GameStatistics = item.GameStatistics,
-                            
+                            ScoutingReport = item.ScoutingReport,
+                           // Setting = item.Setting,
+
                         };
 
                         profiles.Add(profile);

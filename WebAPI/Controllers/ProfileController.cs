@@ -116,8 +116,8 @@ namespace WebAPI.Controllers
                     // Create a detailed view model with all the additional data
                     var detailedViewModel = new ProfileDetailViewModelDto(profile)
                     {
-                        Setting = setting != null ? new SettingViewModelDto(setting) : null,
-                        ScoutingReport = scoutingReport != null ? new ScoutingReportViewModelDto(scoutingReport) : null,
+                        Setting = setting != null ? new Setting(setting) : null,
+                        ScoutingReport = scoutingReport != null ? new ScoutingReport(scoutingReport) : null,
                         GameStatistics = gameStats,
                         Profile = profile,
                     };
@@ -167,8 +167,8 @@ namespace WebAPI.Controllers
 
                 var viewModel = new ProfileDetailViewModelDto(profile)
                 {
-                    Setting = setting != null ? new SettingViewModelDto(setting) : null,
-                    ScoutingReport = scoutingReport != null ? new ScoutingReportViewModelDto(scoutingReport) : null,
+                    Setting = setting != null ? new Setting(setting) : null,
+                    ScoutingReport = scoutingReport != null ? new ScoutingReport(scoutingReport) : null,
                     GameStatistics = gameStats,
                     Profile = profile,
                 };
@@ -204,8 +204,8 @@ namespace WebAPI.Controllers
 
                 var viewModel = new ProfileDetailViewModelDto(profile)
                 {
-                    Setting = setting != null ? new SettingViewModelDto(setting) : null,
-                    ScoutingReport = scoutingReport != null ? new ScoutingReportViewModelDto(scoutingReport) : null,
+                    Setting = setting != null ? new Setting(setting) : null,
+                    ScoutingReport = scoutingReport != null ? new ScoutingReport(scoutingReport) : null,
                     GameStatistics = gameStats
                 };
 

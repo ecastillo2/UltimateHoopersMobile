@@ -44,5 +44,6 @@ namespace Domain.DtoModel
         public string IdealRole { get; set; }
         public DateTime? CreatedDate { get; set; }
         public DateTime? LastUpdated { get; set; }
+        public ScoutingReport ScoutingReport { get; set; }
     }
 }

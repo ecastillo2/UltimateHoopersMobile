@@ -93,7 +93,7 @@ namespace Domain
         public int? TotalLosses { get; set; }
        
         public Setting? Setting { get; set; }
-        [NotMapped]
+       
         public ScoutingReport? ScoutingReport { get; set; }
         [NotMapped]
         public GameStatistics GameStatistics { get; set; }

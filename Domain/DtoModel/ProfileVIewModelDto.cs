@@ -62,7 +62,7 @@ namespace Domain.DtoModel
         public bool? OnSquad { get; set; }
         public Profile Profile { get; set; }
         public SettingViewModelDto Setting { get; set; }
-        public ScoutingReportViewModelDto ScoutingReport { get; set; }
+        public ScoutingReport ScoutingReport { get; set; }
         public GameStatistics GameStatistics { get; set; }
         public string FollowersCount { get; set; }
         public string FollowingCount { get; set; }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace Domain
 {
@@ -8,6 +9,22 @@ namespace Domain
     /// </summary>
     public class Setting
     {
+        // Add a parameterless constructor for JSON deserialization
+        [JsonConstructor]
+        public Setting() { }
+
+        // Existing constructor for mapping from ScoutingReport
+        public Setting(Setting report)
+        {
+            SettingId = report.SettingId;
+            ProfileId = report.ProfileId;
+            AllowComments = report.AllowComments;
+            ShowGameHistory = report.ShowGameHistory;
+            ShowGameHistory = report.ShowGameHistory;
+            AllowEmailNotification = report.AllowEmailNotification;
+           
+        }
+
         /// <summary>
         /// Gets or sets the setting ID
         /// </summary>

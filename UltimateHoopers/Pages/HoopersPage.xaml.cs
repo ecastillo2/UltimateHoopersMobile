@@ -183,7 +183,8 @@ namespace UltimateHoopers.Pages
                                 Record = $"{profile.GameStatistics.TotalWins.ToString() ?? "0"}-{profile.GameStatistics.TotalLosses.ToString() ?? "0"}",
                                 WinPercentage = profile.GameStatistics.WinPercentage.ToString() ?? "0%",
                                 Rating = double.TryParse(profile.StarRating, out double rating) ? rating : 0.0,
-                                ProfileImage = profile.ImageURL
+                                ProfileImage = profile.ImageURL,
+                                StyleOfPlay = profile.ScoutingReport != null ? profile.ScoutingReport.PlayStyle ?? "Unknown Player" : "Unknown Player",
                             };
 
                             // Initialize computed properties

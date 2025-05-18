@@ -263,7 +263,7 @@ BorderColor="{StaticResource BorderColor}">
                                        HorizontalOptions="Center" />
                             </VerticalStackLayout>
 
-                            <!-- PPG (Points Per Game) -->
+                            <!-- PPG (Points Per Game) --><!--
                             <VerticalStackLayout Grid.Row="1"
                                                  Grid.Column="0"
                                                  HorizontalOptions="Center">
@@ -278,9 +278,9 @@ BorderColor="{StaticResource BorderColor}">
                                        FontSize="14"
                                        TextColor="{StaticResource SecondaryTextColor}"
                                        HorizontalOptions="Center" />
-                            </VerticalStackLayout>
+                            </VerticalStackLayout>-->
 
-                            <!-- APG (Assists Per Game) -->
+                            <!-- APG (Assists Per Game) --><!--
                             <VerticalStackLayout Grid.Row="1"
                                                  Grid.Column="1"
                                                  HorizontalOptions="Center">
@@ -295,9 +295,9 @@ BorderColor="{StaticResource BorderColor}">
                                        FontSize="14"
                                        TextColor="{StaticResource SecondaryTextColor}"
                                        HorizontalOptions="Center" />
-                            </VerticalStackLayout>
+                            </VerticalStackLayout>-->
 
-                            <!-- RPG (Rebounds Per Game) -->
+                            <!-- RPG (Rebounds Per Game) --><!--
                             <VerticalStackLayout Grid.Row="1"
                                                  Grid.Column="2"
                                                  HorizontalOptions="Center">
@@ -312,10 +312,10 @@ BorderColor="{StaticResource BorderColor}">
                                        FontSize="14"
                                        TextColor="{StaticResource SecondaryTextColor}"
                                        HorizontalOptions="Center" />
-                            </VerticalStackLayout>
+                            </VerticalStackLayout>-->
 
                             <!-- SPG (Steals Per Game) -->
-                            <VerticalStackLayout Grid.Row="1"
+                            <!--<VerticalStackLayout Grid.Row="1"
                                                  Grid.Column="3"
                                                  HorizontalOptions="Center">
                                 <Label x:Name="SpgLabel"
@@ -329,7 +329,7 @@ BorderColor="{StaticResource BorderColor}">
                                        FontSize="14"
                                        TextColor="{StaticResource SecondaryTextColor}"
                                        HorizontalOptions="Center" />
-                            </VerticalStackLayout>
+                            </VerticalStackLayout>-->
                         </Grid>
                     </VerticalStackLayout>
                 </Frame>
