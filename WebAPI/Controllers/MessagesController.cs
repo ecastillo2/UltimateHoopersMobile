@@ -5,8 +5,10 @@ using Domain.DtoModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using Swashbuckle.Swagger;
 using System.Security.Claims;
+using WebAPI.Models;
 
 namespace WebApi.Controllers
 {
@@ -33,19 +35,19 @@ namespace WebApi.Controllers
         {
             var userId = GetCurrentUserId();
 
-            var conversations = await _context.ConversationParticipants
+            var conversations = await _context.ConversationParticipant
                 .Where(cp => cp.UserId == userId)
                 .Select(cp => new
                 {
                     cp.ConversationId,
-                    Participants = _context.ConversationParticipants
+                    Participants = _context.ConversationParticipant
                         .Where(p => p.ConversationId == cp.ConversationId && p.UserId != userId)
                         .Select(p => p.UserId).ToList(),
-                    LastMessage = _context.Messages
+                    LastMessage = _context.Message
                         .Where(m => m.ConversationId == cp.ConversationId)
                         .OrderByDescending(m => m.SentAt)
                         .FirstOrDefault(),
-                    UnreadCount = _context.Messages
+                    UnreadCount = _context.Message
                         .Count(m => m.ConversationId == cp.ConversationId &&
                                m.SenderId != userId &&
                                m.MessageId > (cp.LastReadMessageId ?? 0))
@@ -58,7 +60,7 @@ namespace WebApi.Controllers
             {
                 // Get other user details - assuming 1:1 chats for simplicity
                 var otherUserId = conv.Participants.FirstOrDefault();
-                var otherUser = await _context.Users.FindAsync(otherUserId);
+                var otherUser = await _context.User.FindAsync(otherUserId);
 
                 conversationDtos.Add(new ConversationDto
                 {
@@ -82,13 +84,13 @@ namespace WebApi.Controllers
             var userId = GetCurrentUserId();
 
             // Check if user is part of conversation
-            var isParticipant = await _context.ConversationParticipants
+            var isParticipant = await _context.ConversationParticipant
                 .AnyAsync(cp => cp.ConversationId == conversationId && cp.UserId == userId);
 
             if (!isParticipant)
                 return Forbid();
 
-            var messages = await _context.Messages
+            var messages = await _context.Message
                 .Where(m => m.ConversationId == conversationId)
                 .OrderBy(m => m.SentAt)
                 .Select(m => new MessageDto
@@ -102,7 +104,7 @@ namespace WebApi.Controllers
                 .ToListAsync();
 
             // Mark messages as read
-            var participant = await _context.ConversationParticipants
+            var participant = await _context.ConversationParticipant
                 .FirstOrDefaultAsync(cp => cp.ConversationId == conversationId && cp.UserId == userId);
 
             if (participant != null && messages.Any())
@@ -127,7 +129,7 @@ namespace WebApi.Controllers
                 conversationId = request.ConversationId.Value;
 
                 // Verify user is part of conversation
-                var isParticipant = await _context.ConversationParticipants
+                var isParticipant = await _context.ConversationParticipant
                     .AnyAsync(cp => cp.ConversationId == conversationId && cp.UserId == userId);
 
                 if (!isParticipant)
@@ -136,12 +138,12 @@ namespace WebApi.Controllers
             else
             {
                 // Check if conversation already exists between these users
-                var existingConversation = await _context.ConversationParticipants
+                var existingConversation = await _context.ConversationParticipant
                     .Where(cp => cp.UserId == userId)
                     .Select(cp => new
                     {
                         cp.ConversationId,
-                        OtherParticipant = _context.ConversationParticipants
+                        OtherParticipant = _context.ConversationParticipant
                             .Any(p => p.ConversationId == cp.ConversationId && p.UserId == request.RecipientId)
                     })
                     .FirstOrDefaultAsync(c => c.OtherParticipant);
@@ -154,19 +156,19 @@ namespace WebApi.Controllers
                 {
                     // Create new conversation
                     var conversation = new Conversation();
-                    _context.Conversations.Add(conversation);
+                    _context.Conversation.Add(conversation);
                     await _context.SaveChangesAsync();
 
                     conversationId = conversation.ConversationId;
 
                     // Add participants
-                    _context.ConversationParticipants.Add(new ConversationParticipant
+                    _context.ConversationParticipant.Add(new ConversationParticipant
                     {
                         ConversationId = conversationId,
                         UserId = userId
                     });
 
-                    _context.ConversationParticipants.Add(new ConversationParticipant
+                    _context.ConversationParticipant.Add(new ConversationParticipant
                     {
                         ConversationId = conversationId,
                         UserId = request.RecipientId
@@ -184,10 +186,10 @@ namespace WebApi.Controllers
                 SentAt = DateTime.UtcNow
             };
 
-            _context.Messages.Add(message);
+            _context.Message.Add(message);
 
             // Update conversation LastMessageAt
-            var conversation = await _context.Conversations.FindAsync(conversationId);
+            var conversation = await _context.Conversation.FindAsync(conversationId);
             conversation.LastMessageAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
@@ -204,7 +206,7 @@ namespace WebApi.Controllers
             };
 
             // Notify other participants via SignalR
-            var participants = await _context.ConversationParticipants
+            var participants = await _context.ConversationParticipant
                 .Where(cp => cp.ConversationId == conversationId && cp.UserId != userId)
                 .Select(cp => cp.UserId.ToString())
                 .ToListAsync();
@@ -224,7 +226,7 @@ namespace WebApi.Controllers
             var userId = GetCurrentUserId();
 
             // Find last message in conversation
-            var lastMessageId = await _context.Messages
+            var lastMessageId = await _context.Message
                 .Where(m => m.ConversationId == conversationId)
                 .OrderByDescending(m => m.MessageId)
                 .Select(m => m.MessageId)
@@ -234,7 +236,7 @@ namespace WebApi.Controllers
                 return Ok(); // No messages
 
             // Update last read message ID
-            var participant = await _context.ConversationParticipants
+            var participant = await _context.ConversationParticipant
                 .FirstOrDefaultAsync(cp => cp.ConversationId == conversationId && cp.UserId == userId);
 
             if (participant != null)

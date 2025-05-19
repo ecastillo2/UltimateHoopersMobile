@@ -51,6 +51,9 @@ namespace DataLayer
         public virtual DbSet<Squad> Squad { get; set; }
         public virtual DbSet<SquadTeam> SquadTeam { get; set; }
         public virtual DbSet<SquadRequest> SquadRequest { get; set; }
+        public virtual DbSet<Message> Message { get; set; }
+        public virtual DbSet<Conversation> Conversation { get; set; }
+        public virtual DbSet<ConversationParticipant> ConversationParticipant { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
 
