@@ -47,61 +47,54 @@ namespace UltimateHoopers.Pages
                 // First look for a matching tab/flyout item with the exact route
                 var postsItem = shell.Items.FirstOrDefault(item =>
                     item != null &&
-                    "PostsPage".Equals(item.Route, StringComparison.OrdinalIgnoreCase));
+                    item.Route != null &&
+                    item.Route.Equals("PostsPage", StringComparison.OrdinalIgnoreCase));
 
                 if (postsItem != null)
                 {
                     shell.CurrentItem = postsItem;
+                    System.Diagnostics.Debug.WriteLine("Set shell.CurrentItem to PostsPage directly");
                     return;
                 }
 
-                // Then look for an item containing a tab with the route
+                // Then look for ShellContent with the route
                 foreach (var item in shell.Items)
                 {
                     if (item?.Items != null)
                     {
-                        var tab = item.Items.FirstOrDefault(si =>
+                        var shellContent = item.Items.FirstOrDefault(si =>
                             si != null &&
-                            "PostsPage".Equals(si.Route, StringComparison.OrdinalIgnoreCase));
+                            si.Route != null &&
+                            si.Route.Equals("PostsPage", StringComparison.OrdinalIgnoreCase));
 
-                        if (tab != null)
+                        if (shellContent != null)
                         {
                             shell.CurrentItem = item;
-                            if (item.CurrentItem != tab)
+                            if (item.CurrentItem != shellContent)
                             {
-                                item.CurrentItem = tab;
+                                item.CurrentItem = shellContent;
                             }
+                            System.Diagnostics.Debug.WriteLine("Set shell.CurrentItem to item containing PostsPage tab");
                             return;
                         }
                     }
                 }
 
-                // If we didn't find a Posts page specifically, try to find any page that has "Posts" in its name
-                foreach (var item in shell.Items)
+                // If explicit route not found, try GoToAsync
+                try
                 {
-                    if (item?.Route != null && item.Route.Contains("Posts", StringComparison.OrdinalIgnoreCase))
-                    {
-                        shell.CurrentItem = item;
-                        return;
-                    }
-
-                    if (item?.Items != null)
-                    {
-                        var tab = item.Items.FirstOrDefault(si =>
-                            si?.Route != null &&
-                            si.Route.Contains("Posts", StringComparison.OrdinalIgnoreCase));
-
-                        if (tab != null)
-                        {
-                            shell.CurrentItem = item;
-                            if (item.CurrentItem != tab)
-                            {
-                                item.CurrentItem = tab;
-                            }
-                            return;
-                        }
-                    }
+                    // This is an alternative approach that uses shell navigation directly
+                    Shell.Current.GoToAsync("//PostsPage");
+                    System.Diagnostics.Debug.WriteLine("Used Shell.GoToAsync to navigate to PostsPage");
+                    return;
                 }
+                catch (Exception navEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"GoToAsync navigation error: {navEx.Message}");
+                }
+
+                // Log that we couldn't find the page
+                System.Diagnostics.Debug.WriteLine("Could not find PostsPage in shell items");
             }
             catch (Exception ex)
             {
@@ -109,6 +102,7 @@ namespace UltimateHoopers.Pages
                 System.Diagnostics.Debug.WriteLine($"Error setting initial page to Posts: {ex.Message}");
             }
         }
+
         private async void OnLoginClicked(object sender, EventArgs e)
         {
             try
@@ -139,25 +133,46 @@ namespace UltimateHoopers.Pages
                     {
                         // Get service provider to resolve AppShell
                         var serviceProvider = MauiProgram.CreateMauiApp().Services;
-                        var appShell = serviceProvider.GetService<AppShell>();
 
-                        // Set the main page to AppShell
-                        if (appShell != null)
+                        // Try to set the main page to AppShell and navigate to PostsPage
+                        try
                         {
-                            // Set the AppShell as the main page
-                            Application.Current.MainPage = appShell;
+                            var appShell = serviceProvider.GetService<AppShell>();
 
-                            // Safely set the Posts page as the current page
-                            SetInitialPage(appShell);
+                            if (appShell != null)
+                            {
+                                // Set the AppShell as the main page
+                                Application.Current.MainPage = appShell;
+
+                                // Ensure we give the UI time to process the MainPage change before navigation
+                                await Task.Delay(100);
+
+                                // Try to navigate using Shell.GoToAsync
+                                await Shell.Current.GoToAsync("//PostsPage");
+
+                                // Also try using SetInitialPage as a fallback
+                                SetInitialPage(appShell);
+                            }
+                            else
+                            {
+                                // Fallback if DI fails
+                                var shell = new AppShell(_authService);
+                                Application.Current.MainPage = shell;
+
+                                await Task.Delay(100);
+
+                                await Shell.Current.GoToAsync("//PostsPage");
+
+                                // Safely set the Posts page as the current page
+                                SetInitialPage(shell);
+                            }
                         }
-                        else
+                        catch (Exception navEx)
                         {
-                            // Fallback if DI fails
-                            var shell = new AppShell(_authService);
-                            Application.Current.MainPage = shell;
+                            System.Diagnostics.Debug.WriteLine($"Navigation error: {navEx.Message}");
 
-                            // Safely set the Posts page as the current page
-                            SetInitialPage(shell);
+                            // Last resort fallback - create PostsPage directly
+                            Application.Current.MainPage = new NavigationPage(new PostsPage());
                         }
                     }
                     else
@@ -174,11 +189,24 @@ namespace UltimateHoopers.Pages
                     App.AuthToken = "sample-jwt-token-here";
                     await SecureStorage.SetAsync("auth_token", App.AuthToken);
 
-                    // Navigate to main app
-                    Application.Current.MainPage = new AppShell();
+                    try
+                    {
+                        // Create a new shell and set it as main page
+                        Application.Current.MainPage = new AppShell();
 
-                    // CHANGE: Navigate to Posts page after authentication
-                    await Shell.Current.GoToAsync("//PostsPage");
+                        // Ensure we give the UI time to process the MainPage change
+                        await Task.Delay(100);
+
+                        // Try to navigate to PostsPage
+                        await Shell.Current.GoToAsync("//PostsPage");
+                    }
+                    catch (Exception navEx)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Navigation error in fallback: {navEx.Message}");
+
+                        // Direct fallback
+                        Application.Current.MainPage = new NavigationPage(new PostsPage());
+                    }
 
                     await DisplayAlert("Demo Mode", "Logged in with simulated credentials. Auth service not available.", "OK");
                 }
@@ -194,6 +222,7 @@ namespace UltimateHoopers.Pages
                 LoginButton.IsEnabled = true;
             }
         }
+
 
 
         private void OnCreateAccountClicked(object sender, EventArgs e)

@@ -30,14 +30,10 @@
         <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" Route="HomePage" />
     </FlyoutItem>
 
-
-
-    <!--<FlyoutItem Title="Teams" Icon="team.png">
-        <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" />
-        -->
-    <!-- Replace with TeamsPage once available -->
-    <!--
-    </FlyoutItem>-->
+    <!-- Add Posts Page as a FlyoutItem -->
+    <FlyoutItem Title="Posts" Icon="home.png">
+        <ShellContent ContentTemplate="{DataTemplate pages:PostsPage}" Route="PostsPage" />
+    </FlyoutItem>
 
     <FlyoutItem Title="Settings" Icon="settings.png">
         <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" />
