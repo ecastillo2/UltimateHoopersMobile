@@ -1,4 +1,4 @@
-﻿// AppShell.xaml.cs
+﻿
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui.Controls;
 using System;
@@ -13,7 +13,7 @@ namespace UltimateHoopers
     public partial class AppShell : Shell
     {
         private readonly IAuthService _authService;
-
+        
         public ICommand HelpCommand { get; private set; }
         public ICommand LogoutCommand { get; private set; }
 
@@ -49,7 +49,7 @@ namespace UltimateHoopers
             // Initialize commands
             HelpCommand = new Command(async () => await ShowHelpDialog());
             LogoutCommand = new Command(async () => await PerformLogout());
-
+            NavigateToNotificationsCommand = new Command(async () => await NavigateToNotifications());
             // Set binding context to this to use the commands
             BindingContext = this;
 
@@ -69,6 +69,8 @@ namespace UltimateHoopers
             Routing.RegisterRoute("shoppage", typeof(Pages.ShopPage));
             Routing.RegisterRoute("editprofilepage", typeof(Pages.EditProfilePage));
             Routing.RegisterRoute("createaccount", typeof(CreateAccountPage));
+            Routing.RegisterRoute("notificationspage", typeof(Pages.NotificationsPage));
+            Routing.RegisterRoute("notificationsettingspage", typeof(Pages.NotificationSettingsPage));
             // Add additional routes as you create more pages
         }
 
@@ -249,6 +251,26 @@ namespace UltimateHoopers
         private async void OnNotificationsTapped(object sender, TappedEventArgs e)
         {
             await DisplayAlert("Notifications", "Notifications feature coming soon!", "OK");
+        }
+
+        // Addition to AppShell.xaml.cs
+        public ICommand NavigateToNotificationsCommand { get; private set; }
+
+        // Add to Initialize method
+        
+
+        // Add this method to AppShell.xaml.cs
+        private async Task NavigateToNotifications()
+        {
+            try
+            {
+                await Shell.Current.GoToAsync("//notificationspage");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Navigation error: {ex.Message}");
+                await DisplayAlert("Navigation Error", "Could not navigate to notifications page", "OK");
+            }
         }
     }
 }

@@ -41,7 +41,8 @@
     <!-- MenuItems appear at the bottom of the Flyout -->
 
     <MenuItem Text="Notifications" 
-              IconImageSource="notification.png" />
+          IconImageSource="notification.png"
+          Command="{Binding NavigateToNotificationsCommand}" />
     <MenuItem Text="About" 
       IconImageSource="about.png" />
     <MenuItem Text="FAQ" 

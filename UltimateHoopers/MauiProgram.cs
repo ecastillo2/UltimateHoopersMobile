@@ -91,6 +91,8 @@ namespace UltimateHoopers
                 builder.Services.AddTransient<CreateAccountPage>();
                 builder.Services.AddTransient<PlayerProfilePage>();
                 builder.Services.AddTransient<PaymentPage>();
+                builder.Services.AddTransient<NotificationsPage>();
+                builder.Services.AddTransient<NotificationSettingsPage>();
                 DiagnosticHelper.Log("Pages registered");
 
 #if DEBUG

@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using UltimateHoopers.ViewModels;
 using UltimateHoopers.Helpers;
+using UltimateHoopers.Services;
 
 namespace UltimateHoopers.Pages
 {
@@ -44,8 +45,17 @@ namespace UltimateHoopers.Pages
         {
             base.OnAppearing();
 
-            // Use the helper to ensure NavBar is hidden
-            UIConfigHelper.ConfigurePageOnAppearing(this);
+            // Configure the page when it appears
+            ConfigurePageOnAppearing();
+        }
+
+        private void ConfigurePageOnAppearing()
+        {
+            // Ensure NavBar is hidden
+            Shell.SetNavBarIsVisible(this, false);
+
+            // Update tab selection to reflect current filter
+            UpdateTabSelection();
         }
 
         #region Tab Selection
@@ -129,6 +139,34 @@ namespace UltimateHoopers.Pages
         private async void OnGamesNavigationClicked(object sender, EventArgs e)
         {
             await Shell.Current.GoToAsync("//FindRunsPage");
+        }
+
+        private async void OnSettingsClicked(object sender, EventArgs e)
+        {
+            // Navigate to notification settings page
+            await Navigation.PushAsync(new NotificationSettingsPage());
+        }
+
+        private async void OnMarkAllAsReadClicked(object sender, EventArgs e)
+        {
+            try
+            {
+                // Ask for confirmation
+                bool confirm = await DisplayAlert("Mark All as Read",
+                    "Would you like to mark all notifications as read?",
+                    "Yes", "No");
+
+                if (confirm)
+                {
+                    // Use the ViewModel's command to mark all as read
+                    _viewModel.MarkAllAsReadCommand.Execute(null);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error marking all as read: {ex.Message}");
+                await DisplayAlert("Error", "Could not mark notifications as read", "OK");
+            }
         }
         #endregion
     }

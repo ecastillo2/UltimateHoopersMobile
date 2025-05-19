@@ -1,16 +1,22 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:UltimateHoopers.Converters"
              x:Class="UltimateHoopers.Pages.NotificationsPage"
              Shell.NavBarIsVisible="False"
              BackgroundColor="{StaticResource PageBackgroundColor}">
+
+    <ContentPage.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <converters:UnreadToColorConverter x:Key="UnreadToColorConverter" />
+    </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,*,Auto"
           Padding="20">
 
         <!-- Header with Title -->
         <Grid Grid.Row="0" 
-              ColumnDefinitions="*,Auto"
+              ColumnDefinitions="*,Auto,Auto"
               Margin="0,10,0,20">
 
             <VerticalStackLayout Grid.Column="0">
@@ -24,8 +30,30 @@
                        TextColor="{StaticResource SecondaryTextColor}" />
             </VerticalStackLayout>
 
-            <!-- Back Button -->
+            <!-- Settings Button -->
             <Frame Grid.Column="1"
+                   CornerRadius="25"
+                   HeightRequest="50"
+                   WidthRequest="50"
+                   Padding="0"
+                   BorderColor="{StaticResource BorderColor}"
+                   BackgroundColor="{StaticResource CardBackgroundColor}"
+                   HasShadow="True"
+                   Margin="0,0,10,0">
+
+                <Label Text="⚙️"
+                       FontSize="24"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       TextColor="{StaticResource PrimaryTextColor}" />
+
+                <Frame.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnSettingsClicked" />
+                </Frame.GestureRecognizers>
+            </Frame>
+
+            <!-- Back Button -->
+            <Frame Grid.Column="2"
                    CornerRadius="25"
                    HeightRequest="50"
                    WidthRequest="50"
@@ -47,7 +75,7 @@
         </Grid>
 
         <!-- Content -->
-        <Grid Grid.Row="1" RowDefinitions="Auto,*">
+        <Grid Grid.Row="1" RowDefinitions="Auto,Auto,*">
             <!-- Filter Tabs -->
             <Frame Grid.Row="0"
                    Padding="5"
@@ -115,8 +143,21 @@
                 </Grid>
             </Frame>
 
+            <!-- Mark All as Read Button -->
+            <Button Grid.Row="1"
+                    Text="Mark All as Read"
+                    FontSize="14"
+                    BackgroundColor="Transparent"
+                    TextColor="{StaticResource PrimaryColor}"
+                    BorderColor="{StaticResource PrimaryColor}"
+                    BorderWidth="1"
+                    CornerRadius="20"
+                    HeightRequest="40"
+                    Margin="0,0,0,15"
+                    Clicked="OnMarkAllAsReadClicked" />
+
             <!-- Notifications List -->
-            <RefreshView Grid.Row="1"
+            <RefreshView Grid.Row="2"
                          IsRefreshing="{Binding IsRefreshing}"
                          Command="{Binding RefreshCommand}">
 
