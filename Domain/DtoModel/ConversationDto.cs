@@ -32,7 +32,7 @@ namespace Domain.DtoModel
         public DateTime Timestamp { get; set; }
 
         // UI helpers
-        public bool IsSentByMe => SenderId.ToString() == App.CurrentUserId;
+        public bool IsSentByMe => App.CurrentUserId != null && SenderId.ToString() == App.CurrentUserId;
         public bool IsReceivedByMe => !IsSentByMe;
         public bool IsTextMessage => MessageType == "Text";
         public bool IsImageMessage => MessageType == "Image";

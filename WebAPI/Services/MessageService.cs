@@ -1,4 +1,6 @@
-﻿using Domain.DtoModel;
+﻿using Domain;
+using Domain.DtoModel;
+using Domain.Events;
 using Microsoft.AspNetCore.SignalR.Client;
 using System;
 using System.Collections.Generic;
@@ -7,8 +9,6 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
-// Make sure to explicitly import the namespace containing MessageReceivedEventArgs
-using WebAPI.Services;
 
 namespace WebAPI.Services
 {
@@ -37,6 +37,8 @@ namespace WebAPI.Services
             if (configuration == null) throw new ArgumentNullException(nameof(configuration));
 
             _userId = authService.GetUserId();
+            // Initialize App with current user ID
+            App.Initialize(_userId);
 
             // Set up HTTP client
             var apiBaseUrl = configuration["ApiClient:BaseUrl"] ?? "https://your-api-url.com/";

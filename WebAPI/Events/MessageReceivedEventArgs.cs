@@ -1,7 +1,7 @@
 ﻿using Domain.DtoModel;
 using System;
 
-namespace WebAPI.Services
+namespace Domain.Events
 {
     /// <summary>
     /// Event arguments for when a message is received

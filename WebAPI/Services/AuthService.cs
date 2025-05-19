@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Domain;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Linq;
 using System.Security.Claims;
@@ -31,7 +32,15 @@ namespace WebAPI.Services
             if (user?.Identity?.IsAuthenticated != true)
                 return null;
 
-            return user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            // Set the current user ID in the App static class
+            if (!string.IsNullOrEmpty(userId))
+            {
+                App.Initialize(userId);
+            }
+
+            return userId;
         }
 
         /// <summary>
