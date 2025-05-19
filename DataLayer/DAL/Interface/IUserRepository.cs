@@ -1,38 +1,102 @@
-﻿using Domain;
+﻿using DataLayer.DAL.Interface;
+using Domain;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace DataLayer.DAL
 {
-    public interface IUserRepository : IDisposable
+    /// <summary>
+    /// User repository interface
+    /// </summary>
+    public interface IUserRepository : IGenericRepository<User>
     {
-        Task<List<User>> GetUsers();
-        Task<List<User>> GetAdminUsers();
-        Task<User> GetUserById(string userId);
-        Task InsertUser(User user);
-        Task DeleteUser(string userId);
-        Task UpdateUser(User user);
-        Task UpdateUserEmail(User user);
-        Task UpdateName(User user);
-        Task UpdatePassword(User user);
-        Task UpdatePlayerName(User user);
-        Task UpdateUserName(User user);
-        Task UpdateSeg(User user);
-        Task UpdateSubId(User user);
-        Task ResetForgottenPassword(User user);
-        Task PasswordReset(User user);
-        Task<bool> IsEmailAvailable(string email);
-        Task<User> GetUserByEmail(string email);
-        Task GeneratePassword(string userId);
-        Task UpdateLastLoginDate(string userId);
-        Task UnActivateAccount(string userId);
+        Task<User> GetUserByEmailAsync(string email, CancellationToken cancellationToken = default);
+        Task<bool> IsEmailAvailableAsync(string email, CancellationToken cancellationToken = default);
+        Task UpdateLastLoginDateAsync(string userId, CancellationToken cancellationToken = default);
+        Task<List<User>> GetAdminUsersAsync(CancellationToken cancellationToken = default);
+        // Add other specialized methods as needed
+    }
 
-        #region Followers
-        Task<List<User>> GetUserFollowersByUserId(string userId);
-        Task<List<User>> GetUserFollowingByUserId(string userId);
-        Task StartFollowingUserId(Following following);
-        Task StopFollowingUserId(Following following);
-        #endregion
+    /// <summary>
+    /// Implementation of the user repository
+    /// </summary>
+    public class UserRepository : GenericRepository<User>, IUserRepository
+    {
+        private readonly ILogger<UserRepository> _logger;
 
-        Task<int> Save();
+        public UserRepository(HUDBContext context, ILogger<UserRepository> logger = null)
+            : base(context)
+        {
+            _logger = logger;
+        }
 
+        public async Task<User> GetUserByEmailAsync(string email, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await _dbSet
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting user by email: {Email}", email);
+                throw;
+            }
+        }
+
+        public async Task<bool> IsEmailAvailableAsync(string email, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return !await _dbSet
+                    .AnyAsync(u => u.Email == email, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error checking email availability: {Email}", email);
+                throw;
+            }
+        }
+
+        public async Task UpdateLastLoginDateAsync(string userId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var user = await _dbSet.FindAsync(new object[] { userId }, cancellationToken);
+
+                if (user != null)
+                {
+                    user.LastLoginDate = DateTime.Now.ToString();
+                    await SaveAsync(cancellationToken);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error updating last login date for user {UserId}", userId);
+                throw;
+            }
+        }
+
+        public async Task<List<User>> GetAdminUsersAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await _dbSet
+                    .AsNoTracking()
+                    .Where(u => u.AccessLevel == "Admin")
+                    .ToListAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting admin users");
+                throw;
+            }
+        }
     }
 }

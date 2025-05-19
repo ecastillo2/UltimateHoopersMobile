@@ -50,8 +50,11 @@ namespace WebAPI
             services.AddDataProtection();
             services.AddHttpClient();
 
-            // Add custom application services
-            services.AddScoped<IAuthenticateService, AuthenticateService>();
+            // In ConfigureServices method of Startup.cs
+            services.AddHttpContextAccessor();
+            services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IMessageService, MessageService>();
+
 
             // Configure Swagger
             services.AddSwaggerGen(c =>
