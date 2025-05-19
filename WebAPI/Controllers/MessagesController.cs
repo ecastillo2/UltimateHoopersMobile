@@ -1,6 +1,7 @@
 ﻿using DataLayer;
 using DataLayer.DAL;
 using Domain;
+using Domain.DtoModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
