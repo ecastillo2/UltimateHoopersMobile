@@ -58,6 +58,16 @@ namespace DataLayer.Context
 
         }
 
+        // In your DbContext class (HUDBContext.cs)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // Configure string-to-enum conversion for AccountType
+            modelBuilder.Entity<User>()
+                .Property(u => u.AccountType)
+                .HasConversion<string>();
+        }
 
         partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
     }

@@ -55,16 +55,14 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <MauiXaml Remove="Pages\CodeSplashScreen.xaml" />
+		<MauiXaml Remove="Pages\CodeSplashScreen.xaml" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <EmbeddedResource Include="Pages\CodeSplashScreen.xaml">
-	    <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
-	  </EmbeddedResource>
+		<EmbeddedResource Include="Pages\CodeSplashScreen.xaml">
+			<Generator>MSBuild:UpdateDesignTimeXaml</Generator>
+		</EmbeddedResource>
 	</ItemGroup>
-
-	
 
 	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.Maui.Core" Version="11.2.0" />
@@ -88,37 +86,40 @@
 
 	<ItemGroup>
 		<Compile Update="Pages\CodeSplashScreen.xaml.cs">
-		  <DependentUpon>CodeSplashScreen.xaml</DependentUpon>
+			<DependentUpon>CodeSplashScreen.xaml</DependentUpon>
 		</Compile>
 	</ItemGroup>
 
 	<ItemGroup>
 		<MauiXaml Update="Pages\CreateAccountPage.xaml">
-		  <Generator>MSBuild:Compile</Generator>
+			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
 		<MauiXaml Update="Pages\EditProfilePage.xaml">
-		  <Generator>MSBuild:Compile</Generator>
+			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
 		<MauiXaml Update="Pages\FindRuns.xaml">
-		  <Generator>MSBuild:Compile</Generator>
+			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
 		<MauiXaml Update="Pages\HomePage.xaml">
 			<Generator>MSBuild:UpdateDesignTimeXaml</Generator>
 		</MauiXaml>
 		<MauiXaml Update="Pages\HoopersPage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
+		<MauiXaml Update="Pages\PaymentPage.xaml">
 		  <Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
 		<MauiXaml Update="Pages\PlayerProfilePage.xaml">
-		  <Generator>MSBuild:Compile</Generator>
+			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
 		<MauiXaml Update="Pages\PostsPage.xaml">
-		  <Generator>MSBuild:Compile</Generator>
+			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
 		<MauiXaml Update="Pages\ShopPage.xaml">
-		  <Generator>MSBuild:Compile</Generator>
+			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
 		<MauiXaml Update="Pages\StatsPage.xaml">
-		  <Generator>MSBuild:Compile</Generator>
+			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
 	</ItemGroup>
 
@@ -132,7 +133,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Include="Pages\PlayerProfilePage.xaml" />
+		<None Include="Pages\PlayerProfilePage.xaml" />
 	</ItemGroup>
 
 </Project>

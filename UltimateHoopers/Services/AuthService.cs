@@ -12,6 +12,7 @@ namespace UltimateHoopers.Services
         private readonly IAuthenticateUser _authenticateUser;
         private readonly ILogger<AuthService> _logger;
         private const string TOKEN_KEY = "auth_token";
+      
         private const string TOKEN_EXPIRATION_KEY = "token_expiration";
         private const string USER_ID_KEY = "user_id";
         private const string USER_KEY = "user_data";
@@ -34,6 +35,7 @@ namespace UltimateHoopers.Services
                 {
                     // Store the token and user details in secure storage
                     await SecureStorage.SetAsync(TOKEN_KEY, user.Token);
+              
                     await SecureStorage.SetAsync(USER_ID_KEY, user.UserId);
                     await SecureStorage.SetAsync(EMAIL_KEY, email);
                     await SecureStorage.SetAsync(PASSWORD_KEY, password);
@@ -51,6 +53,7 @@ namespace UltimateHoopers.Services
                     // Update the global references for easy access
                     App.AuthToken = user.Token;
                     App.User = user;
+                   
 
                     return user;
                 }
@@ -156,7 +159,31 @@ namespace UltimateHoopers.Services
                 //     AccountType = accountType.ToString()
                 // });
 
-                // For demo purposes, we'll just return success
+                // Create a simulated user response for testing
+                var user = new User
+                {
+                    UserId = Guid.NewGuid().ToString(),
+                    Email = email,
+                    UserName = username,
+                    FirstName = fullName.Split(' ')[0], // Simple parsing, would be better in the API
+                    LastName = fullName.Contains(" ") ? fullName.Substring(fullName.IndexOf(' ') + 1) : "",
+                    AccountType = accountType,  // Set the account type from parameter
+                    Profile = new Profile
+                    {
+                        ProfileId = Guid.NewGuid().ToString(),
+                        UserName = username
+                    },
+                    Token = $"simulated-jwt-token-{Guid.NewGuid()}",
+                    TokenExpiration = DateTime.UtcNow.AddDays(30)
+                };
+
+                // Save the user info to secure storage
+                await SaveUserDataAsync(user);
+                await SecureStorage.SetAsync(TOKEN_KEY, user.Token);
+                await SecureStorage.SetAsync(USER_ID_KEY, user.UserId);
+                await SecureStorage.SetAsync(EMAIL_KEY, email);
+
+                // For demo purposes, we'll return success
                 return true;
             }
             catch (Exception ex)

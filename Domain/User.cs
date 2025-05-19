@@ -42,12 +42,16 @@ namespace Domain
         public string? Status { get; set; }
         public string? SegId { get; set; }
         public string? SubId { get; set; }
+
+
+        public bool? IsHost => AccountType == AccountType.Host;
+
         // Add the AccountType property
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public AccountType AccountType { get; set; } = AccountType.Free;
 
         // Add IsHost convenience property
-        public bool IsHost => AccountType == AccountType.Host;
+        
         
         [NotMapped]
         public List<User>? Followers { get; set; }

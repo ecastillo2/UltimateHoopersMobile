@@ -64,7 +64,7 @@ namespace WebAPI.Controllers
                 // Convert synchronous method to asynchronous using Task.Run
                 var userResult = await Task.Run(() =>
                     _authService.Authenticate(model.Token, model.Email, model.Password));
-
+               
                 if (userResult == null)
                 {
                     return BadRequest(new { message = "Authentication failed. Invalid credentials." });

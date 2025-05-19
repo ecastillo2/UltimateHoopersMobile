@@ -2,7 +2,7 @@
 using System;
 using System.Threading.Tasks;
 using UltimateHoopers.Services;
-using Domain; // Import the Domain namespace to use its AccountType enum
+using Domain; // Import the Domain namespace
 
 namespace UltimateHoopers.Pages
 {
@@ -10,7 +10,7 @@ namespace UltimateHoopers.Pages
     {
         private readonly IAuthService _authService;
 
-        // Property to store the selected account type
+        // Property to store the selected account type - using Domain.AccountType
         public AccountType SelectedAccountType { get; private set; } = AccountType.Free;
 
         // Property to store the previous page for direct navigation scenarios
@@ -131,6 +131,21 @@ namespace UltimateHoopers.Pages
                     return;
                 }
 
+                // Check if Host account was selected - go to payment page
+                if (SelectedAccountType == AccountType.Host)
+                {
+                    // Navigate to payment page with registration info
+                    await Navigation.PushAsync(new PaymentPage(
+                        EmailEntry.Text,
+                        UsernameEntry.Text,
+                        FullNameEntry.Text,
+                        PasswordEntry.Text,
+                        _authService
+                    ));
+                    return;
+                }
+
+                // Continue with Free account registration
                 // Update UI during registration
                 RegisterButton.IsEnabled = false;
                 RegisterButton.Text = "Creating Account...";
@@ -158,9 +173,7 @@ namespace UltimateHoopers.Pages
                 // Show success message with account type
                 if (registrationSuccess)
                 {
-                    string accountTypeMessage = SelectedAccountType == AccountType.Host
-                        ? "Host account created successfully! Your subscription ($9.99/month) will begin today. You can now create and manage runs."
-                        : "Account created successfully! You can now log in.";
+                    string accountTypeMessage = "Account created successfully! You can now log in.";
 
                     await DisplayAlert("Success", accountTypeMessage, "OK");
 
