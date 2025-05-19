@@ -1,6 +1,6 @@
 ﻿using Domain;
 
-namespace DataLayer.DAL
+namespace DataLayer.DAL.Interface
 {
     public interface ILikedPostRepository : IDisposable
     {

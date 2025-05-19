@@ -1,5 +1,8 @@
-﻿using DataLayer;
+﻿using DataLayer.Context;
 using DataLayer.DAL;
+using DataLayer.DAL.Context;
+using DataLayer.DAL.Interface;
+using DataLayer.DAL.Repository;
 using Domain;
 using Domain.DtoModel;
 using Microsoft.AspNetCore.Authorization;

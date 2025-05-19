@@ -1,11 +1,14 @@
-﻿using DataLayer;
-using DataLayer.DAL;
+﻿using DataLayer.DAL;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using WebAPI.Services;
 using System;
+using DataLayer.DAL.Repository;
+using DataLayer.DAL.Context;
+using DataLayer.DAL.Interface;
+using DataLayer.Context;
 
 namespace WebAPI.Extensions
 {
@@ -32,8 +35,7 @@ namespace WebAPI.Extensions
                         errorNumbersToAdd: null)
                 ));
 
-            // Register Unit of Work
-            services.AddScoped<IUnitOfWork, UnitOfWork>();
+         
 
             // Register repositories
             services.AddScoped<IUserRepository, UserRepository>();
@@ -46,19 +48,18 @@ namespace WebAPI.Extensions
             services.AddScoped<IPrivateRunRepository, PrivateRunRepository>();
             services.AddScoped<IPrivateRunInviteRepository, PrivateRunInviteRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
-            services.AddScoped<IActivityRepository, ActivityRepository>();
+
             services.AddScoped<IFollowerRepository, FollowerRepository>();
             services.AddScoped<IFollowingRepository, FollowingRepository>();
-            services.AddScoped<IHistoryRepository, HistoryRepository>();
+   
             services.AddScoped<ILikedPostRepository, LikedPostRepository>();
             services.AddScoped<IPlayerCommentRepository, PlayerCommentRepository>();
             services.AddScoped<IPostCommentRepository, PostCommentRepository>();
-            services.AddScoped<IRatingRepository, RatingRepository>();
+        
             services.AddScoped<ISavedPostRepository, SavedPostRepository>();
-            services.AddScoped<ITagRepository, TagRepository>();
-            services.AddScoped<IOrganizationRepository, OrganizationRepository>();
+         
             services.AddScoped<ISettingRepository, SettingRepository>();
-            services.AddScoped<IThirdPartyServiceRepository, ThirdPartyServiceRepository>();
+         
 
             return services;
         }
@@ -73,7 +74,7 @@ namespace WebAPI.Extensions
             // Register authentication services
             services.AddHttpContextAccessor();
             services.AddScoped<IAuthService, AuthService>();
-            services.AddScoped<IMessageService, MessageService>();
+
 
             return services;
         }
@@ -107,3 +108,4 @@ namespace WebAPI.Extensions
             return services;
         }
     }
+}

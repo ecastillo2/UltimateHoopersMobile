@@ -1,9 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using DataLayer.DAL;
-using DataLayer;
 using Microsoft.AspNetCore.Authorization;
-using Domain;
-using Swashbuckle.Swagger;
+using DataLayer.DAL.Interface;
+using DataLayer.DAL.Repository;
+using DataLayer.Context;
 
 namespace WebApi.Controllers
 {

@@ -1,10 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using DataLayer.DAL;
-using DataLayer;
 using Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.CodeAnalysis;
 using System.Net;
+using DataLayer.DAL.Context;
+using DataLayer.Context;
+using DataLayer.DAL.Interface;
+using DataLayer.DAL.Repository;
 
 namespace WebAPI.Controllers
 {

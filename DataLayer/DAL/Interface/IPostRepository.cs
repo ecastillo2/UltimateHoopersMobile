@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Domain;
 
-namespace DataLayer.DAL
+namespace DataLayer.DAL.Interface
 {
     /// <summary>
     /// Repository interface for Post-related data operations

@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Domain;
 
-namespace DataLayer.DAL
+namespace DataLayer.DAL.Interface
 {
     /// <summary>
     /// Interface for PrivateRun repository operations with consistent cancellation token support

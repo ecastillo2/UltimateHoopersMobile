@@ -1,5 +1,8 @@
-﻿using DataLayer;
+﻿using DataLayer.Context;
 using DataLayer.DAL;
+using DataLayer.DAL.Context;
+using DataLayer.DAL.Interface;
+using DataLayer.DAL.Repository;
 using Domain;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -16,7 +19,7 @@ namespace WebAPI.Controllers
     [Route("api/[controller]")]
     public class AuthenticationController : ControllerBase
     {
-        private readonly IAuthenticateService _authenticateService;
+        private readonly IAuthService _authService;
         private IProfileRepository repository;
         private readonly IConfiguration _configuration;
 
@@ -24,9 +27,9 @@ namespace WebAPI.Controllers
         /// Initializes a new instance of the AuthenticationController
         /// </summary>
         /// <param name="authenticateService">Service for authentication operations</param>
-        public AuthenticationController(IAuthenticateService authenticateService, HUDBContext context, IConfiguration configuration)
+        public AuthenticationController(IAuthService authenticateService, HUDBContext context, IConfiguration configuration)
         {
-            _authenticateService = authenticateService ?? throw new ArgumentNullException(nameof(authenticateService));
+            _authService = authenticateService ?? throw new ArgumentNullException(nameof(authenticateService));
             _configuration = configuration;
             this.repository = new ProfileRepository(context, _configuration);
             
@@ -60,7 +63,7 @@ namespace WebAPI.Controllers
 
                 // Convert synchronous method to asynchronous using Task.Run
                 var userResult = await Task.Run(() =>
-                    _authenticateService.Authenticate(model.Token, model.Email, model.Password));
+                    _authService.Authenticate(model.Token, model.Email, model.Password));
 
                 if (userResult == null)
                 {

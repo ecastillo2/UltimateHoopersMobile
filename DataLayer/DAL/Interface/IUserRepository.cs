@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using DataLayer.DAL.Interface;
 using Domain;
 
-namespace DataLayer.DAL
+namespace DataLayer.DAL.Interface
 {
     /// <summary>
     /// Interface for user repository operations

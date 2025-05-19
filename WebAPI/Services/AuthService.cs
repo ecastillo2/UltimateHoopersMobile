@@ -1,4 +1,5 @@
 ﻿using DataLayer.DAL;
+using DataLayer.DAL.Interface;
 using Domain;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;

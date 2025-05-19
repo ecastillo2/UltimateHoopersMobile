@@ -1,11 +1,14 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using DataLayer.DAL;
-using DataLayer;
 using Microsoft.AspNetCore.Authorization;
 using Domain;
 using Swashbuckle.Swagger;
 using System.Diagnostics;
 using Activity = Domain.Activity;
+using DataLayer.DAL.Context;
+using DataLayer.DAL.Interface;
+using DataLayer.Context;
+using DataLayer.DAL.Repository;
 
 namespace WebAPI.Controllers
 {

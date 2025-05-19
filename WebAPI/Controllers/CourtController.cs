@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using DataLayer.DAL;
+using DataLayer.DAL.Interface;
 using Domain;
 using Domain.DtoModel;
 using Microsoft.AspNetCore.Authorization;

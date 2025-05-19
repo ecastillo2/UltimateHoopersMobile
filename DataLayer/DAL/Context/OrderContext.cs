@@ -1,0 +1,15 @@
+﻿using Microsoft.EntityFrameworkCore;
+using Domain;
+
+namespace DataLayer.DAL.Context
+{
+    public class OrderContext : DbContext
+    {
+        public OrderContext(DbContextOptions<OrderContext> options) : base(options)
+		{
+
+		}
+
+        public DbSet<Order> Order { get; set; }
+    }
+}
