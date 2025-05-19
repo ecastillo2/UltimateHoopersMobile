@@ -1,14 +1,23 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Domain;
+using System;
 
 namespace DataLayer
 {
+    /// <summary>
+    /// Main database context for the application
+    /// </summary>
     public class HUDBContext : DbContext
     {
+        /// <summary>
+        /// Initializes a new instance of the HUDBContext
+        /// </summary>
+        /// <param name="options">Context options</param>
         public HUDBContext(DbContextOptions<HUDBContext> options) : base(options)
         {
         }
 
+        // DbSet properties for all entities
         public virtual DbSet<User> User { get; set; }
         public virtual DbSet<Post> Post { get; set; }
         public virtual DbSet<Following> Following { get; set; }
@@ -48,6 +57,10 @@ namespace DataLayer
         public virtual DbSet<Conversation> Conversation { get; set; }
         public virtual DbSet<ConversationParticipant> ConversationParticipant { get; set; }
 
+        /// <summary>
+        /// Configure the model and relationships
+        /// </summary>
+        /// <param name="modelBuilder">The model builder</param>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Configure entity relationships and constraints
@@ -154,7 +167,96 @@ namespace DataLayer
                 .HasIndex(p => p.UserName)
                 .IsUnique();
 
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Email)
+                .IsUnique();
+
+            // Add property configurations like default values
+            modelBuilder.Entity<User>()
+                .Property(u => u.Status)
+                .HasDefaultValue("Active");
+
+            modelBuilder.Entity<User>()
+                .Property(u => u.AccessLevel)
+                .HasDefaultValue("Standard");
+
+            modelBuilder.Entity<Post>()
+                .Property(p => p.Status)
+                .HasDefaultValue("Active");
+
+            modelBuilder.Entity<Profile>()
+                .Property(p => p.Status)
+                .HasDefaultValue("Active");
+
+            // Configure custom handling of DateTime properties to work with string representations in the domain model
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                foreach (var property in entityType.GetProperties())
+                {
+                    if (property.ClrType == typeof(DateTime) || property.ClrType == typeof(DateTime?))
+                    {
+                        property.SetValueConverter(
+                            new Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<DateTime?, string>(
+                                v => v.HasValue ? v.Value.ToString("o") : null,
+                                v => !string.IsNullOrEmpty(v) ? DateTime.Parse(v) : null));
+                    }
+                }
+            }
+
             base.OnModelCreating(modelBuilder);
+        }
+
+        /// <summary>
+        /// Called when saving changes to add audit information
+        /// </summary>
+        /// <returns>Number of entities written to database</returns>
+        public override int SaveChanges()
+        {
+            AddAuditInfo();
+            return base.SaveChanges();
+        }
+
+        /// <summary>
+        /// Called when saving changes asynchronously to add audit information
+        /// </summary>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>Number of entities written to database</returns>
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            AddAuditInfo();
+            return base.SaveChangesAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// Add audit information to entities being tracked
+        /// </summary>
+        private void AddAuditInfo()
+        {
+            var now = DateTime.Now.ToString("o");
+
+            // Get all added or modified entities
+            var entities = ChangeTracker.Entries()
+                .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified);
+
+            // Set CreatedDate for new entities that have a CreatedDate property
+            foreach (var entity in entities.Where(e => e.State == EntityState.Added))
+            {
+                // Check for CreatedDate property
+                if (entity.Entity.GetType().GetProperty("CreatedDate") != null)
+                {
+                    entity.Property("CreatedDate").CurrentValue = now;
+                }
+            }
+
+            // Set last modified properties for modified entities
+            foreach (var entity in entities.Where(e => e.State == EntityState.Modified))
+            {
+                // Check for LastUpdated property
+                if (entity.Entity.GetType().GetProperty("LastUpdated") != null)
+                {
+                    entity.Property("LastUpdated").CurrentValue = now;
+                }
+            }
         }
     }
 }

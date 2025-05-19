@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using Domain;
+using System.Threading.Tasks;
 
 namespace WebAPI.Services
 {
@@ -8,27 +9,12 @@ namespace WebAPI.Services
     public interface IAuthService
     {
         /// <summary>
-        /// Gets the current user ID
+        /// Authenticates a user using token or email/password combination
         /// </summary>
-        /// <returns>The current user ID</returns>
-        string GetUserId();
-
-        /// <summary>
-        /// Gets the authentication token
-        /// </summary>
-        /// <returns>The authentication token</returns>
-        string GetToken();
-
-        /// <summary>
-        /// Checks if the user is authenticated
-        /// </summary>
-        /// <returns>True if the user is authenticated, false otherwise</returns>
-        bool IsAuthenticated();
-
-        /// <summary>
-        /// Gets the user's role or access level
-        /// </summary>
-        /// <returns>The user's role or access level</returns>
-        string GetUserRole();
+        /// <param name="token">JWT token for token-based authentication</param>
+        /// <param name="email">Email for credential-based authentication</param>
+        /// <param name="password">Password for credential-based authentication</param>
+        /// <returns>Authenticated user if successful, null otherwise</returns>
+        Task<User> Authenticate(string token, string email, string password);
     }
 }
