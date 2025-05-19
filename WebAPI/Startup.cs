@@ -61,6 +61,7 @@ namespace WebAPI
             services.AddControllers();
             services.AddMvc();
             services.AddSignalRCore();
+            services.AddSignalR();
             // Register the Swagger generator, defining one or more Swagger documents  
             services.AddSwaggerGen(c =>
             {
@@ -224,6 +225,7 @@ namespace WebAPI
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapHub<ChatHub>("/chatHub");
             });
         }
 
