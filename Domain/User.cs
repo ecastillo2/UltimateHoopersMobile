@@ -13,6 +13,7 @@ namespace Domain
     {
         [Key]
         public string? UserId { get; set; }
+        public string? ProfileId { get; set; }
         public string? Token { get; set; }
         public string? Email { get; set; }
         public string? PasswordHash { get; set; }
@@ -46,12 +47,8 @@ namespace Domain
         public AccountType AccountType { get; set; } = AccountType.Free;
 
         // Add IsHost convenience property
-        [JsonIgnore]
         public bool IsHost => AccountType == AccountType.Host;
-
-       
-
-        public string? ProfileId { get; set; }
+        
         [NotMapped]
         public List<User>? Followers { get; set; }
 
@@ -68,7 +65,6 @@ namespace Domain
 
         [NotMapped]
         public Profile? Profile { get; set; }
-
 
         [NotMapped]
         [JsonIgnore]

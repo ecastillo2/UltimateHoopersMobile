@@ -1,6 +1,6 @@
 ﻿using Microsoft.Maui.Controls;
 using System;
-using Domain;
+using Domain; // Import Domain namespace for AccountType enum
 
 namespace UltimateHoopers.Pages
 {
@@ -81,6 +81,12 @@ namespace UltimateHoopers.Pages
         private async void OnHomeNavigationClicked(object sender, EventArgs e)
         {
             await Shell.Current.GoToAsync("//HomePage");
+        }
+
+        private async void OnStatsNavigationClicked(object sender, EventArgs e)
+        {
+            // Navigate to the Stats page
+            await Shell.Current.GoToAsync("//StatsPage");
         }
 
         private async void OnGamesNavigationClicked(object sender, EventArgs e)

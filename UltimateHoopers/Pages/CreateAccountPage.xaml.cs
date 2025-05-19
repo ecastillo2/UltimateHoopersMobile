@@ -2,16 +2,10 @@
 using System;
 using System.Threading.Tasks;
 using UltimateHoopers.Services;
+using Domain; // Import the Domain namespace to use its AccountType enum
 
 namespace UltimateHoopers.Pages
 {
-    // Enum to define user account types
-    public enum AccountType
-    {
-        Free,
-        Host
-    }
-
     public partial class CreateAccountPage : ContentPage
     {
         private readonly IAuthService _authService;
