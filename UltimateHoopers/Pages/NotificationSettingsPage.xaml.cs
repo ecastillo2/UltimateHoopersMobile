@@ -1,23 +1,35 @@
 ﻿using Microsoft.Maui.Controls;
 using System;
 using System.Threading.Tasks;
-using UltimateHoopers.Services;
 
 namespace UltimateHoopers.Pages
 {
     public partial class NotificationSettingsPage : ContentPage
     {
-        private NotificationSettings _settings;
+        // Create a local settings class to avoid any ambiguity
+        private class LocalNotificationSettings
+        {
+            public bool EnablePushNotifications { get; set; } = true;
+            public bool EnableEmailNotifications { get; set; } = false;
+            public bool GameInvitations { get; set; } = true;
+            public bool GameReminders { get; set; } = true;
+            public bool FriendRequests { get; set; } = true;
+            public bool PostInteractions { get; set; } = true;
+            public bool SystemUpdates { get; set; } = false;
+            public bool QuietHoursEnabled { get; set; } = false;
+            public string QuietHoursStart { get; set; } = "22:00";
+            public string QuietHoursEnd { get; set; } = "08:00";
+        }
+
+        // Store settings in local class
+        private readonly LocalNotificationSettings _settings;
 
         public NotificationSettingsPage()
         {
             InitializeComponent();
 
             // Initialize settings with default values
-            _settings = new NotificationSettings();
-
-            // Set the binding context
-            BindingContext = _settings;
+            _settings = new LocalNotificationSettings();
 
             // Load settings
             LoadSettings();
@@ -52,7 +64,9 @@ namespace UltimateHoopers.Pages
                 // You could implement something like:
                 // var serviceProvider = MauiProgram.CreateMauiApp().Services;
                 // var notificationService = serviceProvider.GetService<INotificationService>();
-                // _settings = await notificationService.GetNotificationSettingsAsync();
+                // var serviceSettings = await notificationService.GetNotificationSettingsAsync();
+                // _settings.EnablePushNotifications = serviceSettings.EnablePushNotifications;
+                // ... and so on for other properties
 
                 // For this demo, we'll just use some sample settings
                 _settings.EnablePushNotifications = true;

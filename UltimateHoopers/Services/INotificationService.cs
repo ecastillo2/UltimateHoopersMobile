@@ -410,17 +410,5 @@ namespace UltimateHoopers.Services
         }
     }
 
-    public class NotificationSettings
-    {
-        public bool EnablePushNotifications { get; set; } = true;
-        public bool EnableEmailNotifications { get; set; } = true;
-        public bool GameInvitations { get; set; } = true;
-        public bool GameReminders { get; set; } = true;
-        public bool FriendRequests { get; set; } = true;
-        public bool PostInteractions { get; set; } = true;
-        public bool SystemUpdates { get; set; } = true;
-        public string QuietHoursStart { get; set; } = "22:00"; // 10:00 PM
-        public string QuietHoursEnd { get; set; } = "08:00"; // 8:00 AM
-        public bool QuietHoursEnabled { get; set; } = false;
-    }
+   
 }

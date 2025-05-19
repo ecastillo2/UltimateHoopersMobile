@@ -1,5 +1,7 @@
 ﻿using Microsoft.Maui.Controls;
+using Microsoft.Maui.Graphics;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -7,6 +9,37 @@ using System.Windows.Input;
 
 namespace UltimateHoopers.ViewModels
 {
+    // Custom notification item class to avoid any ambiguities
+    public class NotificationItem : BindableObject
+    {
+        // Basic notification properties
+        public string Id { get; set; }
+        public string Title { get; set; }
+        public string Message { get; set; }
+        public string TimeAgo { get; set; }
+
+        // UI properties
+        private bool _isUnread;
+        public bool IsUnread
+        {
+            get => _isUnread;
+            set
+            {
+                _isUnread = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string IconText { get; set; } = "📩";
+        public Color IconBackground { get; set; } = Colors.Blue;
+
+        // Metadata for navigation and filtering
+        public string Type { get; set; } = "general";
+        public string Category { get; set; } = "All";
+        public string EntityId { get; set; }
+        public Dictionary<string, string> AdditionalData { get; set; } = new Dictionary<string, string>();
+    }
+
     public class NotificationsViewModel : BindableObject
     {
         private bool _isRefreshing;
@@ -289,38 +322,34 @@ namespace UltimateHoopers.ViewModels
                     EntityId = "system303",
                     IconText = "ℹ️",
                     IconBackground = Colors.Gray
+                },
+                new NotificationItem
+                {
+                    Id = "8",
+                    Title = "New Tournament",
+                    Message = "Registration is now open for the Summer Slam Tournament",
+                    TimeAgo = "1 week ago",
+                    IsUnread = true,
+                    Type = "tournament",
+                    Category = "Games",
+                    EntityId = "tournament101",
+                    IconText = "🏆",
+                    IconBackground = Colors.DarkOrange
+                },
+                new NotificationItem
+                {
+                    Id = "9",
+                    Title = "Stats Update",
+                    Message = "Your season statistics have been updated",
+                    TimeAgo = "1 week ago",
+                    IsUnread = false,
+                    Type = "stats_update",
+                    Category = "Activity",
+                    EntityId = "stats202",
+                    IconText = "📊",
+                    IconBackground = Colors.DarkBlue
                 }
             };
         }
-    }
-
-    public class NotificationItem : BindableObject
-    {
-        // Basic notification properties
-        public string Id { get; set; }
-        public string Title { get; set; }
-        public string Message { get; set; }
-        public string TimeAgo { get; set; }
-
-        // UI properties
-        private bool _isUnread;
-        public bool IsUnread
-        {
-            get => _isUnread;
-            set
-            {
-                _isUnread = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public string IconText { get; set; } = "📩";
-        public Color IconBackground { get; set; } = Colors.Blue;
-
-        // Metadata for navigation and filtering
-        public string Type { get; set; } = "general";
-        public string Category { get; set; } = "All";
-        public string EntityId { get; set; }
-        public Dictionary<string, string> AdditionalData { get; set; } = new Dictionary<string, string>();
     }
 }
