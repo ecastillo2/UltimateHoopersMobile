@@ -1,9 +1,35 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace Domain
 {
     public class Court
     {
+
+        // Add a parameterless constructor for JSON deserialization
+        [JsonConstructor]
+        public Court() { }
+
+        // Existing constructor for mapping from ScoutingReport
+        public Court(Court court)
+        {
+            CourtId = court.CourtId;
+            ImageURL = court.ImageURL;
+            Name = court.Name;
+            Latitude = court.Latitude;
+            Longitude = court.Longitude;
+            Address = court.Address;
+            City = court.City;
+            Zip = court.Zip;
+            Status = court.Status;
+            NumberOfCourts = court.NumberOfCourts;
+            Url = court.Url;
+            RentalCostPerHour = court.RentalCostPerHour;
+            CourtSize = court.CourtSize;
+            CourtNumber = court.CourtNumber;
+        }
+
+
         [Key]
         public string? CourtId { get; set; }
         public string? ImageURL { get; set; }

@@ -1,14 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using DataLayer.DAL;
+﻿using DataLayer.DAL;
 using DataLayer.DAL.Interface;
+using DataLayer.DAL.Repository;
 using Domain;
 using Domain.DtoModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 
 namespace WebAPI.Controllers
@@ -100,6 +101,30 @@ namespace WebAPI.Controllers
                     .GetPrivateRunsWithCursorAsync(cursor, limit, direction, sortBy, cancellationToken);
 
                 var viewModels = privateRuns.Select(p => new PrivateRunViewModelDto(p)).ToList();
+
+
+                // Enrich each profile with additional data
+                foreach (var item in privateRuns)
+                {
+                    // Get additional profile data using the profile's ID
+                    var privateRun = item;
+                    var court = await _privateRunRepository.GetCourtAsync(item.CourtId, cancellationToken);
+                    var invites = await _privateRunRepository.GetPrivateRunInviteAsync(item.PrivateRunId, cancellationToken);
+                    
+
+                    // Create a detailed view model with all the additional data
+                    var detailedViewModel = new PrivateRunDetailViewModelDto(item)
+                    {
+                        Court = court != null ? new Court(court) : null,
+                        PrivateRunInvite = invites != null ? new PrivateRunInvite(invites) : null,
+                        
+                    };
+
+                    // Add to our list
+                    viewModels.Add(detailedViewModel);
+                }
+
+
 
                 var result = new CursorPaginatedResultDto<PrivateRunViewModelDto>
                 {

@@ -56,5 +56,7 @@ namespace Domain
         public int? UndecidedCount { get; set; }
         [NotMapped]
         public int? DeclinedCount { get; set; }
+        [NotMapped]
+        public int? PlayerCount { get; set; }
     }
 }

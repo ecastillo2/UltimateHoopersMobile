@@ -203,7 +203,45 @@ namespace DataLayer.DAL.Repository
         }
 
 
+        public async Task<Court> GetCourtAsync(
+            string courtId,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await _context.Court
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(s => s.CourtId == courtId, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting scouting report for Court {CourtId}", courtId);
+                throw;
+            }
+        }
 
+
+        public async Task<List<Profile>> GetPrivateRunInviteAsync(
+      string privateRunId,
+      CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var result = await (from pri in _context.PrivateRunInvite
+                                    join p in _context.Profile on pri.ProfileId equals p.ProfileId
+                                    where pri.PrivateRunId == privateRunId
+                                    select p)  // Just select the Profile objects directly
+                    .AsNoTracking()
+                    .ToListAsync(cancellationToken);
+
+                return result;  // Since we're selecting Profile entities, just return them
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting profiles for PrivateRunInvite {PrivateRunInviteId}", privateRunId);
+                throw;
+            }
+        }
 
         public async Task<bool> UpdatePrivateRunAsync(
             PrivateRun privateRun,

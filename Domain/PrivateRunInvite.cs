@@ -1,10 +1,25 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Domain
 {
     public class PrivateRunInvite
     {
+        // Add a parameterless constructor for JSON deserialization
+        [JsonConstructor]
+        public PrivateRunInvite() { }
+
+        // Existing constructor for mapping from ScoutingReport
+        public PrivateRunInvite(List<Profile> profiles)
+        {
+            InvitedProfiles = profiles;
+           
+            
+
+        }
+
         [Key]
         public string? PrivateRunInviteId { get; set; }
         public string? ProfileId { get; set; }
@@ -15,19 +30,9 @@ namespace Domain
         public bool? Present { get; set; }
         public string? SquadId { get; set; }
 
-        [NotMapped]
-        public Profile? InviteProfile { get; set; }
-        [NotMapped]
-        public string? UserName { get; set; }
-        [NotMapped]
-        public string? ImageURL { get; set; }
+        
 
         [NotMapped]
-        public string? FirstName { get; set; }
-
-        [NotMapped]
-        public string? LastName { get; set; }
-        [NotMapped]
-        public string? SubId { get; set; }
+        public List<Profile>? InvitedProfiles { get; set; }
     }
 }
