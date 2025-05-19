@@ -13,9 +13,8 @@ using WebAPI.Models;
 namespace WebApi.Controllers
 {
     /// <summary>
-    /// Contact Controller
+    /// Controller for handling messages and conversations
     /// </summary>
-    // For ASP.NET Core API
     [ApiController]
     [Route("api/[controller]")]
     public class MessagesController : ControllerBase
@@ -65,11 +64,11 @@ namespace WebApi.Controllers
                 conversationDtos.Add(new ConversationDto
                 {
                     ConversationId = conv.ConversationId,
-                    OtherUserId = otherUserId,
-                    OtherUserName = otherUser.DisplayName,
-                    OtherUserAvatar = otherUser.AvatarUrl,
-                    LastMessage = conv.LastMessage.Content,
-                    LastMessageTime = conv.LastMessage.SentAt,
+                    OtherUserId = int.Parse(otherUserId ?? "0"),
+                    OtherUserName = otherUser?.UserName ?? "Unknown User", // Using UserName instead of DisplayName
+                    OtherUserAvatar = otherUser?.ImageURL ?? "", // Using ImageURL instead of AvatarUrl
+                    LastMessage = conv.LastMessage?.Content ?? "",
+                    LastMessageTime = conv.LastMessage?.SentAt ?? DateTime.Now,
                     UnreadCount = conv.UnreadCount
                 });
             }
@@ -96,7 +95,7 @@ namespace WebApi.Controllers
                 .Select(m => new MessageDto
                 {
                     MessageId = m.MessageId,
-                    SenderId = m.SenderId.ToString(),
+                    SenderId = m.SenderId,
                     Content = m.Content,
                     MessageType = m.MessageType,
                     Timestamp = m.SentAt
@@ -138,7 +137,7 @@ namespace WebApi.Controllers
             else
             {
                 // Check if conversation already exists between these users
-                var existingConversation = await _context.ConversationParticipant
+                var conversationBetweenUsers = await _context.ConversationParticipant
                     .Where(cp => cp.UserId == userId.ToString())
                     .Select(cp => new
                     {
@@ -148,18 +147,22 @@ namespace WebApi.Controllers
                     })
                     .FirstOrDefaultAsync(c => c.OtherParticipant);
 
-                if (existingConversation != null)
+                if (conversationBetweenUsers != null)
                 {
-                    conversationId = existingConversation.ConversationId;
+                    conversationId = conversationBetweenUsers.ConversationId;
                 }
                 else
                 {
                     // Create new conversation
-                    var conversation = new Conversation();
-                    _context.Conversation.Add(conversation);
+                    var newConversation = new Conversation
+                    {
+                        LastMessageAt = DateTime.UtcNow
+                    };
+
+                    _context.Conversation.Add(newConversation);
                     await _context.SaveChangesAsync();
 
-                    conversationId = conversation.ConversationId;
+                    conversationId = newConversation.ConversationId;
 
                     // Add participants
                     _context.ConversationParticipant.Add(new ConversationParticipant
@@ -189,8 +192,11 @@ namespace WebApi.Controllers
             _context.Message.Add(message);
 
             // Update conversation LastMessageAt
-            var conversation = await _context.Conversation.FindAsync(conversationId);
-            conversation.LastMessageAt = DateTime.UtcNow;
+            var existingConversation = await _context.Conversation.FindAsync(conversationId);
+            if (existingConversation != null)
+            {
+                existingConversation.LastMessageAt = DateTime.UtcNow;
+            }
 
             await _context.SaveChangesAsync();
 
@@ -199,7 +205,7 @@ namespace WebApi.Controllers
             {
                 MessageId = message.MessageId,
                 ConversationId = message.ConversationId,
-                SenderId = message.SenderId.ToString(),
+                SenderId = message.SenderId,
                 Content = message.Content,
                 MessageType = message.MessageType,
                 Timestamp = message.SentAt
@@ -252,7 +258,12 @@ namespace WebApi.Controllers
         {
             // Get user ID from authenticated user
             // Implementation depends on your auth system
-            return int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (int.TryParse(userIdString, out int userId))
+            {
+                return userId;
+            }
+            return 0; // Default value if parsing fails
         }
     }
 }

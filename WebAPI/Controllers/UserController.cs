@@ -82,7 +82,11 @@ namespace WebAPI.Controllers
 
                 // Add both entities
                 await _unitOfWork.User.AddAsync(user, cancellationToken);
-                await _unitOfWork.Profile.AddAsync(profile, cancellationToken);
+
+                // Instead of using AddAsync on the ProfileRepository directly, 
+                // use the UpdateProfileAsync method which is available in the interface
+                profile.ProfileId = Guid.NewGuid().ToString(); // Ensure we have a valid ID
+                await _unitOfWork.Profile.UpdateProfileAsync(profile, cancellationToken);
 
                 // Commit the transaction
                 await _unitOfWork.CommitTransactionAsync(cancellationToken);

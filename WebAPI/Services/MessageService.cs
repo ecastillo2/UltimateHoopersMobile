@@ -7,6 +7,8 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+// Make sure to explicitly import the namespace containing MessageReceivedEventArgs
+using WebAPI.Services;
 
 namespace WebAPI.Services
 {
