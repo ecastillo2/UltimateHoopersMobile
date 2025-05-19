@@ -56,11 +56,19 @@
 
 	<ItemGroup>
 		<MauiXaml Remove="Pages\CodeSplashScreen.xaml" />
+		<MauiXaml Remove="Pages\NotificationSettingsPage.xaml" />
+		<MauiXaml Remove="Pages\NotificationsPage.xaml" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<EmbeddedResource Include="Pages\CodeSplashScreen.xaml">
 			<Generator>MSBuild:UpdateDesignTimeXaml</Generator>
+		</EmbeddedResource>
+		<EmbeddedResource Include="Pages\NotificationSettingsPage.xaml">
+		  <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
+		</EmbeddedResource>
+		<EmbeddedResource Include="Pages\NotificationsPage.xaml">
+		  <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
 		</EmbeddedResource>
 	</ItemGroup>
 

@@ -1,8 +1,4 @@
-﻿// Services/IPostService.cs
-using Domain;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-//using UltimateHoopers.Models;
+﻿using Domain;
 
 namespace UltimateHoopers.Services
 {

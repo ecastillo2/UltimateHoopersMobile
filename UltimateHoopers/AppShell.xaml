@@ -31,7 +31,12 @@
         <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" Route="HomePage" />
     </FlyoutItem>
 
-   
+    <!-- Flyout Items -->
+    <FlyoutItem Title="Traning" Icon="home.png">
+        <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" Route="HomePage" />
+    </FlyoutItem>
+
+
 
     <!-- MenuItems appear at the bottom of the Flyout -->
 

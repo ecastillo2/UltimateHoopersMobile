@@ -1,0 +1,297 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="UltimateHoopers.Pages.NotificationSettingsPage"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource PageBackgroundColor}">
+
+    <Grid RowDefinitions="Auto,*,Auto"
+          Padding="20">
+
+        <!-- Header with Title -->
+        <Grid Grid.Row="0" 
+              ColumnDefinitions="*,Auto"
+              Margin="0,10,0,20">
+
+            <VerticalStackLayout Grid.Column="0">
+                <Label Text="Notification Settings"
+                       FontSize="28"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource PrimaryColor}" />
+
+                <Label Text="Customize your notification preferences"
+                       FontSize="16"
+                       TextColor="{StaticResource SecondaryTextColor}" />
+            </VerticalStackLayout>
+
+            <!-- Back Button -->
+            <Frame Grid.Column="1"
+                   CornerRadius="25"
+                   HeightRequest="50"
+                   WidthRequest="50"
+                   Padding="0"
+                   BorderColor="{StaticResource BorderColor}"
+                   BackgroundColor="{StaticResource CardBackgroundColor}"
+                   HasShadow="True">
+
+                <Label Text="←"
+                       FontSize="24"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       TextColor="{StaticResource PrimaryTextColor}" />
+
+                <Frame.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnBackClicked" />
+                </Frame.GestureRecognizers>
+            </Frame>
+        </Grid>
+
+        <!-- Content Area -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="20">
+                <!-- General Settings -->
+                <Frame BorderColor="{StaticResource BorderColor}"
+                       CornerRadius="10"
+                       HasShadow="True"
+                       Padding="20"
+                       BackgroundColor="{StaticResource CardBackgroundColor}">
+
+                    <VerticalStackLayout Spacing="15">
+                        <Label Text="General Settings"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource PrimaryTextColor}" />
+
+                        <!-- Push Notifications Toggle -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <VerticalStackLayout Grid.Column="0">
+                                <Label Text="Push Notifications"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                                <Label Text="Receive notifications on your device"
+                                       FontSize="14"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
+                            </VerticalStackLayout>
+                            <Switch Grid.Column="1"
+                                    x:Name="PushNotificationsSwitch"
+                                    IsToggled="{Binding EnablePushNotifications}"
+                                    OnColor="{StaticResource PrimaryColor}"
+                                    Toggled="OnPushNotificationsToggled" />
+                        </Grid>
+
+                        <!-- Email Notifications Toggle -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <VerticalStackLayout Grid.Column="0">
+                                <Label Text="Email Notifications"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                                <Label Text="Receive notifications via email"
+                                       FontSize="14"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
+                            </VerticalStackLayout>
+                            <Switch Grid.Column="1"
+                                    x:Name="EmailNotificationsSwitch"
+                                    IsToggled="{Binding EnableEmailNotifications}"
+                                    OnColor="{StaticResource PrimaryColor}"
+                                    Toggled="OnEmailNotificationsToggled" />
+                        </Grid>
+
+                        <!-- Quiet Hours Toggle -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <VerticalStackLayout Grid.Column="0">
+                                <Label Text="Quiet Hours"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                                <Label Text="Silence notifications during specific hours"
+                                       FontSize="14"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
+                            </VerticalStackLayout>
+                            <Switch Grid.Column="1"
+                                    x:Name="QuietHoursSwitch"
+                                    IsToggled="{Binding QuietHoursEnabled}"
+                                    OnColor="{StaticResource PrimaryColor}"
+                                    Toggled="OnQuietHoursToggled" />
+                        </Grid>
+
+                        <!-- Quiet Hours Settings (visible only when enabled) -->
+                        <Frame x:Name="QuietHoursFrame"
+                               BorderColor="{StaticResource BorderColor}"
+                               CornerRadius="10"
+                               Padding="15"
+                               BackgroundColor="{StaticResource PageBackgroundColor}"
+                               IsVisible="{Binding QuietHoursEnabled}">
+                            <Grid RowDefinitions="Auto,Auto" RowSpacing="15">
+                                <Label Grid.Row="0"
+                                       Text="Quiet Hours Time Range"
+                                       FontSize="15"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+
+                                <Grid Grid.Row="1"
+                                      ColumnDefinitions="*,Auto,*"
+                                      ColumnSpacing="10">
+                                    <Frame Grid.Column="0"
+                                           Padding="10,0"
+                                           CornerRadius="5"
+                                           BackgroundColor="Transparent"
+                                           BorderColor="{StaticResource BorderColor}">
+                                        <TimePicker x:Name="StartTimePicker"
+                                                    Time="{Binding QuietHoursStartTime}"
+                                                    Format="hh:mm tt"
+                                                    TextColor="{StaticResource PrimaryTextColor}"
+                                                    FontSize="16"
+                                                    HorizontalOptions="Center" />
+                                    </Frame>
+
+                                    <Label Grid.Column="1"
+                                           Text="to"
+                                           VerticalOptions="Center"
+                                           TextColor="{StaticResource PrimaryTextColor}" />
+
+                                    <Frame Grid.Column="2"
+                                           Padding="10,0"
+                                           CornerRadius="5"
+                                           BackgroundColor="Transparent"
+                                           BorderColor="{StaticResource BorderColor}">
+                                        <TimePicker x:Name="EndTimePicker"
+                                                    Time="{Binding QuietHoursEndTime}"
+                                                    Format="hh:mm tt"
+                                                    TextColor="{StaticResource PrimaryTextColor}"
+                                                    FontSize="16"
+                                                    HorizontalOptions="Center" />
+                                    </Frame>
+                                </Grid>
+                            </Grid>
+                        </Frame>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Notification Types -->
+                <Frame BorderColor="{StaticResource BorderColor}"
+                       CornerRadius="10"
+                       HasShadow="True"
+                       Padding="20"
+                       BackgroundColor="{StaticResource CardBackgroundColor}">
+
+                    <VerticalStackLayout Spacing="15">
+                        <Label Text="Notification Types"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource PrimaryTextColor}" />
+
+                        <!-- Game Invitations Toggle -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <VerticalStackLayout Grid.Column="0">
+                                <Label Text="Game Invitations"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                                <Label Text="Notifications when you're invited to games"
+                                       FontSize="14"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
+                            </VerticalStackLayout>
+                            <Switch Grid.Column="1"
+                                    x:Name="GameInvitationsSwitch"
+                                    IsToggled="{Binding GameInvitations}"
+                                    OnColor="{StaticResource PrimaryColor}" />
+                        </Grid>
+
+                        <!-- Game Reminders Toggle -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <VerticalStackLayout Grid.Column="0">
+                                <Label Text="Game Reminders"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                                <Label Text="Reminders for upcoming games"
+                                       FontSize="14"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
+                            </VerticalStackLayout>
+                            <Switch Grid.Column="1"
+                                    x:Name="GameRemindersSwitch"
+                                    IsToggled="{Binding GameReminders}"
+                                    OnColor="{StaticResource PrimaryColor}" />
+                        </Grid>
+
+                        <!-- Friend Requests Toggle -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <VerticalStackLayout Grid.Column="0">
+                                <Label Text="Friend Requests"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                                <Label Text="Notifications for connection requests"
+                                       FontSize="14"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
+                            </VerticalStackLayout>
+                            <Switch Grid.Column="1"
+                                    x:Name="FriendRequestsSwitch"
+                                    IsToggled="{Binding FriendRequests}"
+                                    OnColor="{StaticResource PrimaryColor}" />
+                        </Grid>
+
+                        <!-- Post Interactions Toggle -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <VerticalStackLayout Grid.Column="0">
+                                <Label Text="Post Interactions"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                                <Label Text="Likes, comments, and shares on your posts"
+                                       FontSize="14"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
+                            </VerticalStackLayout>
+                            <Switch Grid.Column="1"
+                                    x:Name="PostInteractionsSwitch"
+                                    IsToggled="{Binding PostInteractions}"
+                                    OnColor="{StaticResource PrimaryColor}" />
+                        </Grid>
+
+                        <!-- System Updates Toggle -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <VerticalStackLayout Grid.Column="0">
+                                <Label Text="System Updates"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                                <Label Text="App updates and system announcements"
+                                       FontSize="14"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
+                            </VerticalStackLayout>
+                            <Switch Grid.Column="1"
+                                    x:Name="SystemUpdatesSwitch"
+                                    IsToggled="{Binding SystemUpdates}"
+                                    OnColor="{StaticResource PrimaryColor}" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Save Button -->
+                <Button Text="Save Settings"
+                        BackgroundColor="{StaticResource PrimaryColor}"
+                        TextColor="White"
+                        CornerRadius="25"
+                        HeightRequest="50"
+                        FontAttributes="Bold"
+                        FontSize="16"
+                        Margin="0,10,0,40"
+                        Clicked="OnSaveSettingsClicked" />
+
+                <!-- Clear Notifications Button -->
+                <Button Text="Clear All Notifications"
+                        BackgroundColor="Transparent"
+                        TextColor="{StaticResource PrimaryColor}"
+                        BorderColor="{StaticResource PrimaryColor}"
+                        BorderWidth="1"
+                        CornerRadius="25"
+                        HeightRequest="50"
+                        FontSize="16"
+                        Margin="0,0,0,20"
+                        Clicked="OnClearNotificationsClicked" />
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>
