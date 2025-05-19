@@ -30,29 +30,32 @@
         <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" Route="HomePage" />
     </FlyoutItem>
 
-    <!--<FlyoutItem Title="Posts" Icon="search.png">
+    <!-- UNCOMMENTED: PostsPage item - THIS WAS THE ISSUE -->
+    <FlyoutItem Title="Posts" Icon="search.png">
         <ShellContent ContentTemplate="{DataTemplate pages:PostsPage}" Route="PostsPage" />
-    </FlyoutItem>-->
+    </FlyoutItem>
 
-    <!--<FlyoutItem Title="Stats" Icon="search.png">
-        <ShellContent ContentTemplate="{DataTemplate pages:StatsPage}" Route="statsPage" />
-    </FlyoutItem>-->
+    <FlyoutItem Title="Stats" Icon="search.png">
+        <ShellContent ContentTemplate="{DataTemplate pages:StatsPage}" Route="StatsPage" />
+    </FlyoutItem>
 
-    <!--<FlyoutItem Title="Find Runs" Icon="search.png">
-        <ShellContent ContentTemplate="{DataTemplate pages:FindRunsPage}" Route="rindrunsPage" />
-    </FlyoutItem>-->
+    <FlyoutItem Title="Find Runs" Icon="search.png">
+        <ShellContent ContentTemplate="{DataTemplate pages:FindRunsPage}" Route="FindRunsPage" />
+    </FlyoutItem>
 
-    <!--<FlyoutItem Title="Shop" Icon="search.png">
-        <ShellContent ContentTemplate="{DataTemplate pages:ShopPage}" Route="shopPage" />
-    </FlyoutItem>-->
+    <FlyoutItem Title="Shop" Icon="search.png">
+        <ShellContent ContentTemplate="{DataTemplate pages:ShopPage}" Route="ShopPage" />
+    </FlyoutItem>
 
-    <!--<FlyoutItem Title="Hoopers" Icon="search.png">
+    <FlyoutItem Title="Hoopers" Icon="search.png">
         <ShellContent ContentTemplate="{DataTemplate pages:HoopersPage}" Route="HoopersPage" />
-    </FlyoutItem>-->
+    </FlyoutItem>
 
     <!--<FlyoutItem Title="Teams" Icon="team.png">
         <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" />
-        --><!-- Replace with TeamsPage once available --><!--
+        -->
+    <!-- Replace with TeamsPage once available -->
+    <!--
     </FlyoutItem>-->
 
     <FlyoutItem Title="Settings" Icon="settings.png">
@@ -61,7 +64,7 @@
     </FlyoutItem>
 
     <!-- MenuItems appear at the bottom of the Flyout -->
-    
+
     <MenuItem Text="Notifications" 
               IconImageSource="notification.png" />
     <MenuItem Text="About" 
