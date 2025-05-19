@@ -1,5 +1,4 @@
 ﻿using Domain.DtoModel;
-using Domain.Events;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -57,5 +56,25 @@ namespace WebAPI.Services
         /// </summary>
         /// <param name="conversationId">ID of the conversation</param>
         Task MarkAsRead(int conversationId);
+    }
+
+    /// <summary>
+    /// Event arguments for when a message is received
+    /// </summary>
+    public class MessageReceivedEventArgs : EventArgs
+    {
+        /// <summary>
+        /// The received message
+        /// </summary>
+        public MessageDto Message { get; }
+
+        /// <summary>
+        /// Initializes a new instance of the MessageReceivedEventArgs class
+        /// </summary>
+        /// <param name="message">The received message</param>
+        public MessageReceivedEventArgs(MessageDto message)
+        {
+            Message = message ?? throw new ArgumentNullException(nameof(message));
+        }
     }
 }

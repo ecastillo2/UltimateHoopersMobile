@@ -61,12 +61,16 @@ namespace WebApi.Controllers
                 var otherUserId = conv.Participants.FirstOrDefault();
                 var otherUser = await _context.User.FindAsync(otherUserId);
 
+                // Get the profile to access ImageURL
+                var otherUserProfile = await _context.Profile
+                    .FirstOrDefaultAsync(p => p.UserId == otherUserId);
+
                 conversationDtos.Add(new ConversationDto
                 {
                     ConversationId = conv.ConversationId,
                     OtherUserId = int.Parse(otherUserId ?? "0"),
                     OtherUserName = otherUser?.UserName ?? "Unknown User", // Using UserName instead of DisplayName
-                    OtherUserAvatar = otherUser?.ImageURL ?? "", // Using ImageURL instead of AvatarUrl
+                    OtherUserAvatar = otherUserProfile?.ImageURL ?? "", // Using Profile's ImageURL instead of User's
                     LastMessage = conv.LastMessage?.Content ?? "",
                     LastMessageTime = conv.LastMessage?.SentAt ?? DateTime.Now,
                     UnreadCount = conv.UnreadCount
