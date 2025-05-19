@@ -5,7 +5,8 @@
        x:Class="UltimateHoopers.AppShell"
        FlyoutBehavior="Flyout"
        BackgroundColor="{StaticResource CardBackgroundColor}"
-       FlyoutWidth="250">
+       FlyoutWidth="250"
+       Shell.NavBarIsVisible="False">
 
     <!-- Flyout Header -->
     <Shell.FlyoutHeader>
@@ -30,15 +31,7 @@
         <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" Route="HomePage" />
     </FlyoutItem>
 
-    <!-- Add Posts Page as a FlyoutItem -->
-    <FlyoutItem Title="Posts" Icon="home.png">
-        <ShellContent ContentTemplate="{DataTemplate pages:PostsPage}" Route="PostsPage" />
-    </FlyoutItem>
-
-    <FlyoutItem Title="Settings" Icon="settings.png">
-        <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" />
-        <!-- Replace with SettingsPage once available -->
-    </FlyoutItem>
+   
 
     <!-- MenuItems appear at the bottom of the Flyout -->
 
