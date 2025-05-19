@@ -56,51 +56,160 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<User>> CreateUser([FromBody] User user, CancellationToken cancellationToken = default)
+        public async Task<ActionResult<User>> CreateUser([FromBody] User user, [FromQuery] string password, CancellationToken cancellationToken = default)
         {
             try
             {
+                // Validate required fields
+                if (string.IsNullOrEmpty(password))
+                    return BadRequest("Password is required");
+
+                if (string.IsNullOrEmpty(user.Email))
+                    return BadRequest("Email is required");
+
+                // Check if email is available
+                var isEmailAvailable = await _unitOfWork.User.IsEmailAvailableAsync(user.Email, cancellationToken);
+                if (!isEmailAvailable)
+                    return BadRequest("Email is already in use");
+
                 // Start a transaction
                 await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
-                // Generate a new ID
-                user.UserId = Guid.NewGuid().ToString();
-
-                // Set additional properties
-                user.SignUpDate = DateTime.Now.ToString();
-                user.Status = "Active";
-                user.AccessLevel = "Standard";
-
-                // Create a profile for the user
-                var profile = new Profile
+                try
                 {
-                    ProfileId = Guid.NewGuid().ToString(),
-                    UserId = user.UserId,
-                    UserName = user.UserName ?? user.FirstName,
-                    Status = "Active"
-                };
+                    // Create the user with the password
+                    var createdUser = await _unitOfWork.User.CreateUserAsync(user, password, cancellationToken);
 
-                // Add both entities
-                await _unitOfWork.User.AddAsync(user, cancellationToken);
+                    // Create a profile for the user if one doesn't exist
+                    if (string.IsNullOrEmpty(createdUser.ProfileId))
+                    {
+                        var profile = new Profile
+                        {
+                            ProfileId = Guid.NewGuid().ToString(),
+                            UserId = createdUser.UserId,
+                            UserName = string.IsNullOrEmpty(user.UserName) ? user.Email.Split('@')[0] : user.UserName,
+                            Status = "Active"
+                        };
 
-                // Instead of using AddAsync on the ProfileRepository directly, 
-                // use the UpdateProfileAsync method which is available in the interface
-                profile.ProfileId = Guid.NewGuid().ToString(); // Ensure we have a valid ID
-                await _unitOfWork.Profile.UpdateProfileAsync(profile, cancellationToken);
+                        // Create a new setting for the profile
+                        var setting = new Setting
+                        {
+                            SettingId = Guid.NewGuid().ToString(),
+                            ProfileId = profile.ProfileId,
+                            AllowComments = true,
+                            ShowGameHistory = true,
+                            AllowEmailNotification = true
+                        };
 
-                // Commit the transaction
-                await _unitOfWork.CommitTransactionAsync(cancellationToken);
+                        var success = await _unitOfWork.Profile.UpdateProfileAsync(profile, cancellationToken);
+                        if (!success)
+                        {
+                            await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+                            return StatusCode(StatusCodes.Status500InternalServerError, "Failed to create profile for user");
+                        }
 
-                return CreatedAtAction(nameof(GetUser), new { id = user.UserId }, user);
+                        // Update the user with the profile ID
+                        createdUser.ProfileId = profile.ProfileId;
+                        _unitOfWork.User.Update(createdUser); // This method doesn't return a Task
+                        await _unitOfWork.SaveChangesAsync(cancellationToken); // Save the changes
+                    }
+
+                    // Commit the transaction
+                    await _unitOfWork.CommitTransactionAsync(cancellationToken);
+
+                    // Remove sensitive data before returning
+                    createdUser.Password = null;
+                    createdUser.PasswordHash = null;
+
+                    return CreatedAtAction(nameof(GetUser), new { id = createdUser.UserId }, createdUser);
+                }
+                catch (Exception)
+                {
+                    // Rollback the transaction if any step fails
+                    await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+                    throw;
+                }
             }
             catch (Exception ex)
             {
-                await _unitOfWork.RollbackTransactionAsync(cancellationToken);
                 _logger.LogError(ex, "Error creating user");
                 return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while creating the user");
             }
         }
 
-        // Add other actions for updating, deleting, etc.
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateUser(string id, [FromBody] User user, CancellationToken cancellationToken = default)
+        {
+            if (id != user.UserId)
+                return BadRequest("User ID mismatch");
+
+            try
+            {
+                var existingUser = await _unitOfWork.User.GetByIdAsync(id, cancellationToken);
+
+                if (existingUser == null)
+                    return NotFound();
+
+                // Update only allowed fields
+                existingUser.FirstName = user.FirstName;
+                existingUser.LastName = user.LastName;
+                existingUser.PhoneNumber = user.PhoneNumber;
+                existingUser.City = user.City;
+                existingUser.State = user.State;
+                existingUser.Zip = user.Zip;
+                existingUser.Country = user.Country;
+                existingUser.Status = user.Status;
+
+                // Update the user
+                _unitOfWork.User.Update(existingUser);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating user {UserId}", id);
+                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while updating the user");
+            }
+        }
+
+        [HttpPut("{id}/change-password")]
+        public async Task<IActionResult> ChangePassword(string id, [FromBody] ChangePasswordModel model, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(model.NewPassword))
+                return BadRequest("New password is required");
+
+            try
+            {
+                var user = await _unitOfWork.User.GetByIdAsync(id, cancellationToken);
+
+                if (user == null)
+                    return NotFound();
+
+                // If current password is provided, verify it
+                if (!string.IsNullOrEmpty(model.CurrentPassword))
+                {
+                    var isPasswordValid = _unitOfWork.User.VerifyPassword(user, model.CurrentPassword);
+                    if (!isPasswordValid)
+                        return BadRequest("Current password is incorrect");
+                }
+
+                // Change the password
+                await _unitOfWork.User.ChangePasswordAsync(id, model.NewPassword, cancellationToken);
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error changing password for user {UserId}", id);
+                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while changing the password");
+            }
+        }
+    }
+
+    public class ChangePasswordModel
+    {
+        public string CurrentPassword { get; set; }
+        public string NewPassword { get; set; }
     }
 }

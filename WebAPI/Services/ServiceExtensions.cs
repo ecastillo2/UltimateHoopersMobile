@@ -1,14 +1,13 @@
 ﻿using DataLayer.DAL;
+using DataLayer.DAL.Interface;
+using DataLayer.DAL.Repository;
+using DataLayer.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using WebAPI.Services;
 using System;
-using DataLayer.DAL.Repository;
-using DataLayer.DAL.Context;
-using DataLayer.DAL.Interface;
-using DataLayer.Context;
+using WebAPI.Services;
 
 namespace WebAPI.Extensions
 {
@@ -35,9 +34,10 @@ namespace WebAPI.Extensions
                         errorNumbersToAdd: null)
                 ));
 
-         
+            // Register UnitOfWork
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-            // Register repositories
+            // Register individual repositories
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IProfileRepository, ProfileRepository>();
             services.AddScoped<IPostRepository, PostRepository>();
@@ -48,18 +48,13 @@ namespace WebAPI.Extensions
             services.AddScoped<IPrivateRunRepository, PrivateRunRepository>();
             services.AddScoped<IPrivateRunInviteRepository, PrivateRunInviteRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
-
             services.AddScoped<IFollowerRepository, FollowerRepository>();
             services.AddScoped<IFollowingRepository, FollowingRepository>();
-   
             services.AddScoped<ILikedPostRepository, LikedPostRepository>();
             services.AddScoped<IPlayerCommentRepository, PlayerCommentRepository>();
             services.AddScoped<IPostCommentRepository, PostCommentRepository>();
-        
             services.AddScoped<ISavedPostRepository, SavedPostRepository>();
-         
             services.AddScoped<ISettingRepository, SettingRepository>();
-         
 
             return services;
         }
@@ -74,7 +69,6 @@ namespace WebAPI.Extensions
             // Register authentication services
             services.AddHttpContextAccessor();
             services.AddScoped<IAuthService, AuthService>();
-
 
             return services;
         }
