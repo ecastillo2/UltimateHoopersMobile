@@ -41,7 +41,16 @@ namespace Domain
         public string? Status { get; set; }
         public string? SegId { get; set; }
         public string? SubId { get; set; }
-        
+        // Add the AccountType property
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public AccountType AccountType { get; set; } = AccountType.Free;
+
+        // Add IsHost convenience property
+        [JsonIgnore]
+        public bool IsHost => AccountType == AccountType.Host;
+
+       
+
         public string? ProfileId { get; set; }
         [NotMapped]
         public List<User>? Followers { get; set; }
@@ -70,5 +79,12 @@ namespace Domain
         public List<PrivateRunInvite>? PrivateRunInvite { get; set; }
         [NotMapped]
         public DateTime? TokenExpiration { get; set; }
+    }
+
+    // Define the AccountType enum
+    public enum AccountType
+    {
+        Free,
+        Host
     }
 }

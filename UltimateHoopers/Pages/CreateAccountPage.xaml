@@ -37,11 +37,113 @@
             <VerticalStackLayout Spacing="20"
                                  VerticalOptions="Center">
 
+                <!-- Account Type Selection -->
+                <Label Text="Account Type"
+                       FontSize="18"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource PrimaryTextColor}"
+                       Margin="0,0,0,5" />
+
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="15">
+                    <!-- Free Account Option -->
+                    <Frame Grid.Column="0"
+                           BorderColor="{StaticResource BorderColor}"
+                           CornerRadius="10"
+                           HasShadow="True"
+                           Padding="15"
+                           BackgroundColor="{StaticResource CardBackgroundColor}"
+                           x:Name="FreeAccountFrame">
+
+                        <VerticalStackLayout Spacing="10">
+                            <Grid>
+                                <StackLayout Orientation="Vertical" HorizontalOptions="Start">
+                                    <Label Text="Free Account"
+                                           FontSize="16"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource PrimaryTextColor}"
+                                           VerticalOptions="Center" />
+                                    <Label Text="$0/month"
+                                           FontSize="14"
+                                           TextColor="Green"
+                                           FontAttributes="Bold"
+                                           VerticalOptions="Center" />
+                                </StackLayout>
+
+                                <RadioButton x:Name="FreeAccountRadio"
+                                             HorizontalOptions="End"
+                                             IsChecked="True"
+                                             CheckedChanged="OnAccountTypeChanged" />
+                            </Grid>
+
+                            <Label Text="• Find pickup games"
+                                   FontSize="14"
+                                   TextColor="{StaticResource SecondaryTextColor}" />
+                            <Label Text="• Connect with players"
+                                   FontSize="14"
+                                   TextColor="{StaticResource SecondaryTextColor}" />
+                            <Label Text="• Track your stats"
+                                   FontSize="14"
+                                   TextColor="{StaticResource SecondaryTextColor}" />
+                        </VerticalStackLayout>
+
+                        <Frame.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnFreeAccountSelected" />
+                        </Frame.GestureRecognizers>
+                    </Frame>
+
+                    <!-- Host Account Option -->
+                    <Frame Grid.Column="1"
+                           BorderColor="{StaticResource BorderColor}"
+                           CornerRadius="10"
+                           HasShadow="True"
+                           Padding="15"
+                           BackgroundColor="{StaticResource CardBackgroundColor}"
+                           x:Name="HostAccountFrame">
+
+                        <VerticalStackLayout Spacing="10">
+                            <Grid>
+                                <StackLayout Orientation="Vertical" HorizontalOptions="Start">
+                                    <Label Text="Host Account"
+                                           FontSize="16"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource PrimaryTextColor}"
+                                           VerticalOptions="Center" />
+                                    <Label Text="$9.99/month"
+                                           FontSize="14"
+                                           TextColor="{StaticResource PrimaryColor}"
+                                           FontAttributes="Bold"
+                                           VerticalOptions="Center" />
+                                </StackLayout>
+
+                                <RadioButton x:Name="HostAccountRadio"
+                                             HorizontalOptions="End"
+                                             IsChecked="False"
+                                             CheckedChanged="OnAccountTypeChanged" />
+                            </Grid>
+
+                            <Label Text="• All free features"
+                                   FontSize="14"
+                                   TextColor="{StaticResource SecondaryTextColor}" />
+                            <Label Text="• Create runs"
+                                   FontSize="14"
+                                   TextColor="{StaticResource SecondaryTextColor}" />
+                            <Label Text="• Manage players"
+                                   FontSize="14"
+                                   TextColor="{StaticResource SecondaryTextColor}" />
+                        </VerticalStackLayout>
+
+                        <Frame.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnHostAccountSelected" />
+                        </Frame.GestureRecognizers>
+                    </Frame>
+                </Grid>
+
                 <Frame BorderColor="Transparent"
                        BackgroundColor="{StaticResource CardBackgroundColor}"
                        CornerRadius="10"
                        Padding="0"
-                       HasShadow="True">
+                       HasShadow="True"
+                       Margin="0,15,0,0">
 
                     <VerticalStackLayout Spacing="0">
                         <!-- Email Entry -->
@@ -84,7 +186,24 @@
                             </Grid>
                         </Border>
 
-                       
+                        <!-- Full Name Entry -->
+                        <Border Stroke="{StaticResource BorderColor}"
+                                StrokeThickness="1">
+                            <Grid ColumnDefinitions="Auto,*" Padding="15,10">
+                                <Label Text="📝"
+                                       FontSize="20"
+                                       VerticalOptions="Center"
+                                       Grid.Column="0" 
+                                       Margin="0,0,10,0" />
+
+                                <Entry x:Name="FullNameEntry"
+                                       Placeholder="Full Name"
+                                       Grid.Column="1"
+                                       VerticalOptions="Center"
+                                       TextColor="Black"
+                                       BackgroundColor="Transparent" />
+                            </Grid>
+                        </Border>
 
                         <!-- Password Entry -->
                         <Border Stroke="{StaticResource BorderColor}"
@@ -129,7 +248,7 @@
                     </VerticalStackLayout>
                 </Frame>
 
-               
+
                 <!-- Terms and Privacy -->
                 <StackLayout Orientation="Horizontal" Spacing="10">
                     <CheckBox x:Name="TermsCheckBox" 

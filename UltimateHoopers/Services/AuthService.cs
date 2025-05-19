@@ -136,6 +136,36 @@ namespace UltimateHoopers.Services
             }
         }
 
+        public async Task<bool> RegisterAsync(string email, string username, string fullName, string password, AccountType accountType)
+        {
+            try
+            {
+                // In a real implementation, this would call an API to register the user
+                // For now, we'll just simulate success with a delay
+                await Task.Delay(1000);
+
+                // Log the registration attempt
+                _logger.LogInformation($"User registration: {email}, {username}, Account Type: {accountType}");
+
+                // This is where you would make an API call to create the user account
+                // var result = await _apiClient.RegisterUserAsync(new RegisterUserRequest {
+                //     Email = email,
+                //     Username = username,
+                //     FullName = fullName,
+                //     Password = password,
+                //     AccountType = accountType.ToString()
+                // });
+
+                // For demo purposes, we'll just return success
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during user registration");
+                throw new AuthenticationException("Registration failed: " + ex.Message, ex);
+            }
+        }
+
         public async Task<string> GetTokenAsync()
         {
             try

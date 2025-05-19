@@ -5,9 +5,19 @@ using UltimateHoopers.Services;
 
 namespace UltimateHoopers.Pages
 {
+    // Enum to define user account types
+    public enum AccountType
+    {
+        Free,
+        Host
+    }
+
     public partial class CreateAccountPage : ContentPage
     {
         private readonly IAuthService _authService;
+
+        // Property to store the selected account type
+        public AccountType SelectedAccountType { get; private set; } = AccountType.Free;
 
         // Property to store the previous page for direct navigation scenarios
         public Page PreviousPage { get; set; }
@@ -20,12 +30,70 @@ namespace UltimateHoopers.Pages
             // Try to get auth service from DI in case it's available
             var serviceProvider = MauiProgram.CreateMauiApp().Services;
             _authService = serviceProvider.GetService<IAuthService>();
+
+            // Set up initial UI for account type selection
+            UpdateAccountTypeUI();
         }
 
         // Constructor with dependency injection
         public CreateAccountPage(IAuthService authService) : this()
         {
             _authService = authService ?? throw new ArgumentNullException(nameof(authService));
+        }
+
+        // Handle radio button selection change
+        private void OnAccountTypeChanged(object sender, CheckedChangedEventArgs e)
+        {
+            if (sender == FreeAccountRadio && e.Value)
+            {
+                SelectedAccountType = AccountType.Free;
+                HostAccountRadio.IsChecked = false;
+            }
+            else if (sender == HostAccountRadio && e.Value)
+            {
+                SelectedAccountType = AccountType.Host;
+                FreeAccountRadio.IsChecked = false;
+            }
+
+            UpdateAccountTypeUI();
+        }
+
+        // Handle tap on the free account frame
+        private void OnFreeAccountSelected(object sender, EventArgs e)
+        {
+            SelectedAccountType = AccountType.Free;
+            FreeAccountRadio.IsChecked = true;
+            HostAccountRadio.IsChecked = false;
+            UpdateAccountTypeUI();
+        }
+
+        // Handle tap on the host account frame
+        private void OnHostAccountSelected(object sender, EventArgs e)
+        {
+            SelectedAccountType = AccountType.Host;
+            HostAccountRadio.IsChecked = true;
+            FreeAccountRadio.IsChecked = false;
+            UpdateAccountTypeUI();
+        }
+
+        // Update the UI based on selected account type
+        private void UpdateAccountTypeUI()
+        {
+            // Update frame appearances based on selection
+            if (SelectedAccountType == AccountType.Free)
+            {
+                FreeAccountFrame.BorderColor = (Color)Application.Current.Resources["PrimaryColor"];
+                FreeAccountFrame.BackgroundColor = (Color)Application.Current.Resources["SecondaryColor"];
+                HostAccountFrame.BorderColor = (Color)Application.Current.Resources["BorderColor"];
+                HostAccountFrame.BackgroundColor = (Color)Application.Current.Resources["CardBackgroundColor"];
+            }
+            else
+            {
+                HostAccountFrame.BorderColor = (Color)Application.Current.Resources["PrimaryColor"];
+                HostAccountFrame.BackgroundColor = (Color)Application.Current.Resources["SecondaryColor"];
+                FreeAccountFrame.BorderColor = (Color)Application.Current.Resources["BorderColor"];
+                FreeAccountFrame.BackgroundColor = (Color)Application.Current.Resources["CardBackgroundColor"];
+            }
         }
 
         private async void OnRegisterClicked(object sender, EventArgs e)
@@ -45,11 +113,11 @@ namespace UltimateHoopers.Pages
                     return;
                 }
 
-                //if (string.IsNullOrWhiteSpace(FullNameEntry.Text))
-                //{
-                //    await DisplayAlert("Error", "Please enter your full name", "OK");
-                //    return;
-                //}
+                if (string.IsNullOrWhiteSpace(FullNameEntry.Text))
+                {
+                    await DisplayAlert("Error", "Please enter your full name", "OK");
+                    return;
+                }
 
                 if (string.IsNullOrWhiteSpace(PasswordEntry.Text))
                 {
@@ -73,15 +141,42 @@ namespace UltimateHoopers.Pages
                 RegisterButton.IsEnabled = false;
                 RegisterButton.Text = "Creating Account...";
 
-                // In a real app, you would call your API to register the user
-                // For this demo, we'll simulate a successful registration
-                await Task.Delay(2000); // Simulate network delay
+                // Call the auth service to register the user
+                bool registrationSuccess = false;
 
-                // Show success message
-                await DisplayAlert("Success", "Account created successfully! You can now log in.", "OK");
+                if (_authService != null)
+                {
+                    // Use the auth service if available
+                    registrationSuccess = await _authService.RegisterAsync(
+                        EmailEntry.Text,
+                        UsernameEntry.Text,
+                        FullNameEntry.Text,
+                        PasswordEntry.Text,
+                        SelectedAccountType);
+                }
+                else
+                {
+                    // Fallback to simulated success if no auth service
+                    await Task.Delay(2000); // Simulate network delay
+                    registrationSuccess = true;
+                }
 
-                // Navigate back to login page
-                ReturnToLoginPage();
+                // Show success message with account type
+                if (registrationSuccess)
+                {
+                    string accountTypeMessage = SelectedAccountType == AccountType.Host
+                        ? "Host account created successfully! Your subscription ($9.99/month) will begin today. You can now create and manage runs."
+                        : "Account created successfully! You can now log in.";
+
+                    await DisplayAlert("Success", accountTypeMessage, "OK");
+
+                    // Navigate back to login page
+                    ReturnToLoginPage();
+                }
+                else
+                {
+                    await DisplayAlert("Registration Failed", "Unable to create your account. Please try again later.", "OK");
+                }
             }
             catch (Exception ex)
             {

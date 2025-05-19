@@ -30,5 +30,16 @@ namespace UltimateHoopers.Services
         /// </summary>
         /// <returns>The current token, or null if not authenticated</returns>
         Task<string> GetTokenAsync();
+
+        /// <summary>
+        /// Registers a new user
+        /// </summary>
+        /// <param name="email">The user's email</param>
+        /// <param name="username">The user's username</param>
+        /// <param name="fullName">The user's full name</param>
+        /// <param name="password">The user's password</param>
+        /// <param name="accountType">The type of account (Free or Host)</param>
+        /// <returns>True if registration was successful</returns>
+        Task<bool> RegisterAsync(string email, string username, string fullName, string password, AccountType accountType);
     }
 }
