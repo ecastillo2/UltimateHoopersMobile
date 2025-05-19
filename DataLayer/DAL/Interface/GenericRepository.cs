@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using DataLayer.DAL.Interface;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -42,3 +43,4 @@ namespace DataLayer.DAL
             _context.Set<T>().Remove(entity);
         }
     }
+}

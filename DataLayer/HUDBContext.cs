@@ -3,19 +3,12 @@ using Domain;
 
 namespace DataLayer
 {
-    public partial class HUDBContext : DbContext
+    public class HUDBContext : DbContext
     {
-        public HUDBContext()
+        public HUDBContext(DbContextOptions<HUDBContext> options) : base(options)
         {
-        
         }
 
-        public HUDBContext(DbContextOptions<HUDBContext> options)
-            : base(options)
-        {
-
-        }
-     
         public virtual DbSet<User> User { get; set; }
         public virtual DbSet<Post> Post { get; set; }
         public virtual DbSet<Following> Following { get; set; }
@@ -54,12 +47,114 @@ namespace DataLayer
         public virtual DbSet<Message> Message { get; set; }
         public virtual DbSet<Conversation> Conversation { get; set; }
         public virtual DbSet<ConversationParticipant> ConversationParticipant { get; set; }
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // Configure entity relationships and constraints
 
+            // Following -> Profile (FollowingProfileId)
+            modelBuilder.Entity<Following>()
+                .HasOne<Profile>()
+                .WithMany()
+                .HasForeignKey(f => f.FollowingProfileId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Following -> Profile (ProfileId)
+            modelBuilder.Entity<Following>()
+                .HasOne<Profile>()
+                .WithMany()
+                .HasForeignKey(f => f.ProfileId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Follower -> Profile (FollowerProfileId)
+            modelBuilder.Entity<Follower>()
+                .HasOne<Profile>()
+                .WithMany()
+                .HasForeignKey(f => f.FollowerProfileId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Follower -> Profile (ProfileId)
+            modelBuilder.Entity<Follower>()
+                .HasOne<Profile>()
+                .WithMany()
+                .HasForeignKey(f => f.ProfileId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Profile -> User
+            modelBuilder.Entity<Profile>()
+                .HasOne<User>()
+                .WithOne()
+                .HasForeignKey<Profile>(p => p.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Profile -> Setting
+            modelBuilder.Entity<Profile>()
+                .HasOne(p => p.Setting)
+                .WithOne()
+                .HasForeignKey<Setting>(s => s.ProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Player comments
+            modelBuilder.Entity<PlayerComment>()
+                .HasOne<Profile>()
+                .WithMany()
+                .HasForeignKey(pc => pc.ProfileId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<PlayerComment>()
+                .HasOne<Profile>()
+                .WithMany()
+                .HasForeignKey(pc => pc.CommentedProfileId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Post comments
+            modelBuilder.Entity<PostComment>()
+                .HasOne<Post>()
+                .WithMany(p => p.PostComments)
+                .HasForeignKey(pc => pc.PostId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<PostComment>()
+                .HasOne<Profile>()
+                .WithMany()
+                .HasForeignKey(pc => pc.PostCommentByProfileId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure indexes for better performance
+            modelBuilder.Entity<Following>()
+                .HasIndex(f => new { f.ProfileId, f.FollowingProfileId })
+                .IsUnique();
+
+            modelBuilder.Entity<Follower>()
+                .HasIndex(f => new { f.ProfileId, f.FollowerProfileId })
+                .IsUnique();
+
+            modelBuilder.Entity<Post>()
+                .HasIndex(p => p.ProfileId);
+
+            modelBuilder.Entity<Post>()
+                .HasIndex(p => p.PostType);
+
+            modelBuilder.Entity<Post>()
+                .HasIndex(p => p.Status);
+
+            modelBuilder.Entity<LikedPost>()
+                .HasIndex(lp => new { lp.PostId, lp.LikedByProfileId })
+                .IsUnique();
+
+            modelBuilder.Entity<SavedPost>()
+                .HasIndex(sp => new { sp.PostId, sp.SavedByProfileId })
+                .IsUnique();
+
+            modelBuilder.Entity<Rating>()
+                .HasIndex(r => new { r.ProfileId, r.RatedByProfileId })
+                .IsUnique();
+
+            modelBuilder.Entity<Profile>()
+                .HasIndex(p => p.UserName)
+                .IsUnique();
+
+            base.OnModelCreating(modelBuilder);
         }
-
-
-        partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
     }
 }
