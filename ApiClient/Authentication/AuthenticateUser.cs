@@ -73,36 +73,22 @@ namespace ApiClient.Authentication
                 };
 
                 // Deserialize the authentication result
-                var authResult = JsonSerializer.Deserialize<AuthResult>(responseContent, options);
+                User user = JsonSerializer.Deserialize<User>(responseContent, options);
 
-                if (authResult == null)
+                if (user == null)
                 {
                     throw new AuthenticationException("Failed to deserialize authentication response");
                 }
 
                 // Check if token is present
-                if (string.IsNullOrEmpty(authResult.Token))
+                if (string.IsNullOrEmpty(user.Token))
                 {
                     throw new AuthenticationException("Authentication response did not contain a token");
                 }
 
-                // Create a user object with the authentication result
-                var authenticatedUser = new User
-                {
-                    UserId = authResult.UserId,
-                    ProfileId = authResult.ProfileId,
-                    FirstName = authResult.FirstName,
-                    LastName = authResult.LastName,
-                    SegId = authResult.SegId,
-                    SubId = authResult.SubId,
-                    Email = email,
-                    Token = authResult.Token,
-                    AccessLevel = authResult.AccessLevel,
-                    TokenExpiration = authResult.ExpiresAt,
-                    Profile = authResult.Profile
-                };
+              
 
-                return authenticatedUser;
+                return user;
             }
             catch (AuthenticationException)
             {
@@ -154,7 +140,9 @@ namespace ApiClient.Authentication
         public string? SubId { get; set; }
         public string? Token { get; set; }
         public string? AccessLevel { get; set; }
+        public bool? IsHost { get; set; }
         public Profile? Profile { get; set; }
         public DateTime? ExpiresAt { get; set; }
+        public AccountType AccountType { get; internal set; }
     }
 }

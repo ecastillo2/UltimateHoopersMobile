@@ -154,22 +154,23 @@
                         <!-- Map Toggle and Create Run Button -->
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                             <Button Grid.Column="0" 
-                                    Text="Show Map View"
-                                    BackgroundColor="Transparent"
-                                    TextColor="{StaticResource PrimaryColor}"
-                                    BorderColor="{StaticResource PrimaryColor}"
-                                    BorderWidth="1"
-                                    CornerRadius="20"
-                                    WidthRequest="150"
-                                    Clicked="OnToggleMapViewClicked" />
+            Text="Show Map View"
+            BackgroundColor="Transparent"
+            TextColor="{StaticResource PrimaryColor}"
+            BorderColor="{StaticResource PrimaryColor}"
+            BorderWidth="1"
+            CornerRadius="20"
+            WidthRequest="150"
+            Clicked="OnToggleMapViewClicked" />
 
                             <Button Grid.Column="1" 
-                                    Text="Create Run"
-                                    BackgroundColor="{StaticResource PrimaryColor}"
-                                    TextColor="White"
-                                    CornerRadius="20"
-                                    WidthRequest="150"
-                                    Clicked="OnCreateRunClicked" />
+            Text="Create Run"
+            x:Name="CreateRunButton"
+            BackgroundColor="{StaticResource PrimaryColor}"
+            TextColor="White"
+            CornerRadius="20"
+            WidthRequest="150"
+            Clicked="OnCreateRunClicked" />
                         </Grid>
                     </VerticalStackLayout>
                 </Frame>

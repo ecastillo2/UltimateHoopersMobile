@@ -34,41 +34,100 @@ namespace UltimateHoopers.Pages
         // Update the Create Run button visibility based on account type
         private void UpdateCreateRunButtonVisibility()
         {
-            // Check if user is authenticated and has a Host account
-            bool isHost = App.User?.IsHost ?? false;
-
-            // Find the Create Run button in the UI
-            foreach (var element in ((Grid)Content).Children)
+            try
             {
-                if (element is ScrollView scrollView)
-                {
-                    foreach (var childElement in ((VerticalStackLayout)scrollView.Content).Children)
-                    {
-                        if (childElement is Frame frame)
-                        {
-                            var createRunButton = frame.FindByName<Button>("CreateRunButton");
-                            if (createRunButton != null)
-                            {
-                                // Show the button only for Host accounts
-                                createRunButton.IsVisible = isHost;
+                // Check if user is authenticated and has a Host account
+                bool isHost = App.User?.IsHost ?? false;
 
-                                // Update button text to reflect permissions
-                                if (!isHost)
+                Console.WriteLine($"User is host: {isHost}");
+
+                // Find the Create Run button by name
+                var createRunButton = this.FindByName<Button>("CreateRunButton");
+
+                if (createRunButton != null)
+                {
+                    Console.WriteLine("Found CreateRunButton by name");
+
+                    // Update button based on account type
+                    if (!isHost)
+                    {
+                        createRunButton.Text = "Upgrade to Host";
+                        // Remove existing event handlers to avoid duplicates
+                        createRunButton.Clicked -= OnCreateRunClicked;
+                        createRunButton.Clicked -= OnUpgradeAccountClicked;
+                        // Add the upgrade event handler
+                        createRunButton.Clicked += OnUpgradeAccountClicked;
+                    }
+                    else
+                    {
+                        createRunButton.Text = "Create Run";
+                        // Remove existing event handlers to avoid duplicates
+                        createRunButton.Clicked -= OnUpgradeAccountClicked;
+                        createRunButton.Clicked -= OnCreateRunClicked;
+                        // Add the create run event handler
+                        createRunButton.Clicked += OnCreateRunClicked;
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("CreateRunButton not found by name - falling back to search");
+
+                    // Fallback: search through the visual tree if button can't be found by name
+                    foreach (var element in ((Grid)Content).Children)
+                    {
+                        if (element is ScrollView scrollView)
+                        {
+                            var stackLayout = scrollView.Content as VerticalStackLayout;
+                            if (stackLayout != null)
+                            {
+                                // Find the Search Section frame
+                                var searchFrame = stackLayout.Children.FirstOrDefault(c => c is Frame) as Frame;
+                                if (searchFrame != null)
                                 {
-                                    createRunButton.Text = "Upgrade to Host";
-                                    createRunButton.Clicked -= OnCreateRunClicked;
-                                    createRunButton.Clicked += OnUpgradeAccountClicked;
-                                }
-                                else
-                                {
-                                    createRunButton.Text = "Create Run";
-                                    createRunButton.Clicked -= OnUpgradeAccountClicked;
-                                    createRunButton.Clicked += OnCreateRunClicked;
+                                    var frameContent = searchFrame.Content as VerticalStackLayout;
+                                    if (frameContent != null)
+                                    {
+                                        // Find the button grid (the last child in the frame content)
+                                        var buttonGrid = frameContent.Children.LastOrDefault() as Grid;
+                                        if (buttonGrid != null)
+                                        {
+                                            // Get the create run button (second column)
+                                            var button = buttonGrid.Children.LastOrDefault() as Button;
+                                            if (button != null)
+                                            {
+                                                Console.WriteLine("Found Create Run button through visual tree");
+
+                                                // Update button based on account type
+                                                if (!isHost)
+                                                {
+                                                    button.Text = "Upgrade to Host";
+                                                    // Remove existing event handlers to avoid duplicates
+                                                    button.Clicked -= OnCreateRunClicked;
+                                                    button.Clicked -= OnUpgradeAccountClicked;
+                                                    // Add the upgrade event handler
+                                                    button.Clicked += OnUpgradeAccountClicked;
+                                                }
+                                                else
+                                                {
+                                                    button.Text = "Create Run";
+                                                    // Remove existing event handlers to avoid duplicates
+                                                    button.Clicked -= OnUpgradeAccountClicked;
+                                                    button.Clicked -= OnCreateRunClicked;
+                                                    // Add the create run event handler
+                                                    button.Clicked += OnCreateRunClicked;
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating create run button visibility: {ex.Message}");
             }
         }
 
@@ -151,7 +210,7 @@ namespace UltimateHoopers.Pages
 
         private async void OnCreateRunClicked(object sender, EventArgs e)
         {
-            // Check if user is authorized to create runs
+            // Double-check if user is authorized to create runs
             if (App.User?.IsHost != true)
             {
                 await DisplayAlert(
@@ -161,6 +220,7 @@ namespace UltimateHoopers.Pages
                 return;
             }
 
+            // If we get here, user is a host and can create runs
             await DisplayAlert("Create Run", "Create run feature coming soon!", "OK");
         }
 
@@ -175,6 +235,16 @@ namespace UltimateHoopers.Pages
             {
                 // Navigate to account upgrade page or show upgrade modal
                 await DisplayAlert("Account Upgrade", "Account upgrade feature coming soon! Your card will be charged $9.99/month after completing the upgrade.", "OK");
+
+                // In a real implementation, you would call an API to upgrade the account
+                // For example:
+                // await _accountService.UpgradeToHostAsync();
+
+                // Then update the App.User object
+                // App.User.IsHost = true;
+
+                // Then refresh the UI
+                // UpdateCreateRunButtonVisibility();
             }
         }
 
