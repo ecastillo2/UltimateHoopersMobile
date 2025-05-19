@@ -65,12 +65,23 @@ namespace UltimateHoopers
                     var logger = sp.GetService<ILogger<PostService>>();
                     return new PostService(httpClient, configuration, logger);
                 });
+
+                // Register Notification Service
+                builder.Services.AddSingleton<INotificationService>(sp =>
+                {
+                    var httpClient = sp.GetService<HttpClient>();
+                    var configuration = sp.GetService<IConfiguration>();
+                    var logger = sp.GetService<ILogger<NotificationService>>();
+                    return new NotificationService(httpClient, configuration, logger);
+                });
+
                 builder.Services.AddSingleton<IAuthenticateUser, AuthenticateUser>();
                 builder.Services.AddSingleton<IAuthService, AuthService>();
                 DiagnosticHelper.Log("Services registered");
 
                 // Register ViewModels
                 builder.Services.AddTransient<PostsViewModel>();
+                builder.Services.AddTransient<NotificationsViewModel>();
                 DiagnosticHelper.Log("ViewModels registered");
 
                 // Register shell

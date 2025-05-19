@@ -6,6 +6,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using UltimateHoopers.Services;
 
 namespace UltimateHoopers.ViewModels
 {
@@ -42,6 +43,7 @@ namespace UltimateHoopers.ViewModels
 
     public class NotificationsViewModel : BindableObject
     {
+        private readonly INotificationService _notificationService;
         private bool _isRefreshing;
         private ObservableCollection<NotificationItem> _notifications = new ObservableCollection<NotificationItem>();
 
@@ -72,6 +74,10 @@ namespace UltimateHoopers.ViewModels
 
         public NotificationsViewModel()
         {
+            // Try to get the notification service from DI
+            var serviceProvider = MauiProgram.CreateMauiApp().Services;
+            _notificationService = serviceProvider.GetService<INotificationService>() ?? new NotificationService();
+
             // Initialize commands
             RefreshCommand = new Command(async () => await RefreshNotifications());
             NotificationTappedCommand = new Command<NotificationItem>(async (notification) => await OnNotificationTapped(notification));
@@ -86,15 +92,59 @@ namespace UltimateHoopers.ViewModels
             try
             {
                 IsRefreshing = true;
-                await Task.Delay(600); // Simulate network call
 
                 // Clear existing notifications
                 Notifications.Clear();
 
-                // In a real app, you would call your API to get notifications
-                // var apiNotifications = await _notificationService.GetNotificationsAsync(filter);
+                // Get notifications from the service
+                List<NotificationDto> notificationDtos = await _notificationService.GetNotificationsAsync(filter);
 
-                // For now, we'll create sample notifications
+                // Convert DTOs to view model items
+                foreach (var dto in notificationDtos)
+                {
+                    // Create color from hex string
+                    Color iconBgColor;
+                    if (!string.IsNullOrEmpty(dto.IconBackgroundColor) &&
+                        dto.IconBackgroundColor.StartsWith("#"))
+                    {
+                        try
+                        {
+                            iconBgColor = Color.FromArgb(dto.IconBackgroundColor);
+                        }
+                        catch
+                        {
+                            // Default to blue if parsing fails
+                            iconBgColor = Colors.Blue;
+                        }
+                    }
+                    else
+                    {
+                        iconBgColor = Colors.Blue;
+                    }
+
+                    var notification = new NotificationItem
+                    {
+                        Id = dto.Id,
+                        Title = dto.Title,
+                        Message = dto.Message,
+                        TimeAgo = dto.TimeAgo,
+                        IsUnread = dto.IsRead == false,
+                        Type = dto.Type,
+                        Category = dto.Category,
+                        EntityId = dto.EntityId,
+                        IconText = dto.IconText,
+                        IconBackground = iconBgColor,
+                        AdditionalData = dto.AdditionalData
+                    };
+
+                    Notifications.Add(notification);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading notifications: {ex.Message}");
+
+                // If service fails, fall back to sample data
                 var sampleNotifications = GetSampleNotifications();
 
                 // Apply filter if needed
@@ -110,11 +160,6 @@ namespace UltimateHoopers.ViewModels
                 {
                     Notifications.Add(notification);
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error loading notifications: {ex.Message}");
-                await Application.Current.MainPage.DisplayAlert("Error", "Failed to load notifications", "OK");
             }
             finally
             {
@@ -144,8 +189,8 @@ namespace UltimateHoopers.ViewModels
                     Notifications[index] = notification;
                 }
 
-                // In a real app, you would call your API to mark the notification as read
-                // await _notificationService.MarkAsReadAsync(notification.Id);
+                // Call the service to mark as read
+                await _notificationService.MarkAsReadAsync(notification.Id);
 
                 // Handle navigation based on notification type
                 await HandleNotificationNavigation(notification);
@@ -215,8 +260,8 @@ namespace UltimateHoopers.ViewModels
                     Notifications.Add(notification);
                 }
 
-                // In a real app, you would call your API to mark all notifications as read
-                // await _notificationService.MarkAllAsReadAsync();
+                // Call the service to mark all as read
+                await _notificationService.MarkAllAsReadAsync();
 
                 await Application.Current.MainPage.DisplayAlert("Success", "All notifications marked as read", "OK");
             }

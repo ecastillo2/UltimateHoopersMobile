@@ -11,6 +11,7 @@ namespace UltimateHoopers.Pages
     public partial class NotificationsPage : ContentPage
     {
         private readonly NotificationsViewModel _viewModel;
+        private readonly INotificationService _notificationService;
         private string _currentTab = "All";
 
         public NotificationsPage()
@@ -19,6 +20,10 @@ namespace UltimateHoopers.Pages
 
             // Ensure navigation bar is hidden
             Shell.SetNavBarIsVisible(this, false);
+
+            // Create notification service
+            var serviceProvider = MauiProgram.CreateMauiApp().Services;
+            _notificationService = serviceProvider.GetService<INotificationService>() ?? new NotificationService();
 
             // Initialize ViewModel
             _viewModel = new NotificationsViewModel();
@@ -160,6 +165,9 @@ namespace UltimateHoopers.Pages
                 {
                     // Use the ViewModel's command to mark all as read
                     _viewModel.MarkAllAsReadCommand.Execute(null);
+
+                    // Also call the service
+                    await _notificationService.MarkAllAsReadAsync();
                 }
             }
             catch (Exception ex)

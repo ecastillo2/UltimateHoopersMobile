@@ -1,35 +1,25 @@
 ﻿using Microsoft.Maui.Controls;
 using System;
 using System.Threading.Tasks;
+using UltimateHoopers.Services;
 
 namespace UltimateHoopers.Pages
 {
     public partial class NotificationSettingsPage : ContentPage
     {
-        // Create a local settings class to avoid any ambiguity
-        private class LocalNotificationSettings
-        {
-            public bool EnablePushNotifications { get; set; } = true;
-            public bool EnableEmailNotifications { get; set; } = false;
-            public bool GameInvitations { get; set; } = true;
-            public bool GameReminders { get; set; } = true;
-            public bool FriendRequests { get; set; } = true;
-            public bool PostInteractions { get; set; } = true;
-            public bool SystemUpdates { get; set; } = false;
-            public bool QuietHoursEnabled { get; set; } = false;
-            public string QuietHoursStart { get; set; } = "22:00";
-            public string QuietHoursEnd { get; set; } = "08:00";
-        }
-
-        // Store settings in local class
-        private readonly LocalNotificationSettings _settings;
+        private readonly INotificationService _notificationService;
+        private readonly NotificationSettings _settings;
 
         public NotificationSettingsPage()
         {
             InitializeComponent();
 
+            // Get notification service from DI
+            var serviceProvider = MauiProgram.CreateMauiApp().Services;
+            _notificationService = serviceProvider.GetService<INotificationService>() ?? new NotificationService();
+
             // Initialize settings with default values
-            _settings = new LocalNotificationSettings();
+            _settings = new NotificationSettings();
 
             // Load settings
             LoadSettings();
@@ -58,13 +48,11 @@ namespace UltimateHoopers.Pages
         {
             try
             {
-                // In a real app, you would load settings from a service or storage
+                // In a real app, you would load settings from the service
                 // For now, we're using the default values set in the constructor
 
                 // You could implement something like:
-                // var serviceProvider = MauiProgram.CreateMauiApp().Services;
-                // var notificationService = serviceProvider.GetService<INotificationService>();
-                // var serviceSettings = await notificationService.GetNotificationSettingsAsync();
+                // var serviceSettings = await _notificationService.GetNotificationSettingsAsync();
                 // _settings.EnablePushNotifications = serviceSettings.EnablePushNotifications;
                 // ... and so on for other properties
 
@@ -148,9 +136,8 @@ namespace UltimateHoopers.Pages
                 _settings.QuietHoursStart = StartTimePicker.Time.ToString(@"hh\:mm");
                 _settings.QuietHoursEnd = EndTimePicker.Time.ToString(@"hh\:mm");
 
-                // In a real app, you would save settings to a service or storage
-                // For example:
-                // await _notificationService.UpdateNotificationSettingsAsync(_settings);
+                // Save settings using the notification service
+                await _notificationService.UpdateNotificationSettingsAsync(_settings);
 
                 await DisplayAlert("Success", "Notification settings have been saved", "OK");
 
@@ -174,9 +161,8 @@ namespace UltimateHoopers.Pages
             {
                 try
                 {
-                    // In a real app, you would call a service to clear notifications
-                    // For example:
-                    // await _notificationService.ClearAllNotificationsAsync();
+                    // Mark all notifications as read (no actual clearing API yet)
+                    await _notificationService.MarkAllAsReadAsync();
 
                     await DisplayAlert("Success", "All notifications have been cleared", "OK");
                 }
