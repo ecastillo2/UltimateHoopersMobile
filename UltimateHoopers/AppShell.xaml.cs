@@ -1,5 +1,4 @@
-﻿
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui.Controls;
 using System;
 using System.Threading.Tasks;
@@ -13,9 +12,10 @@ namespace UltimateHoopers
     public partial class AppShell : Shell
     {
         private readonly IAuthService _authService;
-        
+
         public ICommand HelpCommand { get; private set; }
         public ICommand LogoutCommand { get; private set; }
+        public ICommand NavigateToNotificationsCommand { get; private set; }
 
         // Default constructor for XAML preview
         public AppShell()
@@ -50,12 +50,24 @@ namespace UltimateHoopers
             HelpCommand = new Command(async () => await ShowHelpDialog());
             LogoutCommand = new Command(async () => await PerformLogout());
             NavigateToNotificationsCommand = new Command(async () => await NavigateToNotifications());
+
             // Set binding context to this to use the commands
             BindingContext = this;
 
-            // CHANGE: Set the Posts page as the initial page
+            // Set the Posts page as the initial page
             // Use the safer method to find and set the Posts page
-            SetInitialPage(this);
+            MainThread.BeginInvokeOnMainThread(async () => {
+                try
+                {
+                    // Add a slight delay to ensure shell is fully loaded
+                    await Task.Delay(100);
+                    SetInitialPage(this);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error in initial navigation: {ex.Message}");
+                }
+            });
         }
 
         private void RegisterRoutes()
@@ -161,70 +173,77 @@ namespace UltimateHoopers
         {
             try
             {
-                if (shell == null || shell.Items == null || shell.Items.Count == 0)
-                    return;
+                System.Diagnostics.Debug.WriteLine("Setting initial page to Posts page");
 
-                // First look for a matching tab/flyout item with the exact route
+                if (shell == null || shell.Items == null || shell.Items.Count == 0)
+                {
+                    System.Diagnostics.Debug.WriteLine("Shell or shell items is null or empty");
+                    return;
+                }
+
+                // Log some debug info about shell items
+                foreach (var item in shell.Items)
+                {
+                    if (item != null)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Shell Item: Route={item.Route}, Items.Count={item.Items?.Count ?? 0}");
+
+                        if (item.Items != null)
+                        {
+                            foreach (var subItem in item.Items)
+                            {
+                                if (subItem != null)
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"  - ShellContent: Route={subItem.Route}");
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // First look for FlyoutItem with Route="PostsPage"
                 var postsItem = shell.Items.FirstOrDefault(item =>
                     item != null &&
-                    "PostsPage".Equals(item.Route, StringComparison.OrdinalIgnoreCase));
+                    item.Route != null &&
+                    item.Route.Equals("PostsPage", StringComparison.OrdinalIgnoreCase));
 
                 if (postsItem != null)
                 {
+                    System.Diagnostics.Debug.WriteLine("Found posts item by route, setting as current item");
                     shell.CurrentItem = postsItem;
-                    System.Diagnostics.Debug.WriteLine("Set shell.CurrentItem to PostsPage directly");
                     return;
                 }
 
-                // Then look for an item containing a tab with the route
+                // If we didn't find a direct match, look for a ShellContent with Route="PostsPage"
                 foreach (var item in shell.Items)
                 {
                     if (item?.Items != null)
                     {
-                        var tab = item.Items.FirstOrDefault(si =>
-                            si != null &&
-                            "PostsPage".Equals(si.Route, StringComparison.OrdinalIgnoreCase));
+                        var postsContent = item.Items.FirstOrDefault(sc =>
+                            sc != null &&
+                            sc.Route != null &&
+                            sc.Route.Equals("PostsPage", StringComparison.OrdinalIgnoreCase));
 
-                        if (tab != null)
+                        if (postsContent != null)
                         {
+                            System.Diagnostics.Debug.WriteLine($"Found posts content in {item.Route}, setting as current");
                             shell.CurrentItem = item;
-                            if (item.CurrentItem != tab)
-                            {
-                                item.CurrentItem = tab;
-                            }
-                            System.Diagnostics.Debug.WriteLine("Set shell.CurrentItem to item containing PostsPage tab");
+                            item.CurrentItem = postsContent;
                             return;
                         }
                     }
                 }
 
-                // If we didn't find a Posts page specifically, try to find any page that has "Posts" in its name
-                foreach (var item in shell.Items)
+                // If direct lookup fails, try using GoToAsync
+                try
                 {
-                    if (item?.Route != null && item.Route.Contains("Posts", StringComparison.OrdinalIgnoreCase))
-                    {
-                        shell.CurrentItem = item;
-                        System.Diagnostics.Debug.WriteLine($"Set shell.CurrentItem to item with route containing 'Posts': {item.Route}");
-                        return;
-                    }
-
-                    if (item?.Items != null)
-                    {
-                        var tab = item.Items.FirstOrDefault(si =>
-                            si?.Route != null &&
-                            si.Route.Contains("Posts", StringComparison.OrdinalIgnoreCase));
-
-                        if (tab != null)
-                        {
-                            shell.CurrentItem = item;
-                            if (item.CurrentItem != tab)
-                            {
-                                item.CurrentItem = tab;
-                            }
-                            System.Diagnostics.Debug.WriteLine($"Set shell.CurrentItem to item containing tab with route containing 'Posts': {tab.Route}");
-                            return;
-                        }
-                    }
+                    System.Diagnostics.Debug.WriteLine("Attempting to navigate using GoToAsync");
+                    Shell.Current.GoToAsync("//PostsPage");
+                    return;
+                }
+                catch (Exception navEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Navigation error: {navEx.Message}");
                 }
 
                 System.Diagnostics.Debug.WriteLine("Could not find Posts page in shell items");
@@ -235,7 +254,6 @@ namespace UltimateHoopers
                 System.Diagnostics.Debug.WriteLine($"Error setting initial page to Posts: {ex.Message}");
             }
         }
-
 
         // These methods can be used for tap gesture recognizers in Shell
         private async void OnHelpTapped(object sender, TappedEventArgs e)
@@ -252,12 +270,6 @@ namespace UltimateHoopers
         {
             await DisplayAlert("Notifications", "Notifications feature coming soon!", "OK");
         }
-
-        // Addition to AppShell.xaml.cs
-        public ICommand NavigateToNotificationsCommand { get; private set; }
-
-        // Add to Initialize method
-        
 
         // Add this method to AppShell.xaml.cs
         private async Task NavigateToNotifications()

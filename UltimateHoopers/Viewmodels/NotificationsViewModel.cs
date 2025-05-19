@@ -10,42 +10,13 @@ using UltimateHoopers.Services;
 
 namespace UltimateHoopers.ViewModels
 {
-    // Custom notification item class to avoid any ambiguities
-    public class NotificationItem : BindableObject
-    {
-        // Basic notification properties
-        public string Id { get; set; }
-        public string Title { get; set; }
-        public string Message { get; set; }
-        public string TimeAgo { get; set; }
-
-        // UI properties
-        private bool _isUnread;
-        public bool IsUnread
-        {
-            get => _isUnread;
-            set
-            {
-                _isUnread = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public string IconText { get; set; } = "📩";
-        public Color IconBackground { get; set; } = Colors.Blue;
-
-        // Metadata for navigation and filtering
-        public string Type { get; set; } = "general";
-        public string Category { get; set; } = "All";
-        public string EntityId { get; set; }
-        public Dictionary<string, string> AdditionalData { get; set; } = new Dictionary<string, string>();
-    }
-
     public class NotificationsViewModel : BindableObject
     {
         private readonly INotificationService _notificationService;
         private bool _isRefreshing;
         private ObservableCollection<NotificationItem> _notifications = new ObservableCollection<NotificationItem>();
+        private string _currentFilter = "All";
+        private int _unreadCount = 0;
 
         public bool IsRefreshing
         {
@@ -67,10 +38,37 @@ namespace UltimateHoopers.ViewModels
             }
         }
 
+        public string CurrentFilter
+        {
+            get => _currentFilter;
+            set
+            {
+                if (_currentFilter != value)
+                {
+                    _currentFilter = value;
+                    OnPropertyChanged();
+
+                    // Reload notifications with the new filter
+                    LoadNotificationsAsync(_currentFilter).ConfigureAwait(false);
+                }
+            }
+        }
+
+        public int UnreadCount
+        {
+            get => _unreadCount;
+            set
+            {
+                _unreadCount = value;
+                OnPropertyChanged();
+            }
+        }
+
         // Commands
         public ICommand RefreshCommand { get; }
         public ICommand NotificationTappedCommand { get; }
         public ICommand MarkAllAsReadCommand { get; }
+        public ICommand FilterCommand { get; }
 
         public NotificationsViewModel()
         {
@@ -82,6 +80,10 @@ namespace UltimateHoopers.ViewModels
             RefreshCommand = new Command(async () => await RefreshNotifications());
             NotificationTappedCommand = new Command<NotificationItem>(async (notification) => await OnNotificationTapped(notification));
             MarkAllAsReadCommand = new Command(async () => await MarkAllAsRead());
+            FilterCommand = new Command<string>((filter) => CurrentFilter = filter);
+
+            // Load notifications initially
+            LoadNotificationsAsync("All").ConfigureAwait(false);
         }
 
         public async Task LoadNotificationsAsync(string filter = "All")
@@ -128,7 +130,7 @@ namespace UltimateHoopers.ViewModels
                         Title = dto.Title,
                         Message = dto.Message,
                         TimeAgo = dto.TimeAgo,
-                        IsUnread = dto.IsRead == false,
+                        IsUnread = !dto.IsRead,
                         Type = dto.Type,
                         Category = dto.Category,
                         EntityId = dto.EntityId,
@@ -139,6 +141,9 @@ namespace UltimateHoopers.ViewModels
 
                     Notifications.Add(notification);
                 }
+
+                // Calculate unread count
+                UpdateUnreadCount();
             }
             catch (Exception ex)
             {
@@ -160,6 +165,9 @@ namespace UltimateHoopers.ViewModels
                 {
                     Notifications.Add(notification);
                 }
+
+                // Calculate unread count
+                UpdateUnreadCount();
             }
             finally
             {
@@ -167,9 +175,14 @@ namespace UltimateHoopers.ViewModels
             }
         }
 
+        private void UpdateUnreadCount()
+        {
+            UnreadCount = Notifications.Count(n => n.IsUnread);
+        }
+
         private async Task RefreshNotifications()
         {
-            await LoadNotificationsAsync("All");
+            await LoadNotificationsAsync(CurrentFilter);
         }
 
         private async Task OnNotificationTapped(NotificationItem notification)
@@ -179,18 +192,24 @@ namespace UltimateHoopers.ViewModels
 
             try
             {
-                // Mark as read
-                notification.IsUnread = false;
-
-                // Update UI
-                var index = Notifications.IndexOf(notification);
-                if (index >= 0)
+                // Mark as read locally
+                if (notification.IsUnread)
                 {
-                    Notifications[index] = notification;
-                }
+                    notification.IsUnread = false;
 
-                // Call the service to mark as read
-                await _notificationService.MarkAsReadAsync(notification.Id);
+                    // Update UI by replacing the item
+                    var index = Notifications.IndexOf(notification);
+                    if (index >= 0)
+                    {
+                        Notifications[index] = notification;
+                    }
+
+                    // Update unread count
+                    UpdateUnreadCount();
+
+                    // Mark as read on the server
+                    await _notificationService.MarkAsReadAsync(notification.Id);
+                }
 
                 // Handle navigation based on notification type
                 await HandleNotificationNavigation(notification);
@@ -203,42 +222,123 @@ namespace UltimateHoopers.ViewModels
 
         private async Task HandleNotificationNavigation(NotificationItem notification)
         {
-            // Navigate based on notification type and data
-            switch (notification.Type)
+            try
             {
-                case "game_invite":
-                    // Navigate to the game details page
-                    await Application.Current.MainPage.DisplayAlert("Game Invite",
-                        $"Navigating to game invite: {notification.Title}", "OK");
-                    // await Shell.Current.GoToAsync($"//GameDetailsPage?id={notification.EntityId}");
-                    break;
+                // Navigate based on notification type and data
+                switch (notification.Type.ToLowerInvariant())
+                {
+                    case "game_invite":
+                        // Navigate to the game details page
+                        await MainThread.InvokeOnMainThreadAsync(async () =>
+                        {
+                            await Application.Current.MainPage.DisplayAlert("Game Invitation",
+                                $"Navigating to game: {notification.EntityId}", "OK");
+                            // In production, use: await Shell.Current.GoToAsync($"//GameDetailsPage?id={notification.EntityId}");
+                        });
+                        break;
 
-                case "friend_request":
-                    // Navigate to the player profile page
-                    await Application.Current.MainPage.DisplayAlert("Friend Request",
-                        $"Navigating to profile: {notification.Title}", "OK");
-                    // await Shell.Current.GoToAsync($"//PlayerProfilePage?id={notification.EntityId}");
-                    break;
+                    case "friend_request":
+                        // Navigate to the player profile page
+                        await MainThread.InvokeOnMainThreadAsync(async () =>
+                        {
+                            await Application.Current.MainPage.DisplayAlert("Friend Request",
+                                $"Navigating to profile: {notification.EntityId}", "OK");
+                            // In production, use: await Shell.Current.GoToAsync($"//PlayerProfilePage?id={notification.EntityId}");
+                        });
+                        break;
 
-                case "post_like":
-                case "post_comment":
-                    // Navigate to the post details
-                    await Application.Current.MainPage.DisplayAlert("Post Interaction",
-                        $"Navigating to post: {notification.Title}", "OK");
-                    // await Shell.Current.GoToAsync($"//PostDetailsPage?id={notification.EntityId}");
-                    break;
+                    case "game_reminder":
+                        // Navigate to the game details
+                        await MainThread.InvokeOnMainThreadAsync(async () =>
+                        {
+                            await Application.Current.MainPage.DisplayAlert("Game Reminder",
+                                $"Your game is starting soon: {notification.Message}", "OK");
+                            // In production, use: await Shell.Current.GoToAsync($"//GameDetailsPage?id={notification.EntityId}");
+                        });
+                        break;
 
-                case "system":
-                    // Just show the notification details
+                    case "game_result":
+                        // Navigate to the game result
+                        await MainThread.InvokeOnMainThreadAsync(async () =>
+                        {
+                            await Application.Current.MainPage.DisplayAlert("Game Result",
+                                notification.Message, "OK");
+                            // In production, use: await Shell.Current.GoToAsync($"//GameDetailsPage?id={notification.EntityId}");
+                        });
+                        break;
+
+                    case "post_like":
+                    case "comment":
+                        // Navigate to the post
+                        await MainThread.InvokeOnMainThreadAsync(async () =>
+                        {
+                            await Application.Current.MainPage.DisplayAlert("Post Interaction",
+                                notification.Message, "OK");
+                            // In production, use: await Shell.Current.GoToAsync($"//PostDetailsPage?id={notification.EntityId}");
+                        });
+                        break;
+
+                    case "profile_views":
+                    case "stats_update":
+                        // Navigate to stats page
+                        await MainThread.InvokeOnMainThreadAsync(async () =>
+                        {
+                            await Application.Current.MainPage.DisplayAlert("Stats Update",
+                                notification.Message, "OK");
+                            // In production, use: await Shell.Current.GoToAsync($"//StatsPage");
+                        });
+                        break;
+
+                    case "tournament":
+                    case "training":
+                        // Navigate to event details
+                        await MainThread.InvokeOnMainThreadAsync(async () =>
+                        {
+                            await Application.Current.MainPage.DisplayAlert("Event Details",
+                                notification.Message, "OK");
+                            // In production, use: await Shell.Current.GoToAsync($"//EventDetailsPage?id={notification.EntityId}");
+                        });
+                        break;
+
+                    case "achievement":
+                        // Show achievement details
+                        await MainThread.InvokeOnMainThreadAsync(async () =>
+                        {
+                            await Application.Current.MainPage.DisplayAlert("Achievement Unlocked",
+                                notification.Message, "View Achievements");
+                            // In production, use: await Shell.Current.GoToAsync($"//AchievementsPage");
+                        });
+                        break;
+
+                    case "system":
+                        // Just show the notification details
+                        await MainThread.InvokeOnMainThreadAsync(async () =>
+                        {
+                            await Application.Current.MainPage.DisplayAlert(notification.Title,
+                                notification.Message, "OK");
+                        });
+                        break;
+
+                    default:
+                        // Default action
+                        await MainThread.InvokeOnMainThreadAsync(async () =>
+                        {
+                            await Application.Current.MainPage.DisplayAlert("Notification",
+                                notification.Message, "OK");
+                        });
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error navigating from notification: {ex.Message}");
+
+                // Fallback to just showing the notification content
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
                     await Application.Current.MainPage.DisplayAlert(notification.Title,
                         notification.Message, "OK");
-                    break;
-
-                default:
-                    // Default action
-                    await Application.Current.MainPage.DisplayAlert("Notification",
-                        notification.Message, "OK");
-                    break;
+                });
             }
         }
 
@@ -246,35 +346,44 @@ namespace UltimateHoopers.ViewModels
         {
             try
             {
-                // Mark all notifications as read
-                foreach (var notification in Notifications)
+                // Update all notifications locally
+                foreach (var notification in Notifications.Where(n => n.IsUnread).ToList())
                 {
                     notification.IsUnread = false;
+
+                    // Update UI by replacing the item
+                    var index = Notifications.IndexOf(notification);
+                    if (index >= 0)
+                    {
+                        Notifications[index] = notification;
+                    }
                 }
 
-                // Update the collection to refresh the UI
-                var tempNotifications = new ObservableCollection<NotificationItem>(Notifications);
-                Notifications.Clear();
-                foreach (var notification in tempNotifications)
-                {
-                    Notifications.Add(notification);
-                }
+                // Update unread count
+                UpdateUnreadCount();
 
                 // Call the service to mark all as read
                 await _notificationService.MarkAllAsReadAsync();
 
-                await Application.Current.MainPage.DisplayAlert("Success", "All notifications marked as read", "OK");
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    await Application.Current.MainPage.DisplayAlert("Success", "All notifications marked as read", "OK");
+                });
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error marking all as read: {ex.Message}");
-                await Application.Current.MainPage.DisplayAlert("Error", "Failed to mark notifications as read", "OK");
+
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    await Application.Current.MainPage.DisplayAlert("Error", "Failed to mark notifications as read", "OK");
+                });
             }
         }
 
+        // Fallback sample notifications (only used if service fails)
         private List<NotificationItem> GetSampleNotifications()
         {
-            // Create a list of sample notifications
             return new List<NotificationItem>
             {
                 new NotificationItem
@@ -315,86 +424,39 @@ namespace UltimateHoopers.ViewModels
                     EntityId = "game789",
                     IconText = "⏰",
                     IconBackground = Colors.Orange
-                },
-                new NotificationItem
-                {
-                    Id = "4",
-                    Title = "Game Result",
-                    Message = "Your team won the game at Central Park! Final score: 21-15",
-                    TimeAgo = "Yesterday",
-                    IsUnread = false,
-                    Type = "game_result",
-                    Category = "Games",
-                    EntityId = "game101",
-                    IconText = "🏆",
-                    IconBackground = Colors.Gold
-                },
-                new NotificationItem
-                {
-                    Id = "5",
-                    Title = "Profile Views",
-                    Message = "5 people viewed your profile this week",
-                    TimeAgo = "2 days ago",
-                    IsUnread = false,
-                    Type = "profile_views",
-                    Category = "Activity",
-                    EntityId = "stats101",
-                    IconText = "👁️",
-                    IconBackground = Colors.Purple
-                },
-                new NotificationItem
-                {
-                    Id = "6",
-                    Title = "Post Like",
-                    Message = "John and 3 others liked your highlight video",
-                    TimeAgo = "3 days ago",
-                    IsUnread = false,
-                    Type = "post_like",
-                    Category = "Activity",
-                    EntityId = "post202",
-                    IconText = "❤️",
-                    IconBackground = Colors.Red
-                },
-                new NotificationItem
-                {
-                    Id = "7",
-                    Title = "System Update",
-                    Message = "Ultimate Hoopers app has been updated to version 2.0",
-                    TimeAgo = "5 days ago",
-                    IsUnread = false,
-                    Type = "system",
-                    Category = "Activity",
-                    EntityId = "system303",
-                    IconText = "ℹ️",
-                    IconBackground = Colors.Gray
-                },
-                new NotificationItem
-                {
-                    Id = "8",
-                    Title = "New Tournament",
-                    Message = "Registration is now open for the Summer Slam Tournament",
-                    TimeAgo = "1 week ago",
-                    IsUnread = true,
-                    Type = "tournament",
-                    Category = "Games",
-                    EntityId = "tournament101",
-                    IconText = "🏆",
-                    IconBackground = Colors.DarkOrange
-                },
-                new NotificationItem
-                {
-                    Id = "9",
-                    Title = "Stats Update",
-                    Message = "Your season statistics have been updated",
-                    TimeAgo = "1 week ago",
-                    IsUnread = false,
-                    Type = "stats_update",
-                    Category = "Activity",
-                    EntityId = "stats202",
-                    IconText = "📊",
-                    IconBackground = Colors.DarkBlue
                 }
             };
         }
+    }
+
+    // Custom notification item class for the ViewModel
+    public class NotificationItem : BindableObject
+    {
+        // Basic notification properties
+        public string Id { get; set; }
+        public string Title { get; set; }
+        public string Message { get; set; }
+        public string TimeAgo { get; set; }
+
+        // UI properties
+        private bool _isUnread;
+        public bool IsUnread
+        {
+            get => _isUnread;
+            set
+            {
+                _isUnread = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string IconText { get; set; } = "📩";
+        public Color IconBackground { get; set; } = Colors.Blue;
+
+        // Metadata for navigation and filtering
+        public string Type { get; set; } = "general";
+        public string Category { get; set; } = "All";
+        public string EntityId { get; set; }
+        public Dictionary<string, string> AdditionalData { get; set; } = new Dictionary<string, string>();
     }
 }

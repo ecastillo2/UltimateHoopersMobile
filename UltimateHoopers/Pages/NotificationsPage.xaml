@@ -10,8 +10,6 @@
     <ContentPage.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <converters:UnreadToColorConverter x:Key="UnreadToColorConverter" />
-        <!-- Add a local instance of the ViewModel to reference in commands -->
-        <viewmodels:NotificationsViewModel x:Key="NotificationsVM" />
     </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,*,Auto"
@@ -32,6 +30,21 @@
                        FontSize="16"
                        TextColor="{StaticResource SecondaryTextColor}" />
             </VerticalStackLayout>
+
+            <!-- Badge for Unread Count (only visible when count > 0) -->
+            <Frame Grid.Column="0"
+                   HorizontalOptions="Start"
+                   VerticalOptions="Start"
+                   Margin="170,0,0,0"
+                   Padding="8,3"
+                   CornerRadius="12"
+                   BackgroundColor="{StaticResource PrimaryColor}"
+                   IsVisible="{Binding UnreadCount, Converter={StaticResource GreaterThanZeroConverter}}">
+                <Label Text="{Binding UnreadCount}"
+                       TextColor="White"
+                       FontSize="12"
+                       FontAttributes="Bold" />
+            </Frame>
 
             <!-- Settings Button -->
             <Frame Grid.Column="1"
@@ -88,59 +101,76 @@
                    HasShadow="True"
                    Margin="0,0,0,15">
 
-                <Grid ColumnDefinitions="*,*,*">
+                <Grid ColumnDefinitions="*,*,*,*">
                     <!-- All Tab -->
                     <Frame Grid.Column="0"
-                           BackgroundColor="{StaticResource PrimaryColor}"
+                           BackgroundColor="{Binding CurrentFilter, Converter={StaticResource StringEqualsConverter}, ConverterParameter='All', FallbackValue=Transparent, TargetNullValue=Transparent}"
                            CornerRadius="8"
                            Padding="0"
                            HasShadow="False"
                            x:Name="AllTabFrame">
-                        <Label Text="All"
-                               TextColor="White"
-                               FontAttributes="Bold"
+                        <Label Text="All" 
+                               TextColor="{Binding CurrentFilter, Converter={StaticResource StringEqualsConverter}, ConverterParameter='All', FallbackValue={StaticResource PrimaryTextColor}, TargetNullValue={StaticResource PrimaryTextColor}}"
                                HorizontalOptions="Center"
                                VerticalOptions="Center"
                                Padding="0,10"/>
 
                         <Frame.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnAllTabSelected" />
+                            <TapGestureRecognizer Command="{Binding FilterCommand}" CommandParameter="All" />
                         </Frame.GestureRecognizers>
                     </Frame>
 
                     <!-- Games Tab -->
                     <Frame Grid.Column="1"
-                           BackgroundColor="Transparent"
+                           BackgroundColor="{Binding CurrentFilter, Converter={StaticResource StringEqualsConverter}, ConverterParameter='Games', FallbackValue=Transparent, TargetNullValue=Transparent}"
                            CornerRadius="8"
                            Padding="0"
                            HasShadow="False"
                            x:Name="GamesTabFrame">
                         <Label Text="Games"
-                               TextColor="{StaticResource PrimaryTextColor}"
+                               TextColor="{Binding CurrentFilter, Converter={StaticResource StringEqualsConverter}, ConverterParameter='Games', FallbackValue={StaticResource PrimaryTextColor}, TargetNullValue={StaticResource PrimaryTextColor}}"
                                HorizontalOptions="Center"
                                VerticalOptions="Center"
                                Padding="0,10"/>
 
                         <Frame.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnGamesTabSelected" />
+                            <TapGestureRecognizer Command="{Binding FilterCommand}" CommandParameter="Games" />
                         </Frame.GestureRecognizers>
                     </Frame>
 
                     <!-- Activity Tab -->
                     <Frame Grid.Column="2"
-                           BackgroundColor="Transparent"
+                           BackgroundColor="{Binding CurrentFilter, Converter={StaticResource StringEqualsConverter}, ConverterParameter='Activity', FallbackValue=Transparent, TargetNullValue=Transparent}"
                            CornerRadius="8"
                            Padding="0"
                            HasShadow="False"
                            x:Name="ActivityTabFrame">
                         <Label Text="Activity"
-                               TextColor="{StaticResource PrimaryTextColor}"
+                               TextColor="{Binding CurrentFilter, Converter={StaticResource StringEqualsConverter}, ConverterParameter='Activity', FallbackValue={StaticResource PrimaryTextColor}, TargetNullValue={StaticResource PrimaryTextColor}}"
                                HorizontalOptions="Center"
                                VerticalOptions="Center"
                                Padding="0,10"/>
 
                         <Frame.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnActivityTabSelected" />
+                            <TapGestureRecognizer Command="{Binding FilterCommand}" CommandParameter="Activity" />
+                        </Frame.GestureRecognizers>
+                    </Frame>
+
+                    <!-- System Tab -->
+                    <Frame Grid.Column="3"
+                           BackgroundColor="{Binding CurrentFilter, Converter={StaticResource StringEqualsConverter}, ConverterParameter='System', FallbackValue=Transparent, TargetNullValue=Transparent}"
+                           CornerRadius="8"
+                           Padding="0"
+                           HasShadow="False"
+                           x:Name="SystemTabFrame">
+                        <Label Text="System"
+                               TextColor="{Binding CurrentFilter, Converter={StaticResource StringEqualsConverter}, ConverterParameter='System', FallbackValue={StaticResource PrimaryTextColor}, TargetNullValue={StaticResource PrimaryTextColor}}"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"
+                               Padding="0,10"/>
+
+                        <Frame.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding FilterCommand}" CommandParameter="System" />
                         </Frame.GestureRecognizers>
                     </Frame>
                 </Grid>
@@ -157,7 +187,8 @@
                     CornerRadius="20"
                     HeightRequest="40"
                     Margin="0,0,0,15"
-                    Clicked="OnMarkAllAsReadClicked" />
+                    Command="{Binding MarkAllAsReadCommand}"
+                    IsEnabled="{Binding UnreadCount, Converter={StaticResource GreaterThanZeroConverter}}" />
 
             <!-- Notifications List -->
             <RefreshView Grid.Row="2"
@@ -229,7 +260,7 @@
 
                                 <Frame.GestureRecognizers>
                                     <TapGestureRecognizer 
-                                        Command="{Binding Source={StaticResource NotificationsVM}, Path=NotificationTappedCommand}"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:NotificationsViewModel}}, Path=NotificationTappedCommand}"
                                         CommandParameter="{Binding .}" />
                                 </Frame.GestureRecognizers>
                             </Frame>

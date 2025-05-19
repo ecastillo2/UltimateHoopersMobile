@@ -27,19 +27,21 @@
     </Shell.FlyoutHeader>
 
     <!-- Flyout Items -->
-    <FlyoutItem Title="Home" Icon="home.png">
+    <FlyoutItem Title="Home" Icon="home.png" Route="HomePage">
         <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" Route="HomePage" />
     </FlyoutItem>
 
-    <!-- Flyout Items -->
-    <FlyoutItem Title="Traning" Icon="home.png">
-        <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" Route="HomePage" />
+    <!-- Posts Page -->
+    <FlyoutItem Title="Posts" Icon="home.png" Route="PostsPage">
+        <ShellContent ContentTemplate="{DataTemplate pages:PostsPage}" Route="PostsPage" />
     </FlyoutItem>
 
-
+    <!-- Training -->
+    <FlyoutItem Title="Training" Icon="home.png">
+        <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" Route="TrainingPage" />
+    </FlyoutItem>
 
     <!-- MenuItems appear at the bottom of the Flyout -->
-
     <MenuItem Text="Notifications" 
           IconImageSource="notification.png"
           Command="{Binding NavigateToNotificationsCommand}" />

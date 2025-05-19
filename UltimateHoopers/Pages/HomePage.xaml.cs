@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Xaml;
+using UltimateHoopers.Helpers; // Add this to import NavigationHelper
 
 namespace UltimateHoopers.Pages
 {
@@ -61,76 +62,21 @@ namespace UltimateHoopers.Pages
             }
         }
 
+        // Updated navigation methods using NavigationHelper
+
         private async void OnStatsClicked(object sender, EventArgs e)
         {
-            try
-            {
-                // Navigate to StatsPage
-                await Navigation.PushAsync(new StatsPage());
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Navigation error: {ex.Message}");
-
-                // Alternative navigation using Shell if direct navigation fails
-                try
-                {
-                    await Shell.Current.GoToAsync("StatsPage");
-                }
-                catch
-                {
-                    // Fallback to display an alert if all navigation attempts fail
-                    await DisplayAlert("Stats", "Could not navigate to Stats page", "OK");
-                }
-            }
+            await NavigationHelper.NavigateTo(this, "//StatsPage");
         }
 
         private async void OnFindGamesClicked(object sender, EventArgs e)
         {
-            try
-            {
-                // Navigate to Find Runs
-                await Navigation.PushAsync(new FindRunsPage());
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Navigation error: {ex.Message}");
-
-                // Alternative navigation using Shell if direct navigation fails
-                try
-                {
-                    await Shell.Current.GoToAsync("FindRunsPage");
-                }
-                catch
-                {
-                    // Fallback to display an alert if all navigation attempts fail
-                    await DisplayAlert("Find Runs", "Could not navigate to Finds Runs page", "OK");
-                }
-            }
+            await NavigationHelper.NavigateTo(this, "//FindRunsPage");
         }
 
         private async void OnHoopersClicked(object sender, EventArgs e)
         {
-            try
-            {
-                // Navigate to HoopersPage
-                await Navigation.PushAsync(new HoopersPage());
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Navigation error: {ex.Message}");
-
-                // Alternative navigation using Shell if direct navigation fails
-                try
-                {
-                    await Shell.Current.GoToAsync("HoopersPage");
-                }
-                catch
-                {
-                    // Fallback to display an alert if all navigation attempts fail
-                    await DisplayAlert("Hoopers", "Could not navigate to Hoopers page", "OK");
-                }
-            }
+            await NavigationHelper.NavigateTo(this, "//HoopersPage");
         }
 
         private async void OnTeamsClicked(object sender, EventArgs e)
@@ -140,64 +86,48 @@ namespace UltimateHoopers.Pages
 
         private async void OnPostsClicked(object sender, EventArgs e)
         {
-            // Navigate to posts page
-            await Shell.Current.GoToAsync("//PostsPage");
+            await NavigationHelper.NavigateTo(this, "//PostsPage");
         }
 
         private async void OnShopClicked(object sender, EventArgs e)
         {
-            try
-            {
-                // Navigate to Shop
-                await Navigation.PushAsync(new ShopPage());
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Navigation error: {ex.Message}");
-
-                // Alternative navigation using Shell if direct navigation fails
-                try
-                {
-                    await Shell.Current.GoToAsync("ShopPage");
-                }
-                catch
-                {
-                    // Fallback to display an alert if all navigation attempts fail
-                    await DisplayAlert("Shop", "Could not navigate to Finds Runs page", "OK");
-                }
-            }
+            await NavigationHelper.NavigateTo(this, "//ShopPage");
         }
 
         private async void OnProfileClicked(object sender, EventArgs e)
         {
-            try
-            {
-                // Navigate to EditProfilePage
-                await Navigation.PushAsync(new EditProfilePage());
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Navigation error: {ex.Message}");
-                await DisplayAlert("Profile", "Could not navigate to Edit Profile page", "OK");
-            }
+            await NavigationHelper.NavigateTo(this, "//EditProfilePage");
         }
 
         private async void OnPostsNavigationClicked(object sender, TappedEventArgs e)
         {
-            // Navigate to posts page
-            await Shell.Current.GoToAsync("//PostsPage");
+            await NavigationHelper.NavigateTo(this, "//PostsPage");
         }
 
         private async void OnMessagesNavigationClicked(object sender, TappedEventArgs e)
         {
-            // Navigate to posts page
-            await Shell.Current.GoToAsync("//MessagesPage");
+            await NavigationHelper.NavigateTo(this, "//MessagesPage");
         }
 
         private void OnMenuClicked(object sender, EventArgs e)
         {
             // Use Shell's flyout menu instead of custom menu popup
-            Shell.Current.FlyoutIsPresented = true;
+            try
+            {
+                if (Shell.Current != null)
+                {
+                    Shell.Current.FlyoutIsPresented = true;
+                }
+                else
+                {
+                    DisplayAlert("Menu", "Menu is not available in this context", "OK");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error showing menu: {ex.Message}");
+                DisplayAlert("Menu", "Could not display menu", "OK");
+            }
         }
     }
 }

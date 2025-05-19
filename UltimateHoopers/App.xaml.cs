@@ -24,7 +24,6 @@ namespace UltimateHoopers
                 DiagnosticHelper.Log("App constructor starting");
                 InitializeComponent();
                 DiagnosticHelper.Log("InitializeComponent complete");
-               
 
                 // Check for existing authentication
                 InitializeAsync();
@@ -70,70 +69,54 @@ namespace UltimateHoopers
                 if (shell == null || shell.Items == null || shell.Items.Count == 0)
                     return;
 
-                // First look for a matching tab/flyout item with the exact route
+                DiagnosticHelper.Log("SetInitialPage: Finding PostsPage in shell items");
+
+                // First look for FlyoutItem with Route="PostsPage"
                 var postsItem = shell.Items.FirstOrDefault(item =>
                     item != null &&
-                    "PostsPage".Equals(item.Route, StringComparison.OrdinalIgnoreCase));
+                    item.Route != null &&
+                    item.Route.Equals("PostsPage", StringComparison.OrdinalIgnoreCase));
 
                 if (postsItem != null)
                 {
+                    DiagnosticHelper.Log("Found PostsPage FlyoutItem, setting as current item");
                     shell.CurrentItem = postsItem;
-                    DiagnosticHelper.Log("Set shell.CurrentItem to PostsPage directly");
                     return;
                 }
 
-                // Then look for an item containing a tab with the route
+                // Look for any ShellContent within FlyoutItems with Route="PostsPage"
                 foreach (var item in shell.Items)
                 {
                     if (item?.Items != null)
                     {
-                        var tab = item.Items.FirstOrDefault(si =>
-                            si != null &&
-                            "PostsPage".Equals(si.Route, StringComparison.OrdinalIgnoreCase));
+                        var shellContent = item.Items.FirstOrDefault(sc =>
+                            sc != null &&
+                            sc.Route != null &&
+                            sc.Route.Equals("PostsPage", StringComparison.OrdinalIgnoreCase));
 
-                        if (tab != null)
+                        if (shellContent != null)
                         {
+                            DiagnosticHelper.Log($"Found ShellContent with Route=PostsPage in {item.Route}, setting as current");
                             shell.CurrentItem = item;
-                            if (item.CurrentItem != tab)
-                            {
-                                item.CurrentItem = tab;
-                            }
-                            DiagnosticHelper.Log("Set shell.CurrentItem to item containing PostsPage tab");
+                            item.CurrentItem = shellContent;
                             return;
                         }
                     }
                 }
 
-                // If we didn't find a Posts page specifically, try to find any page that has "Posts" in its name
-                foreach (var item in shell.Items)
+                // If we couldn't find by Route, try GoToAsync as a fallback
+                try
                 {
-                    if (item?.Route != null && item.Route.Contains("Posts", StringComparison.OrdinalIgnoreCase))
-                    {
-                        shell.CurrentItem = item;
-                        DiagnosticHelper.Log($"Set shell.CurrentItem to item with route containing 'Posts': {item.Route}");
-                        return;
-                    }
-
-                    if (item?.Items != null)
-                    {
-                        var tab = item.Items.FirstOrDefault(si =>
-                            si?.Route != null &&
-                            si.Route.Contains("Posts", StringComparison.OrdinalIgnoreCase));
-
-                        if (tab != null)
-                        {
-                            shell.CurrentItem = item;
-                            if (item.CurrentItem != tab)
-                            {
-                                item.CurrentItem = tab;
-                            }
-                            DiagnosticHelper.Log($"Set shell.CurrentItem to item containing tab with route containing 'Posts': {tab.Route}");
-                            return;
-                        }
-                    }
+                    DiagnosticHelper.Log("Attempting Shell.GoToAsync to navigate to PostsPage");
+                    Shell.Current.GoToAsync("//PostsPage");
+                    return;
+                }
+                catch (Exception navEx)
+                {
+                    DiagnosticHelper.Log($"GoToAsync navigation error: {navEx.Message}");
                 }
 
-                DiagnosticHelper.Log("Could not find Posts page in shell items");
+                DiagnosticHelper.Log("Could not find PostsPage in shell items");
             }
             catch (Exception ex)
             {
@@ -171,30 +154,29 @@ namespace UltimateHoopers
                             AuthToken = await authService.GetTokenAsync();
                             DiagnosticHelper.Log("Auth token retrieved");
 
+                            // Create AppShell
+                            AppShell appShell = null;
+
                             // Try to get AppShell from DI
-                            var appShell = serviceProvider.GetService<AppShell>();
+                            appShell = serviceProvider.GetService<AppShell>();
                             DiagnosticHelper.Log($"AppShell obtained from DI: {(appShell != null ? "Yes" : "No")}");
 
-                            if (appShell != null)
+                            if (appShell == null)
                             {
-                                // Set the main page to the shell
-                                MainPage = appShell;
-                                DiagnosticHelper.Log("Set MainPage to AppShell from DI");
-
-                                // Safely set the Posts page as the current page
-                                SetInitialPage(appShell);
+                                // Create new shell if DI failed
+                                appShell = new AppShell(authService);
+                                DiagnosticHelper.Log("Created new AppShell with auth service");
                             }
-                            else
-                            {
-                                // Fallback if DI can't resolve the AppShell
-                                DiagnosticHelper.Log("Creating new AppShell with auth service");
-                                var shell = new AppShell(authService);
-                                MainPage = shell;
-                                DiagnosticHelper.Log("Set MainPage to new AppShell");
 
-                                // Safely set the Posts page as the current page
-                                SetInitialPage(shell);
-                            }
+                            // Set the main page to the shell
+                            MainPage = appShell;
+                            DiagnosticHelper.Log("Set MainPage to AppShell");
+
+                            // Navigate to PostsPage after a short delay to ensure shell is initialized
+                            await Task.Delay(100);
+
+                            // Safely set the Posts page as the current page
+                            SetInitialPage(appShell);
                         }
                         else
                         {
