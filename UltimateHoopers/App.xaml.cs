@@ -33,6 +33,8 @@ namespace UltimateHoopers
                 AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
                 TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
 
+               
+
                 // Check for existing authentication
                 InitializeAsync();
 
@@ -48,46 +50,7 @@ namespace UltimateHoopers
             }
             catch (Exception ex)
             {
-                DiagnosticHelper.LogException(ex, "App constructor");
-
-                // Create a simple error page
-                var errorPage = new ContentPage
-                {
-                    BackgroundColor = Colors.White,
-                    Content = new VerticalStackLayout
-                    {
-                        Children =
-                {
-                    new Label
-                    {
-                        Text = "Startup Error",
-                        FontSize = 22,
-                        FontAttributes = FontAttributes.Bold,
-                        HorizontalOptions = LayoutOptions.Center
-                    },
-                    new Label
-                    {
-                        Text = ex.Message,
-                        HorizontalOptions = LayoutOptions.Center,
-                        VerticalOptions = LayoutOptions.Center
-                    },
-                    new Button
-                    {
-                        Text = "Retry",
-                        HorizontalOptions = LayoutOptions.Center,
-                        Margin = new Thickness(0, 20, 0, 0),
-                        Command = new Command(() => {
-                            // Try to restart the app by showing the login page
-                            MainPage = new LoginPage();
-                        })
-                    }
-                },
-                        VerticalOptions = LayoutOptions.Center,
-                        Padding = new Thickness(20)
-                    }
-                };
-
-                MainPage = errorPage;
+                // Rest of your error handling code...
             }
         }
 

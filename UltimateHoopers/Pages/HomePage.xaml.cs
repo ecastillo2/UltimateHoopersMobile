@@ -4,16 +4,257 @@ using System;
 using System.Diagnostics;
 using UltimateHoopers.Helpers;
 using UltimateHoopers.Pages;
+using UltimateHoopers.Controls;
 
 namespace UltimateHoopers.Pages
 {
     [XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class HomePage : ContentPage
     {
+        // Add a field for the menu popup
+        private Frame _menuPopup;
+
         public HomePage()
         {
             InitializeComponent();
             InitializeUserProfile();
+
+            // Set up the hamburger menu
+            SetupHamburgerMenu();
+        }
+
+        private void SetupHamburgerMenu()
+        {
+            try
+            {
+                // Create the menu popup that will be shown when hamburger menu is clicked
+                _menuPopup = new Frame
+                {
+                    IsVisible = false,
+                    BackgroundColor = Colors.Transparent,
+                    Padding = 0,
+                    HasShadow = false,
+                    VerticalOptions = LayoutOptions.Start,
+                    HorizontalOptions = LayoutOptions.Start,
+                    ZIndex = 999, // Ensure it appears above other content
+                    Margin = new Thickness(10, 80, 0, 0) // Position it below the header
+                };
+
+                var grid = new Grid();
+
+                // Semi-transparent background
+                var overlay = new BoxView
+                {
+                    Color = Colors.Black,
+                    Opacity = 0.5
+                };
+
+                var overlayTapGesture = new TapGestureRecognizer();
+                overlayTapGesture.Tapped += OnOverlayTapped;
+                overlay.GestureRecognizers.Add(overlayTapGesture);
+
+                grid.Add(overlay);
+
+                // Menu panel
+                var menuPanel = new Frame
+                {
+                    HeightRequest = 400,
+                    WidthRequest = 250,
+                    VerticalOptions = LayoutOptions.Start,
+                    HorizontalOptions = LayoutOptions.Start,
+                    Margin = new Thickness(0, 0, 0, 0),
+                    BorderColor = Colors.LightGray,
+                    BackgroundColor = Colors.White,
+                    CornerRadius = 10,
+                    Padding = 0,
+                    HasShadow = true
+                };
+
+                var menuStack = new VerticalStackLayout { Spacing = 0 };
+
+                // Menu Header
+                var headerGrid = new Grid
+                {
+                    BackgroundColor = Colors.Purple,
+                    HeightRequest = 60,
+                    Padding = new Thickness(15)
+                };
+
+                headerGrid.Add(new Label
+                {
+                    Text = "Menu",
+                    TextColor = Colors.White,
+                    FontSize = 20,
+                    FontAttributes = FontAttributes.Bold,
+                    VerticalOptions = LayoutOptions.Center
+                });
+
+                menuStack.Add(headerGrid);
+
+                // Menu Items Stack
+                var menuItemsStack = new VerticalStackLayout { Padding = 0, Spacing = 0 };
+
+                // Add menu items with handlers
+                menuItemsStack.Add(CreateMenuItem("👤", "My Profile", ProfileItemTapped));
+                menuItemsStack.Add(CreateMenuItem("⚙️", "Settings", SettingsItemTapped));
+                menuItemsStack.Add(CreateMenuItem("🔔", "Notifications", NotificationsItemTapped));
+                menuItemsStack.Add(CreateMenuItem("❓", "Help & Support", HelpItemTapped));
+                menuItemsStack.Add(CreateMenuItem("🚪", "Logout", LogoutItemTapped));
+
+                menuStack.Add(menuItemsStack);
+                menuPanel.Content = menuStack;
+                grid.Add(menuPanel);
+
+                _menuPopup.Content = grid;
+
+                // Add the menu popup to the page content
+                (Content as Grid)?.Children.Add(_menuPopup);
+
+                // Add hamburger menu button to the header
+                var hamburgerButton = new Frame
+                {
+                    CornerRadius = 25,
+                    HeightRequest = 50,
+                    WidthRequest = 50,
+                    Padding = 0,
+                    BorderColor = Colors.LightGray,
+                    BackgroundColor = Colors.White,
+                    HasShadow = true,
+                    HorizontalOptions = LayoutOptions.Start,
+                    VerticalOptions = LayoutOptions.Center
+                };
+
+                var hamburgerLabel = new Label
+                {
+                    Text = "☰",
+                    FontSize = 24,
+                    HorizontalOptions = LayoutOptions.Center,
+                    VerticalOptions = LayoutOptions.Center
+                };
+
+                hamburgerButton.Content = hamburgerLabel;
+
+                // Add tap gesture to hamburger button
+                var hamburgerTapGesture = new TapGestureRecognizer();
+                hamburgerTapGesture.Tapped += OnHamburgerButtonTapped;
+                hamburgerButton.GestureRecognizers.Add(hamburgerTapGesture);
+
+                // Find the header grid and add the hamburger button
+                var headerGrid1 = (Content as Grid)?.Children.FirstOrDefault(c => c is Grid) as Grid;
+                if (headerGrid1 != null)
+                {
+                    // Add hamburger button to the start of the grid
+                    var logoImage = headerGrid1.Children.FirstOrDefault(c => c is Image) as Image;
+                    if (logoImage != null)
+                    {
+                        // Adjust the logo position
+                        Grid.SetColumn(logoImage, 1);
+                    }
+
+                    // Add the hamburger button
+                    headerGrid1.Children.Add(hamburgerButton);
+                    Grid.SetColumn(hamburgerButton, 0);
+                }
+                else
+                {
+                    Debug.WriteLine("HomePage: Could not find header grid");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"HomePage: Error setting up hamburger menu: {ex.Message}");
+            }
+        }
+
+        private Frame CreateMenuItem(string icon, string title, EventHandler<TappedEventArgs> tappedHandler)
+        {
+            var menuItem = new Frame
+            {
+                BackgroundColor = Colors.Transparent,
+                BorderColor = Colors.Transparent,
+                Padding = new Thickness(15),
+                HeightRequest = 60
+            };
+
+            var grid = new Grid
+            {
+                ColumnDefinitions = new ColumnDefinitionCollection
+                {
+                    new ColumnDefinition { Width = GridLength.Auto },
+                    new ColumnDefinition { Width = GridLength.Star }
+                }
+            };
+
+            grid.Add(new Label
+            {
+                Text = icon,
+                FontSize = 20,
+                VerticalOptions = LayoutOptions.Center,
+                Margin = new Thickness(0, 0, 15, 0)
+            }, 0, 0);
+
+            grid.Add(new Label
+            {
+                Text = title,
+                FontSize = 16,
+                VerticalOptions = LayoutOptions.Center,
+                TextColor = Colors.DarkGray
+            }, 1, 0);
+
+            menuItem.Content = grid;
+
+            var tapGesture = new TapGestureRecognizer();
+            tapGesture.Tapped += tappedHandler;
+            menuItem.GestureRecognizers.Add(tapGesture);
+
+            return menuItem;
+        }
+
+        // Menu items tap handlers
+        private void OnOverlayTapped(object sender, TappedEventArgs e)
+        {
+            _menuPopup.IsVisible = false;
+        }
+
+        private async void ProfileItemTapped(object sender, TappedEventArgs e)
+        {
+            _menuPopup.IsVisible = false;
+            await NavigateToPage("EditProfilePage");
+        }
+
+        private async void SettingsItemTapped(object sender, TappedEventArgs e)
+        {
+            _menuPopup.IsVisible = false;
+            await DisplayAlert("Settings", "Settings page coming soon!", "OK");
+        }
+
+        private async void NotificationsItemTapped(object sender, TappedEventArgs e)
+        {
+            _menuPopup.IsVisible = false;
+            await DisplayAlert("Notifications", "Notifications page coming soon!", "OK");
+        }
+
+        private async void HelpItemTapped(object sender, TappedEventArgs e)
+        {
+            _menuPopup.IsVisible = false;
+            await DisplayAlert("Help & Support", "Help & Support page coming soon!", "OK");
+        }
+
+        private async void LogoutItemTapped(object sender, TappedEventArgs e)
+        {
+            _menuPopup.IsVisible = false;
+            bool answer = await DisplayAlert("Logout", "Are you sure you want to logout?", "Yes", "No");
+            if (answer)
+            {
+                // Navigate back to login page
+                Application.Current.MainPage = new LoginPage();
+            }
+        }
+
+        // Hamburger button tap handler
+        private void OnHamburgerButtonTapped(object sender, TappedEventArgs e)
+        {
+            _menuPopup.IsVisible = true;
         }
 
         private void InitializeUserProfile()

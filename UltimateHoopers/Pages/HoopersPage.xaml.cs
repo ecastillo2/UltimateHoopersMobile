@@ -2,8 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using UltimateHoopers.Helpers;
 using UltimateHoopers.Services;
 using UltimateHoopers.ViewModels;
 
@@ -48,7 +50,22 @@ namespace UltimateHoopers.Pages
 
         private async void OnHomeNavigationClicked(object sender, EventArgs e)
         {
-            await Shell.Current.GoToAsync("//HomePage");
+            try
+            {
+                Debug.WriteLine("PostsPage: OnHomeClicked - using DirectNavigationHelper");
+
+                // Use the simpler, more direct navigation helper
+                await DirectNavigationHelper.GoToHomePageAsync();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"PostsPage: Error navigating to HomePage: {ex.Message}");
+
+                // Show an error message to the user
+                await DisplayAlert("Navigation Error",
+                    "Could not navigate to home page. Please try again or restart the app.",
+                    "OK");
+            }
         }
 
         // Events from XAML

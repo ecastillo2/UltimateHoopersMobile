@@ -6,7 +6,7 @@
        FlyoutBehavior="Flyout"
        BackgroundColor="{StaticResource CardBackgroundColor}"
        FlyoutWidth="250"
-       Shell.NavBarIsVisible="False">
+       >
 
     <!-- Flyout Header -->
     <Shell.FlyoutHeader>

@@ -1,6 +1,8 @@
-﻿using Microsoft.Maui.Controls;
+﻿using Domain; // Import Domain namespace for AccountType enum
+using Microsoft.Maui.Controls;
 using System;
-using Domain; // Import Domain namespace for AccountType enum
+using System.Diagnostics;
+using UltimateHoopers.Helpers;
 
 namespace UltimateHoopers.Pages
 {
@@ -139,7 +141,22 @@ namespace UltimateHoopers.Pages
 
         private async void OnHomeNavigationClicked(object sender, EventArgs e)
         {
-            await Shell.Current.GoToAsync("//HomePage");
+            try
+            {
+                Debug.WriteLine("PostsPage: OnHomeClicked - using DirectNavigationHelper");
+
+                // Use the simpler, more direct navigation helper
+                await DirectNavigationHelper.GoToHomePageAsync();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"PostsPage: Error navigating to HomePage: {ex.Message}");
+
+                // Show an error message to the user
+                await DisplayAlert("Navigation Error",
+                    "Could not navigate to home page. Please try again or restart the app.",
+                    "OK");
+            }
         }
 
         private async void OnStatsNavigationClicked(object sender, EventArgs e)
