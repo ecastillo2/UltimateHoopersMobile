@@ -6,7 +6,7 @@
              x:Class="UltimateHoopers.Pages.PostsPage"
              xmlns:viewmodels="clr-namespace:UltimateHoopers.ViewModels"
              xmlns:converters="clr-namespace:UltimateHoopers.Converters"
-             Title="Posts"
+             NavigationPage.HasNavigationBar="False"
              BackgroundColor="{StaticResource PageBackgroundColor}">
 
     <ContentPage.Resources>

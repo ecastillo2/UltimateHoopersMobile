@@ -1,359 +1,636 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="UltimateHoopers.Pages.HomePage"
-             BackgroundColor="{StaticResource PageBackgroundColor}">
+             BackgroundColor="{StaticResource PageBackgroundColor}"
+             NavigationPage.HasNavigationBar="False">
 
-    <Grid RowDefinitions="Auto,*,Auto"
-          Padding="20">
+    <!-- Main Grid -->
+    <Grid>
+        <!-- Main Content -->
+        <Grid x:Name="MainContent" 
+              RowDefinitions="Auto,*,Auto"
+              Padding="20">
 
-        <!-- Header with Profile Icon -->
-        <!-- Header with Logo -->
-        <Grid Grid.Row="0" 
-      ColumnDefinitions="Auto,*,Auto"
-      Margin="0,10,0,20">
+            <!-- Header with Profile Icon -->
+            <Grid Grid.Row="0" 
+                  ColumnDefinitions="Auto,Auto,*,Auto"
+                  Margin="0,10,0,20">
 
-            <!-- Logo Image -->
-            <Image Grid.Column="0"
-           Source="logo_uh.png"
-           HeightRequest="60"
-           WidthRequest="60"
-           Margin="0,0,15,0" />
+                <!-- Hamburger Menu Button -->
+                <Frame Grid.Column="0"
+       CornerRadius="25"
+       HeightRequest="50"
+       WidthRequest="50"
+       Padding="10"
+       BorderColor="{StaticResource BorderColor}"
+       BackgroundColor="{StaticResource CardBackgroundColor}"
+       HasShadow="True">
+                    <!-- Use Image control to display menu.png -->
+                    <Image Source="menu.png"
+           HeightRequest="24"
+           WidthRequest="24"
+           HorizontalOptions="Center"
+           VerticalOptions="Center" />
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnHamburgerButtonTapped" />
+                    </Frame.GestureRecognizers>
+                </Frame>
 
+                <!-- Points Badge - Next to hamburger menu -->
+                <Frame Grid.Column="1"
+                       BackgroundColor="{StaticResource SecondaryColor}"
+                       BorderColor="{StaticResource PrimaryColor}"
+                       CornerRadius="15"
+                       Padding="10,5"
+                       HasShadow="True"
+                       Margin="10,0,0,0"
+                       VerticalOptions="Center">
+                    <StackLayout Orientation="Horizontal" Spacing="5">
+                        <Label Text="⭐" 
+                               FontSize="14" 
+                               TextColor="{StaticResource PrimaryColor}"
+                               VerticalOptions="Center" />
+                        <Label Text="2,450"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource PrimaryColor}" 
+                               VerticalOptions="Center" />
+                        <Label Text="pts"
+                               FontSize="12"
+                               TextColor="{StaticResource PrimaryColor}" 
+                               VerticalOptions="Center" />
+                    </StackLayout>
+                </Frame>
 
+                <!-- Logo Image - Now Centered -->
+                <Image Grid.Column="2"
+                       Source="logo_uh.png"
+                       HeightRequest="60"
+                       WidthRequest="60"
+                       HorizontalOptions="Center" 
+                       VerticalOptions="Center"/>
 
-            <!-- Profile Icon -->
-            <Frame Grid.Column="2"
-           CornerRadius="25"
-           HeightRequest="50"
-           WidthRequest="50"
-           Padding="0"
-           BorderColor="{StaticResource BorderColor}"
-           BackgroundColor="{StaticResource CardBackgroundColor}"
-           HasShadow="True">
-                <Label Text="👤" 
-               FontSize="24" 
-               HorizontalOptions="Center" 
-               VerticalOptions="Center" />
-                <!-- Image (visible when available) -->
-                <Image x:Name="ProfileImage"
-               IsVisible="False"
-               Aspect="AspectFill"
-               HorizontalOptions="FillAndExpand"
-               VerticalOptions="FillAndExpand" />
-                <Frame.GestureRecognizers>
-                    <TapGestureRecognizer Tapped="OnProfileClicked" />
-                </Frame.GestureRecognizers>
-            </Frame>
-            <!-- Points Badge -->
-            <Frame BackgroundColor="{StaticResource SecondaryColor}"
-BorderColor="{StaticResource PrimaryColor}"
-CornerRadius="15"
-Padding="10,5"
-HasShadow="True">
-                <StackLayout Orientation="Horizontal" Spacing="5">
-                    <Label Text="⭐" 
-        FontSize="14" 
-        TextColor="{StaticResource PrimaryColor}"
-        VerticalOptions="Center" />
-                    <Label Text="2,450"
-        FontSize="14"
-        FontAttributes="Bold"
-        TextColor="{StaticResource PrimaryColor}" 
-        VerticalOptions="Center" />
-                    <Label Text="pts"
-        FontSize="12"
-        TextColor="{StaticResource PrimaryColor}" 
-        VerticalOptions="Center" />
-                </StackLayout>
-            </Frame>
+                <!-- Profile Icon -->
+                <Frame Grid.Column="3"
+                       CornerRadius="25"
+                       HeightRequest="50"
+                       WidthRequest="50"
+                       Padding="0"
+                       BorderColor="{StaticResource BorderColor}"
+                       BackgroundColor="{StaticResource CardBackgroundColor}"
+                       HasShadow="True">
+                    <Label Text="👤" 
+                           FontSize="24" 
+                           HorizontalOptions="Center" 
+                           VerticalOptions="Center" />
+                    <!-- Image (visible when available) -->
+                    <Image x:Name="ProfileImage"
+                           IsVisible="False"
+                           Aspect="AspectFill"
+                           HorizontalOptions="FillAndExpand"
+                           VerticalOptions="FillAndExpand" />
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnProfileClicked" />
+                    </Frame.GestureRecognizers>
+                </Frame>
+            </Grid>
+
+            <!-- Content -->
+            <ScrollView Grid.Row="1" Margin="0,15,0,0">
+                <VerticalStackLayout Spacing="20">
+
+                    <!-- Feature Cards -->
+                    <Label Text="Features"
+                           FontSize="20"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource PrimaryTextColor}"
+                           Margin="0,10,0,5" />
+
+                    <Grid ColumnDefinitions="*,*" 
+                          RowDefinitions="Auto,Auto,Auto,Auto"
+                          ColumnSpacing="15"
+                          RowSpacing="15">
+
+                        <!-- My Stats Card -->
+                        <Frame Grid.Row="0" Grid.Column="0"
+                               BorderColor="{StaticResource BorderColor}"
+                               BackgroundColor="{StaticResource CardBackgroundColor}"
+                               CornerRadius="10"
+                               HasShadow="True"
+                               Padding="15">
+
+                            <VerticalStackLayout Spacing="10">
+                                <Label Text="📊" FontSize="32" HorizontalOptions="Start" />
+                                <Label Text="My Stats" 
+                                       FontSize="18" 
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                                <Label Text="Track your performance" 
+                                       FontSize="14"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
+                            </VerticalStackLayout>
+
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnStatsClicked" />
+                            </Frame.GestureRecognizers>
+                        </Frame>
+
+                        <!-- Find Runs Card -->
+                        <Frame Grid.Row="0" Grid.Column="1"
+                               BorderColor="{StaticResource BorderColor}"
+                               BackgroundColor="{StaticResource CardBackgroundColor}"
+                               CornerRadius="10"
+                               HasShadow="True"
+                               Padding="15">
+
+                            <VerticalStackLayout Spacing="10">
+                                <Label Text="🏀" FontSize="32" HorizontalOptions="Start" />
+                                <Label Text="Find Runs" 
+                                       FontSize="18" 
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                                <Label Text="Join local pickup games" 
+                                       FontSize="14"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
+                            </VerticalStackLayout>
+
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnFindGamesClicked" />
+                            </Frame.GestureRecognizers>
+                        </Frame>
+
+                        <!-- Hoopers Card -->
+                        <Frame Grid.Row="1" Grid.Column="0"
+                               BorderColor="{StaticResource BorderColor}"
+                               BackgroundColor="{StaticResource CardBackgroundColor}"
+                               CornerRadius="10"
+                               HasShadow="True"
+                               Padding="15">
+
+                            <VerticalStackLayout Spacing="10">
+                                <Label Text="🏀" FontSize="32" HorizontalOptions="Start" />
+                                <Label Text="Hoopers" 
+                                       FontSize="18" 
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                                <Label Text="Search Hoopers" 
+                                       FontSize="14"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
+                            </VerticalStackLayout>
+
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnHoopersClicked" />
+                            </Frame.GestureRecognizers>
+                        </Frame>
+
+                        <!-- Squads Card -->
+                        <Frame Grid.Row="1" Grid.Column="1"
+                               BorderColor="{StaticResource BorderColor}"
+                               BackgroundColor="{StaticResource CardBackgroundColor}"
+                               CornerRadius="10"
+                               HasShadow="True"
+                               Padding="15">
+
+                            <VerticalStackLayout Spacing="10">
+                                <Label Text="👥" FontSize="32" HorizontalOptions="Start" />
+                                <Label Text="Squads" 
+                                       FontSize="18" 
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                                <Label Text="Join or create teams" 
+                                       FontSize="14"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
+                            </VerticalStackLayout>
+
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnTeamsClicked" />
+                            </Frame.GestureRecognizers>
+                        </Frame>
+
+                        <!-- New Posts Card -->
+                        <Frame Grid.Row="2" Grid.Column="0"
+                               BorderColor="{StaticResource BorderColor}"
+                               BackgroundColor="{StaticResource CardBackgroundColor}"
+                               CornerRadius="10"
+                               HasShadow="True"
+                               Padding="15">
+
+                            <VerticalStackLayout Spacing="10">
+                                <Label Text="✨" FontSize="32" HorizontalOptions="Start" />
+                                <Label Text="Posts" 
+                                       FontSize="18" 
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                                <Label Text="View Highlight and News" 
+                                       FontSize="14"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
+                            </VerticalStackLayout>
+
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnPostsClicked" />
+                            </Frame.GestureRecognizers>
+                        </Frame>
+
+                        <!-- New Shop Card -->
+                        <Frame Grid.Row="2" Grid.Column="1"
+                               BorderColor="{StaticResource BorderColor}"
+                               BackgroundColor="{StaticResource CardBackgroundColor}"
+                               CornerRadius="10"
+                               HasShadow="True"
+                               Padding="15">
+
+                            <VerticalStackLayout Spacing="10">
+                                <Label Text="🛒" FontSize="32" HorizontalOptions="Start" />
+                                <Label Text="Shop" 
+                                       FontSize="18" 
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                                <Label Text="Get basketball gear" 
+                                       FontSize="14"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
+                            </VerticalStackLayout>
+
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnShopClicked" />
+                            </Frame.GestureRecognizers>
+                        </Frame>
+
+                        <!-- League Card -->
+                        <Frame Grid.Row="3" Grid.Column="0"
+                               BorderColor="{StaticResource BorderColor}"
+                               BackgroundColor="{StaticResource CardBackgroundColor}"
+                               CornerRadius="10"
+                               HasShadow="True"
+                               Padding="15">
+
+                            <VerticalStackLayout Spacing="10">
+                                <Label Text="🏆" FontSize="32" HorizontalOptions="Start" />
+                                <Label Text="League" 
+                                       FontSize="18" 
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                                <Label Text="Join A League" 
+                                       FontSize="14"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
+                            </VerticalStackLayout>
+
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnLeaguesClicked" />
+                            </Frame.GestureRecognizers>
+                        </Frame>
+
+                        <!-- Events Card -->
+                        <Frame Grid.Row="3" Grid.Column="1"
+                               BorderColor="{StaticResource BorderColor}"
+                               BackgroundColor="{StaticResource CardBackgroundColor}"
+                               CornerRadius="10"
+                               HasShadow="True"
+                               Padding="15">
+
+                            <VerticalStackLayout Spacing="10">
+                                <Label Text="📅" FontSize="32" HorizontalOptions="Start" />
+                                <Label Text="Events" 
+                                       FontSize="18" 
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                                <Label Text="Join An Event" 
+                                       FontSize="14"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
+                            </VerticalStackLayout>
+
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnEventsClicked" />
+                            </Frame.GestureRecognizers>
+                        </Frame>
+                    </Grid>
+
+                    <!-- Upcoming Events Section -->
+                    <Label Text="Upcoming Events"
+                           FontSize="20"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource PrimaryTextColor}"
+                           Margin="0,20,0,5" />
+
+                    <!-- Event cards can be added here -->
+                    <Frame BorderColor="{StaticResource BorderColor}"
+                           BackgroundColor="{StaticResource CardBackgroundColor}"
+                           CornerRadius="10"
+                           HasShadow="True"
+                           Padding="15"
+                           Margin="0,5,0,10">
+
+                        <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="15">
+                            <!-- Date Box -->
+                            <Frame Grid.RowSpan="3" Grid.Column="0"
+                                   BackgroundColor="{StaticResource PrimaryColor}"
+                                   CornerRadius="10"
+                                   Padding="10"
+                                   WidthRequest="70"
+                                   HeightRequest="70"
+                                   VerticalOptions="Center">
+                                <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center">
+                                    <Label Text="25" 
+                                           FontSize="22" 
+                                           FontAttributes="Bold" 
+                                           TextColor="White" 
+                                           HorizontalOptions="Center"/>
+                                    <Label Text="MAY" 
+                                           FontSize="14" 
+                                           TextColor="White" 
+                                           HorizontalOptions="Center"/>
+                                </VerticalStackLayout>
+                            </Frame>
+
+                            <!-- Event Details -->
+                            <Label Grid.Row="0" Grid.Column="1"
+                                   Text="Weekend Hoops Tournament"
+                                   FontSize="18"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource PrimaryTextColor}"/>
+
+                            <Label Grid.Row="1" Grid.Column="1"
+                                   Text="📍 Central Park Courts, 10:00 AM"
+                                   FontSize="14"
+                                   TextColor="{StaticResource SecondaryTextColor}"
+                                   Margin="0,5,0,5"/>
+
+                            <StackLayout Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Spacing="10">
+                                <Button Text="Join" 
+                                        BackgroundColor="{StaticResource PrimaryColor}"
+                                        TextColor="White"
+                                        CornerRadius="20"
+                                        HeightRequest="36"
+                                        WidthRequest="80"
+                                        Padding="0"/>
+
+                                <Button Text="Details" 
+                                        BackgroundColor="Transparent"
+                                        TextColor="{StaticResource PrimaryColor}"
+                                        BorderColor="{StaticResource PrimaryColor}"
+                                        BorderWidth="1"
+                                        CornerRadius="20"
+                                        HeightRequest="36"
+                                        WidthRequest="80"
+                                        Padding="0"/>
+                            </StackLayout>
+                        </Grid>
+                    </Frame>
+
+                    <!-- Recent Posts Section -->
+                    <Label Text="Recent Posts"
+                           FontSize="20"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource PrimaryTextColor}"
+                           Margin="0,20,0,10" />
+
+                    <!-- Post cards can be added here -->
+                    <Frame BorderColor="{StaticResource BorderColor}"
+                           BackgroundColor="{StaticResource CardBackgroundColor}"
+                           CornerRadius="10"
+                           HasShadow="True"
+                           Padding="0"
+                           Margin="0,0,0,15">
+
+                        <Grid RowDefinitions="Auto,Auto,Auto">
+                            <!-- Header with user info -->
+                            <Grid ColumnDefinitions="Auto,*,Auto" Padding="15,10" RowSpacing="0">
+                                <!-- User avatar -->
+                                <Frame Grid.Column="0" 
+       CornerRadius="20" 
+       HeightRequest="40" 
+       WidthRequest="40"
+       Padding="0"
+       IsClippedToBounds="True"
+       BorderColor="{StaticResource BorderColor}">
+                                    <Image Source="logo_uh.png"
+           Aspect="AspectFill"
+           HorizontalOptions="Center" 
+           VerticalOptions="Center" />
+                                </Frame>
+
+                                <!-- Username and time -->
+                                <StackLayout Grid.Column="1" Spacing="0" Margin="10,0,0,0">
+                                    <Label Text="Michael Jordan" 
+                                           FontAttributes="Bold"
+                                           FontSize="16"
+                                           TextColor="{StaticResource PrimaryTextColor}"/>
+                                    <Label Text="2 hours ago" 
+                                           FontSize="12"
+                                           TextColor="{StaticResource SecondaryTextColor}"
+                                           Opacity="0.7"/>
+                                </StackLayout>
+
+                                <!-- Options menu -->
+                                <Label Grid.Column="2" 
+                                       Text="⋮" 
+                                       FontSize="22" 
+                                       VerticalOptions="Start"
+                                       HorizontalOptions="End"/>
+                            </Grid>
+
+                            <!-- Content area with placeholder image -->
+                            <Image Grid.Row="1"
+                                   Source="logo_uh.png"
+                                   Aspect="AspectFill"
+                                   HeightRequest="200"/>
+
+                            <!-- Caption and interaction buttons -->
+                            <StackLayout Grid.Row="2" Padding="15,10">
+                                <Label Text="Great game today! 🏀 #basketball #hoopers"
+                                       FontSize="14"
+                                       TextColor="{StaticResource PrimaryTextColor}"
+                                       Margin="0,0,0,10"/>
+
+                                <!-- Like, Comment, Share buttons -->
+                                <Grid ColumnDefinitions="*,*,*">
+                                    <StackLayout Grid.Column="0" Orientation="Horizontal" HorizontalOptions="Start">
+                                        <Label Text="❤️" FontSize="16" VerticalOptions="Center"/>
+                                        <Label Text="125" 
+                                               FontSize="14" 
+                                               VerticalOptions="Center" 
+                                               Margin="5,0,0,0"
+                                               TextColor="{StaticResource SecondaryTextColor}"/>
+                                    </StackLayout>
+
+                                    <StackLayout Grid.Column="1" Orientation="Horizontal" HorizontalOptions="Center">
+                                        <Label Text="💬" FontSize="16" VerticalOptions="Center"/>
+                                        <Label Text="23" 
+                                               FontSize="14" 
+                                               VerticalOptions="Center" 
+                                               Margin="5,0,0,0"
+                                               TextColor="{StaticResource SecondaryTextColor}"/>
+                                    </StackLayout>
+
+                                    <StackLayout Grid.Column="2" Orientation="Horizontal" HorizontalOptions="End">
+                                        <Label Text="↪️" FontSize="16" VerticalOptions="Center"/>
+                                        <Label Text="Share" 
+                                               FontSize="14" 
+                                               VerticalOptions="Center" 
+                                               Margin="5,0,0,0"
+                                               TextColor="{StaticResource SecondaryTextColor}"/>
+                                    </StackLayout>
+                                </Grid>
+                            </StackLayout>
+                        </Grid>
+                    </Frame>
+                </VerticalStackLayout>
+            </ScrollView>
+
+            <!-- Navigation Footer -->
+            <Grid Grid.Row="2"
+                  ColumnDefinitions="*,*,*,*"
+                  BackgroundColor="{StaticResource CardBackgroundColor}"
+                  HeightRequest="70"
+                  Margin="-20,0,-20,0"
+                  Padding="0,5,0,20">
+
+                <VerticalStackLayout Grid.Column="0"
+                                     HorizontalOptions="Center"
+                                     VerticalOptions="Center"
+                                     Spacing="2">
+                    <Label Text="🏠"
+                           FontSize="20"
+                           HorizontalOptions="Center" />
+                    <Label Text="Home"
+                           FontSize="12"
+                           TextColor="{StaticResource PrimaryColor}"
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="1"
+                                     HorizontalOptions="Center"
+                                     VerticalOptions="Center"
+                                     Spacing="2"
+                                     Opacity="0.6">
+                    <Label Text="🔍"
+                           FontSize="20"
+                           HorizontalOptions="Center" />
+                    <Label Text="Post"
+                           FontSize="12"
+                           TextColor="{StaticResource SecondaryTextColor}"
+                           HorizontalOptions="Center" />
+
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnPostsNavigationClicked" />
+                    </VerticalStackLayout.GestureRecognizers>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="2"
+                                     HorizontalOptions="Center"
+                                     VerticalOptions="Center"
+                                     Spacing="2"
+                                     Opacity="0.6">
+                    <Label Text="📅"
+                           FontSize="20"
+                           HorizontalOptions="Center" />
+                    <Label Text="Messages"
+                           FontSize="12"
+                           TextColor="{StaticResource SecondaryTextColor}"
+                           HorizontalOptions="Center" />
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnMessagesNavigationClicked" />
+                    </VerticalStackLayout.GestureRecognizers>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="3"
+                                     HorizontalOptions="Center"
+                                     VerticalOptions="Center"
+                                     Spacing="2"
+                                     Opacity="0.6">
+                    <Label Text="⚙️"
+                           FontSize="20"
+                           HorizontalOptions="Center" />
+                    <Label Text="Settings"
+                           FontSize="12"
+                           TextColor="{StaticResource SecondaryTextColor}"
+                           HorizontalOptions="Center" />
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnSettingsNavigationClicked" />
+                    </VerticalStackLayout.GestureRecognizers>
+                </VerticalStackLayout>
+            </Grid>
         </Grid>
 
-        <!-- Content -->
-        <ScrollView Grid.Row="1">
-            <VerticalStackLayout Spacing="20">
+        <!-- Improved Flyout Menu (Initially Hidden) -->
+        <Grid x:Name="MenuFlyout" 
+              IsVisible="False"
+              ZIndex="999"
+              HorizontalOptions="FillAndExpand"
+              VerticalOptions="FillAndExpand">
 
-                <!-- Feature Cards -->
-                <Label Text="Features"
-                       FontSize="20"
-                       FontAttributes="Bold"
-                       TextColor="{StaticResource PrimaryTextColor}"
-                       Margin="0,10,0,5" />
+            <!-- Background Overlay - THIS IS CRITICAL FOR CLOSING WHEN TAPPING AWAY -->
+            <BoxView x:Name="MenuOverlay"
+                     Color="Black"
+                     Opacity="0"
+                     InputTransparent="True"
+                     HorizontalOptions="FillAndExpand"
+                     VerticalOptions="FillAndExpand">
+                <BoxView.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnMenuOverlayTapped" />
+                </BoxView.GestureRecognizers>
+            </BoxView>
 
-                <Grid ColumnDefinitions="*,*" 
-                      RowDefinitions="Auto,Auto,Auto,Auto"
-                      ColumnSpacing="15"
-                      RowSpacing="15">
+            <!-- Flyout Menu Panel -->
+            <Grid x:Name="MenuPanel"
+                  BackgroundColor="White"
+                  WidthRequest="280" 
+                  HorizontalOptions="Start"
+                  VerticalOptions="FillAndExpand"
+                  TranslationX="-280">
 
-                    <!-- My Stats Card -->
-                    <Frame Grid.Row="0" Grid.Column="0"
-                           BorderColor="{StaticResource BorderColor}"
-                           BackgroundColor="{StaticResource CardBackgroundColor}"
-                           CornerRadius="10"
-                           HasShadow="True"
-                           Padding="15">
+                <!-- Menu Header -->
+                <Grid RowDefinitions="Auto,*">
+                    <!-- Menu Header -->
+                    <Grid BackgroundColor="{StaticResource PrimaryColor}" 
+                          HeightRequest="170"
+                          Padding="20">
 
-                        <VerticalStackLayout Spacing="10">
-                            <Label Text="📊" FontSize="32" HorizontalOptions="Start" />
-                            <Label Text="My Stats" 
-                                   FontSize="18" 
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource PrimaryTextColor}" />
-                            <Label Text="Track your performance" 
-                                   FontSize="14"
-                                   TextColor="{StaticResource SecondaryTextColor}" />
+                        <!-- Profile Image -->
+                        <VerticalStackLayout VerticalOptions="Center" Spacing="10">
+                            <Frame CornerRadius="40" 
+                                   HeightRequest="80"
+                                   WidthRequest="80"
+                                   Padding="0"
+                                   IsClippedToBounds="True"
+                                   BorderColor="White">
+                                <!-- Default profile icon -->
+                                <Label Text="👤" 
+                                       FontSize="40" 
+                                       HorizontalOptions="Center" 
+                                       VerticalOptions="Center"
+                                       x:Name="ProfileIcon" />
+                                <!-- Profile image (when available) -->
+                                <Image x:Name="FlyoutProfileImage"
+                                       IsVisible="False"
+                                       Aspect="AspectFill" />
+                            </Frame>
+
+                            <!-- User Info -->
+                            <VerticalStackLayout Spacing="5">
+                                <Label x:Name="UsernameLabel"
+                                       Text="User Name"
+                                       TextColor="White"
+                                       FontSize="20"
+                                       FontAttributes="Bold" />
+                                <Label x:Name="UserEmailLabel"
+                                       Text="user@example.com"
+                                       TextColor="White"
+                                       FontSize="14"
+                                       Opacity="0.8" />
+                            </VerticalStackLayout>
                         </VerticalStackLayout>
+                    </Grid>
 
-                        <Frame.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnStatsClicked" />
-                        </Frame.GestureRecognizers>
-                    </Frame>
-
-                    <!-- Find Runs Card -->
-                    <Frame Grid.Row="0" Grid.Column="1"
-                           BorderColor="{StaticResource BorderColor}"
-                           BackgroundColor="{StaticResource CardBackgroundColor}"
-                           CornerRadius="10"
-                           HasShadow="True"
-                           Padding="15">
-
-                        <VerticalStackLayout Spacing="10">
-                            <Label Text="🏀" FontSize="32" HorizontalOptions="Start" />
-                            <Label Text="Find Runs" 
-                                   FontSize="18" 
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource PrimaryTextColor}" />
-                            <Label Text="Join local pickup games" 
-                                   FontSize="14"
-                                   TextColor="{StaticResource SecondaryTextColor}" />
+                    <!-- Menu Items -->
+                    <ScrollView Grid.Row="1" Margin="0,0,0,0">
+                        <VerticalStackLayout x:Name="MenuItemsContainer" Spacing="0">
+                            <!-- Menu items will be added here in code-behind -->
                         </VerticalStackLayout>
-
-                        <Frame.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnFindGamesClicked" />
-                        </Frame.GestureRecognizers>
-                    </Frame>
-
-                    <!-- Hoopers Card -->
-                    <Frame Grid.Row="1" Grid.Column="0"
-                           BorderColor="{StaticResource BorderColor}"
-                           BackgroundColor="{StaticResource CardBackgroundColor}"
-                           CornerRadius="10"
-                           HasShadow="True"
-                           Padding="15">
-
-                        <VerticalStackLayout Spacing="10">
-                            <Label Text="🏀" FontSize="32" HorizontalOptions="Start" />
-                            <Label Text="Hoopers" 
-                                   FontSize="18" 
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource PrimaryTextColor}" />
-                            <Label Text="Search Hoopers" 
-                                   FontSize="14"
-                                   TextColor="{StaticResource SecondaryTextColor}" />
-                        </VerticalStackLayout>
-
-                        <Frame.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnHoopersClicked" />
-                        </Frame.GestureRecognizers>
-                    </Frame>
-
-                    <!-- Squads Card -->
-                    <Frame Grid.Row="1" Grid.Column="1"
-                           BorderColor="{StaticResource BorderColor}"
-                           BackgroundColor="{StaticResource CardBackgroundColor}"
-                           CornerRadius="10"
-                           HasShadow="True"
-                           Padding="15">
-
-                        <VerticalStackLayout Spacing="10">
-                            <Label Text="👥" FontSize="32" HorizontalOptions="Start" />
-                            <Label Text="Squads" 
-                                   FontSize="18" 
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource PrimaryTextColor}" />
-                            <Label Text="Join or create teams" 
-                                   FontSize="14"
-                                   TextColor="{StaticResource SecondaryTextColor}" />
-                        </VerticalStackLayout>
-
-                        <Frame.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnTeamsClicked" />
-                        </Frame.GestureRecognizers>
-                    </Frame>
-
-                    <!-- New Posts Card -->
-                    <Frame Grid.Row="2" Grid.Column="0"
-                           BorderColor="{StaticResource BorderColor}"
-                           BackgroundColor="{StaticResource CardBackgroundColor}"
-                           CornerRadius="10"
-                           HasShadow="True"
-                           Padding="15">
-
-                        <VerticalStackLayout Spacing="10">
-                            <Label Text="✨" FontSize="32" HorizontalOptions="Start" />
-                            <Label Text="Posts" 
-                                   FontSize="18" 
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource PrimaryTextColor}" />
-                            <Label Text="View Highlight and News" 
-                                   FontSize="14"
-                                   TextColor="{StaticResource SecondaryTextColor}" />
-                        </VerticalStackLayout>
-
-                        <Frame.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnPostsClicked" />
-                        </Frame.GestureRecognizers>
-                    </Frame>
-
-                    <!-- New Shop Card -->
-                    <Frame Grid.Row="2" Grid.Column="1"
-                           BorderColor="{StaticResource BorderColor}"
-                           BackgroundColor="{StaticResource CardBackgroundColor}"
-                           CornerRadius="10"
-                           HasShadow="True"
-                           Padding="15">
-
-                        <VerticalStackLayout Spacing="10">
-                            <Label Text="🛒" FontSize="32" HorizontalOptions="Start" />
-                            <Label Text="Shop" 
-                                   FontSize="18" 
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource PrimaryTextColor}" />
-                            <Label Text="Get basketball gear" 
-                                   FontSize="14"
-                                   TextColor="{StaticResource SecondaryTextColor}" />
-                        </VerticalStackLayout>
-
-                        <Frame.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnShopClicked" />
-                        </Frame.GestureRecognizers>
-                    </Frame>
-
-
-
-
-                    <!-- League Card -->
-                    <Frame Grid.Row="3" Grid.Column="0"
-                           BorderColor="{StaticResource BorderColor}"
-                           BackgroundColor="{StaticResource CardBackgroundColor}"
-                           CornerRadius="10"
-                           HasShadow="True"
-                           Padding="15">
-
-                        <VerticalStackLayout Spacing="10">
-                            <Label Text="🏆" FontSize="32" HorizontalOptions="Start" />
-                            <Label Text="League" 
-                                   FontSize="18" 
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource PrimaryTextColor}" />
-                            <Label Text="Join A Leauge" 
-                                   FontSize="14"
-                                   TextColor="{StaticResource SecondaryTextColor}" />
-                        </VerticalStackLayout>
-
-                        <Frame.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnLeaguesClicked" />
-                        </Frame.GestureRecognizers>
-                    </Frame>
-
-                    <!-- Events Card -->
-                    <Frame Grid.Row="3" Grid.Column="1"
-                           BorderColor="{StaticResource BorderColor}"
-                           BackgroundColor="{StaticResource CardBackgroundColor}"
-                           CornerRadius="10"
-                           HasShadow="True"
-                           Padding="15">
-
-                        <VerticalStackLayout Spacing="10">
-                            <Label Text="📅" FontSize="32" HorizontalOptions="Start" />
-                            <Label Text="Events" 
-                                   FontSize="18" 
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource PrimaryTextColor}" />
-                            <Label Text="Join An Event" 
-                                   FontSize="14"
-                                   TextColor="{StaticResource SecondaryTextColor}" />
-                        </VerticalStackLayout>
-
-                        <Frame.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnEventsClicked" />
-                        </Frame.GestureRecognizers>
-                    </Frame>
+                    </ScrollView>
                 </Grid>
-            </VerticalStackLayout>
-        </ScrollView>
-
-
-        <!-- Navigation Footer -->
-        <Grid Grid.Row="2"
-      ColumnDefinitions="*,*,*,*"
-      BackgroundColor="{StaticResource CardBackgroundColor}"
-      HeightRequest="70"
-      Margin="-20,0,-20,0"
-      Padding="0,5,0,20">
-
-            <VerticalStackLayout Grid.Column="0"
-                         HorizontalOptions="Center"
-                         VerticalOptions="Center"
-                         Spacing="2">
-                <Label Text="🏠"
-               FontSize="20"
-               HorizontalOptions="Center" />
-                <Label Text="Home"
-               FontSize="12"
-               TextColor="{StaticResource PrimaryColor}"
-               FontAttributes="Bold"
-               HorizontalOptions="Center" />
-            </VerticalStackLayout>
-
-            <VerticalStackLayout Grid.Column="1"
-                         HorizontalOptions="Center"
-                         VerticalOptions="Center"
-                         Spacing="2"
-                         Opacity="0.6">
-                <Label Text="🔍"
-               FontSize="20"
-               HorizontalOptions="Center" />
-                <Label Text="Post"
-               FontSize="12"
-               TextColor="{StaticResource SecondaryTextColor}"
-               HorizontalOptions="Center" />
-
-                <VerticalStackLayout.GestureRecognizers>
-                    <TapGestureRecognizer Tapped="OnPostsNavigationClicked" />
-                </VerticalStackLayout.GestureRecognizers>
-            </VerticalStackLayout>
-
-            <VerticalStackLayout Grid.Column="2"
-                         HorizontalOptions="Center"
-                         VerticalOptions="Center"
-                         Spacing="2"
-                         Opacity="0.6">
-                <Label Text="📅"
-               FontSize="20"
-               HorizontalOptions="Center" />
-                <Label Text="Messages"
-               FontSize="12"
-               TextColor="{StaticResource SecondaryTextColor}"
-               HorizontalOptions="Center" />
-                <VerticalStackLayout.GestureRecognizers>
-                    <TapGestureRecognizer Tapped="OnMessagesNavigationClicked" />
-                </VerticalStackLayout.GestureRecognizers>
-            </VerticalStackLayout>
-
-            <VerticalStackLayout Grid.Column="3"
-                         HorizontalOptions="Center"
-                         VerticalOptions="Center"
-                         Spacing="2"
-                         Opacity="0.6">
-                <Label Text="⚙️"
-               FontSize="20"
-               HorizontalOptions="Center" />
-                <Label Text="Settings"
-               FontSize="12"
-               TextColor="{StaticResource SecondaryTextColor}"
-               HorizontalOptions="Center" />
-            </VerticalStackLayout>
+            </Grid>
         </Grid>
     </Grid>
 </ContentPage>

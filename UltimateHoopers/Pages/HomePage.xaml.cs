@@ -1,589 +1,386 @@
-﻿using Microsoft.Maui.Controls;
-using Microsoft.Maui.Controls.Xaml;
-using System;
-using System.Diagnostics;
-using UltimateHoopers.Helpers;
-using UltimateHoopers.Pages;
-using UltimateHoopers.Controls;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Microsoft.Maui.Controls;
+using Microsoft.Maui.Graphics;
+using UltimateHoopers.Services;
+
+// Create alias for the Animation classes to avoid ambiguity
+using ControlsAnimation = Microsoft.Maui.Controls.Animation;
+using MauiAnimation = Microsoft.Maui.Animations.Animation;
 
 namespace UltimateHoopers.Pages
 {
-    [XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class HomePage : ContentPage
     {
-        // Add a field for the menu popup
-        private Frame _menuPopup;
+        private readonly IAuthService _authService;
+        private bool isMenuOpen = false;
 
         public HomePage()
         {
             InitializeComponent();
-            InitializeUserProfile();
+            SetupMenu();
 
-            // Set up the hamburger menu
-            SetupHamburgerMenu();
+            // Try to get auth service from DI in case it's available
+            var serviceProvider = MauiProgram.CreateMauiApp().Services;
+            _authService = serviceProvider.GetService<IAuthService>();
+
+            // You can load user data here if needed
+            LoadUserData();
         }
 
-        private void SetupHamburgerMenu()
+        // Set up side menu items
+        private void SetupMenu()
         {
-            try
+            // Define menu items
+            var menuItems = new List<(string Icon, string Title, Action Callback)>
             {
-                // Create the menu popup that will be shown when hamburger menu is clicked
-                _menuPopup = new Frame
-                {
-                    IsVisible = false,
-                    BackgroundColor = Colors.Transparent,
-                    Padding = 0,
-                    HasShadow = false,
-                    VerticalOptions = LayoutOptions.Start,
-                    HorizontalOptions = LayoutOptions.Start,
-                    ZIndex = 999, // Ensure it appears above other content
-                    Margin = new Thickness(10, 80, 0, 0) // Position it below the header
-                };
+                ("👤", "Training", () => Navigation.PushAsync(new ProfilePage())),
+               
+              
+                ("⚙️", "Settings", () => Navigation.PushAsync(new SettingsPage())),
+                ("❓", "FAQ", () => Navigation.PushAsync(new HelpPage())),
+                ("📱", "About App", () => Navigation.PushAsync(new AboutPage())),
+                ("📤", "Logout", () => LogoutUser())
+            };
 
-                var grid = new Grid();
-
-                // Semi-transparent background
-                var overlay = new BoxView
-                {
-                    Color = Colors.Black,
-                    Opacity = 0.5
-                };
-
-                var overlayTapGesture = new TapGestureRecognizer();
-                overlayTapGesture.Tapped += OnOverlayTapped;
-                overlay.GestureRecognizers.Add(overlayTapGesture);
-
-                grid.Add(overlay);
-
-                // Menu panel
-                var menuPanel = new Frame
-                {
-                    HeightRequest = 400,
-                    WidthRequest = 250,
-                    VerticalOptions = LayoutOptions.Start,
-                    HorizontalOptions = LayoutOptions.Start,
-                    Margin = new Thickness(0, 0, 0, 0),
-                    BorderColor = Colors.LightGray,
-                    BackgroundColor = Colors.White,
-                    CornerRadius = 10,
-                    Padding = 0,
-                    HasShadow = true
-                };
-
-                var menuStack = new VerticalStackLayout { Spacing = 0 };
-
-                // Menu Header
-                var headerGrid = new Grid
-                {
-                    BackgroundColor = Colors.Purple,
-                    HeightRequest = 60,
-                    Padding = new Thickness(15)
-                };
-
-                headerGrid.Add(new Label
-                {
-                    Text = "Menu",
-                    TextColor = Colors.White,
-                    FontSize = 20,
-                    FontAttributes = FontAttributes.Bold,
-                    VerticalOptions = LayoutOptions.Center
-                });
-
-                menuStack.Add(headerGrid);
-
-                // Menu Items Stack
-                var menuItemsStack = new VerticalStackLayout { Padding = 0, Spacing = 0 };
-
-                // Add menu items with handlers
-                menuItemsStack.Add(CreateMenuItem("👤", "My Profile", ProfileItemTapped));
-                menuItemsStack.Add(CreateMenuItem("⚙️", "Settings", SettingsItemTapped));
-                menuItemsStack.Add(CreateMenuItem("🔔", "Notifications", NotificationsItemTapped));
-                menuItemsStack.Add(CreateMenuItem("❓", "Help & Support", HelpItemTapped));
-                menuItemsStack.Add(CreateMenuItem("🚪", "Logout", LogoutItemTapped));
-
-                menuStack.Add(menuItemsStack);
-                menuPanel.Content = menuStack;
-                grid.Add(menuPanel);
-
-                _menuPopup.Content = grid;
-
-                // Add the menu popup to the page content
-                (Content as Grid)?.Children.Add(_menuPopup);
-
-                // Add hamburger menu button to the header
-                var hamburgerButton = new Frame
-                {
-                    CornerRadius = 25,
-                    HeightRequest = 50,
-                    WidthRequest = 50,
-                    Padding = 0,
-                    BorderColor = Colors.LightGray,
-                    BackgroundColor = Colors.White,
-                    HasShadow = true,
-                    HorizontalOptions = LayoutOptions.Start,
-                    VerticalOptions = LayoutOptions.Center
-                };
-
-                var hamburgerLabel = new Label
-                {
-                    Text = "☰",
-                    FontSize = 24,
-                    HorizontalOptions = LayoutOptions.Center,
-                    VerticalOptions = LayoutOptions.Center
-                };
-
-                hamburgerButton.Content = hamburgerLabel;
-
-                // Add tap gesture to hamburger button
-                var hamburgerTapGesture = new TapGestureRecognizer();
-                hamburgerTapGesture.Tapped += OnHamburgerButtonTapped;
-                hamburgerButton.GestureRecognizers.Add(hamburgerTapGesture);
-
-                // Find the header grid and add the hamburger button
-                var headerGrid1 = (Content as Grid)?.Children.FirstOrDefault(c => c is Grid) as Grid;
-                if (headerGrid1 != null)
-                {
-                    // Add hamburger button to the start of the grid
-                    var logoImage = headerGrid1.Children.FirstOrDefault(c => c is Image) as Image;
-                    if (logoImage != null)
-                    {
-                        // Adjust the logo position
-                        Grid.SetColumn(logoImage, 1);
-                    }
-
-                    // Add the hamburger button
-                    headerGrid1.Children.Add(hamburgerButton);
-                    Grid.SetColumn(hamburgerButton, 0);
-                }
-                else
-                {
-                    Debug.WriteLine("HomePage: Could not find header grid");
-                }
-            }
-            catch (Exception ex)
+            // Add menu items to container
+            foreach (var item in menuItems)
             {
-                Debug.WriteLine($"HomePage: Error setting up hamburger menu: {ex.Message}");
+                var menuItem = CreateMenuItem(item.Icon, item.Title, item.Callback);
+                MenuItemsContainer.Children.Add(menuItem);
             }
         }
 
-        private Frame CreateMenuItem(string icon, string title, EventHandler<TappedEventArgs> tappedHandler)
+        // Create individual menu item
+        private Frame CreateMenuItem(string icon, string title, Action callback)
         {
             var menuItem = new Frame
             {
                 BackgroundColor = Colors.Transparent,
-                BorderColor = Colors.Transparent,
-                Padding = new Thickness(15),
-                HeightRequest = 60
+                Padding = new Thickness(20, 15),
+                HasShadow = false,
+                BorderColor = Colors.Transparent
             };
 
-            var grid = new Grid
+            var layout = new Grid
             {
                 ColumnDefinitions = new ColumnDefinitionCollection
                 {
-                    new ColumnDefinition { Width = GridLength.Auto },
+                    new ColumnDefinition { Width = new GridLength(30) },
                     new ColumnDefinition { Width = GridLength.Star }
                 }
             };
 
-            grid.Add(new Label
+            var iconLabel = new Label
             {
                 Text = icon,
                 FontSize = 20,
-                VerticalOptions = LayoutOptions.Center,
-                Margin = new Thickness(0, 0, 15, 0)
-            }, 0, 0);
+                VerticalOptions = LayoutOptions.Center
+            };
 
-            grid.Add(new Label
+            var titleLabel = new Label
             {
                 Text = title,
                 FontSize = 16,
                 VerticalOptions = LayoutOptions.Center,
-                TextColor = Colors.DarkGray
-            }, 1, 0);
+                TextColor = Color.FromArgb("#333333")
+            };
 
-            menuItem.Content = grid;
+            layout.Add(iconLabel, 0, 0);
+            layout.Add(titleLabel, 1, 0);
+            menuItem.Content = layout;
 
-            var tapGesture = new TapGestureRecognizer();
-            tapGesture.Tapped += tappedHandler;
-            menuItem.GestureRecognizers.Add(tapGesture);
+            if (callback != null)
+            {
+                var tapGesture = new TapGestureRecognizer();
+                tapGesture.Tapped += (s, e) =>
+                {
+                    // Close menu
+                    CloseMenu();
+                    // Execute callback
+                    callback.Invoke();
+                };
+                menuItem.GestureRecognizers.Add(tapGesture);
+            }
 
             return menuItem;
         }
 
-        // Menu items tap handlers
-        private void OnOverlayTapped(object sender, TappedEventArgs e)
+        // Load user profile data
+        private void LoadUserData()
         {
-            _menuPopup.IsVisible = false;
-        }
+            // You might want to load this from a service or local storage
+            // For now, using placeholder data
+            UsernameLabel.Text = App.User.Profile.UserName;
+            
 
-        private async void ProfileItemTapped(object sender, TappedEventArgs e)
-        {
-            _menuPopup.IsVisible = false;
-            await NavigateToPage("EditProfilePage");
-        }
-
-        private async void SettingsItemTapped(object sender, TappedEventArgs e)
-        {
-            _menuPopup.IsVisible = false;
-            await DisplayAlert("Settings", "Settings page coming soon!", "OK");
-        }
-
-        private async void NotificationsItemTapped(object sender, TappedEventArgs e)
-        {
-            _menuPopup.IsVisible = false;
-            await DisplayAlert("Notifications", "Notifications page coming soon!", "OK");
-        }
-
-        private async void HelpItemTapped(object sender, TappedEventArgs e)
-        {
-            _menuPopup.IsVisible = false;
-            await DisplayAlert("Help & Support", "Help & Support page coming soon!", "OK");
-        }
-
-        private async void LogoutItemTapped(object sender, TappedEventArgs e)
-        {
-            _menuPopup.IsVisible = false;
-            bool answer = await DisplayAlert("Logout", "Are you sure you want to logout?", "Yes", "No");
-            if (answer)
+            // Load profile image if available
+            if (!string.IsNullOrEmpty(App.User.Profile.ImageURL))
             {
-                // Navigate back to login page
-                Application.Current.MainPage = new LoginPage();
+                try
+                {
+                    ProfileImage.Source = App.User.Profile.ImageURL;
+                    ProfileImage.IsVisible = true;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error loading profile image: {ex.Message}");
+                }
             }
         }
 
-        // Hamburger button tap handler
+        #region Menu Functions
+        // IMPORTANT: Fixed event handler signature for XAML compatibility
         private void OnHamburgerButtonTapped(object sender, TappedEventArgs e)
         {
-            _menuPopup.IsVisible = true;
+            if (isMenuOpen)
+                CloseMenu();
+            else
+                OpenMenu();
         }
 
-        private void InitializeUserProfile()
+        // This is the critical method for closing when tapping outside
+        private void OnMenuOverlayTapped(object sender, TappedEventArgs e)
         {
-            try
+            // Log for debugging
+            Console.WriteLine("Menu overlay tapped - closing menu");
+            CloseMenu();
+        }
+
+        private void OpenMenu()
+        {
+            if (isMenuOpen)
+                return;
+
+            // Make menu flyout visible first
+            MenuFlyout.IsVisible = true;
+
+            // The key is to ensure the overlay is NOT input transparent when menu is open
+            // so it can receive taps to close the menu
+            MenuOverlay.InputTransparent = false;
+
+            // Animate menu panel
+            var menuAnimation = new ControlsAnimation(v => MenuPanel.TranslationX = -280 + (v * 280), 0, 1);
+            menuAnimation.Commit(this, "OpenMenu", 16, 250, Easing.CubicOut);
+
+            // Animate overlay
+            var overlayAnimation = new ControlsAnimation(v => MenuOverlay.Opacity = v * 0.5, 0, 1);
+            overlayAnimation.Commit(this, "OverlayFade", 16, 250, Easing.CubicOut);
+
+            isMenuOpen = true;
+        }
+
+        private void CloseMenu()
+        {
+            if (!isMenuOpen)
+                return;
+
+            // Animate menu panel
+            var menuAnimation = new ControlsAnimation(v => MenuPanel.TranslationX = v * -280, 0, 1);
+            menuAnimation.Commit(this, "CloseMenu", 16, 250, Easing.CubicIn, (v, c) =>
             {
-                Debug.WriteLine("HomePage: Initializing user profile");
+                // Only hide the flyout when animation completes
+                MenuFlyout.IsVisible = false;
+            });
 
-                // Check if App.User exists
-                if (App.User == null)
-                {
-                    Debug.WriteLine("HomePage: App.User is null, creating empty profile");
-                    // Create a placeholder user to prevent crashes
-                    App.User = new Domain.User
-                    {
-                        Profile = new Domain.Profile
-                        {
-                            UserName = "User"
-                        }
-                    };
-                }
+            // Animate overlay
+            var overlayAnimation = new ControlsAnimation(v => MenuOverlay.Opacity = 0.5 - (v * 0.5), 0, 1);
+            overlayAnimation.Commit(this, "OverlayFadeOut", 16, 250, Easing.CubicIn);
 
-                // Check if App.User.Profile exists
-                if (App.User.Profile == null)
-                {
-                    Debug.WriteLine("HomePage: App.User.Profile is null, creating empty profile");
-                    App.User.Profile = new Domain.Profile
-                    {
-                        UserName = "User"
-                    };
-                }
-
-                // Safely update UI with profile data
-                try
-                {
-                    // Load profile image if available
-                    if (!string.IsNullOrEmpty(App.User.Profile.ImageURL))
-                    {
-                        try
-                        {
-                            Debug.WriteLine("HomePage: Setting profile image");
-                            ProfileImage.Source = App.User.Profile.ImageURL;
-                            ProfileImage.IsVisible = true;
-                        }
-                        catch (Exception imgEx)
-                        {
-                            Debug.WriteLine($"HomePage: Error loading profile image: {imgEx.Message}");
-                            ProfileImage.IsVisible = false;
-                        }
-                    }
-                    else
-                    {
-                        // No image URL is available, ensure image is not visible
-                        ProfileImage.IsVisible = false;
-                    }
-                }
-                catch (Exception uiEx)
-                {
-                    Debug.WriteLine($"HomePage: Error updating UI: {uiEx.Message}");
-                }
-            }
-            catch (Exception ex)
-            {
-                // Log any unexpected errors
-                Debug.WriteLine($"HomePage: Error in InitializeUserProfile: {ex.Message}");
-            }
+            // Set overlay to input transparent
+            MenuOverlay.InputTransparent = true;
+            isMenuOpen = false;
         }
+        #endregion
 
-        protected override void OnAppearing()
+        #region Navigation Functions
+        // IMPORTANT: Fixed event handler signatures for XAML compatibility
+        private async void OnProfileClicked(object sender, TappedEventArgs e)
         {
-            try
-            {
-                base.OnAppearing();
-                Debug.WriteLine("HomePage: OnAppearing called");
-
-                // Ensure UI is properly initialized
-                InitializeUserProfile();
-
-                // Make sure Shell navigation is properly set up
-                EnsureShellConfiguration();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"HomePage: Error in OnAppearing: {ex.Message}");
-            }
+            await Navigation.PushAsync(new EditProfilePage());
         }
 
-        private void EnsureShellConfiguration()
+        private async void OnStatsClicked(object sender, TappedEventArgs e)
         {
-            try
-            {
-                // If we're in a Shell environment
-                if (Shell.Current != null)
-                {
-                    // Make sure navigation bar is visible
-                    Shell.SetNavBarIsVisible(this, true);
-
-                    // Try to set this page as the current tab
-                    if (Shell.Current.Items.Count > 0)
-                    {
-                        var item = Shell.Current.Items.FirstOrDefault(i => i.Route?.Contains("HomePage") == true);
-                        if (item != null)
-                        {
-                            Debug.WriteLine("HomePage: Setting current Shell item to HomePage");
-                            Shell.Current.CurrentItem = item;
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"HomePage: Error configuring Shell: {ex.Message}");
-            }
+            await Navigation.PushAsync(new StatsPage());
         }
 
-        private async void OnHomeClicked(object sender, EventArgs e)
+        private async void OnFindGamesClicked(object sender, TappedEventArgs e)
         {
-            // We're already on the home page, so no navigation needed
-            Debug.WriteLine("HomePage: Already on HomePage, no navigation needed");
+            await Navigation.PushAsync(new FindRunsPage());
         }
 
-        // Unified navigation method to handle all navigation with consistent approach
-        private async Task NavigateToPage(string routeName)
+        private async void OnHoopersClicked(object sender, TappedEventArgs e)
         {
-            try
-            {
-                Debug.WriteLine($"HomePage: Attempting to navigate to {routeName}");
-                string route = $"//{routeName}";
-
-                // Try multiple navigation methods in order of preference
-                Exception lastException = null;
-
-                // Method 1: Use Shell Navigation if available (preferred)
-                if (Shell.Current != null)
-                {
-                    try
-                    {
-                        Debug.WriteLine($"HomePage: Using Shell.GoToAsync to navigate to {route}");
-                        await Shell.Current.GoToAsync(route);
-                        return;
-                    }
-                    catch (Exception shellEx)
-                    {
-                        lastException = shellEx;
-                        Debug.WriteLine($"HomePage: Shell navigation failed: {shellEx.Message}");
-                    }
-                }
-
-                // Method 2: Try regular page navigation
-                try
-                {
-                    // Create a new instance of the target page
-                    var serviceProvider = MauiProgram.CreateMauiApp().Services;
-                    Page targetPage = null;
-
-                    // Get the appropriate page based on the route name
-                    switch (routeName)
-                    {
-                        case "StatsPage":
-                            targetPage = serviceProvider.GetService<StatsPage>() ?? new StatsPage();
-                            break;
-                        case "FindRunsPage":
-                            targetPage = serviceProvider.GetService<FindRunsPage>() ?? new FindRunsPage();
-                            break;
-                        case "HoopersPage":
-                            targetPage = serviceProvider.GetService<HoopersPage>() ?? new HoopersPage();
-                            break;
-                        case "PostsPage":
-                            targetPage = serviceProvider.GetService<PostsPage>() ?? new PostsPage();
-                            break;
-                        case "ShopPage":
-                            targetPage = serviceProvider.GetService<ShopPage>() ?? new ShopPage();
-                            break;
-                        case "EditProfilePage":
-                            targetPage = serviceProvider.GetService<EditProfilePage>() ?? new EditProfilePage();
-                            break;
-                        default:
-                            targetPage = new HomePage(); // Default fallback to HomePage
-                            break;
-                    }
-
-                    if (targetPage != null && Navigation != null)
-                    {
-                        Debug.WriteLine($"HomePage: Using Navigation.PushAsync to navigate to {routeName}");
-                        await Navigation.PushAsync(targetPage);
-                        return;
-                    }
-                }
-                catch (Exception navEx)
-                {
-                    lastException = navEx;
-                    Debug.WriteLine($"HomePage: Navigation.PushAsync failed: {navEx.Message}");
-                }
-
-                // Method 3: Use NavigationHelper as a fallback
-                try
-                {
-                    Debug.WriteLine($"HomePage: Using NavigationHelper to navigate to {route}");
-                    await NavigationHelper.NavigateTo(this, route);
-                    return;
-                }
-                catch (Exception helperEx)
-                {
-                    lastException = helperEx;
-                    Debug.WriteLine($"HomePage: NavigationHelper failed: {helperEx.Message}");
-                }
-
-                // Method A4: Use DirectNavigationHelper as a last resort
-                try
-                {
-                    Debug.WriteLine($"HomePage: Using DirectNavigationHelper as last resort");
-                    await DirectNavigationHelper.GoToPageAsync(routeName);
-                    return;
-                }
-                catch (Exception directEx)
-                {
-                    lastException = directEx;
-                    Debug.WriteLine($"HomePage: DirectNavigationHelper failed: {directEx.Message}");
-                }
-
-                // If all navigation methods failed, show an error to the user
-                if (lastException != null)
-                {
-                    Debug.WriteLine($"HomePage: All navigation methods failed: {lastException.Message}");
-                    await DisplayAlert("Navigation Error",
-                        $"Could not navigate to {routeName}. Please try again.",
-                        "OK");
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"HomePage: Unhandled error navigating to {routeName}: {ex.Message}");
-                await DisplayAlert("Navigation Error",
-                    $"Could not navigate to {routeName}. Please try again or restart the app.",
-                    "OK");
-            }
+            await Navigation.PushAsync(new HoopersPage());
         }
 
-        // All card click handlers now use the unified navigation method
-        private async void OnStatsClicked(object sender, EventArgs e)
+        private async void OnTeamsClicked(object sender, TappedEventArgs e)
         {
-            await NavigateToPage("StatsPage");
+            //await Navigation.PushAsync(new TeamsPage());
+            await DisplayAlert("Squads", "Feature coming soon?", "Ok");
         }
 
-        private async void OnFindGamesClicked(object sender, EventArgs e)
+        private async void OnPostsClicked(object sender, TappedEventArgs e)
         {
-            await NavigateToPage("FindRunsPage");
+            await Navigation.PushAsync(new PostsPage());
         }
 
-        private async void OnHoopersClicked(object sender, EventArgs e)
+        private async void OnShopClicked(object sender, TappedEventArgs e)
         {
-            await NavigateToPage("HoopersPage");
+            await Navigation.PushAsync(new ShopPage());
         }
 
-        private async void OnTeamsClicked(object sender, EventArgs e)
+        private async void OnLeaguesClicked(object sender, TappedEventArgs e)
         {
-            await DisplayAlert("Squad", "Bring your own squad feature coming soon!", "OK");
+            //await Navigation.PushAsync(new LeaguesPage());
+            await DisplayAlert("Leagues", "Feature coming soon?", "Ok");
         }
 
-        private async void OnEventsClicked(object sender, EventArgs e)
+        private async void OnEventsClicked(object sender, TappedEventArgs e)
         {
-            await DisplayAlert("Events", "Events coming soon!", "OK");
-        }
-        
-            private async void OnLeaguesClicked(object sender, EventArgs e)
-        {
-            await DisplayAlert("Leagues", "Leagues coming soon!", "OK");
+            //await Navigation.PushAsync(new EventsPage());
+            await DisplayAlert("Events", "Feature coming soon?", "Ok");
         }
 
-        private async void OnPostsClicked(object sender, EventArgs e)
-        {
-            await NavigateToPage("PostsPage");
-        }
-
-        private async void OnShopClicked(object sender, EventArgs e)
-        {
-            await NavigateToPage("ShopPage");
-        }
-
-        private async void OnProfileClicked(object sender, EventArgs e)
-        {
-            await NavigateToPage("EditProfilePage");
-        }
-
-        // Navigation bar handlers
         private async void OnPostsNavigationClicked(object sender, TappedEventArgs e)
         {
-            await NavigateToPage("PostsPage");
-        }
-
-        private void OnHomeNavigationClicked(object sender, TappedEventArgs e)
-        {
-            // We're already on HomePage, so no navigation needed
-            Debug.WriteLine("Already on HomePage, no navigation needed");
+            await Navigation.PushAsync(new PostsPage());
         }
 
         private async void OnMessagesNavigationClicked(object sender, TappedEventArgs e)
         {
+            await Navigation.PushAsync(new MessagesPage());
+        }
+
+        private async void OnSettingsNavigationClicked(object sender, TappedEventArgs e)
+        {
+            await Navigation.PushAsync(new SettingsPage());
+        }
+        #endregion
+
+        // Handle back button presses (Android)
+        protected override bool OnBackButtonPressed()
+        {
+            // If menu is open, close it and consume the back button press
+            if (isMenuOpen)
+            {
+                CloseMenu();
+                return true;
+            }
+
+            // Otherwise, let the back button work normally
+            return base.OnBackButtonPressed();
+        }
+
+        // Handle logout
+        private async void LogoutUser()
+        {
             try
             {
-                Debug.WriteLine("HomePage: OnMessagesNavigationClicked - Attempting navigation to MessagesPage");
-                await DisplayAlert("Messages", "Messages feature coming soon!", "OK");
+                bool answer = await DisplayAlert("Logout", "Are you sure you want to logout?", "Yes", "No");
+                if (answer)
+                {
+                    // Use auth service to logout if available
+                    if (_authService != null)
+                    {
+                        try
+                        {
+                            await _authService.LogoutAsync();
+                        }
+                        catch (Exception ex)
+                        {
+                            // Log the exception but continue with logout process
+                            System.Diagnostics.Debug.WriteLine($"Error in auth service logout: {ex.Message}");
+                            // Manual fallback for logout
+                            App.AuthToken = null;
+                            await SecureStorage.Default.SetAsync("auth_token", string.Empty);
+                            await SecureStorage.Default.SetAsync("user_id", string.Empty);
+                        }
+                    }
+                    else
+                    {
+                        // Fallback if service is not available
+                        App.AuthToken = null;
+                        await SecureStorage.Default.SetAsync("auth_token", string.Empty);
+                        await SecureStorage.Default.SetAsync("user_id", string.Empty);
+                    }
+
+                    // Wrap the main page transition in try-catch
+                    try
+                    {
+                        // Create a new instance of LoginPage
+                        LoginPage loginPage;
+
+                        // Try to get LoginPage from DI
+                        var serviceProvider = MauiProgram.CreateMauiApp().Services;
+                        var resolvedLoginPage = serviceProvider.GetService<LoginPage>();
+
+                        if (resolvedLoginPage != null)
+                        {
+                            loginPage = resolvedLoginPage;
+                        }
+                        else if (_authService != null)
+                        {
+                            // Create LoginPage with auth service if available
+                            loginPage = new LoginPage(_authService);
+                        }
+                        else
+                        {
+                            // Fallback without auth service
+                            loginPage = new LoginPage();
+                        }
+
+                        // Important: Dispatch to main thread for UI operations
+                        await MainThread.InvokeOnMainThreadAsync(() =>
+                        {
+                            try
+                            {
+                                Application.Current.MainPage = loginPage;
+                                System.Diagnostics.Debug.WriteLine("Successfully set MainPage to LoginPage");
+                            }
+                            catch (Exception ex)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"Error setting MainPage: {ex.Message}");
+                            }
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        // Handle navigation error
+                        System.Diagnostics.Debug.WriteLine($"Error navigating to login page: {ex.Message}");
+                        await DisplayAlert("Error", "There was a problem logging out. Please restart the app.", "OK");
+                    }
+                }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"HomePage: Error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Unhandled exception in logout: {ex.Message}");
+                await DisplayAlert("Error", "An unexpected error occurred. Please try again.", "OK");
             }
         }
 
-        private void OnMenuClicked(object sender, EventArgs e)
+        // Animation helpers
+        private async Task AnimateCardPress(Frame frame)
         {
-            // Use Shell's flyout menu instead of custom menu popup
-            try
-            {
-                if (Shell.Current != null)
-                {
-                    Shell.Current.FlyoutIsPresented = true;
-                    Debug.WriteLine("HomePage: Showing Shell flyout menu");
-                }
-                else
-                {
-                    DisplayAlert("Menu", "Menu is not available in this context", "OK");
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"HomePage: Error showing menu: {ex.Message}");
-                DisplayAlert("Menu", "Could not display menu", "OK");
-            }
+            await frame.ScaleTo(0.95, 100, Easing.CubicOut);
+            await frame.ScaleTo(1, 100, Easing.CubicIn);
         }
     }
+
+    // Placeholder pages for navigation
+    public class ProfilePage : ContentPage { }
+    //public class StatsPage : ContentPage { }
+    public class FindGamesPage : ContentPage { }
+    //public class HoopersPage : ContentPage { }
+    public class TeamsPage : ContentPage { }
+    //public class PostsPage : ContentPage { }
+   // public class ShopPage : ContentPage { }
+    public class LeaguesPage : ContentPage { }
+    public class EventsPage : ContentPage { }
+    public class SettingsPage : ContentPage { }
+    public class HelpPage : ContentPage { }
+    public class AboutPage : ContentPage { }
+    public class MessagesPage : ContentPage { }
 }
