@@ -131,6 +131,12 @@ namespace UltimateHoopers.Pages
             }
         }
 
+        private void OnHomeNavigationClicked(object sender, TappedEventArgs e)
+        {
+            // We're already on HomePage, so do nothing
+            Console.WriteLine("Already on HomePage, no navigation needed");
+        }
+
         private async void OnMessagesNavigationClicked(object sender, TappedEventArgs e)
         {
             try

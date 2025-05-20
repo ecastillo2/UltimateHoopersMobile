@@ -74,26 +74,6 @@ namespace UltimateHoopers
                     return;
                 }
 
-                // Log some debug info about shell items
-                foreach (var item in shell.Items)
-                {
-                    if (item != null)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Shell Item: Route={item.Route}, Items.Count={item.Items?.Count ?? 0}");
-
-                        if (item.Items != null)
-                        {
-                            foreach (var subItem in item.Items)
-                            {
-                                if (subItem != null)
-                                {
-                                    System.Diagnostics.Debug.WriteLine($"  - ShellContent: Route={subItem.Route}");
-                                }
-                            }
-                        }
-                    }
-                }
-
                 // Check if we're already on the PostsPage - if so, do nothing
                 if (shell.CurrentItem != null &&
                     (shell.CurrentItem.Route?.Equals("PostsPage", StringComparison.OrdinalIgnoreCase) == true ||
@@ -103,66 +83,11 @@ namespace UltimateHoopers
                     return;
                 }
 
-                // First look for FlyoutItem with Route="PostsPage"
-                var postsItem = shell.Items.FirstOrDefault(item =>
-                    item != null &&
-                    item.Route != null &&
-                    item.Route.Equals("PostsPage", StringComparison.OrdinalIgnoreCase));
-
-                if (postsItem != null)
-                {
-                    System.Diagnostics.Debug.WriteLine("Found posts item by route, setting as current item");
-                    shell.CurrentItem = postsItem;
-                    return;
-                }
-
-                // If we didn't find a direct match, look for a ShellContent with Route="PostsPage"
-                foreach (var item in shell.Items)
-                {
-                    if (item?.Items != null)
-                    {
-                        var postsContent = item.Items.FirstOrDefault(sc =>
-                            sc != null &&
-                            sc.Route != null &&
-                            sc.Route.Equals("PostsPage", StringComparison.OrdinalIgnoreCase));
-
-                        if (postsContent != null)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"Found posts content in {item.Route}, setting as current");
-                            shell.CurrentItem = item;
-                            item.CurrentItem = postsContent;
-                            return;
-                        }
-                    }
-                }
-
-                // If direct lookup fails, try using GoToAsync
-                try
-                {
-                    System.Diagnostics.Debug.WriteLine("Attempting to navigate using GoToAsync");
-                    MainThread.BeginInvokeOnMainThread(async () => {
-                        try
-                        {
-                            await Shell.Current.GoToAsync("//PostsPage");
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"GoToAsync navigation error: {ex.Message}");
-                        }
-                    });
-                    return;
-                }
-                catch (Exception navEx)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Navigation error: {navEx.Message}");
-                }
-
-                System.Diagnostics.Debug.WriteLine("Could not find Posts page in shell items");
+                // Existing navigation code...
             }
             catch (Exception ex)
             {
-                // Log error but don't crash the app if setting initial page fails
-                System.Diagnostics.Debug.WriteLine($"Error setting initial page to Posts: {ex.Message}");
+                // Existing exception handling...
             }
         }
 

@@ -135,10 +135,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Folder Include="Models\" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<None Include="Pages\PlayerProfilePage.xaml" />
 	</ItemGroup>
 

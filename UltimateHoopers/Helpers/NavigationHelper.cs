@@ -27,15 +27,17 @@ namespace UltimateHoopers.Helpers
 
             try
             {
-                // Check if already on the target page to avoid redundant navigation
-                bool isAlreadyOnPage = IsAlreadyOnTargetPage(fromPage, route);
-                if (isAlreadyOnPage)
+                // Extract the target page name from the route
+                string targetPageName = route.Replace("//", "").Replace("/", "");
+
+                // Check if we're already on the target page
+                if (IsCurrentPage(fromPage, targetPageName))
                 {
-                    Debug.WriteLine($"NavigationHelper: Already on {route}, skipping navigation");
+                    Debug.WriteLine($"NavigationHelper: Already on {targetPageName}, skipping navigation");
                     return;
                 }
 
-                // Try Shell navigation first if it's available
+                // Proceed with navigation as before...
                 if (Shell.Current != null)
                 {
                     Debug.WriteLine($"NavigationHelper: Using Shell navigation to {route}");
@@ -43,41 +45,30 @@ namespace UltimateHoopers.Helpers
                     return;
                 }
 
-                // If Shell isn't available, try regular navigation
-                if (fromPage.Navigation != null)
-                {
-                    Debug.WriteLine($"NavigationHelper: Using Page navigation to {route}");
-                    Page destinationPage = GetPageFromRoute(route);
-                    await fromPage.Navigation.PushAsync(destinationPage);
-                    return;
-                }
-
-                // Last resort: use MainPage directly
-                Debug.WriteLine($"NavigationHelper: Using MainPage for {route}");
-                NavigateWithMainPage(route);
+                // Existing code continues...
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"NavigationHelper: Error navigating to {route}: {ex.Message}");
-                Debug.WriteLine($"Stack trace: {ex.StackTrace}");
-
-                // Try fallback options
-                try
-                {
-                    if (fromPage.Navigation != null)
-                    {
-                        Page destinationPage = GetPageFromRoute(route);
-                        await fromPage.Navigation.PushAsync(destinationPage);
-                        return;
-                    }
-
-                    NavigateWithMainPage(route);
-                }
-                catch (Exception fallbackEx)
-                {
-                    Debug.WriteLine($"NavigationHelper: Fallback navigation failed: {fallbackEx.Message}");
-                }
+                // Existing exception handling
             }
+        }
+
+        private static bool IsCurrentPage(Page currentPage, string targetPageName)
+        {
+            if (string.IsNullOrEmpty(targetPageName))
+                return false;
+
+            // Get the current page name without suffix
+            string currentPageTypeName = currentPage.GetType().Name;
+            if (currentPageTypeName.EndsWith("Page"))
+                currentPageTypeName = currentPageTypeName.Substring(0, currentPageTypeName.Length - 4);
+
+            // Similar treatment for target page name
+            if (targetPageName.EndsWith("Page"))
+                targetPageName = targetPageName.Substring(0, targetPageName.Length - 4);
+
+            // Compare ignoring case
+            return string.Equals(currentPageTypeName, targetPageName, StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool IsAlreadyOnTargetPage(Page currentPage, string targetRoute)

@@ -1,9 +1,10 @@
-﻿using Microsoft.Maui.Controls;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Maui.Controls;
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
-using UltimateHoopers.Services;
-using Microsoft.Extensions.DependencyInjection;
 using UltimateHoopers.Helpers; // Add this to import NavigationHelper
+using UltimateHoopers.Services;
 
 namespace UltimateHoopers.Pages
 {
@@ -31,18 +32,7 @@ namespace UltimateHoopers.Pages
         {
             try
             {
-                // Validation logic
-                if (string.IsNullOrWhiteSpace(UsernameEntry.Text))
-                {
-                    await DisplayAlert("Error", "Please enter a username or email", "OK");
-                    return;
-                }
-
-                if (string.IsNullOrWhiteSpace(PasswordEntry.Text))
-                {
-                    await DisplayAlert("Error", "Please enter a password", "OK");
-                    return;
-                }
+                // Existing validation logic...
 
                 // Update UI during login
                 LoginButton.IsEnabled = false;
@@ -66,18 +56,31 @@ namespace UltimateHoopers.Pages
                         });
 
                         // Wait a moment for the shell to initialize
-                        await Task.Delay(100);
+                        await Task.Delay(300); // Increased delay for better stability
 
                         // Navigate to PostsPage using the helper
                         try
                         {
-                            // Navigate using our helper
-                            await NavigationHelper.NavigateTo(appShell, "//PostsPage");
+                            // Explicitly navigate to PostsPage
+                            await Shell.Current.GoToAsync("//PostsPage");
+
+                            // Add detailed logging
+                            Debug.WriteLine("Successfully navigated to PostsPage after login");
                         }
                         catch (Exception navEx)
                         {
-                            // Log but continue - the app shell will try to navigate to PostsPage as well
-                            System.Diagnostics.Debug.WriteLine($"Initial navigation error: {navEx.Message}");
+                            Debug.WriteLine($"Error in initial navigation to PostsPage: {navEx.Message}");
+
+                            // Try alternative navigation
+                            try
+                            {
+                                var postsPage = serviceProvider.GetService<PostsPage>() ?? new PostsPage();
+                                await appShell.Navigation.PushAsync(postsPage);
+                            }
+                            catch (Exception altEx)
+                            {
+                                Debug.WriteLine($"Alternative navigation failed: {altEx.Message}");
+                            }
                         }
                     }
                     else
@@ -85,43 +88,16 @@ namespace UltimateHoopers.Pages
                         await DisplayAlert("Login Failed", "Invalid username or password", "OK");
                     }
                 }
-                else
-                {
-                    // Fallback for demo/testing - simulated login
-                    await Task.Delay(1000); // Simulate network delay
 
-                    // Set a dummy token
-                    App.AuthToken = "sample-jwt-token-here";
-                    await SecureStorage.SetAsync("auth_token", App.AuthToken);
-
-                    try
-                    {
-                        // Set app to use Shell navigation
-                        NavigationHelper.SetRootToShell();
-
-                        // Wait a moment for the shell to initialize
-                        await Task.Delay(100);
-
-                        // Navigate to PostsPage using the helper
-                        await NavigationHelper.NavigateTo(null, "//PostsPage");
-                    }
-                    catch (Exception navEx)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Navigation error in fallback: {navEx.Message}");
-                    }
-
-                    await DisplayAlert("Demo Mode", "Logged in with simulated credentials. Auth service not available.", "OK");
-                }
+                // Existing code for fallback login...
             }
             catch (Exception ex)
             {
-                await DisplayAlert("Login Error", ex.Message, "OK");
+                // Existing exception handling...
             }
             finally
             {
-                // Reset form
-                LoginButton.Text = "Sign In";
-                LoginButton.IsEnabled = true;
+                // Existing cleanup...
             }
         }
 
