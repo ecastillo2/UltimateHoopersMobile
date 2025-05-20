@@ -66,10 +66,42 @@ namespace UltimateHoopers
         {
             try
             {
-                if (shell == null || shell.Items == null || shell.Items.Count == 0)
-                    return;
+                System.Diagnostics.Debug.WriteLine("Setting initial page to Posts page");
 
-                DiagnosticHelper.Log("SetInitialPage: Finding PostsPage in shell items");
+                if (shell == null || shell.Items == null || shell.Items.Count == 0)
+                {
+                    System.Diagnostics.Debug.WriteLine("Shell or shell items is null or empty");
+                    return;
+                }
+
+                // Log some debug info about shell items
+                foreach (var item in shell.Items)
+                {
+                    if (item != null)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Shell Item: Route={item.Route}, Items.Count={item.Items?.Count ?? 0}");
+
+                        if (item.Items != null)
+                        {
+                            foreach (var subItem in item.Items)
+                            {
+                                if (subItem != null)
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"  - ShellContent: Route={subItem.Route}");
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Check if we're already on the PostsPage - if so, do nothing
+                if (shell.CurrentItem != null &&
+                    (shell.CurrentItem.Route?.Equals("PostsPage", StringComparison.OrdinalIgnoreCase) == true ||
+                     shell.CurrentItem.CurrentItem?.Route?.Equals("PostsPage", StringComparison.OrdinalIgnoreCase) == true))
+                {
+                    System.Diagnostics.Debug.WriteLine("Already on Posts page, no navigation needed");
+                    return;
+                }
 
                 // First look for FlyoutItem with Route="PostsPage"
                 var postsItem = shell.Items.FirstOrDefault(item =>
@@ -79,49 +111,58 @@ namespace UltimateHoopers
 
                 if (postsItem != null)
                 {
-                    DiagnosticHelper.Log("Found PostsPage FlyoutItem, setting as current item");
+                    System.Diagnostics.Debug.WriteLine("Found posts item by route, setting as current item");
                     shell.CurrentItem = postsItem;
                     return;
                 }
 
-                // Look for any ShellContent within FlyoutItems with Route="PostsPage"
+                // If we didn't find a direct match, look for a ShellContent with Route="PostsPage"
                 foreach (var item in shell.Items)
                 {
                     if (item?.Items != null)
                     {
-                        var shellContent = item.Items.FirstOrDefault(sc =>
+                        var postsContent = item.Items.FirstOrDefault(sc =>
                             sc != null &&
                             sc.Route != null &&
                             sc.Route.Equals("PostsPage", StringComparison.OrdinalIgnoreCase));
 
-                        if (shellContent != null)
+                        if (postsContent != null)
                         {
-                            DiagnosticHelper.Log($"Found ShellContent with Route=PostsPage in {item.Route}, setting as current");
+                            System.Diagnostics.Debug.WriteLine($"Found posts content in {item.Route}, setting as current");
                             shell.CurrentItem = item;
-                            item.CurrentItem = shellContent;
+                            item.CurrentItem = postsContent;
                             return;
                         }
                     }
                 }
 
-                // If we couldn't find by Route, try GoToAsync as a fallback
+                // If direct lookup fails, try using GoToAsync
                 try
                 {
-                    DiagnosticHelper.Log("Attempting Shell.GoToAsync to navigate to PostsPage");
-                    Shell.Current.GoToAsync("//PostsPage");
+                    System.Diagnostics.Debug.WriteLine("Attempting to navigate using GoToAsync");
+                    MainThread.BeginInvokeOnMainThread(async () => {
+                        try
+                        {
+                            await Shell.Current.GoToAsync("//PostsPage");
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"GoToAsync navigation error: {ex.Message}");
+                        }
+                    });
                     return;
                 }
                 catch (Exception navEx)
                 {
-                    DiagnosticHelper.Log($"GoToAsync navigation error: {navEx.Message}");
+                    System.Diagnostics.Debug.WriteLine($"Navigation error: {navEx.Message}");
                 }
 
-                DiagnosticHelper.Log("Could not find PostsPage in shell items");
+                System.Diagnostics.Debug.WriteLine("Could not find Posts page in shell items");
             }
             catch (Exception ex)
             {
                 // Log error but don't crash the app if setting initial page fails
-                DiagnosticHelper.LogException(ex, "SetInitialPage");
+                System.Diagnostics.Debug.WriteLine($"Error setting initial page to Posts: {ex.Message}");
             }
         }
 
@@ -168,15 +209,43 @@ namespace UltimateHoopers
                                 DiagnosticHelper.Log("Created new AppShell with auth service");
                             }
 
-                            // Set the main page to the shell
-                            MainPage = appShell;
-                            DiagnosticHelper.Log("Set MainPage to AppShell");
+                            // Set the main page to the shell - using try/catch for safety
+                            try
+                            {
+                                MainPage = appShell;
+                                DiagnosticHelper.Log("Set MainPage to AppShell");
+                            }
+                            catch (Exception shellEx)
+                            {
+                                DiagnosticHelper.LogException(shellEx, "Setting MainPage to AppShell");
+                                // Fallback to creating a new AppShell
+                                try
+                                {
+                                    MainPage = new AppShell(authService);
+                                    DiagnosticHelper.Log("Set MainPage to new AppShell (fallback)");
+                                }
+                                catch (Exception fallbackEx)
+                                {
+                                    DiagnosticHelper.LogException(fallbackEx, "Setting MainPage to fallback AppShell");
+                                    // Last resort - go to login page
+                                    SetLoginPage(serviceProvider, authService);
+                                    return;
+                                }
+                            }
 
                             // Navigate to PostsPage after a short delay to ensure shell is initialized
-                            await Task.Delay(100);
+                            await Task.Delay(300);  // Increase delay for better initialization
 
                             // Safely set the Posts page as the current page
-                            SetInitialPage(appShell);
+                            try
+                            {
+                                SetInitialPage(appShell);
+                            }
+                            catch (Exception navEx)
+                            {
+                                DiagnosticHelper.LogException(navEx, "Setting initial page");
+                                // Continue anyway - the shell will attempt to navigate
+                            }
                         }
                         else
                         {

@@ -175,7 +175,34 @@ namespace UltimateHoopers.Pages
 
         private async void OnHomeNavigationClicked(object sender, EventArgs e)
         {
-            await Shell.Current.GoToAsync("//HomePage");
+            try
+            {
+                // Check if we're already on the HomePage
+                Page currentPage = null;
+
+                if (Shell.Current != null)
+                {
+                    currentPage = Shell.Current.CurrentPage;
+                }
+                else if (Application.Current?.MainPage != null)
+                {
+                    currentPage = Application.Current.MainPage;
+                }
+
+                // If we're already on HomePage, do nothing
+                if (currentPage is HomePage)
+                {
+                    Console.WriteLine("Already on HomePage, skipping navigation");
+                    return;
+                }
+
+                Console.WriteLine("Navigating to HomePage");
+                await Shell.Current.GoToAsync("//HomePage");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error navigating to HomePage: {ex.Message}");
+            }
         }
 
         private async void OnConnectClicked(object sender, EventArgs e)

@@ -101,14 +101,48 @@ namespace UltimateHoopers.Pages
 
         private async void OnPostsNavigationClicked(object sender, TappedEventArgs e)
         {
-            await NavigationHelper.NavigateTo(this, "//PostsPage");
+            try
+            {
+                // Check if we're already on the PostsPage
+                Page currentPage = null;
+
+                if (Shell.Current != null)
+                {
+                    currentPage = Shell.Current.CurrentPage;
+                }
+                else if (Application.Current?.MainPage != null)
+                {
+                    currentPage = Application.Current.MainPage;
+                }
+
+                // If we're already on PostsPage, do nothing
+                if (currentPage is PostsPage)
+                {
+                    Console.WriteLine("Already on PostsPage, skipping navigation");
+                    return;
+                }
+
+                Console.WriteLine("Navigating to PostsPage");
+                await NavigationHelper.NavigateTo(this, "//PostsPage");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error navigating to PostsPage: {ex.Message}");
+            }
         }
 
         private async void OnMessagesNavigationClicked(object sender, TappedEventArgs e)
         {
-            await NavigationHelper.NavigateTo(this, "//MessagesPage");
+            try
+            {
+                await NavigationHelper.NavigateTo(this, "//MessagesPage");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error navigating to MessagesPage: {ex.Message}");
+                await DisplayAlert("Navigation", "Messages feature coming soon!", "OK");
+            }
         }
-
         private void OnMenuClicked(object sender, EventArgs e)
         {
             // Use Shell's flyout menu instead of custom menu popup

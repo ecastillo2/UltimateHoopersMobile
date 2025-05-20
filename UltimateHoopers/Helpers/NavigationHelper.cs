@@ -27,6 +27,14 @@ namespace UltimateHoopers.Helpers
 
             try
             {
+                // Check if already on the target page to avoid redundant navigation
+                bool isAlreadyOnPage = IsAlreadyOnTargetPage(fromPage, route);
+                if (isAlreadyOnPage)
+                {
+                    Debug.WriteLine($"NavigationHelper: Already on {route}, skipping navigation");
+                    return;
+                }
+
                 // Try Shell navigation first if it's available
                 if (Shell.Current != null)
                 {
@@ -70,6 +78,37 @@ namespace UltimateHoopers.Helpers
                     Debug.WriteLine($"NavigationHelper: Fallback navigation failed: {fallbackEx.Message}");
                 }
             }
+        }
+
+        private static bool IsAlreadyOnTargetPage(Page currentPage, string targetRoute)
+        {
+            // Clean up the route (remove // or / prefixes)
+            string pageName = targetRoute.Replace("//", "").Replace("/", "");
+
+            // Edge case: empty route
+            if (string.IsNullOrEmpty(pageName))
+            {
+                return false;
+            }
+
+            // Check if current page is the same type as target
+            string currentPageName = currentPage.GetType().Name;
+
+            // Handle special cases with page names
+            if (pageName.Equals("HomePage", StringComparison.OrdinalIgnoreCase) &&
+                currentPageName.Equals("HomePage", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (pageName.Equals("PostsPage", StringComparison.OrdinalIgnoreCase) &&
+                currentPageName.Equals("PostsPage", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            // General case
+            return currentPageName.Equals(pageName, StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>

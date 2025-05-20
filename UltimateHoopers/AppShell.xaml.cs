@@ -151,7 +151,15 @@ namespace UltimateHoopers
                         // Important: Dispatch to main thread for UI operations
                         await MainThread.InvokeOnMainThreadAsync(() =>
                         {
-                            Application.Current.MainPage = loginPage;
+                            try
+                            {
+                                Application.Current.MainPage = loginPage;
+                                System.Diagnostics.Debug.WriteLine("Successfully set MainPage to LoginPage");
+                            }
+                            catch (Exception ex)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"Error setting MainPage: {ex.Message}");
+                            }
                         });
                     }
                     catch (Exception ex)
@@ -276,6 +284,13 @@ namespace UltimateHoopers
         {
             try
             {
+                // Check if we're already on the notifications page
+                if (Shell.Current?.CurrentPage is NotificationsPage)
+                {
+                    System.Diagnostics.Debug.WriteLine("Already on Notifications page, skipping navigation");
+                    return;
+                }
+
                 await Shell.Current.GoToAsync("//notificationspage");
             }
             catch (Exception ex)
