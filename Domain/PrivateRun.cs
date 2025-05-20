@@ -13,8 +13,11 @@ namespace Domain
         public DateTime? RunDate { get; set; }
         
         public decimal? Cost { get; set; }
-        public string? Title { get; set; }
-        public string? Location { get; set; }
+        public string? Name { get; set; }
+        public string? Address { get; set; }
+        public string? City { get; set; }
+        public string? State { get; set; }
+        public string? Zip { get; set; }
         public string? Description { get; set; }
         public string? RunTime { get; set; }
         public string? EndTime { get; set; }

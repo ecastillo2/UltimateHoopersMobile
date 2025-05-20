@@ -195,10 +195,8 @@ namespace UltimateHoopers.Services
                                     PrivateRunId = item.PrivateRunId,
                                     CourtId = item.CourtId,
                                     ProfileId = item.ProfileId,
-                                    Title = item.Title,
                                     Type = item.Type,
                                     Status = item.Status,
-                                    Location = item.Location,
                                     SkillLevel = item.SkillLevel,
                                     PlayerLimit = item.PlayerLimit,
                                     

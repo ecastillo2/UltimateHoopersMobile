@@ -1,18 +1,27 @@
 ﻿using Domain; // Import Domain namespace for AccountType enum
 using Microsoft.Maui.Controls;
 using System;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using UltimateHoopers.Helpers;
+using UltimateHoopers.Services;
+using UltimateHoopers.ViewModels;
 
 namespace UltimateHoopers.Pages
 {
     public partial class FindRunsPage : ContentPage
     {
         private bool _isMapView = false;
+        // ViewModel for data binding
+        private PrivateRunViewModel _viewModel;
 
         public FindRunsPage()
         {
             InitializeComponent();
+
+            // Create and initialize the ViewModel
+            _viewModel = new PrivateRunViewModel();
+            BindingContext = _viewModel;
 
             // Set default values for filters
             if (DatePicker.Items.Count > 0)
@@ -21,6 +30,8 @@ namespace UltimateHoopers.Pages
             if (SkillLevelPicker.Items.Count > 0)
                 SkillLevelPicker.SelectedIndex = 0;
 
+            // Load data when page appears
+            Loaded += OnPageLoaded;
             // Update UI based on user account type
             UpdateCreateRunButtonVisibility();
         }
@@ -31,6 +42,19 @@ namespace UltimateHoopers.Pages
 
             // Make sure the UI is updated when the page appears
             UpdateCreateRunButtonVisibility();
+        }
+
+        private async void OnPageLoaded(object sender, EventArgs e)
+        {
+            try
+            {
+                await _viewModel.LoadRunsAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading hoopers: {ex.Message}");
+                await DisplayAlert("Error", "Could not load player data. Please try again later.", "OK");
+            }
         }
 
         // Update the Create Run button visibility based on account type
@@ -283,6 +307,164 @@ namespace UltimateHoopers.Pages
         {
             await DisplayAlert("Load More", "Loading more games...", "OK");
             // In a real app, you would load the next page of results
+        }
+    }
+
+    public class PrivateRunsViewModel : BindableObject
+    {
+        private ObservableCollection<PrivateRunViewModel> _allHoopers = new ObservableCollection<PrivateRunViewModel>();
+        private ObservableCollection<PrivateRunViewModel> _filteredHoopers = new ObservableCollection<PrivateRunViewModel>();
+        private bool _isLoading;
+
+        public ObservableCollection<PrivateRunViewModel> FilteredHoopers
+        {
+            get => _filteredHoopers;
+            private set
+            {
+                _filteredHoopers = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool IsNotLoading
+        {
+            get => !_isLoading;
+        }
+
+        public bool IsLoading
+        {
+            get => _isLoading;
+            set
+            {
+                if (_isLoading != value)
+                {
+                    _isLoading = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(IsNotLoading));
+                }
+            }
+        }
+
+        public async Task LoadRunsAsync()
+        {
+            try
+            {
+                IsLoading = true;
+
+                // Add a small delay to ensure the loading indicator is visible
+                //await Task.Delay(300);
+
+                // Try to get profile service from DI
+                var serviceProvider = MauiProgram.CreateMauiApp().Services;
+                var profileService = serviceProvider.GetService<IPrivateRunService>();
+
+                if (profileService == null)
+                {
+                    // Fallback if service is not available through DI
+                    profileService = new PrivateRunService();
+                }
+
+                // Load private run
+                var profiles = await profileService.GetPrivateRunsAsync();
+
+                // Convert to view models
+                _allHoopers.Clear();
+                if (profiles != null)
+                {
+                    foreach (var profile in profiles)
+                    {
+                        try
+                        {
+                            var hooper = new PrivateRunViewModel
+                            {
+                                //Private Run
+                                PrivateRunId = profile.PrivateRunId,
+                                ProfileId = profile.ProfileId,
+                                Status = profile.Status,
+                                RunDate = profile.RunDate,
+                                Cost = profile.Cost,
+                                RunTime = profile.RunTime,
+                                EndTime = profile.EndTime,
+                                Type = profile.Type,
+                                PrivateRunNumber = profile.PrivateRunNumber,
+                                SkillLevel = profile.SkillLevel,
+                                PlayerLimit = profile.PlayerLimit,
+                               
+                                //Court
+                                CourtId = profile.Court.CourtId,
+                                CourtImage = profile.Court.ImageURL,
+                                Name = profile.Court.Name,
+                                Address = profile.Court.Address,
+                                City = profile.Court.City,
+                                State = profile.Court.State,
+                                Zip = profile.Court.Zip,
+                                Url = profile.Court.Url,
+
+                                JoinedPlayers = (List<PrivateRunInvite>)profile.PrivateRunInviteList
+
+                            };
+
+                           
+
+                            _allHoopers.Add(hooper);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Error converting profile to hooper model: {ex.Message}");
+                        }
+                    }
+                }
+
+                // Initialize filtered hoopers with all hoopers
+                FilteredHoopers = new ObservableCollection<PrivateRunViewModel>(_allHoopers);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading profiles: {ex.Message}");
+                throw; // Let the page handle this exception
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        public void FilterHoopers(string searchText)
+        {
+            if (_allHoopers == null || _allHoopers.Count == 0)
+                return;
+
+            if (string.IsNullOrWhiteSpace(searchText))
+            {
+                // Reset to show all hoopers
+                FilteredHoopers = new ObservableCollection<PrivateRunViewModel>(_allHoopers);
+                return;
+            }
+
+            // Remove @ symbol if present
+            searchText = searchText.TrimStart('@').ToLower();
+
+            // Filter by username
+            var filtered = _allHoopers.Where(h => h.Name.ToLower().Contains(searchText)).ToList();
+            FilteredHoopers = new ObservableCollection<PrivateRunViewModel>(filtered);
+        }
+
+        public void ZipByPosition(string zip)
+        {
+            if (_allHoopers == null || _allHoopers.Count == 0)
+                return;
+
+            var filtered = _allHoopers.Where(h => h.Zip.Contains(zip)).ToList();
+            FilteredHoopers = new ObservableCollection<PrivateRunViewModel>(filtered);
+        }
+
+        public void FilterByAddress(string address)
+        {
+            if (_allHoopers == null || _allHoopers.Count == 0)
+                return;
+
+            var filtered = _allHoopers.Where(h => h.Address.Contains(address)).ToList();
+            FilteredHoopers = new ObservableCollection<PrivateRunViewModel>(filtered);
         }
     }
 }

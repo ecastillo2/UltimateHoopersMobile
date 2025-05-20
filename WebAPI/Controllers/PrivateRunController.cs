@@ -100,7 +100,8 @@ namespace WebAPI.Controllers
                 var (privateRuns, nextCursor) = await _privateRunRepository
                     .GetPrivateRunsWithCursorAsync(cursor, limit, direction, sortBy, cancellationToken);
 
-                var viewModels = privateRuns.Select(p => new PrivateRunViewModelDto(p)).ToList();
+                // Create a list to hold our detailed profile view models
+                var detailedViewModels = new List<PrivateRunDetailViewModelDto>();
 
 
                 // Enrich each profile with additional data
@@ -121,14 +122,14 @@ namespace WebAPI.Controllers
                     };
 
                     // Add to our list
-                    viewModels.Add(detailedViewModel);
+                    detailedViewModels.Add(detailedViewModel);
                 }
 
 
 
-                var result = new CursorPaginatedResultDto<PrivateRunViewModelDto>
+                var result = new CursorPaginatedResultDto<PrivateRunDetailViewModelDto>
                 {
-                    Items = viewModels,
+                    Items = detailedViewModels,
                     NextCursor = nextCursor,
                     HasMore = !string.IsNullOrEmpty(nextCursor),
                     Direction = direction,
