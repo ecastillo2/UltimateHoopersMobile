@@ -252,7 +252,7 @@ HasShadow="True">
                         </VerticalStackLayout>
 
                         <Frame.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnPostsClicked" />
+                            <TapGestureRecognizer Tapped="OnLeaguesClicked" />
                         </Frame.GestureRecognizers>
                     </Frame>
 
@@ -276,7 +276,7 @@ HasShadow="True">
                         </VerticalStackLayout>
 
                         <Frame.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnShopClicked" />
+                            <TapGestureRecognizer Tapped="OnEventsClicked" />
                         </Frame.GestureRecognizers>
                     </Frame>
                 </Grid>

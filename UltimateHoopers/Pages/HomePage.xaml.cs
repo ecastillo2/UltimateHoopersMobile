@@ -511,7 +511,17 @@ namespace UltimateHoopers.Pages
 
         private async void OnTeamsClicked(object sender, EventArgs e)
         {
-            await DisplayAlert("Teams", "Teams feature coming soon!", "OK");
+            await DisplayAlert("Squad", "Bring your own squad feature coming soon!", "OK");
+        }
+
+        private async void OnEventsClicked(object sender, EventArgs e)
+        {
+            await DisplayAlert("Events", "Events coming soon!", "OK");
+        }
+        
+            private async void OnLeaguesClicked(object sender, EventArgs e)
+        {
+            await DisplayAlert("Leagues", "Leagues coming soon!", "OK");
         }
 
         private async void OnPostsClicked(object sender, EventArgs e)
