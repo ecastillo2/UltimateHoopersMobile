@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui.Controls;
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using UltimateHoopers.Pages;
@@ -70,20 +71,104 @@ namespace UltimateHoopers
             });
         }
 
+        public async Task EnsureCorrectNavigationStack()
+        {
+            try
+            {
+                Debug.WriteLine("AppShell: EnsureCorrectNavigationStack called");
+
+                // Register all routes if not already registered
+                RegisterAllRoutes();
+
+                // Try to reset internal navigation state
+                if (Navigation != null && Navigation.NavigationStack.Count > 1)
+                {
+                    Debug.WriteLine("AppShell: Clearing navigation stack");
+
+                    // Clear all but the first page in the navigation stack
+                    var firstPage = Navigation.NavigationStack.FirstOrDefault();
+                    for (int i = Navigation.NavigationStack.Count - 1; i > 0; i--)
+                    {
+                        Navigation.RemovePage(Navigation.NavigationStack[i]);
+                    }
+                }
+
+                Debug.WriteLine("AppShell: Navigation stack cleared/reset");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"AppShell: Error in EnsureCorrectNavigationStack: {ex.Message}");
+            }
+        }
+
         private void RegisterRoutes()
         {
-            // Register routes for navigation
-            Routing.RegisterRoute("homepage", typeof(Pages.HomePage));
-            Routing.RegisterRoute("postspage", typeof(Pages.PostsPage));
-            Routing.RegisterRoute("hooperspage", typeof(Pages.HoopersPage));
-            Routing.RegisterRoute("statspage", typeof(Pages.StatsPage));
-            Routing.RegisterRoute("findrunspage", typeof(Pages.FindRunsPage));
-            Routing.RegisterRoute("shoppage", typeof(Pages.ShopPage));
-            Routing.RegisterRoute("editprofilepage", typeof(Pages.EditProfilePage));
-            Routing.RegisterRoute("createaccount", typeof(CreateAccountPage));
-            Routing.RegisterRoute("notificationspage", typeof(Pages.NotificationsPage));
-            Routing.RegisterRoute("notificationsettingspage", typeof(Pages.NotificationSettingsPage));
-            // Add additional routes as you create more pages
+            try
+            {
+                // Register routes for navigation
+                RegisterAllRoutes();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"AppShell: Error registering routes: {ex.Message}");
+
+                // Try again with individual routes in try/catch blocks
+                try { Routing.RegisterRoute("homepage", typeof(Pages.HomePage)); } catch { }
+                try { Routing.RegisterRoute("postspage", typeof(Pages.PostsPage)); } catch { }
+                try { Routing.RegisterRoute("hooperspage", typeof(Pages.HoopersPage)); } catch { }
+                try { Routing.RegisterRoute("statspage", typeof(Pages.StatsPage)); } catch { }
+            }
+        }
+
+        private void RegisterAllRoutes()
+        {
+            // Check if route is already registered before trying to register it
+            if (!Routing.IsRouteRegistered("homepage"))
+                Routing.RegisterRoute("homepage", typeof(Pages.HomePage));
+
+            if (!Routing.IsRouteRegistered("postspage"))
+                Routing.RegisterRoute("postspage", typeof(Pages.PostsPage));
+
+            if (!Routing.IsRouteRegistered("hooperspage"))
+                Routing.RegisterRoute("hooperspage", typeof(Pages.HoopersPage));
+
+            if (!Routing.IsRouteRegistered("statspage"))
+                Routing.RegisterRoute("statspage", typeof(Pages.StatsPage));
+
+            if (!Routing.IsRouteRegistered("findrunspage"))
+                Routing.RegisterRoute("findrunspage", typeof(Pages.FindRunsPage));
+
+            if (!Routing.IsRouteRegistered("shoppage"))
+                Routing.RegisterRoute("shoppage", typeof(Pages.ShopPage));
+
+            if (!Routing.IsRouteRegistered("editprofilepage"))
+                Routing.RegisterRoute("editprofilepage", typeof(Pages.EditProfilePage));
+
+            if (!Routing.IsRouteRegistered("createaccount"))
+                Routing.RegisterRoute("createaccount", typeof(Pages.CreateAccountPage));
+
+            if (!Routing.IsRouteRegistered("notificationspage"))
+                Routing.RegisterRoute("notificationspage", typeof(Pages.NotificationsPage));
+
+            if (!Routing.IsRouteRegistered("notificationsettingspage"))
+                Routing.RegisterRoute("notificationsettingspage", typeof(Pages.NotificationSettingsPage));
+        }
+
+        // Helper extension method to check if a route is registered
+        public static class RoutingExtensions
+        {
+            public static bool IsRouteRegistered(this IRoutingService service, string route)
+            {
+                try
+                {
+                    var routes = Routing.GetRoutes();
+                    return routes.Contains(route);
+                }
+                catch
+                {
+                    return false;
+                }
+            }
         }
 
         private async Task ShowHelpDialog()

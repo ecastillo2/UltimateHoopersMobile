@@ -22,43 +22,72 @@ namespace UltimateHoopers
             try
             {
                 DiagnosticHelper.Log("App constructor starting");
+
+                // Enable diagnostic mode for page initialization
+                PageInitializationHelper.EnableDiagnosticMode();
+
                 InitializeComponent();
                 DiagnosticHelper.Log("InitializeComponent complete");
 
+                // Set up global error handling
+                AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
+                TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
+
                 // Check for existing authentication
                 InitializeAsync();
+
                 // Show splash screen on startup
                 // Use code-only splash screen 
-                MainPage = new CodeSplashScreen();
+                var splashScreen = new CodeSplashScreen();
+
+                // Monitor the splash screen's lifecycle
+                PageInitializationHelper.MonitorPageLifecycle(splashScreen);
+
+                MainPage = splashScreen;
                 DiagnosticHelper.Log("InitializeAsync called");
             }
             catch (Exception ex)
             {
                 DiagnosticHelper.LogException(ex, "App constructor");
-                MainPage = new ContentPage
+
+                // Create a simple error page
+                var errorPage = new ContentPage
                 {
+                    BackgroundColor = Colors.White,
                     Content = new VerticalStackLayout
                     {
                         Children =
-                        {
-                            new Label
-                            {
-                                Text = "Startup Error",
-                                FontSize = 22,
-                                FontAttributes = FontAttributes.Bold,
-                                HorizontalOptions = LayoutOptions.Center
-                            },
-                            new Label
-                            {
-                                Text = ex.Message,
-                                HorizontalOptions = LayoutOptions.Center,
-                                VerticalOptions = LayoutOptions.Center
-                            }
-                        },
+                {
+                    new Label
+                    {
+                        Text = "Startup Error",
+                        FontSize = 22,
+                        FontAttributes = FontAttributes.Bold,
+                        HorizontalOptions = LayoutOptions.Center
+                    },
+                    new Label
+                    {
+                        Text = ex.Message,
+                        HorizontalOptions = LayoutOptions.Center,
+                        VerticalOptions = LayoutOptions.Center
+                    },
+                    new Button
+                    {
+                        Text = "Retry",
+                        HorizontalOptions = LayoutOptions.Center,
+                        Margin = new Thickness(0, 20, 0, 0),
+                        Command = new Command(() => {
+                            // Try to restart the app by showing the login page
+                            MainPage = new LoginPage();
+                        })
+                    }
+                },
                         VerticalOptions = LayoutOptions.Center,
                         Padding = new Thickness(20)
                     }
                 };
+
+                MainPage = errorPage;
             }
         }
 
@@ -139,6 +168,12 @@ namespace UltimateHoopers
                             {
                                 MainPage = appShell;
                                 DiagnosticHelper.Log("Set MainPage to AppShell");
+
+                                // Mark that auto-login is in progress
+                                UltimateHoopers.Helpers.AutoLoginNavigationHelper.IsInitialNavigationComplete = false;
+
+                                // Give shell time to initialize
+                                await Task.Delay(500);
                             }
                             catch (Exception shellEx)
                             {
@@ -148,6 +183,12 @@ namespace UltimateHoopers
                                 {
                                     MainPage = new AppShell(authService);
                                     DiagnosticHelper.Log("Set MainPage to new AppShell (fallback)");
+
+                                    // Still mark as auto-login
+                                    UltimateHoopers.Helpers.AutoLoginNavigationHelper.IsInitialNavigationComplete = false;
+
+                                    // Give shell time to initialize
+                                    await Task.Delay(500);
                                 }
                                 catch (Exception fallbackEx)
                                 {
@@ -159,12 +200,21 @@ namespace UltimateHoopers
                             }
 
                             // Navigate to PostsPage after a short delay to ensure shell is initialized
-                            await Task.Delay(300);  // Increase delay for better initialization
+                            await Task.Delay(500);  // Increase delay for better initialization
 
                             // Safely set the Posts page as the current page
                             try
                             {
+                                // Use the helper to ensure Shell is fully initialized
+                                await UltimateHoopers.Helpers.AutoLoginNavigationHelper.EnsureShellInitializedAsync();
+
+                                // Now try to set the initial page
                                 SetInitialPage(appShell);
+
+                                // Mark initial navigation as complete
+                                UltimateHoopers.Helpers.AutoLoginNavigationHelper.IsInitialNavigationComplete = true;
+
+                                DiagnosticHelper.Log("Initial navigation completed successfully");
                             }
                             catch (Exception navEx)
                             {

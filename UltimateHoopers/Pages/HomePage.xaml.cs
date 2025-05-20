@@ -1,6 +1,7 @@
-﻿using System;
-using Microsoft.Maui.Controls;
+﻿using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Xaml;
+using System;
+using System.Diagnostics;
 using UltimateHoopers.Helpers; // Add this to import NavigationHelper
 
 namespace UltimateHoopers.Pages
@@ -18,55 +19,165 @@ namespace UltimateHoopers.Pages
         {
             try
             {
+                Debug.WriteLine("HomePage: Initializing user profile");
+
                 // Check if App.User exists
                 if (App.User == null)
                 {
-                    Console.WriteLine("App.User is null. User may not be logged in.");
-                    return;
+                    Debug.WriteLine("HomePage: App.User is null, creating empty profile");
+                    // Create a placeholder user to prevent crashes
+                    App.User = new Domain.User
+                    {
+                        Profile = new Domain.Profile
+                        {
+                            UserName = "User"
+                        }
+                    };
                 }
 
                 // Check if App.User.Profile exists
                 if (App.User.Profile == null)
                 {
-                    Console.WriteLine("App.User.Profile is null. User profile hasn't been loaded yet.");
-                    return;
+                    Debug.WriteLine("HomePage: App.User.Profile is null, creating empty profile");
+                    App.User.Profile = new Domain.Profile
+                    {
+                        UserName = "User"
+                    };
                 }
 
-                // Load profile image if available
-                if (!string.IsNullOrEmpty(App.User.Profile.ImageURL))
+                // Safely update UI with profile data
+                try
                 {
-                    try
+                    // Load profile image if available
+                    if (!string.IsNullOrEmpty(App.User.Profile.ImageURL))
                     {
-                        ProfileImage.Source = App.User.Profile.ImageURL;
-                        ProfileImage.IsVisible = true;
+                        try
+                        {
+                            Debug.WriteLine("HomePage: Setting profile image");
+                            ProfileImage.Source = App.User.Profile.ImageURL;
+                            ProfileImage.IsVisible = true;
+                        }
+                        catch (Exception imgEx)
+                        {
+                            Debug.WriteLine($"HomePage: Error loading profile image: {imgEx.Message}");
+                            ProfileImage.IsVisible = false;
+                        }
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        Console.WriteLine($"Error loading profile image: {ex.Message}");
-                        // Optionally set a default image
-                        // ProfileImage.Source = "default_profile.png";
+                        // No image URL is available, ensure image is not visible
                         ProfileImage.IsVisible = false;
                     }
                 }
-                else
+                catch (Exception uiEx)
                 {
-                    // No image URL is available, ensure image is not visible
-                    ProfileImage.IsVisible = false;
+                    Debug.WriteLine($"HomePage: Error updating UI: {uiEx.Message}");
                 }
             }
             catch (Exception ex)
             {
                 // Log any unexpected errors
-                Console.WriteLine($"Error in InitializeUserProfile: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                Debug.WriteLine($"HomePage: Error in InitializeUserProfile: {ex.Message}");
             }
         }
 
-        // Updated navigation methods using NavigationHelper
+        protected override void OnAppearing()
+        {
+            try
+            {
+                base.OnAppearing();
+                Debug.WriteLine("HomePage: OnAppearing called");
+
+                // Ensure UI is properly initialized
+                InitializeUserProfile();
+
+                // Make sure Shell navigation is properly set up
+                EnsureShellConfiguration();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"HomePage: Error in OnAppearing: {ex.Message}");
+            }
+        }
+
+        private void EnsureShellConfiguration()
+        {
+            try
+            {
+                // If we're in a Shell environment
+                if (Shell.Current != null)
+                {
+                    // Make sure navigation bar is visible
+                    Shell.SetNavBarIsVisible(this, true);
+
+                    // Try to set this page as the current tab
+                    if (Shell.Current.Items.Count > 0)
+                    {
+                        var item = Shell.Current.Items.FirstOrDefault(i => i.Route?.Contains("HomePage") == true);
+                        if (item != null)
+                        {
+                            Debug.WriteLine("HomePage: Setting current Shell item to HomePage");
+                            Shell.Current.CurrentItem = item;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"HomePage: Error configuring Shell: {ex.Message}");
+            }
+        }
+
+        private async void OnHomeClicked(object sender, EventArgs e)
+        {
+            try
+            {
+                Debug.WriteLine("PostsPage: OnHomeClicked - using DirectNavigationHelper");
+
+                // Use the simpler, more direct navigation helper
+                await DirectNavigationHelper.GoToHomePageAsync();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"PostsPage: Error navigating to HomePage: {ex.Message}");
+
+                // Show an error message to the user
+                await DisplayAlert("Navigation Error",
+                    "Could not navigate to home page. Please try again or restart the app.",
+                    "OK");
+            }
+        }
 
         private async void OnStatsClicked(object sender, EventArgs e)
         {
-            await NavigationHelper.NavigateTo(this, "//StatsPage");
+            try
+            {
+                // Check if we're already on the PostsPage
+                Page currentPage = null;
+
+                if (Shell.Current != null)
+                {
+                    currentPage = Shell.Current.CurrentPage;
+                }
+                else if (Application.Current?.MainPage != null)
+                {
+                    currentPage = Application.Current.MainPage;
+                }
+
+                // If we're already on PostsPage, do nothing
+                if (currentPage is StatsPage)
+                {
+                    Console.WriteLine("Already on PostsPage, skipping navigation");
+                    return;
+                }
+
+                Console.WriteLine("Navigating to StatsPage");
+                await NavigationHelper.NavigateTo(this, "//StatsPage");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error navigating to PostsPage: {ex.Message}");
+            }
         }
 
         private async void OnFindGamesClicked(object sender, EventArgs e)
