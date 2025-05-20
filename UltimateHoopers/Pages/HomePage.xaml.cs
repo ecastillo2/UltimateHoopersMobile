@@ -131,170 +131,141 @@ namespace UltimateHoopers.Pages
 
         private async void OnHomeClicked(object sender, EventArgs e)
         {
-            try
-            {
-                Debug.WriteLine("HomePage: OnHomeClicked - using DirectNavigationHelper");
-
-                // Use the simpler, more direct navigation helper
-                await DirectNavigationHelper.GoToHomePageAsync();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"HomePage: Error navigating to HomePage: {ex.Message}");
-
-                // Show an error message to the user
-                await DisplayAlert("Navigation Error",
-                    "Could not navigate to home page. Please try again or restart the app.",
-                    "OK");
-            }
+            // We're already on the home page, so no navigation needed
+            Debug.WriteLine("HomePage: Already on HomePage, no navigation needed");
         }
 
-        private async void OnStatsClicked(object sender, EventArgs e)
+        // Unified navigation method to handle all navigation with consistent approach
+        private async Task NavigateToPage(string routeName)
         {
             try
             {
-                Debug.WriteLine("HomePage: OnStatsClicked - Starting navigation to Stats page");
+                Debug.WriteLine($"HomePage: Attempting to navigate to {routeName}");
+                string route = $"//{routeName}";
 
                 // Try multiple navigation methods in order of preference
+                Exception lastException = null;
 
-                // Method 1: Use Shell Navigation if available
+                // Method 1: Use Shell Navigation if available (preferred)
                 if (Shell.Current != null)
                 {
                     try
                     {
-                        Debug.WriteLine("HomePage: Using Shell.GoToAsync to navigate to StatsPage");
-                        await Shell.Current.GoToAsync("//StatsPage");
+                        Debug.WriteLine($"HomePage: Using Shell.GoToAsync to navigate to {route}");
+                        await Shell.Current.GoToAsync(route);
                         return;
                     }
                     catch (Exception shellEx)
                     {
+                        lastException = shellEx;
                         Debug.WriteLine($"HomePage: Shell navigation failed: {shellEx.Message}");
-                        // Fall through to next method
                     }
                 }
 
-                // Method 2: Try regular page navigation if shell navigation failed
+                // Method 2: Try regular page navigation
                 try
                 {
-                    Debug.WriteLine("HomePage: Using Navigation.PushAsync to navigate to StatsPage");
-                    // Create a new instance of StatsPage
+                    // Create a new instance of the target page
                     var serviceProvider = MauiProgram.CreateMauiApp().Services;
-                    var statsPage = serviceProvider.GetService<StatsPage>() ?? new StatsPage();
+                    Page targetPage = null;
 
-                    await Navigation.PushAsync(statsPage);
-                    return;
+                    // Get the appropriate page based on the route name
+                    switch (routeName)
+                    {
+                        case "StatsPage":
+                            targetPage = serviceProvider.GetService<StatsPage>() ?? new StatsPage();
+                            break;
+                        case "FindRunsPage":
+                            targetPage = serviceProvider.GetService<FindRunsPage>() ?? new FindRunsPage();
+                            break;
+                        case "HoopersPage":
+                            targetPage = serviceProvider.GetService<HoopersPage>() ?? new HoopersPage();
+                            break;
+                        case "PostsPage":
+                            targetPage = serviceProvider.GetService<PostsPage>() ?? new PostsPage();
+                            break;
+                        case "ShopPage":
+                            targetPage = serviceProvider.GetService<ShopPage>() ?? new ShopPage();
+                            break;
+                        case "EditProfilePage":
+                            targetPage = serviceProvider.GetService<EditProfilePage>() ?? new EditProfilePage();
+                            break;
+                        default:
+                            targetPage = new HomePage(); // Default fallback to HomePage
+                            break;
+                    }
+
+                    if (targetPage != null && Navigation != null)
+                    {
+                        Debug.WriteLine($"HomePage: Using Navigation.PushAsync to navigate to {routeName}");
+                        await Navigation.PushAsync(targetPage);
+                        return;
+                    }
                 }
                 catch (Exception navEx)
                 {
+                    lastException = navEx;
                     Debug.WriteLine($"HomePage: Navigation.PushAsync failed: {navEx.Message}");
-                    // Fall through to next method
                 }
 
                 // Method 3: Use NavigationHelper as a fallback
                 try
                 {
-                    Debug.WriteLine("HomePage: Using NavigationHelper to navigate to StatsPage");
-                    await NavigationHelper.NavigateTo(this, "//StatsPage");
+                    Debug.WriteLine($"HomePage: Using NavigationHelper to navigate to {route}");
+                    await NavigationHelper.NavigateTo(this, route);
                     return;
                 }
                 catch (Exception helperEx)
                 {
+                    lastException = helperEx;
                     Debug.WriteLine($"HomePage: NavigationHelper failed: {helperEx.Message}");
-                    // Fall through to final method
                 }
 
-                // Method 4: Last resort - direct page setting
-                Debug.WriteLine("HomePage: Using DirectNavigationHelper as last resort");
-                await DirectNavigationHelper.GoToPageAsync("StatsPage");
+                // Method A4: Use DirectNavigationHelper as a last resort
+                try
+                {
+                    Debug.WriteLine($"HomePage: Using DirectNavigationHelper as last resort");
+                    await DirectNavigationHelper.GoToPageAsync(routeName);
+                    return;
+                }
+                catch (Exception directEx)
+                {
+                    lastException = directEx;
+                    Debug.WriteLine($"HomePage: DirectNavigationHelper failed: {directEx.Message}");
+                }
+
+                // If all navigation methods failed, show an error to the user
+                if (lastException != null)
+                {
+                    Debug.WriteLine($"HomePage: All navigation methods failed: {lastException.Message}");
+                    await DisplayAlert("Navigation Error",
+                        $"Could not navigate to {routeName}. Please try again.",
+                        "OK");
+                }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"HomePage: Unhandled error navigating to StatsPage: {ex.Message}");
+                Debug.WriteLine($"HomePage: Unhandled error navigating to {routeName}: {ex.Message}");
                 await DisplayAlert("Navigation Error",
-                    "Could not navigate to Stats page. Please try again or restart the app.",
+                    $"Could not navigate to {routeName}. Please try again or restart the app.",
                     "OK");
             }
+        }
+
+        // All card click handlers now use the unified navigation method
+        private async void OnStatsClicked(object sender, EventArgs e)
+        {
+            await NavigateToPage("StatsPage");
         }
 
         private async void OnFindGamesClicked(object sender, EventArgs e)
         {
-            try
-            {
-                Debug.WriteLine("HomePage: OnStatsClicked - Starting navigation to Stats page");
-
-                // Try multiple navigation methods in order of preference
-
-                // Method 1: Use Shell Navigation if available
-                if (Shell.Current != null)
-                {
-                    try
-                    {
-                        Debug.WriteLine("HomePage: Using Shell.GoToAsync to navigate to StatsPage");
-                        await Shell.Current.GoToAsync("//FindRunsPage");
-                        return;
-                    }
-                    catch (Exception shellEx)
-                    {
-                        Debug.WriteLine($"HomePage: Shell navigation failed: {shellEx.Message}");
-                        // Fall through to next method
-                    }
-                }
-
-                // Method 2: Try regular page navigation if shell navigation failed
-                try
-                {
-                    Debug.WriteLine("HomePage: Using Navigation.PushAsync to navigate to StatsPage");
-                    // Create a new instance of StatsPage
-                    var serviceProvider = MauiProgram.CreateMauiApp().Services;
-                    var statsPage = serviceProvider.GetService<FindRunsPage>() ?? new FindRunsPage();
-
-                    await Navigation.PushAsync(statsPage);
-                    return;
-                }
-                catch (Exception navEx)
-                {
-                    Debug.WriteLine($"HomePage: Navigation.PushAsync failed: {navEx.Message}");
-                    // Fall through to next method
-                }
-
-                // Method 3: Use NavigationHelper as a fallback
-                try
-                {
-                    Debug.WriteLine("HomePage: Using NavigationHelper to navigate to FindRunsPage");
-                    await NavigationHelper.NavigateTo(this, "//FindRunsPage");
-                    return;
-                }
-                catch (Exception helperEx)
-                {
-                    Debug.WriteLine($"HomePage: NavigationHelper failed: {helperEx.Message}");
-                    // Fall through to final method
-                }
-
-                // Method 4: Last resort - direct page setting
-                Debug.WriteLine("HomePage: Using DirectNavigationHelper as last resort");
-                await DirectNavigationHelper.GoToPageAsync("FindRunsPage");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"HomePage: Unhandled error navigating to StatsPage: {ex.Message}");
-                await DisplayAlert("Navigation Error",
-                    "Could not navigate to Stats page. Please try again or restart the app.",
-                    "OK");
-            }
+            await NavigateToPage("FindRunsPage");
         }
 
         private async void OnHoopersClicked(object sender, EventArgs e)
         {
-            try
-            {
-                Debug.WriteLine("HomePage: OnHoopersClicked - Starting navigation to HoopersPage");
-                await Shell.Current.GoToAsync("//HoopersPage");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"HomePage: Error navigating to HoopersPage: {ex.Message}");
-                await DisplayAlert("Navigation Error", "Could not navigate to Hoopers page", "OK");
-            }
+            await NavigateToPage("HoopersPage");
         }
 
         private async void OnTeamsClicked(object sender, EventArgs e)
@@ -304,71 +275,28 @@ namespace UltimateHoopers.Pages
 
         private async void OnPostsClicked(object sender, EventArgs e)
         {
-            try
-            {
-                Debug.WriteLine("HomePage: OnPostsClicked - Starting navigation to PostsPage");
-                await Shell.Current.GoToAsync("//PostsPage");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"HomePage: Error navigating to PostsPage: {ex.Message}");
-                await DisplayAlert("Navigation Error", "Could not navigate to Posts page", "OK");
-            }
+            await NavigateToPage("PostsPage");
         }
 
         private async void OnShopClicked(object sender, EventArgs e)
         {
-            try
-            {
-                Debug.WriteLine("HomePage: OnShopClicked - Starting navigation to ShopPage");
-                await Shell.Current.GoToAsync("//ShopPage");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"HomePage: Error navigating to ShopPage: {ex.Message}");
-                await DisplayAlert("Navigation Error", "Could not navigate to Shop page", "OK");
-            }
+            await NavigateToPage("ShopPage");
         }
 
         private async void OnProfileClicked(object sender, EventArgs e)
         {
-            try
-            {
-                Debug.WriteLine("HomePage: OnProfileClicked - Starting navigation to EditProfilePage");
-                await Shell.Current.GoToAsync("//EditProfilePage");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"HomePage: Error navigating to EditProfilePage: {ex.Message}");
-                await DisplayAlert("Navigation Error", "Could not navigate to Profile page", "OK");
-            }
+            await NavigateToPage("EditProfilePage");
         }
 
+        // Navigation bar handlers
         private async void OnPostsNavigationClicked(object sender, TappedEventArgs e)
         {
-            try
-            {
-                Debug.WriteLine("HomePage: OnPostsNavigationClicked - Starting navigation to PostsPage");
-
-                // Check if we're already on the PostsPage
-                if (Shell.Current?.CurrentPage is PostsPage)
-                {
-                    Debug.WriteLine("Already on PostsPage, skipping navigation");
-                    return;
-                }
-
-                await Shell.Current.GoToAsync("//PostsPage");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"HomePage: Error navigating to PostsPage: {ex.Message}");
-                await DisplayAlert("Navigation Error", "Could not navigate to Posts page", "OK");
-            }
+            await NavigateToPage("PostsPage");
         }
 
         private void OnHomeNavigationClicked(object sender, TappedEventArgs e)
         {
-            // We're already on HomePage, so do nothing
+            // We're already on HomePage, so no navigation needed
             Debug.WriteLine("Already on HomePage, no navigation needed");
         }
 
