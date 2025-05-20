@@ -91,6 +91,125 @@ namespace UltimateHoopers
             }
         }
 
+        // Event handlers for unhandled exceptions
+        private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            // Log the exception
+            Exception ex = e.ExceptionObject as Exception;
+            DiagnosticHelper.LogException(ex, "Unhandled exception");
+
+            // Since this is an app-domain level exception, we can't really recover
+            // Just log it and let the app crash, or try to show an error message if possible
+            try
+            {
+                if (MainThread.IsMainThread)
+                {
+                    ShowFatalErrorPage(ex);
+                }
+                else
+                {
+                    MainThread.BeginInvokeOnMainThread(() => {
+                        ShowFatalErrorPage(ex);
+                    });
+                }
+            }
+            catch
+            {
+                // If this also fails, there's not much we can do
+            }
+        }
+
+        // Handler for unobserved task exceptions
+        private void OnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
+        {
+            // Log the exception
+            DiagnosticHelper.LogException(e.Exception, "Unobserved task exception");
+
+            // Mark as observed to prevent app termination
+            e.SetObserved();
+
+            // Try to recover if possible or show error
+            try
+            {
+                MainThread.BeginInvokeOnMainThread(() => {
+                    // If this is a critical error, show a message
+                    if (IsCriticalException(e.Exception))
+                    {
+                        ShowErrorMessage("An unexpected error occurred. Some features may not work correctly.");
+                    }
+                });
+            }
+            catch
+            {
+                // If this also fails, there's not much we can do
+            }
+        }
+
+        // Helper to determine if an exception is critical
+        private bool IsCriticalException(Exception ex)
+        {
+            // Define which exceptions are considered critical
+            return ex is OutOfMemoryException
+                || ex is StackOverflowException
+                || ex is AccessViolationException
+                || ex is System.Runtime.InteropServices.SEHException;
+        }
+
+        // Helper to show a fatal error page
+        private void ShowFatalErrorPage(Exception ex)
+        {
+            var errorPage = new ContentPage
+            {
+                BackgroundColor = Colors.White,
+                Content = new VerticalStackLayout
+                {
+                    Children =
+                    {
+                        new Label
+                        {
+                            Text = "Fatal Error",
+                            FontSize = 24,
+                            FontAttributes = FontAttributes.Bold,
+                            HorizontalOptions = LayoutOptions.Center,
+                            Margin = new Thickness(0, 0, 0, 20)
+                        },
+                        new Label
+                        {
+                            Text = "An unexpected error has occurred:",
+                            HorizontalOptions = LayoutOptions.Start
+                        },
+                        new Label
+                        {
+                            Text = ex.Message,
+                            HorizontalOptions = LayoutOptions.Start,
+                            Margin = new Thickness(0, 10, 0, 20)
+                        },
+                        new Button
+                        {
+                            Text = "Restart App",
+                            HorizontalOptions = LayoutOptions.Center,
+                            Command = new Command(() => {
+                                // Try to restart by showing login page
+                                MainPage = new LoginPage();
+                            })
+                        }
+                    },
+                    VerticalOptions = LayoutOptions.Center,
+                    Padding = new Thickness(20)
+                }
+            };
+
+            MainPage = errorPage;
+        }
+
+        // Helper to show a non-fatal error message
+        private void ShowErrorMessage(string message)
+        {
+            if (MainPage == null) return;
+
+            MainPage.DisplayAlert("Error", message, "OK");
+        }
+
         private void SetInitialPage(Shell shell)
         {
             try

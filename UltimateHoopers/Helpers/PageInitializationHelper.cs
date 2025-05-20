@@ -78,22 +78,25 @@ namespace UltimateHoopers.Helpers
             {
                 Debug.WriteLine($"PageInitializationHelper: Attempting recovery for {page.GetType().Name}");
 
-                // Force layout update
-                page.ForceLayout();
-
-                // Try to ensure visibility
+                // Mark the page as visible
                 page.IsVisible = true;
 
-                // If the page has a parent that's a container, try to force layout there too
-                if (page.Parent is Layout parentLayout)
+                // Request a layout update instead of using ForceLayout which doesn't exist in MAUI
+                if (page.Handler != null)
                 {
-                    parentLayout.ForceLayout();
+                    page.InvalidateMeasure();
                 }
 
-                // If the page has content that's a layout, force its layout too
-                if (page.Content is Layout contentLayout)
+                // If the page has a parent that's a layout container, try to invalidate its measure as well
+                if (page.Parent is Layout parentLayout && parentLayout.Handler != null)
                 {
-                    contentLayout.ForceLayout();
+                    parentLayout.InvalidateMeasure();
+                }
+
+                // If the page is a ContentPage, check its content
+                if (page is ContentPage contentPage && contentPage.Content is Layout contentLayout && contentLayout.Handler != null)
+                {
+                    contentLayout.InvalidateMeasure();
                 }
 
                 Debug.WriteLine($"PageInitializationHelper: Recovery attempt completed for {page.GetType().Name}");

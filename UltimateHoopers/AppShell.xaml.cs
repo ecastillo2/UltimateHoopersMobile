@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using UltimateHoopers.Pages;
 using UltimateHoopers.Services;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace UltimateHoopers
 {
@@ -123,53 +125,85 @@ namespace UltimateHoopers
         private void RegisterAllRoutes()
         {
             // Check if route is already registered before trying to register it
-            if (!Routing.IsRouteRegistered("homepage"))
-                Routing.RegisterRoute("homepage", typeof(Pages.HomePage));
-
-            if (!Routing.IsRouteRegistered("postspage"))
-                Routing.RegisterRoute("postspage", typeof(Pages.PostsPage));
-
-            if (!Routing.IsRouteRegistered("hooperspage"))
-                Routing.RegisterRoute("hooperspage", typeof(Pages.HoopersPage));
-
-            if (!Routing.IsRouteRegistered("statspage"))
-                Routing.RegisterRoute("statspage", typeof(Pages.StatsPage));
-
-            if (!Routing.IsRouteRegistered("findrunspage"))
-                Routing.RegisterRoute("findrunspage", typeof(Pages.FindRunsPage));
-
-            if (!Routing.IsRouteRegistered("shoppage"))
-                Routing.RegisterRoute("shoppage", typeof(Pages.ShopPage));
-
-            if (!Routing.IsRouteRegistered("editprofilepage"))
-                Routing.RegisterRoute("editprofilepage", typeof(Pages.EditProfilePage));
-
-            if (!Routing.IsRouteRegistered("createaccount"))
-                Routing.RegisterRoute("createaccount", typeof(Pages.CreateAccountPage));
-
-            if (!Routing.IsRouteRegistered("notificationspage"))
-                Routing.RegisterRoute("notificationspage", typeof(Pages.NotificationsPage));
-
-            if (!Routing.IsRouteRegistered("notificationsettingspage"))
-                Routing.RegisterRoute("notificationsettingspage", typeof(Pages.NotificationSettingsPage));
-        }
-
-        // Helper extension method to check if a route is registered
-        public static class RoutingExtensions
-        {
-            public static bool IsRouteRegistered(this IRoutingService service, string route)
+            // Using our custom tracking mechanism
+            if (!_registeredRoutes.Contains("homepage"))
             {
-                try
-                {
-                    var routes = Routing.GetRoutes();
-                    return routes.Contains(route);
-                }
-                catch
-                {
-                    return false;
-                }
+                Routing.RegisterRoute("homepage", typeof(Pages.HomePage));
+                _registeredRoutes.Add("homepage");
+            }
+
+            if (!_registeredRoutes.Contains("postspage"))
+            {
+                Routing.RegisterRoute("postspage", typeof(Pages.PostsPage));
+                _registeredRoutes.Add("postspage");
+            }
+
+            if (!_registeredRoutes.Contains("hooperspage"))
+            {
+                Routing.RegisterRoute("hooperspage", typeof(Pages.HoopersPage));
+                _registeredRoutes.Add("hooperspage");
+            }
+
+            if (!_registeredRoutes.Contains("statspage"))
+            {
+                Routing.RegisterRoute("statspage", typeof(Pages.StatsPage));
+                _registeredRoutes.Add("statspage");
+            }
+
+            if (!_registeredRoutes.Contains("findrunspage"))
+            {
+                Routing.RegisterRoute("findrunspage", typeof(Pages.FindRunsPage));
+                _registeredRoutes.Add("findrunspage");
+            }
+
+            if (!_registeredRoutes.Contains("shoppage"))
+            {
+                Routing.RegisterRoute("shoppage", typeof(Pages.ShopPage));
+                _registeredRoutes.Add("shoppage");
+            }
+
+            if (!_registeredRoutes.Contains("editprofilepage"))
+            {
+                Routing.RegisterRoute("editprofilepage", typeof(Pages.EditProfilePage));
+                _registeredRoutes.Add("editprofilepage");
+            }
+
+            if (!_registeredRoutes.Contains("createaccount"))
+            {
+                Routing.RegisterRoute("createaccount", typeof(Pages.CreateAccountPage));
+                _registeredRoutes.Add("createaccount");
+            }
+
+            if (!_registeredRoutes.Contains("notificationspage"))
+            {
+                Routing.RegisterRoute("notificationspage", typeof(Pages.NotificationsPage));
+                _registeredRoutes.Add("notificationspage");
+            }
+
+            if (!_registeredRoutes.Contains("notificationsettingspage"))
+            {
+                Routing.RegisterRoute("notificationsettingspage", typeof(Pages.NotificationSettingsPage));
+                _registeredRoutes.Add("notificationsettingspage");
             }
         }
+
+        // Custom method to check if a route is registered
+        private bool IsRouteRegistered(string route)
+        {
+            try
+            {
+                // In MAUI, there's no direct API to check if a route is registered
+                // We'll use a safer approach by using a dictionary to track registered routes
+                return _registeredRoutes.Contains(route);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        // Track registered routes manually
+        private static HashSet<string> _registeredRoutes = new HashSet<string>();
 
         private async Task ShowHelpDialog()
         {

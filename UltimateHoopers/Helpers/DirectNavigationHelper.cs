@@ -161,6 +161,81 @@ namespace UltimateHoopers.Helpers
         }
 
         /// <summary>
+        /// Navigate directly to PostsPage, bypassing complex navigation logic
+        /// </summary>
+        public static async Task GoToFindRunsPageAsync()
+        {
+            try
+            {
+                Debug.WriteLine("DirectNavigationHelper: GoToPostsPageAsync called");
+
+                // Create the PostsPage instance
+                FindRunsPage findRunsPage = null;
+
+                // Try DI first
+                var serviceProvider = MauiProgram.CreateMauiApp().Services;
+                findRunsPage = serviceProvider.GetService<FindRunsPage>();
+
+                // Fallback to direct creation
+                if (findRunsPage == null)
+                {
+                    Debug.WriteLine("DirectNavigationHelper: Creating PostsPage manually");
+                    findRunsPage = new FindRunsPage();
+                }
+
+                // Execute on UI thread
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    try
+                    {
+                        // Check if we're in a Shell environment
+                        if (Shell.Current != null)
+                        {
+                            try
+                            {
+                                Debug.WriteLine("DirectNavigationHelper: Using Shell.GoToAsync to FindRunsPage");
+                                await Shell.Current.GoToAsync("//FindRunsPage");
+                                return;
+                            }
+                            catch (Exception shellEx)
+                            {
+                                Debug.WriteLine($"DirectNavigationHelper: Shell navigation failed: {shellEx.Message}");
+                            }
+                        }
+
+                        // Direct approach if Shell navigation fails or is unavailable
+                        Debug.WriteLine("DirectNavigationHelper: Setting NavigationPage with FindRunsPage directly");
+                        Application.Current.MainPage = new NavigationPage(findRunsPage);
+                    }
+                    catch (Exception navEx)
+                    {
+                        Debug.WriteLine($"DirectNavigationHelper: Navigation error: {navEx.Message}");
+
+                        // Last resort
+                        Application.Current.MainPage = findRunsPage;
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"DirectNavigationHelper: Critical error: {ex.Message}");
+
+                // Even if everything fails, try one last option on the UI thread
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    try
+                    {
+                        Application.Current.MainPage = new PostsPage();
+                    }
+                    catch
+                    {
+                        // Nothing more we can do
+                    }
+                });
+            }
+        }
+
+        /// <summary>
         /// Navigate directly to a specific page by name
         /// </summary>
         public static async Task GoToPageAsync(string pageName)
