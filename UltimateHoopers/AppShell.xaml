@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
        xmlns:pages="clr-namespace:UltimateHoopers.Pages"
        x:Class="UltimateHoopers.AppShell"
        FlyoutBehavior="Flyout"
@@ -41,6 +41,11 @@
         <ShellContent ContentTemplate="{DataTemplate pages:HomePage}" Route="TrainingPage" />
     </FlyoutItem>
 
+    <!-- FAQ Page -->
+    <FlyoutItem Title="FAQ" Icon="help.png" Route="FAQPage">
+        <ShellContent ContentTemplate="{DataTemplate pages:FAQPage}" Route="FAQPage" />
+    </FlyoutItem>
+
     <!-- MenuItems appear at the bottom of the Flyout -->
     <MenuItem Text="Notifications" 
           IconImageSource="notification.png"
@@ -48,7 +53,8 @@
     <MenuItem Text="About" 
       IconImageSource="about.png" />
     <MenuItem Text="FAQ" 
-   IconImageSource="FAQ.png" />
+   IconImageSource="FAQ.png" 
+   Command="{Binding FAQCommand}" />
     <MenuItem Text="Help &amp; Support" 
               IconImageSource="help.png"
               Command="{Binding HelpCommand}" />

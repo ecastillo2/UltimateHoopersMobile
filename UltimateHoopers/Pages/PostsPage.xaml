@@ -331,24 +331,36 @@
             </VerticalStackLayout>
 
             <VerticalStackLayout Grid.Column="4"
-                                 HorizontalOptions="Center"
-                                 Spacing="2">
-                <Frame CornerRadius="15"
-                       HeightRequest="30"
-                       WidthRequest="30"
-                       Padding="0"
-                       HasShadow="False"
-                       BorderColor="{StaticResource BorderColor}">
-                    <Label Text="👤"
-                           FontSize="18"
-                           HorizontalOptions="Center"
-                           VerticalOptions="Center" />
+                     HorizontalOptions="Center"
+                     Spacing="2">
+                <Frame x:Name="ProfileIconFrame"
+           CornerRadius="15"
+           HeightRequest="30"
+           WidthRequest="30"
+           Padding="0"
+           HasShadow="False"
+           IsClippedToBounds="True"
+           BorderColor="{StaticResource BorderColor}">
+                    <!-- Default user icon (shown when no profile image is available) -->
+                    <Label x:Name="DefaultProfileIcon"
+               Text="👤"
+               FontSize="18"
+               HorizontalOptions="Center"
+               VerticalOptions="Center" />
+
+                    <!-- User's profile image (initially hidden, will be shown when loaded) -->
+                    <Image x:Name="UserProfileImage"
+               Aspect="AspectFill"
+               HorizontalOptions="FillAndExpand"
+               VerticalOptions="FillAndExpand"
+               IsVisible="False" />
                 </Frame>
 
                 <VerticalStackLayout.GestureRecognizers>
                     <TapGestureRecognizer Tapped="OnProfileClicked" />
                 </VerticalStackLayout.GestureRecognizers>
             </VerticalStackLayout>
+
         </Grid>
 
         <!-- Fullscreen Media Viewer (initially hidden) -->

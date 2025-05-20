@@ -79,6 +79,9 @@ namespace UltimateHoopers.Pages
                 MainThread.BeginInvokeOnMainThread(async () => {
                     await Task.Delay(500);
                     CheckVisibleVideos();
+
+                    // Load user's profile image
+                    LoadUserProfileImage();
                 });
             }
             catch (Exception ex)
@@ -86,6 +89,7 @@ namespace UltimateHoopers.Pages
                 Debug.WriteLine($"Error in PostsPage.OnAppearing: {ex.Message}");
             }
         }
+
 
         protected override void OnDisappearing()
         {
@@ -112,6 +116,66 @@ namespace UltimateHoopers.Pages
             }
         }
 
+        private void LoadUserProfileImage()
+        {
+            try
+            {
+                // Check if the user is logged in and has a profile image URL
+                if (App.User != null && App.User.Profile != null &&
+                    !string.IsNullOrEmpty(App.User.Profile.ImageURL))
+                {
+                    Debug.WriteLine($"Loading user profile image: {App.User.Profile.ImageURL}");
+
+                    // Create a proper URI for the image source
+                    if (Uri.TryCreate(App.User.Profile.ImageURL, UriKind.Absolute, out Uri imageUri))
+                    {
+                        // For MAUI, we need to handle image loading differently
+                        // Set the image source
+                        UserProfileImage.Source = ImageSource.FromUri(imageUri);
+
+                        // Show the image immediately, since we don't have success/failure events
+                        DefaultProfileIcon.IsVisible = false;
+                        UserProfileImage.IsVisible = true;
+
+                        // We could add a fallback by using a timer to check if the image has loaded dimensions
+                        MainThread.BeginInvokeOnMainThread(async () => {
+                            // Wait a bit for the image to load
+                            await Task.Delay(1000);
+
+                            // If the image doesn't have valid dimensions after the delay, it likely failed to load
+                            if (UserProfileImage.Width <= 0 || UserProfileImage.Height <= 0)
+                            {
+                                Debug.WriteLine("Profile image appears to have failed loading (no dimensions)");
+                                // Revert to the default icon
+                                DefaultProfileIcon.IsVisible = true;
+                                UserProfileImage.IsVisible = false;
+                            }
+                        });
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"Invalid image URI: {App.User.Profile.ImageURL}");
+                        // Keep showing the default icon
+                        DefaultProfileIcon.IsVisible = true;
+                        UserProfileImage.IsVisible = false;
+                    }
+                }
+                else
+                {
+                    Debug.WriteLine("User profile image not available");
+                    // Keep showing the default icon
+                    DefaultProfileIcon.IsVisible = true;
+                    UserProfileImage.IsVisible = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error loading user profile image: {ex.Message}");
+                // Keep showing the default icon in case of error
+                DefaultProfileIcon.IsVisible = true;
+                UserProfileImage.IsVisible = false;
+            }
+        }
         // Image loading event handlers
         private void OnImageLoaded(object sender, EventArgs e)
         {
@@ -178,6 +242,19 @@ namespace UltimateHoopers.Pages
             }
         }
 
+        private async void OnProfileClicked(object sender, EventArgs e)
+        {
+            try
+            {
+                // Navigate to the user profile page
+                await Navigation.PushAsync(new UserProfilePage());
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error navigating to profile page: {ex.Message}");
+                await DisplayAlert("Error", "Could not open profile", "OK");
+            }
+        }
         // Subscribe to AutoPlayVideoElement mute events
         private void SubscribeToMuteEvents()
         {
@@ -644,9 +721,6 @@ namespace UltimateHoopers.Pages
             await DisplayAlert("Activity", "Activity feature coming soon!", "OK");
         }
 
-        private async void OnProfileClicked(object sender, EventArgs e)
-        {
-            await DisplayAlert("Profile", "Profile feature coming soon!", "OK");
-        }
+       
     }
 }

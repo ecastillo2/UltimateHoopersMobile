@@ -1,0 +1,275 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="UltimateHoopers.Pages.FAQPage"
+             Title="FAQ"
+             BackgroundColor="{StaticResource PageBackgroundColor}">
+
+    <Grid RowDefinitions="Auto,*,Auto"
+          Padding="20">
+
+        <!-- Header with Title -->
+        <Grid Grid.Row="0" 
+              ColumnDefinitions="*,Auto"
+              Margin="0,10,0,20">
+
+            <VerticalStackLayout Grid.Column="0">
+                <Label Text="FAQ"
+                       FontSize="28"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource PrimaryColor}" />
+
+                <Label Text="Frequently Asked Questions"
+                       FontSize="16"
+                       TextColor="{StaticResource SecondaryTextColor}" />
+            </VerticalStackLayout>
+
+            <!-- Back Button -->
+            <Frame Grid.Column="1"
+                   CornerRadius="25"
+                   HeightRequest="50"
+                   WidthRequest="50"
+                   Padding="0"
+                   BorderColor="{StaticResource BorderColor}"
+                   BackgroundColor="{StaticResource CardBackgroundColor}"
+                   HasShadow="True">
+
+                <Label Text="←"
+                       FontSize="24"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       TextColor="{StaticResource PrimaryTextColor}" />
+
+                <Frame.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnBackClicked" />
+                </Frame.GestureRecognizers>
+            </Frame>
+        </Grid>
+
+        <!-- FAQ Content Scrollable Area -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="15" Padding="0,0,0,20">
+
+                <!-- Category Tabs at the top -->
+                <ScrollView Orientation="Horizontal" 
+                            HorizontalScrollBarVisibility="Never"
+                            Margin="0,0,0,10">
+                    <HorizontalStackLayout Spacing="10" x:Name="CategoryTabs">
+                        <Frame Padding="15,8" 
+                               CornerRadius="20" 
+                               BackgroundColor="{StaticResource PrimaryColor}"
+                               HasShadow="False">
+                            <Label Text="All" 
+                                   TextColor="White" 
+                                   FontAttributes="Bold" />
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnCategorySelected" CommandParameter="All" />
+                            </Frame.GestureRecognizers>
+                        </Frame>
+                        <Frame Padding="15,8" 
+                               CornerRadius="20" 
+                               BackgroundColor="{StaticResource CardBackgroundColor}"
+                               BorderColor="{StaticResource BorderColor}"
+                               HasShadow="False">
+                            <Label Text="General" 
+                                   TextColor="{StaticResource PrimaryTextColor}" />
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnCategorySelected" CommandParameter="General" />
+                            </Frame.GestureRecognizers>
+                        </Frame>
+                        <Frame Padding="15,8" 
+                               CornerRadius="20" 
+                               BackgroundColor="{StaticResource CardBackgroundColor}"
+                               BorderColor="{StaticResource BorderColor}"
+                               HasShadow="False">
+                            <Label Text="Account" 
+                                   TextColor="{StaticResource PrimaryTextColor}" />
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnCategorySelected" CommandParameter="Account" />
+                            </Frame.GestureRecognizers>
+                        </Frame>
+                        <Frame Padding="15,8" 
+                               CornerRadius="20" 
+                               BackgroundColor="{StaticResource CardBackgroundColor}"
+                               BorderColor="{StaticResource BorderColor}"
+                               HasShadow="False">
+                            <Label Text="Games" 
+                                   TextColor="{StaticResource PrimaryTextColor}" />
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnCategorySelected" CommandParameter="Games" />
+                            </Frame.GestureRecognizers>
+                        </Frame>
+                        <Frame Padding="15,8" 
+                               CornerRadius="20" 
+                               BackgroundColor="{StaticResource CardBackgroundColor}"
+                               BorderColor="{StaticResource BorderColor}"
+                               HasShadow="False">
+                            <Label Text="Stats" 
+                                   TextColor="{StaticResource PrimaryTextColor}" />
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnCategorySelected" CommandParameter="Stats" />
+                            </Frame.GestureRecognizers>
+                        </Frame>
+                        <Frame Padding="15,8" 
+                               CornerRadius="20" 
+                               BackgroundColor="{StaticResource CardBackgroundColor}"
+                               BorderColor="{StaticResource BorderColor}"
+                               HasShadow="False">
+                            <Label Text="Posts" 
+                                   TextColor="{StaticResource PrimaryTextColor}" />
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnCategorySelected" CommandParameter="Posts" />
+                            </Frame.GestureRecognizers>
+                        </Frame>
+                        <Frame Padding="15,8" 
+                               CornerRadius="20" 
+                               BackgroundColor="{StaticResource CardBackgroundColor}"
+                               BorderColor="{StaticResource BorderColor}"
+                               HasShadow="False">
+                            <Label Text="Support" 
+                                   TextColor="{StaticResource PrimaryTextColor}" />
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnCategorySelected" CommandParameter="Support" />
+                            </Frame.GestureRecognizers>
+                        </Frame>
+                    </HorizontalStackLayout>
+                </ScrollView>
+
+                <!-- Search Box -->
+                <Frame Padding="15,5" 
+                       CornerRadius="25" 
+                       HasShadow="False"
+                       BorderColor="{StaticResource BorderColor}"
+                       Margin="0,0,0,15">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Label Text="🔍" 
+                               FontSize="20" 
+                               VerticalOptions="Center"
+                               TextColor="{StaticResource SecondaryTextColor}" />
+                        <Entry Grid.Column="1" 
+                               x:Name="SearchEntry"
+                               Placeholder="Search FAQs..." 
+                               PlaceholderColor="{StaticResource SecondaryTextColor}"
+                               TextColor="{StaticResource PrimaryTextColor}"
+                               TextChanged="OnSearchTextChanged"
+                               BackgroundColor="Transparent" 
+                               Margin="5,0,0,0"
+                               VerticalOptions="Center" />
+                    </Grid>
+                </Frame>
+
+                <!-- FAQ Items Container -->
+                <VerticalStackLayout x:Name="FAQItemsContainer" Spacing="15">
+                    <!-- FAQ Items will be added here programmatically -->
+                </VerticalStackLayout>
+
+                <!-- Contact Support Section -->
+                <Frame BorderColor="{StaticResource BorderColor}"
+                       CornerRadius="10"
+                       HasShadow="True"
+                       BackgroundColor="{StaticResource CardBackgroundColor}"
+                       Margin="0,15,0,0"
+                       Padding="20">
+                    <VerticalStackLayout Spacing="15">
+                        <Label Text="Still have questions?"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource PrimaryTextColor}" />
+
+                        <Label Text="If you couldn't find the answer you were looking for, our support team is here to help."
+                               TextColor="{StaticResource SecondaryTextColor}"
+                               FontSize="14" />
+
+                        <Button Text="Contact Support"
+                                BackgroundColor="{StaticResource PrimaryColor}"
+                                TextColor="White"
+                                CornerRadius="25"
+                                HeightRequest="50"
+                                HorizontalOptions="Fill"
+                                Clicked="OnContactSupportClicked" />
+                    </VerticalStackLayout>
+                </Frame>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Navigation Footer -->
+        <Grid Grid.Row="2"
+              ColumnDefinitions="*,*,*,*"
+              BackgroundColor="{StaticResource CardBackgroundColor}"
+              HeightRequest="70"
+              Margin="-20,0,-20,0"
+              Padding="0,5,0,20">
+
+            <VerticalStackLayout Grid.Column="0"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Spacing="2">
+                <Label Text="🏠"
+                       FontSize="20"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+                <Label Text="Home"
+                       FontSize="12"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+
+                <VerticalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnHomeNavigationClicked" />
+                </VerticalStackLayout.GestureRecognizers>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Grid.Column="1"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Spacing="2">
+                <Label Text="📋"
+                       FontSize="20"
+                       TextColor="{StaticResource PrimaryColor}"
+                       HorizontalOptions="Center" />
+                <Label Text="FAQ"
+                       FontSize="12"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource PrimaryColor}"
+                       HorizontalOptions="Center" />
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Grid.Column="2"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Spacing="2"
+                                 Opacity="0.6">
+                <Label Text="❓"
+                       FontSize="20"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+                <Label Text="Support"
+                       FontSize="12"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+
+                <VerticalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnSupportNavigationClicked" />
+                </VerticalStackLayout.GestureRecognizers>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Grid.Column="3"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Spacing="2"
+                                 Opacity="0.6">
+                <Label Text="👤"
+                       FontSize="20"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+                <Label Text="Profile"
+                       FontSize="12"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+
+                <VerticalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnProfileNavigationClicked" />
+                </VerticalStackLayout.GestureRecognizers>
+            </VerticalStackLayout>
+        </Grid>
+    </Grid>
+</ContentPage>

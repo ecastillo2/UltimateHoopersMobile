@@ -97,6 +97,9 @@
 		<MauiXaml Update="Pages\EditProfilePage.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
+		<MauiXaml Update="Pages\FAQPage.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
 		<MauiXaml Update="Pages\FindRuns.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
@@ -126,6 +129,9 @@
 		</MauiXaml>
 		<MauiXaml Update="Pages\StatsPage.xaml">
 			<Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
+		<MauiXaml Update="Pages\UserProfilePage.xaml">
+		  <Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
 	</ItemGroup>
 

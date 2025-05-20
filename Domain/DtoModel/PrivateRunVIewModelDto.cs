@@ -24,8 +24,7 @@ namespace Domain.DtoModel
             Status = privateRun.Status;
             RunDate = privateRun.RunDate;
             Cost = privateRun.Cost;
-            Title = privateRun.Title;
-            Location = privateRun.Location;
+
             Description = privateRun.Description;
             RunTime = privateRun.RunTime;
             EndTime = privateRun.EndTime;

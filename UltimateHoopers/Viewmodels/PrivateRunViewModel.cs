@@ -3,6 +3,7 @@ using Domain.DtoModel;
 using Microsoft.Maui.Controls;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace UltimateHoopers.ViewModels
 {
@@ -34,5 +35,30 @@ namespace UltimateHoopers.ViewModels
         public string? Url { get; set; }
 
         public List<PrivateRunInvite>? JoinedPlayers { get; set; }
+
+        // New method to load runs
+        public async Task LoadRunsAsync()
+        {
+            try
+            {
+                // Here you would implement the logic to load private runs
+                // For example, you might use a service to fetch data from an API
+
+                // For now, we'll just add a placeholder that logs a message
+                Debug.WriteLine("LoadRunsAsync called in PrivateRunViewModel");
+
+                // In a real implementation, you would:
+                // 1. Call a service to get data
+                // 2. Update properties in this view model
+                // 3. Notify UI of changes
+
+                await Task.Delay(500); // Simulate network delay
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error loading runs: {ex.Message}");
+                // Handle the error appropriately
+            }
+        }
     }
 }

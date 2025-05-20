@@ -119,6 +119,7 @@ namespace UltimateHoopers
                 try { Routing.RegisterRoute("postspage", typeof(Pages.PostsPage)); } catch { }
                 try { Routing.RegisterRoute("hooperspage", typeof(Pages.HoopersPage)); } catch { }
                 try { Routing.RegisterRoute("statspage", typeof(Pages.StatsPage)); } catch { }
+                try { Routing.RegisterRoute("userprofilepage", typeof(Pages.UserProfilePage)); } catch { }
             }
         }
 

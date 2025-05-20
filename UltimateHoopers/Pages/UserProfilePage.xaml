@@ -1,0 +1,272 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="UltimateHoopers.Pages.UserProfilePage"
+             NavigationPage.HasNavigationBar="False"
+             BackgroundColor="{StaticResource PageBackgroundColor}">
+
+    <Grid RowDefinitions="Auto,*"
+          Padding="0">
+
+        <!-- Header with Username and Back Button -->
+        <Grid Grid.Row="0" 
+              BackgroundColor="{StaticResource CardBackgroundColor}"
+              Padding="10,10,10,10"
+              HeightRequest="50"
+              ColumnDefinitions="*,Auto">
+
+            <!-- Username -->
+            <Label Grid.Column="0"
+                   x:Name="UsernameLabel"
+                   Text="Username"
+                   FontSize="18"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center" />
+
+            <!-- Back Button (Moved to Right) -->
+            <Frame Grid.Column="1"
+                   CornerRadius="25"
+                   HeightRequest="40"
+                   WidthRequest="40"
+                   Padding="0"
+                   BorderColor="{StaticResource BorderColor}"
+                   BackgroundColor="{StaticResource CardBackgroundColor}"
+                   HasShadow="True"
+                   HorizontalOptions="End"
+                   VerticalOptions="Center">
+
+                <Label Text="←"
+                       FontSize="24"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       TextColor="{StaticResource PrimaryTextColor}" />
+
+                <Frame.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnBackClicked" />
+                </Frame.GestureRecognizers>
+            </Frame>
+        </Grid>
+
+        <!-- Main Content -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="0">
+
+                <!-- Profile Section -->
+                <Grid Padding="15" 
+                      ColumnDefinitions="Auto,*"
+                      BackgroundColor="{StaticResource CardBackgroundColor}">
+
+                    <!-- Profile Image -->
+                    <Frame Grid.Column="0"
+                           CornerRadius="40"
+                           HeightRequest="80"
+                           WidthRequest="80"
+                           Padding="0"
+                           IsClippedToBounds="True"
+                           BorderColor="{StaticResource BorderColor}"
+                           Margin="0,0,15,0">
+
+                        <!-- Default user icon (shown when no profile image is available) -->
+                        <Label x:Name="DefaultProfileIcon"
+                               Text="👤"
+                               FontSize="40"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center" />
+
+                        <!-- User's profile image (initially hidden, will be shown when loaded) -->
+                        <Image x:Name="UserProfileImage"
+                               Aspect="AspectFill"
+                               HorizontalOptions="FillAndExpand"
+                               VerticalOptions="FillAndExpand"
+                               IsVisible="False" />
+                    </Frame>
+
+                    <!-- Stats and Edit Profile Button -->
+                    <VerticalStackLayout Grid.Column="1"
+                                         VerticalOptions="Center"
+                                         Spacing="10">
+
+                        <!-- Stats Row -->
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
+
+                            <!-- Posts Count -->
+                            <VerticalStackLayout Grid.Column="0"
+                                                 HorizontalOptions="Center">
+                                <Label x:Name="PostsCountLabel"
+                                       Text="0"
+                                       FontSize="18"
+                                       FontAttributes="Bold"
+                                       HorizontalOptions="Center"/>
+                                <Label Text="Posts"
+                                       FontSize="14"
+                                       TextColor="{StaticResource SecondaryTextColor}"
+                                       HorizontalOptions="Center"/>
+                            </VerticalStackLayout>
+
+                            <!-- Followers Count -->
+                            <VerticalStackLayout Grid.Column="1"
+                                                 HorizontalOptions="Center">
+                                <Label x:Name="FollowersCountLabel"
+                                       Text="0"
+                                       FontSize="18"
+                                       FontAttributes="Bold"
+                                       HorizontalOptions="Center"/>
+                                <Label Text="Followers"
+                                       FontSize="14"
+                                       TextColor="{StaticResource SecondaryTextColor}"
+                                       HorizontalOptions="Center"/>
+                            </VerticalStackLayout>
+
+                            <!-- Following Count -->
+                            <VerticalStackLayout Grid.Column="2"
+                                                 HorizontalOptions="Center">
+                                <Label x:Name="FollowingCountLabel"
+                                       Text="0"
+                                       FontSize="18"
+                                       FontAttributes="Bold"
+                                       HorizontalOptions="Center"/>
+                                <Label Text="Following"
+                                       FontSize="14"
+                                       TextColor="{StaticResource SecondaryTextColor}"
+                                       HorizontalOptions="Center"/>
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <!-- Edit Profile Button -->
+                        <Button Text="Edit Profile"
+                                BackgroundColor="Transparent"
+                                TextColor="{StaticResource PrimaryTextColor}"
+                                BorderColor="{StaticResource BorderColor}"
+                                BorderWidth="1"
+                                CornerRadius="5"
+                                HeightRequest="30"
+                                Clicked="OnEditProfileClicked"/>
+                    </VerticalStackLayout>
+                </Grid>
+
+                <!-- Bio Section -->
+                <StackLayout Padding="15,5,15,15"
+                             BackgroundColor="{StaticResource CardBackgroundColor}">
+
+                    <!-- Display Name -->
+                    <Label x:Name="DisplayNameLabel"
+                           Text="Display Name"
+                           FontAttributes="Bold"
+                           FontSize="16"/>
+
+                    <!-- Bio -->
+                    <Label x:Name="BioLabel"
+                           Text="This is the user's bio. It can contain multiple lines of text about the user."
+                           TextColor="{StaticResource PrimaryTextColor}"
+                           FontSize="14"
+                           Margin="0,5,0,0"/>
+                </StackLayout>
+
+                <!-- Tab Bar -->
+                <Grid BackgroundColor="{StaticResource CardBackgroundColor}"
+                      HeightRequest="45" 
+                      ColumnDefinitions="*,*"
+                      Margin="0,1,0,0">
+
+                    <!-- Posts Tab -->
+                    <Grid Grid.Column="0"
+                          x:Name="PostsTabGrid">
+                        <Label Text="📸"
+                               FontSize="20"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"/>
+                        <BoxView x:Name="PostsTabIndicator"
+                                 BackgroundColor="{StaticResource PrimaryColor}"
+                                 HeightRequest="2"
+                                 HorizontalOptions="Fill"
+                                 VerticalOptions="End"/>
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnPostsTabClicked"/>
+                        </Grid.GestureRecognizers>
+                    </Grid>
+
+                    <!-- Tagged Tab -->
+                    <Grid Grid.Column="1"
+                          x:Name="TaggedTabGrid">
+                        <Label Text="🏷️"
+                               FontSize="20"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"/>
+                        <BoxView x:Name="TaggedTabIndicator"
+                                 BackgroundColor="{StaticResource PrimaryColor}"
+                                 HeightRequest="2"
+                                 HorizontalOptions="Fill"
+                                 VerticalOptions="End"
+                                 IsVisible="False"/>
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnTaggedTabClicked"/>
+                        </Grid.GestureRecognizers>
+                    </Grid>
+                </Grid>
+
+                <!-- Content Area -->
+                <Grid x:Name="ContentArea"
+                      BackgroundColor="{StaticResource CardBackgroundColor}"
+                      Padding="1"
+                      MinimumHeightRequest="300">
+
+                    <!-- Posts Grid -->
+                    <Grid x:Name="PostsGrid"
+                          ColumnDefinitions="*,*,*"
+                          RowDefinitions="Auto,Auto,Auto,Auto,Auto"
+                          ColumnSpacing="1"
+                          RowSpacing="1">
+                        <!-- Posts will be added here dynamically -->
+                    </Grid>
+
+                    <!-- Tagged Grid (initially hidden) -->
+                    <Grid x:Name="TaggedGrid"
+                          IsVisible="False">
+                        <VerticalStackLayout VerticalOptions="Center"
+                                             HorizontalOptions="Center"
+                                             Spacing="20">
+                            <Label Text="🏷️"
+                                   FontSize="48"
+                                   HorizontalOptions="Center"/>
+                            <Label Text="Photos of you"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   HorizontalOptions="Center"/>
+                            <Label Text="When people tag you in photos, they'll appear here."
+                                   TextColor="{StaticResource SecondaryTextColor}"
+                                   FontSize="16"
+                                   HorizontalOptions="Center"
+                                   MaxLines="2"
+                                   LineBreakMode="WordWrap"
+                                   HorizontalTextAlignment="Center"/>
+                        </VerticalStackLayout>
+                    </Grid>
+
+                    <!-- Empty State for No Posts -->
+                    <VerticalStackLayout x:Name="EmptyPostsState"
+                                         VerticalOptions="Center"
+                                         HorizontalOptions="Center"
+                                         Spacing="20"
+                                         IsVisible="False">
+                        <Label Text="📸"
+                               FontSize="48"
+                               HorizontalOptions="Center"/>
+                        <Label Text="No Posts Yet"
+                               FontSize="20"
+                               FontAttributes="Bold"
+                               HorizontalOptions="Center"/>
+                        <Button Text="Share Your First Post"
+                                BackgroundColor="{StaticResource PrimaryColor}"
+                                TextColor="White"
+                                CornerRadius="5"
+                                Margin="0,10,0,0"
+                                HeightRequest="40"
+                                WidthRequest="200"
+                                Clicked="OnShareFirstPostClicked"/>
+                    </VerticalStackLayout>
+                </Grid>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>
