@@ -360,6 +360,10 @@ namespace UltimateHoopers.Helpers
                     return new NotificationsPage();
                 case "notificationsettingspage":
                     return new NotificationSettingsPage();
+                case "faqpage":
+                    return new FAQPage();
+                case "accountsettingspage":
+                    return new AccountSettingsPage();
                 // Add cases for any other pages in your app
                 default:
                     Debug.WriteLine($"NavigationHelper: Unknown route {pageName}, defaulting to HomePage");

@@ -35,11 +35,11 @@ namespace UltimateHoopers.Pages
             // Define menu items
             var menuItems = new List<(string Icon, string Title, Action Callback)>
             {
-                ("👤", "Training", () => Navigation.PushAsync(new ProfilePage())),
-               
               
+
+                ("⚙️", "Account", () => Navigation.PushAsync(new AccountSettingsPage())),
                 ("⚙️", "Settings", () => Navigation.PushAsync(new SettingsPage())),
-                ("❓", "FAQ", () => Navigation.PushAsync(new HelpPage())),
+                ("❓", "FAQ", () => Navigation.PushAsync(new FAQPage())),
                 ("📱", "About App", () => Navigation.PushAsync(new AboutPage())),
                 ("📤", "Logout", () => LogoutUser())
             };

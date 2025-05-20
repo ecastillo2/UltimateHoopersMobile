@@ -120,6 +120,8 @@ namespace UltimateHoopers
                 try { Routing.RegisterRoute("hooperspage", typeof(Pages.HoopersPage)); } catch { }
                 try { Routing.RegisterRoute("statspage", typeof(Pages.StatsPage)); } catch { }
                 try { Routing.RegisterRoute("userprofilepage", typeof(Pages.UserProfilePage)); } catch { }
+                try { Routing.RegisterRoute("faqepage", typeof(Pages.FAQPage)); } catch { }
+                try { Routing.RegisterRoute("accountsettingspage", typeof(Pages.AccountSettingsPage)); } catch { }
             }
         }
 

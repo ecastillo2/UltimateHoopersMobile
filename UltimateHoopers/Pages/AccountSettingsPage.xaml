@@ -1,0 +1,595 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="UltimateHoopers.Pages.AccountSettingsPage"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource PageBackgroundColor}">
+
+    <Grid RowDefinitions="Auto,*,Auto"
+          Padding="20">
+
+        <!-- Header with Title -->
+        <Grid Grid.Row="0" 
+              ColumnDefinitions="*,Auto"
+              Margin="0,10,0,20">
+
+            <VerticalStackLayout Grid.Column="0">
+                <Label Text="Account Settings"
+                       FontSize="28"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource PrimaryColor}" />
+
+                <Label Text="Manage your account preferences"
+                       FontSize="16"
+                       TextColor="{StaticResource SecondaryTextColor}" />
+            </VerticalStackLayout>
+
+            <!-- Back Button -->
+            <Frame Grid.Column="1"
+                   CornerRadius="25"
+                   HeightRequest="50"
+                   WidthRequest="50"
+                   Padding="0"
+                   BorderColor="{StaticResource BorderColor}"
+                   BackgroundColor="{StaticResource CardBackgroundColor}"
+                   HasShadow="True">
+
+                <Label Text="←"
+                       FontSize="24"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       TextColor="{StaticResource PrimaryTextColor}" />
+
+                <Frame.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnBackClicked" />
+                </Frame.GestureRecognizers>
+            </Frame>
+        </Grid>
+
+        <!-- Content Area -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="20">
+
+                <!-- Account Information Section -->
+                <Frame BorderColor="{StaticResource BorderColor}"
+                       CornerRadius="10"
+                       HasShadow="True"
+                       Padding="20"
+                       BackgroundColor="{StaticResource CardBackgroundColor}">
+
+                    <VerticalStackLayout Spacing="15">
+                        <Label Text="Account Information"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource PrimaryTextColor}" />
+
+                        <!-- Username -->
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="Username"
+                                   FontSize="14"
+                                   TextColor="{StaticResource SecondaryTextColor}" />
+                            <Label x:Name="UsernameLabel"
+                                   Text="username"
+                                   FontSize="16"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource PrimaryTextColor}" />
+                        </VerticalStackLayout>
+
+                        <!-- Email -->
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="Email"
+                                   FontSize="14"
+                                   TextColor="{StaticResource SecondaryTextColor}" />
+                            <Label x:Name="EmailLabel"
+                                   Text="user@example.com"
+                                   FontSize="16"
+                                   TextColor="{StaticResource PrimaryTextColor}" />
+
+                            <Button Text="Change Email"
+                                    BackgroundColor="Transparent"
+                                    TextColor="{StaticResource PrimaryColor}"
+                                    BorderColor="{StaticResource PrimaryColor}"
+                                    BorderWidth="1"
+                                    CornerRadius="5"
+                                    Margin="0,5,0,0"
+                                    HeightRequest="40"
+                                    Clicked="OnChangeEmailClicked" />
+                        </VerticalStackLayout>
+
+                        <!-- Account Type -->
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="Account Type"
+                                   FontSize="14"
+                                   TextColor="{StaticResource SecondaryTextColor}" />
+                            <Label x:Name="AccountTypeLabel"
+                                   Text="Free Player Account"
+                                   FontSize="16"
+                                   TextColor="{StaticResource PrimaryTextColor}" />
+                        </VerticalStackLayout>
+
+                        <!-- Joined Date -->
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="Member Since"
+                                   FontSize="14"
+                                   TextColor="{StaticResource SecondaryTextColor}" />
+                            <Label x:Name="JoinedDateLabel"
+                                   Text="January 1, 2023"
+                                   FontSize="16"
+                                   TextColor="{StaticResource PrimaryTextColor}" />
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Subscription Section -->
+                <Frame BorderColor="{StaticResource BorderColor}"
+                       CornerRadius="10"
+                       HasShadow="True"
+                       Padding="20"
+                       BackgroundColor="{StaticResource CardBackgroundColor}">
+
+                    <VerticalStackLayout Spacing="15">
+                        <Label Text="Subscription"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource PrimaryTextColor}" />
+
+                        <!-- Current Plan -->
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="Current Plan"
+                                   FontSize="14"
+                                   TextColor="{StaticResource SecondaryTextColor}" />
+                            <Label x:Name="CurrentPlanLabel"
+                                   Text="Free Plan"
+                                   FontSize="16"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource PrimaryTextColor}" />
+                        </VerticalStackLayout>
+
+                        <!-- Plan Features -->
+                        <VerticalStackLayout x:Name="PlanFeaturesLayout" Spacing="5">
+                            <Label Text="Features"
+                                   FontSize="14"
+                                   TextColor="{StaticResource SecondaryTextColor}" />
+
+                            <StackLayout Orientation="Horizontal" Spacing="10">
+                                <Label Text="✓"
+                                       TextColor="{StaticResource PrimaryColor}"
+                                       FontSize="16"
+                                       VerticalOptions="Start" />
+                                <Label Text="Join pickup games"
+                                       TextColor="{StaticResource PrimaryTextColor}"
+                                       FontSize="14" />
+                            </StackLayout>
+
+                            <StackLayout Orientation="Horizontal" Spacing="10">
+                                <Label Text="✓"
+                                       TextColor="{StaticResource PrimaryColor}"
+                                       FontSize="16"
+                                       VerticalOptions="Start" />
+                                <Label Text="Basic stat tracking"
+                                       TextColor="{StaticResource PrimaryTextColor}"
+                                       FontSize="14" />
+                            </StackLayout>
+
+                            <StackLayout Orientation="Horizontal" Spacing="10">
+                                <Label Text="✓"
+                                       TextColor="{StaticResource PrimaryColor}"
+                                       FontSize="16"
+                                       VerticalOptions="Start" />
+                                <Label Text="Posts and social features"
+                                       TextColor="{StaticResource PrimaryTextColor}"
+                                       FontSize="14" />
+                            </StackLayout>
+                        </VerticalStackLayout>
+
+                        <!-- Upgrade Button -->
+                        <Button x:Name="UpgradeButton"
+                                Text="Upgrade to Pro"
+                                BackgroundColor="{StaticResource PrimaryColor}"
+                                TextColor="White"
+                                CornerRadius="25"
+                                HeightRequest="50"
+                                Margin="0,10,0,0"
+                                Clicked="OnUpgradeClicked" />
+
+                        <!-- Cancel Subscription (hidden for free accounts) -->
+                        <Button x:Name="CancelSubscriptionButton"
+                                Text="Cancel Subscription"
+                                BackgroundColor="Transparent"
+                                TextColor="#E53935"
+                                BorderColor="#E53935"
+                                BorderWidth="1"
+                                CornerRadius="25"
+                                HeightRequest="50"
+                                IsVisible="False"
+                                Clicked="OnCancelSubscriptionClicked" />
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Security Section -->
+                <Frame BorderColor="{StaticResource BorderColor}"
+                       CornerRadius="10"
+                       HasShadow="True"
+                       Padding="20"
+                       BackgroundColor="{StaticResource CardBackgroundColor}">
+
+                    <VerticalStackLayout Spacing="15">
+                        <Label Text="Security"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource PrimaryTextColor}" />
+
+                        <!-- Password Change -->
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="Password"
+                                   FontSize="14"
+                                   TextColor="{StaticResource SecondaryTextColor}" />
+                            <Label Text="•••••••••••••"
+                                   FontSize="16"
+                                   TextColor="{StaticResource PrimaryTextColor}" />
+
+                            <Button Text="Change Password"
+                                    BackgroundColor="Transparent"
+                                    TextColor="{StaticResource PrimaryColor}"
+                                    BorderColor="{StaticResource PrimaryColor}"
+                                    BorderWidth="1"
+                                    CornerRadius="5"
+                                    Margin="0,5,0,0"
+                                    HeightRequest="40"
+                                    Clicked="OnChangePasswordClicked" />
+                        </VerticalStackLayout>
+
+                        <!-- Two-Factor Authentication -->
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="Two-Factor Authentication"
+                                   FontSize="14"
+                                   TextColor="{StaticResource SecondaryTextColor}" />
+
+                            <Grid ColumnDefinitions="*,Auto">
+                                <Label Grid.Column="0"
+                                       Text="Enable 2FA for additional security"
+                                       FontSize="16"
+                                       TextColor="{StaticResource PrimaryTextColor}"
+                                       VerticalOptions="Center" />
+
+                                <Switch Grid.Column="1"
+                                        x:Name="TwoFactorSwitch"
+                                        IsToggled="False"
+                                        OnColor="{StaticResource PrimaryColor}"
+                                        Toggled="OnTwoFactorToggled" />
+                            </Grid>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- App Permissions -->
+                <Frame BorderColor="{StaticResource BorderColor}"
+                       CornerRadius="10"
+                       HasShadow="True"
+                       Padding="20"
+                       BackgroundColor="{StaticResource CardBackgroundColor}">
+
+                    <VerticalStackLayout Spacing="15">
+                        <Label Text="App Permissions"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource PrimaryTextColor}" />
+
+                        <!-- Notifications Permission -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <VerticalStackLayout Grid.Column="0" Spacing="5">
+                                <Label Text="Push Notifications"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                                <Label Text="Allow the app to send you notifications"
+                                       FontSize="14"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
+                            </VerticalStackLayout>
+
+                            <Switch Grid.Column="1"
+                                    x:Name="NotificationsSwitch"
+                                    IsToggled="True"
+                                    OnColor="{StaticResource PrimaryColor}"
+                                    VerticalOptions="Center"
+                                    Toggled="OnNotificationsToggled" />
+                        </Grid>
+
+                        <!-- Location Permission -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <VerticalStackLayout Grid.Column="0" Spacing="5">
+                                <Label Text="Location Services"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                                <Label Text="Allow the app to access your location"
+                                       FontSize="14"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
+                            </VerticalStackLayout>
+
+                            <Switch Grid.Column="1"
+                                    x:Name="LocationSwitch"
+                                    IsToggled="True"
+                                    OnColor="{StaticResource PrimaryColor}"
+                                    VerticalOptions="Center"
+                                    Toggled="OnLocationToggled" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Danger Zone -->
+                <Frame BorderColor="#FFCDD2"
+                       CornerRadius="10"
+                       HasShadow="True"
+                       Padding="20"
+                       BackgroundColor="#FFEBEE">
+
+                    <VerticalStackLayout Spacing="15">
+                        <Label Text="Danger Zone"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="#D32F2F" />
+
+                        <Label Text="These actions are permanent and cannot be undone."
+                               FontSize="14"
+                               TextColor="#D32F2F" />
+
+                        <!-- Delete Account Button -->
+                        <Button Text="Delete Account"
+                                BackgroundColor="Transparent"
+                                TextColor="#D32F2F"
+                                BorderColor="#D32F2F"
+                                BorderWidth="1"
+                                CornerRadius="25"
+                                HeightRequest="50"
+                                Clicked="OnDeleteAccountClicked" />
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Version Info -->
+                <VerticalStackLayout HorizontalOptions="Center" Spacing="5" Margin="0,10,0,40">
+                    <Label Text="Ultimate Hoopers"
+                           FontSize="14"
+                           TextColor="{StaticResource SecondaryTextColor}"
+                           HorizontalOptions="Center" />
+                    <Label x:Name="VersionLabel"
+                           Text="Version 1.0.0"
+                           FontSize="12"
+                           TextColor="{StaticResource SecondaryTextColor}"
+                           HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Footer Navigation -->
+        <Grid Grid.Row="2"
+              ColumnDefinitions="*,*,*,*"
+              BackgroundColor="{StaticResource CardBackgroundColor}"
+              HeightRequest="70"
+              Margin="-20,0,-20,0"
+              Padding="0,5,0,20">
+
+            <VerticalStackLayout Grid.Column="0"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Spacing="2">
+                <Label Text="🏠"
+                       FontSize="20"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+                <Label Text="Home"
+                       FontSize="12"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+
+                <VerticalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnHomeNavigationClicked" />
+                </VerticalStackLayout.GestureRecognizers>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Grid.Column="1"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Spacing="2"
+                                 Opacity="0.6">
+                <Label Text="📋"
+                       FontSize="20"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+                <Label Text="Posts"
+                       FontSize="12"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+                <VerticalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnPostsNavigationClicked" />
+                </VerticalStackLayout.GestureRecognizers>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Grid.Column="2"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Spacing="2"
+                                 Opacity="0.6">
+                <Label Text="❓"
+                       FontSize="20"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+                <Label Text="FAQ"
+                       FontSize="12"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+
+                <VerticalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnFAQNavigationClicked" />
+                </VerticalStackLayout.GestureRecognizers>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Grid.Column="3"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Spacing="2">
+                <Label Text="⚙️"
+                       FontSize="20"
+                       TextColor="{StaticResource PrimaryColor}"
+                       HorizontalOptions="Center" />
+                <Label Text="Account"
+                       FontSize="12"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource PrimaryColor}"
+                       HorizontalOptions="Center" />
+            </VerticalStackLayout>
+        </Grid>
+    </Grid>
+
+    <!-- Popup Dialogs -->
+    <!-- Change Email Popup -->
+    <Grid x:Name="ChangeEmailPopup" 
+          IsVisible="False"
+          BackgroundColor="#80000000"
+          InputTransparent="False">
+        <Frame VerticalOptions="Center"
+               HorizontalOptions="Center"
+               WidthRequest="300"
+               HasShadow="True"
+               BorderColor="{StaticResource BorderColor}"
+               BackgroundColor="{StaticResource CardBackgroundColor}"
+               CornerRadius="10"
+               Padding="20">
+            <VerticalStackLayout Spacing="15">
+                <Label Text="Change Email"
+                       FontSize="18"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource PrimaryTextColor}"
+                       HorizontalOptions="Center" />
+
+                <VerticalStackLayout Spacing="5">
+                    <Label Text="Current Email"
+                           FontSize="14"
+                           TextColor="{StaticResource SecondaryTextColor}" />
+                    <Label x:Name="CurrentEmailLabel"
+                           Text="user@example.com"
+                           FontSize="16"
+                           TextColor="{StaticResource PrimaryTextColor}" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="5">
+                    <Label Text="New Email"
+                           FontSize="14"
+                           TextColor="{StaticResource SecondaryTextColor}" />
+                    <Entry x:Name="NewEmailEntry"
+                           Placeholder="Enter new email address"
+                           Keyboard="Email"
+                           BackgroundColor="Transparent"
+                           />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="5">
+                    <Label Text="Password"
+                           FontSize="14"
+                           TextColor="{StaticResource SecondaryTextColor}" />
+                    <Entry x:Name="EmailPasswordEntry"
+                           Placeholder="Enter your password"
+                           IsPassword="True"
+                           BackgroundColor="Transparent"
+                           />
+                </VerticalStackLayout>
+
+                <StackLayout Orientation="Horizontal" Spacing="10" HorizontalOptions="Center">
+                    <Button Text="Cancel"
+                            BackgroundColor="Transparent"
+                            TextColor="{StaticResource PrimaryTextColor}"
+                            BorderColor="{StaticResource BorderColor}"
+                            BorderWidth="1"
+                            CornerRadius="5"
+                            WidthRequest="120"
+                            HeightRequest="40"
+                            Clicked="OnCancelEmailChangeClicked" />
+
+                    <Button Text="Update"
+                            BackgroundColor="{StaticResource PrimaryColor}"
+                            TextColor="White"
+                            CornerRadius="5"
+                            WidthRequest="120"
+                            HeightRequest="40"
+                            Clicked="OnConfirmEmailChangeClicked" />
+                </StackLayout>
+            </VerticalStackLayout>
+        </Frame>
+    </Grid>
+
+    <!-- Change Password Popup -->
+    <Grid x:Name="ChangePasswordPopup" 
+          IsVisible="False"
+          BackgroundColor="#80000000"
+          InputTransparent="False">
+        <Frame VerticalOptions="Center"
+               HorizontalOptions="Center"
+               WidthRequest="300"
+               HasShadow="True"
+               BorderColor="{StaticResource BorderColor}"
+               BackgroundColor="{StaticResource CardBackgroundColor}"
+               CornerRadius="10"
+               Padding="20">
+            <VerticalStackLayout Spacing="15">
+                <Label Text="Change Password"
+                       FontSize="18"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource PrimaryTextColor}"
+                       HorizontalOptions="Center" />
+
+                <VerticalStackLayout Spacing="5">
+                    <Label Text="Current Password"
+                           FontSize="14"
+                           TextColor="{StaticResource SecondaryTextColor}" />
+                    <Entry x:Name="CurrentPasswordEntry"
+                           Placeholder="Enter current password"
+                           IsPassword="True"
+                           BackgroundColor="Transparent"
+                           />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="5">
+                    <Label Text="New Password"
+                           FontSize="14"
+                           TextColor="{StaticResource SecondaryTextColor}" />
+                    <Entry x:Name="NewPasswordEntry"
+                           Placeholder="Enter new password"
+                           IsPassword="True"
+                           BackgroundColor="Transparent"
+                          />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="5">
+                    <Label Text="Confirm New Password"
+                           FontSize="14"
+                           TextColor="{StaticResource SecondaryTextColor}" />
+                    <Entry x:Name="ConfirmPasswordEntry"
+                           Placeholder="Confirm new password"
+                           IsPassword="True"
+                           BackgroundColor="Transparent"
+                           />
+                </VerticalStackLayout>
+
+                <StackLayout Orientation="Horizontal" Spacing="10" HorizontalOptions="Center">
+                    <Button Text="Cancel"
+                            BackgroundColor="Transparent"
+                            TextColor="{StaticResource PrimaryTextColor}"
+                            BorderColor="{StaticResource BorderColor}"
+                            BorderWidth="1"
+                            CornerRadius="5"
+                            WidthRequest="120"
+                            HeightRequest="40"
+                            Clicked="OnCancelPasswordChangeClicked" />
+
+                    <Button Text="Update"
+                            BackgroundColor="{StaticResource PrimaryColor}"
+                            TextColor="White"
+                            CornerRadius="5"
+                            WidthRequest="120"
+                            HeightRequest="40"
+                            Clicked="OnConfirmPasswordChangeClicked" />
+                </StackLayout>
+            </VerticalStackLayout>
+        </Frame>
+    </Grid>
+</ContentPage>

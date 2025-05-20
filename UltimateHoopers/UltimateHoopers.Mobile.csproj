@@ -91,6 +91,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<MauiXaml Update="Pages\AccountSettingsPage.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
 		<MauiXaml Update="Pages\CreateAccountPage.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>

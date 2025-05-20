@@ -449,7 +449,23 @@ namespace UltimateHoopers.Pages
 
         private async void OnProfileNavigationClicked(object sender, EventArgs e)
         {
-            await DisplayAlert("Profile", "Profile navigation coming soon!", "OK");
+            // Navigate to profile page if available
+            try
+            {
+                if (App.User != null && App.User.Profile != null)
+                {
+                    await Navigation.PushAsync(new UserProfilePage());
+                }
+                else
+                {
+                    await DisplayAlert("Profile", "Please log in to view your profile", "OK");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error navigating to profile: {ex.Message}");
+                await DisplayAlert("Profile", "Profile navigation unavailable", "OK");
+            }
         }
 
         private async void OnContactSupportClicked(object sender, EventArgs e)
@@ -457,6 +473,11 @@ namespace UltimateHoopers.Pages
             await DisplayAlert("Contact Support",
                 "Our support team is available via email at support@ultimatehoopers.com or through in-app chat during business hours.",
                 "OK");
+        }
+
+        private async void OnShareFirstPostClicked(object sender, EventArgs e)
+        {
+            await DisplayAlert("Create Post", "Create Post feature coming soon!", "OK");
         }
     }
 
