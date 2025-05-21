@@ -302,7 +302,7 @@
                                                     WidthRequest="80"
                                                     VerticalOptions="Start"
                                                     HorizontalOptions="End"
-                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:FindRunsViewModel}}, Path=JoinRunCommand}"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:PrivateRunsViewModel}}, Path=JoinRunCommand}"
                                                     CommandParameter="{Binding}" />
 
                                             <Label Grid.Row="1"
@@ -314,7 +314,7 @@
                                         </Grid>
 
                                         <Frame.GestureRecognizers>
-                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:FindRunsViewModel}}, Path=ViewPrivateRunDetailsCommand}"
+                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:PrivateRunsViewModel}}, Path=ViewPrivateRunDetailsCommand}"
                                                                 CommandParameter="{Binding}" />
                                         </Frame.GestureRecognizers>
                                     </Frame>

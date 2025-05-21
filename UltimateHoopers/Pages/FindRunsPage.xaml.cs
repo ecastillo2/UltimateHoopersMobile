@@ -35,11 +35,12 @@ namespace UltimateHoopers.Pages
         {
             try
             {
+                Debug.WriteLine("FindRunsPage: OnPageLoaded called");
                 await _viewModel.LoadRunsAsync();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error loading runs: {ex.Message}");
+                Debug.WriteLine($"Error loading runs: {ex.Message}");
                 await DisplayAlert("Error", "Could not load run data. Please try again later.", "OK");
             }
         }
@@ -133,7 +134,7 @@ namespace UltimateHoopers.Pages
         }
     }
 
-    // Renamed and fixed ViewModel
+    // Fixed and Enhanced ViewModel
     public class FindRunsViewModel : BindableObject
     {
         private ObservableCollection<Run> _allRuns = new ObservableCollection<Run>();
@@ -152,6 +153,7 @@ namespace UltimateHoopers.Pages
             {
                 _runs = value;
                 OnPropertyChanged();
+                Debug.WriteLine($"Runs collection updated. Count: {_runs?.Count ?? 0}");
             }
         }
 
@@ -167,6 +169,7 @@ namespace UltimateHoopers.Pages
                     _isLoading = value;
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(IsNotLoading));
+                    Debug.WriteLine($"IsLoading changed to: {_isLoading}");
                 }
             }
         }
@@ -178,6 +181,7 @@ namespace UltimateHoopers.Pages
             {
                 _isRefreshing = value;
                 OnPropertyChanged();
+                Debug.WriteLine($"IsRefreshing changed to: {_isRefreshing}");
             }
         }
 
@@ -237,140 +241,235 @@ namespace UltimateHoopers.Pages
 
         public FindRunsViewModel()
         {
+            Debug.WriteLine("FindRunsViewModel: Constructor called");
+
             RefreshCommand = new Command(async () => await LoadRunsAsync());
             JoinRunCommand = new Command<Run>(async (run) => await JoinRun(run));
             ViewPrivateRunDetailsCommand = new Command<Run>(async (run) => await ViewRunDetails(run));
             CreateRunCommand = new Command(async () => await CreateRun());
             ToggleMapViewCommand = new Command(() => MapViewEnabled = !MapViewEnabled);
             LoadMoreCommand = new Command(async () => await LoadMoreRuns());
+
+            Debug.WriteLine("FindRunsViewModel: Commands initialized");
         }
 
         public async Task LoadRunsAsync()
         {
             try
             {
+                Debug.WriteLine("LoadRunsAsync: Starting");
                 IsLoading = true;
-                await Task.Delay(300); // Small delay for loading indicator
+                IsRefreshing = true;
+
+                // Small delay for loading indicator
+                await Task.Delay(300);
+
+                // Clear existing runs
+                _allRuns.Clear();
+                Debug.WriteLine("LoadRunsAsync: Cleared existing runs");
 
                 // Load mock data
-                _allRuns.Clear();
                 LoadMockRuns();
+                Debug.WriteLine($"LoadRunsAsync: Loaded {_allRuns.Count} mock runs");
 
                 // Apply current filters
                 FilterRuns();
+                Debug.WriteLine($"LoadRunsAsync: After filtering, {Runs.Count} runs visible");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error loading runs: {ex.Message}");
-                throw;
+                Debug.WriteLine($"Error in LoadRunsAsync: {ex.Message}");
+                await Application.Current.MainPage.DisplayAlert("Error", $"Failed to load runs: {ex.Message}", "OK");
             }
             finally
             {
                 IsLoading = false;
+                IsRefreshing = false;
+                Debug.WriteLine("LoadRunsAsync: Completed");
             }
         }
 
         private void LoadMockRuns()
         {
-            var runs = new List<Run>
-            {
-                new Run
-                {
-                    Name = "Downtown Pickup Game",
-                    Location = "Downtown Court",
-                    Address = "123 Main St, Conyers, GA",
-                    Date = DateTime.Now.AddDays(2),
-                    Time = "7:00 PM - 9:00 PM",
-                    HostName = "Michael Jordan",
-                    HostId = "user123",
-                    SkillLevel = "All Levels",
-                    GameType = "5-on-5",
-                    IsPublic = true,
-                    Description = "Weekly pickup game, open to all skill levels. Bring light and dark shirts!",
-                    PlayerLimit = 10,
-                    CurrentPlayerCount = 6,
-                    CourtImageUrl = "https://images.unsplash.com/photo-1518626413561-907586085645?q=80&w=1000&auto=format&fit=crop",
-                    Cost = 0,
-                    Distance = 1.2
-                },
-                new Run
-                {
-                    Name = "Pro Run",
-                    Location = "Elite Sports Center",
-                    Address = "456 Elm St, Conyers, GA",
-                    Date = DateTime.Now.AddDays(1),
-                    Time = "6:00 PM - 8:00 PM",
-                    HostName = "LeBron James",
-                    HostId = "user456",
-                    SkillLevel = "Advanced",
-                    GameType = "5-on-5",
-                    IsPublic = true,
-                    Description = "High-level run for experienced players. Full court games with refs.",
-                    PlayerLimit = 15,
-                    CurrentPlayerCount = 15,
-                    CourtImageUrl = "https://images.unsplash.com/photo-1505666287802-931dc83d1b52?q=80&w=1000&auto=format&fit=crop",
-                    Cost = 10,
-                    Distance = 3.5
-                }
-            };
+            Debug.WriteLine("LoadMockRuns: Starting to create mock data");
 
-            foreach (var run in runs)
+            try
             {
-                _allRuns.Add(run);
+                var runs = new List<Run>
+                {
+                    new Run
+                    {
+                        Id = "1",
+                        Name = "Downtown Pickup Game",
+                        Location = "Downtown Court",
+                        Address = "123 Main St, Conyers, GA",
+                        Date = DateTime.Now.AddDays(2),
+                        Time = "7:00 PM - 9:00 PM",
+                        HostName = "Michael Jordan",
+                        HostId = "user123",
+                        SkillLevel = "All Levels",
+                        GameType = "5-on-5",
+                        IsPublic = true,
+                        Description = "Weekly pickup game, open to all skill levels. Bring light and dark shirts!",
+                        PlayerLimit = 10,
+                        CurrentPlayerCount = 6,
+                        CourtImageUrl = "https://images.unsplash.com/photo-1518626413561-907586085645?q=80&w=1000&auto=format&fit=crop",
+                        Cost = 0,
+                        Distance = 1.2
+                    },
+                    new Run
+                    {
+                        Id = "2",
+                        Name = "Pro Run",
+                        Location = "Elite Sports Center",
+                        Address = "456 Elm St, Conyers, GA",
+                        Date = DateTime.Now.AddDays(1),
+                        Time = "6:00 PM - 8:00 PM",
+                        HostName = "LeBron James",
+                        HostId = "user456",
+                        SkillLevel = "Advanced",
+                        GameType = "5-on-5",
+                        IsPublic = true,
+                        Description = "High-level run for experienced players. Full court games with refs.",
+                        PlayerLimit = 15,
+                        CurrentPlayerCount = 15,
+                        CourtImageUrl = "https://images.unsplash.com/photo-1505666287802-931dc83d1b52?q=80&w=1000&auto=format&fit=crop",
+                        Cost = 10,
+                        Distance = 3.5
+                    },
+                    new Run
+                    {
+                        Id = "3",
+                        Name = "Morning Shootaround",
+                        Location = "Community Center",
+                        Address = "789 Oak Ave, Conyers, GA",
+                        Date = DateTime.Now.AddDays(3),
+                        Time = "8:00 AM - 10:00 AM",
+                        HostName = "Steph Curry",
+                        HostId = "user789",
+                        SkillLevel = "Intermediate",
+                        GameType = "3-on-3",
+                        IsPublic = true,
+                        Description = "Early morning games for those who like to start their day with basketball.",
+                        PlayerLimit = 12,
+                        CurrentPlayerCount = 8,
+                        CourtImageUrl = "https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=1000&auto=format&fit=crop",
+                        Cost = 5,
+                        Distance = 2.1
+                    }
+                };
+
+                Debug.WriteLine($"LoadMockRuns: Created {runs.Count} mock runs");
+
+                // Add runs to the main collection
+                foreach (var run in runs)
+                {
+                    // Initialize Players collection if null
+                    if (run.Players == null)
+                    {
+                        run.Players = new ObservableCollection<Player>();
+                        Debug.WriteLine($"Initialized Players collection for run {run.Id}");
+                    }
+
+                    // Add some mock players
+                    for (int i = 0; i < run.CurrentPlayerCount && i < 3; i++)
+                    {
+                        run.Players.Add(new Player
+                        {
+                            Id = $"player{i}_{run.Id}",
+                            Name = $"Player {i + 1}",
+                            IsHost = i == 0
+                        });
+                    }
+
+                    _allRuns.Add(run);
+                    Debug.WriteLine($"Added run: {run.Name} with {run.Players.Count} players");
+                }
+
+                Debug.WriteLine($"LoadMockRuns: Total runs in _allRuns: {_allRuns.Count}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error in LoadMockRuns: {ex.Message}");
+                Debug.WriteLine($"Stack trace: {ex.StackTrace}");
             }
         }
 
         private void FilterRuns()
         {
-            if (_allRuns == null || _allRuns.Count == 0)
+            try
             {
-                Runs = new ObservableCollection<Run>();
-                return;
-            }
+                Debug.WriteLine("FilterRuns: Starting");
+                Debug.WriteLine($"FilterRuns: _allRuns count: {_allRuns?.Count ?? 0}");
 
-            var filtered = _allRuns.AsEnumerable();
-
-            // Filter by search text
-            if (!string.IsNullOrWhiteSpace(SearchText))
-            {
-                filtered = filtered.Where(r =>
-                    r.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                    r.Location.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                    r.Address.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
-            }
-
-            // Filter by skill level
-            if (SelectedSkillLevel != "All Levels")
-            {
-                filtered = filtered.Where(r => r.SkillLevel == SelectedSkillLevel);
-            }
-
-            // Filter by date
-            if (SelectedDate != "All")
-            {
-                var today = DateTime.Today;
-                switch (SelectedDate)
+                if (_allRuns == null || _allRuns.Count == 0)
                 {
-                    case "Today":
-                        filtered = filtered.Where(r => r.Date.Date == today);
-                        break;
-                    case "Tomorrow":
-                        filtered = filtered.Where(r => r.Date.Date == today.AddDays(1));
-                        break;
-                    case "This Weekend":
-                        var saturday = today.AddDays((int)DayOfWeek.Saturday - (int)today.DayOfWeek);
-                        var sunday = saturday.AddDays(1);
-                        filtered = filtered.Where(r => r.Date.Date == saturday || r.Date.Date == sunday);
-                        break;
-                    case "Next Week":
-                        var nextWeekStart = today.AddDays(7 - (int)today.DayOfWeek);
-                        var nextWeekEnd = nextWeekStart.AddDays(6);
-                        filtered = filtered.Where(r => r.Date.Date >= nextWeekStart && r.Date.Date <= nextWeekEnd);
-                        break;
+                    Debug.WriteLine("FilterRuns: No runs to filter, setting empty collection");
+                    Runs = new ObservableCollection<Run>();
+                    return;
                 }
-            }
 
-            Runs = new ObservableCollection<Run>(filtered.ToList());
+                var filtered = _allRuns.AsEnumerable();
+                Debug.WriteLine($"FilterRuns: Starting with {filtered.Count()} runs");
+
+                // Filter by search text
+                if (!string.IsNullOrWhiteSpace(SearchText))
+                {
+                    filtered = filtered.Where(r =>
+                        r.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                        r.Location.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                        r.Address.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+                    Debug.WriteLine($"FilterRuns: After search filter: {filtered.Count()} runs");
+                }
+
+                // Filter by skill level
+                if (SelectedSkillLevel != "All Levels")
+                {
+                    filtered = filtered.Where(r => r.SkillLevel == SelectedSkillLevel);
+                    Debug.WriteLine($"FilterRuns: After skill level filter: {filtered.Count()} runs");
+                }
+
+                // Filter by date
+                if (SelectedDate != "All")
+                {
+                    var today = DateTime.Today;
+                    switch (SelectedDate)
+                    {
+                        case "Today":
+                            filtered = filtered.Where(r => r.Date.Date == today);
+                            break;
+                        case "Tomorrow":
+                            filtered = filtered.Where(r => r.Date.Date == today.AddDays(1));
+                            break;
+                        case "This Weekend":
+                            var saturday = today.AddDays((int)DayOfWeek.Saturday - (int)today.DayOfWeek);
+                            var sunday = saturday.AddDays(1);
+                            filtered = filtered.Where(r => r.Date.Date == saturday || r.Date.Date == sunday);
+                            break;
+                        case "Next Week":
+                            var nextWeekStart = today.AddDays(7 - (int)today.DayOfWeek);
+                            var nextWeekEnd = nextWeekStart.AddDays(6);
+                            filtered = filtered.Where(r => r.Date.Date >= nextWeekStart && r.Date.Date <= nextWeekEnd);
+                            break;
+                    }
+                    Debug.WriteLine($"FilterRuns: After date filter: {filtered.Count()} runs");
+                }
+
+                var filteredList = filtered.ToList();
+                Debug.WriteLine($"FilterRuns: Final filtered count: {filteredList.Count}");
+
+                // Update the Runs collection on the UI thread
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    Runs = new ObservableCollection<Run>(filteredList);
+                    Debug.WriteLine($"FilterRuns: Updated UI collection with {Runs.Count} runs");
+                });
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error in FilterRuns: {ex.Message}");
+                Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+            }
         }
 
         private async Task JoinRun(Run run)
@@ -435,10 +534,13 @@ namespace UltimateHoopers.Pages
             {
                 if (run == null) return;
 
+                Debug.WriteLine($"ViewRunDetails: Navigating to details for run {run.Id}");
+
                 await MainThread.InvokeOnMainThreadAsync(async () =>
                 {
                     var detailsPage = new PrivateRunDetailsPage(run);
                     await Application.Current.MainPage.Navigation.PushAsync(detailsPage);
+                    Debug.WriteLine("ViewRunDetails: Navigation completed");
                 });
             }
             catch (Exception ex)
@@ -495,6 +597,7 @@ namespace UltimateHoopers.Pages
                 // Add more mock runs
                 _allRuns.Add(new Run
                 {
+                    Id = "4",
                     Name = "Weekend Warriors",
                     Location = "Recreation Center",
                     Address = "555 Maple St, Conyers, GA",
@@ -510,7 +613,8 @@ namespace UltimateHoopers.Pages
                     CurrentPlayerCount = 6,
                     CourtImageUrl = "https://images.unsplash.com/photo-1518036232006-8c9ed5097053?q=80&w=1000&auto=format&fit=crop",
                     Cost = 0,
-                    Distance = 5.1
+                    Distance = 5.1,
+                    Players = new ObservableCollection<Player>()
                 });
 
                 FilterRuns();

@@ -7,7 +7,7 @@ using UltimateHoopers.Models;
 
 namespace UltimateHoopers.ViewModels
 {
-    public class RunDetailsViewModel : BindableObject
+    public class PrivateRunDetailsViewModel : BindableObject
     {
         private Run _run;
         private bool _isBusy;
@@ -79,7 +79,7 @@ namespace UltimateHoopers.ViewModels
         public ICommand ShareRunCommand { get; }
 
         // Constructor
-        public RunDetailsViewModel(Run run)
+        public PrivateRunDetailsViewModel(Run run)
         {
             Run = run;
 
@@ -97,8 +97,6 @@ namespace UltimateHoopers.ViewModels
             try
             {
                 // In a real app, this would refresh the run details from a service
-
-                // For now, just check if the user is joined
                 CheckUserJoined();
             }
             catch (Exception ex)
@@ -110,8 +108,6 @@ namespace UltimateHoopers.ViewModels
         private void CheckUserJoined()
         {
             // In a real app, this would check if the current user is in the player list
-
-            // For demo purposes, we'll just set a default value
             IsUserJoined = false;
 
             // Check if any players match the current user ID
@@ -149,9 +145,6 @@ namespace UltimateHoopers.ViewModels
                     if (!confirmed)
                         return;
 
-                    // In a real app, this would call a service to leave the run
-                    // For demo, just remove from player list and decrement count
-
                     // Find and remove current user
                     string currentUserId = App.User?.UserId;
                     if (!string.IsNullOrEmpty(currentUserId) && Run.Players != null)
@@ -173,7 +166,6 @@ namespace UltimateHoopers.ViewModels
                         }
                     }
 
-                    // Update state
                     IsUserJoined = false;
 
                     await Application.Current.MainPage.DisplayAlert(
@@ -191,8 +183,6 @@ namespace UltimateHoopers.ViewModels
 
                     if (!confirmed)
                         return;
-
-                    // In a real app, this would call a service to join the waitlist
 
                     await Application.Current.MainPage.DisplayAlert(
                         "Success",
@@ -221,15 +211,11 @@ namespace UltimateHoopers.ViewModels
                         if (!payNow)
                             return;
 
-                        // In a real app, this would navigate to a payment page
                         await Application.Current.MainPage.DisplayAlert(
                             "Payment",
                             "Payment processing coming soon!",
                             "OK");
                     }
-
-                    // In a real app, this would call a service to join the run
-                    // For demo, just add to player list and increment count
 
                     // Create a player object for the current user
                     var player = new Player
@@ -239,11 +225,8 @@ namespace UltimateHoopers.ViewModels
                         IsHost = false
                     };
 
-                    // Add to the player list
                     Run.Players.Add(player);
                     Run.CurrentPlayerCount++;
-
-                    // Update state
                     IsUserJoined = true;
 
                     await Application.Current.MainPage.DisplayAlert(
@@ -252,7 +235,6 @@ namespace UltimateHoopers.ViewModels
                         "OK");
                 }
 
-                // Notify that the run has been updated
                 OnPropertyChanged(nameof(Run));
             }
             catch (Exception ex)
@@ -273,8 +255,6 @@ namespace UltimateHoopers.ViewModels
         {
             try
             {
-                // In a real app, this would use the Share API to share the run
-
                 string action = await Application.Current.MainPage.DisplayActionSheet(
                     "Share Run",
                     "Cancel",
@@ -285,10 +265,7 @@ namespace UltimateHoopers.ViewModels
 
                 if (action == "Copy Link")
                 {
-                    // Example URL format
                     string url = $"https://ultimatehoopers.com/run/{Run.Id}";
-
-                    // In a real app, this would copy to clipboard
                     await Application.Current.MainPage.DisplayAlert(
                         "Link Copied",
                         $"Run link copied to clipboard: {url}",
