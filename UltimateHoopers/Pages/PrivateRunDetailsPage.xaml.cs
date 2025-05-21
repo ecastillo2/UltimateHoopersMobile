@@ -6,12 +6,12 @@ using UltimateHoopers.ViewModels;
 
 namespace UltimateHoopers.Pages
 {
-    public partial class RunDetailsPage : ContentPage
+    public partial class PrivateRunDetailsPage : ContentPage
     {
-        private RunDetailsViewModel _viewModel;
+        private PrivateRunDetailsViewModel _viewModel;
 
         // Default constructor (needed for design-time support)
-        public RunDetailsPage()
+        public PrivateRunDetailsPage()
         {
             InitializeComponent();
 
@@ -21,7 +21,7 @@ namespace UltimateHoopers.Pages
         }
 
         // Main constructor with a run parameter
-        public RunDetailsPage(Run run)
+        public PrivateRunDetailsPage(Run run)
         {
             InitializeComponent();
 
