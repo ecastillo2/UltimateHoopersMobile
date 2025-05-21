@@ -37,8 +37,8 @@ namespace UltimateHoopers.Pages
             {
               
 
-                ("⚙️", "Account", () => Navigation.PushAsync(new AccountSettingsPage())),
-                ("⚙️", "Settings", () => Navigation.PushAsync(new SettingsPage())),
+                ("👤", "Account", () => Navigation.PushAsync(new AccountSettingsPage())),
+                
                 ("❓", "FAQ", () => Navigation.PushAsync(new FAQPage())),
                 ("📱", "About App", () => Navigation.PushAsync(new AboutPage())),
                 ("📤", "Logout", () => LogoutUser())

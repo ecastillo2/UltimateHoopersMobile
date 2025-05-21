@@ -52,13 +52,5 @@
           Command="{Binding NavigateToNotificationsCommand}" />
     <MenuItem Text="About" 
       IconImageSource="about.png" />
-    <MenuItem Text="FAQ" 
-   IconImageSource="FAQ.png" 
-   Command="{Binding FAQCommand}" />
-    <MenuItem Text="Help &amp; Support" 
-              IconImageSource="help.png"
-              Command="{Binding HelpCommand}" />
-    <MenuItem Text="Logout" 
-              IconImageSource="logo_uh.png"
-              Command="{Binding LogoutCommand}" />
+  
 </Shell>

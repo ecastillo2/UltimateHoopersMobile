@@ -188,6 +188,12 @@ namespace UltimateHoopers
                 Routing.RegisterRoute("notificationsettingspage", typeof(Pages.NotificationSettingsPage));
                 _registeredRoutes.Add("notificationsettingspage");
             }
+
+            if (!_registeredRoutes.Contains("accountsettingspage"))
+            {
+                Routing.RegisterRoute("accountsettingspage", typeof(Pages.AccountSettingsPage));
+                _registeredRoutes.Add("accountsettingspage");
+            }
         }
 
         // Custom method to check if a route is registered

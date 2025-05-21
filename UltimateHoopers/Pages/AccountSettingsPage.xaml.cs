@@ -1,215 +1,101 @@
 ﻿using Microsoft.Maui.Controls;
 using System;
-using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
-using UltimateHoopers.Helpers;
-using UltimateHoopers.Services;
 
 namespace UltimateHoopers.Pages
 {
     public partial class AccountSettingsPage : ContentPage
     {
-        private readonly IAuthService _authService;
-        private bool _isPro = false;
-
         public AccountSettingsPage()
         {
             InitializeComponent();
-
-            // Try to get auth service from DI
-            var serviceProvider = MauiProgram.CreateMauiApp().Services;
-            _authService = serviceProvider.GetService<IAuthService>();
-
-            // Set app version
-            VersionLabel.Text = $"Version {AppInfo.VersionString}";
-
-            // Load user data when page appears
-            this.Appearing += OnPageAppearing;
+            InitializeUserData();
         }
 
-        private async void OnPageAppearing(object sender, EventArgs e)
+        private void InitializeUserData()
         {
-            try
+            // Populate labels with user data from your authentication service
+            // This is just sample code - replace with your actual implementation
+            UsernameLabel.Text = "johndoe";
+            EmailLabel.Text = "john.doe@example.com";
+            CurrentEmailLabel.Text = "john.doe@example.com";
+            AccountTypeLabel.Text = "Free Player Account";
+            JoinedDateLabel.Text = "January 15, 2023";
+            CurrentPlanLabel.Text = "Free Plan";
+
+            // Set version
+            VersionLabel.Text = $"Version {AppInfo.Current.VersionString}";
+
+            // Set subscription visibility based on user's subscription status
+            bool isPremium = false; // Get from your subscription service
+            UpgradeButton.IsVisible = !isPremium;
+            CancelSubscriptionButton.IsVisible = isPremium;
+
+            // Initialize plan features
+            if (isPremium)
             {
-                await LoadUserData();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error loading user data: {ex.Message}");
-                await DisplayAlert("Error", "Could not load account information", "OK");
-            }
-        }
-
-        private async Task LoadUserData()
-        {
-            // Check if user is logged in
-            if (App.User == null)
-            {
-                await DisplayAlert("Not Logged In", "Please log in to view your account settings", "OK");
-                await Navigation.PopAsync();
-                return;
-            }
-
-            // Set user information
-            UsernameLabel.Text = App.User.UserName ?? "username";
-            EmailLabel.Text = App.User.Email ?? "email@example.com";
-            CurrentEmailLabel.Text = App.User.Email ?? "email@example.com";
-
-            // Set account type
-            string accountType = "Free Player Account";
-            if (App.User.AccountType == Domain.AccountType.Host)
-            {
-                accountType = "Court Host Account";
-            }
-            AccountTypeLabel.Text = accountType;
-
-            // Subscription status
-            // This is where you would check the user's actual subscription status
-            // For this example, we'll use a simple approach
-            CheckSubscriptionStatus();
-
-            // Set joined date
-            // In a real app, you would get this from the user object
-            JoinedDateLabel.Text = "January 1, 2023";
-
-            // Set permissions based on user preferences
-            // In a real app, you would fetch these from user settings
-            NotificationsSwitch.IsToggled = true;
-            LocationSwitch.IsToggled = true;
-            TwoFactorSwitch.IsToggled = false;
-        }
-
-        private void CheckSubscriptionStatus()
-        {
-            // This is a placeholder for real subscription logic
-            // In a real app, you would check the user's subscription from a service
-
-            // For demo purposes, we'll determine if the user has a Pro account
-            // based on a simple condition - you would replace this with actual logic
-            _isPro = App.User.UserName?.Contains("pro", StringComparison.OrdinalIgnoreCase) == true;
-
-            if (_isPro)
-            {
-                // Update UI for Pro users
-                CurrentPlanLabel.Text = "Pro Plan";
-                UpgradeButton.Text = "Manage Subscription";
-                CancelSubscriptionButton.IsVisible = true;
-
-                // Update features list for Pro users
-                PlanFeaturesLayout.Children.Clear();
-
-                // Add header
-                PlanFeaturesLayout.Children.Add(new Label
-                {
-                    Text = "Features",
-                    FontSize = 14,
-                    TextColor = (Color)Application.Current.Resources["SecondaryTextColor"]
-                });
-
-                // Add Pro features
-                AddFeatureItem("Join and host unlimited games");
-                AddFeatureItem("Advanced statistics and analytics");
-                AddFeatureItem("Priority court bookings");
-                AddFeatureItem("Ad-free experience");
-                AddFeatureItem("Premium support");
+                // Add premium features to the list
+                AddFeatureToList("Advanced statistics");
+                AddFeatureToList("Video analysis tools");
+                AddFeatureToList("Unlimited posts");
+                AddFeatureToList("Ad-free experience");
             }
             else
             {
-                // Free user UI is already set up in XAML
-                CancelSubscriptionButton.IsVisible = false;
+                // Add free features to the list
+                AddFeatureToList("Basic features included");
+                AddFeatureToList("Limited statistics");
+                AddFeatureToList("5 posts per week");
             }
+
+            // Set two-factor auth status
+            TwoFactorSwitch.IsToggled = false; // Get from your auth service
         }
 
-        private void AddFeatureItem(string featureText)
+        private void AddFeatureToList(string featureText)
         {
-            var stack = new StackLayout
-            {
-                Orientation = StackOrientation.Horizontal,
-                Spacing = 10
-            };
-
-            stack.Children.Add(new Label
-            {
-                Text = "✓",
-                TextColor = (Color)Application.Current.Resources["PrimaryColor"],
-                FontSize = 16,
-                VerticalOptions = LayoutOptions.Start
-            });
-
-            stack.Children.Add(new Label
-            {
-                Text = featureText,
-                TextColor = (Color)Application.Current.Resources["PrimaryTextColor"],
-                FontSize = 14
-            });
-
-            PlanFeaturesLayout.Children.Add(stack);
+            var layout = new HorizontalStackLayout { Spacing = 10 };
+            layout.Add(new Label { Text = "✓", TextColor = (Color)Application.Current.Resources["PrimaryColor"] });
+            layout.Add(new Label { Text = featureText, TextColor = (Color)Application.Current.Resources["PrimaryTextColor"] });
+            PlanFeaturesLayout.Add(layout);
         }
 
-        #region Navigation Handlers
-        private async void OnBackClicked(object sender, EventArgs e)
+        #region Navigation
+        private void OnBackClicked(object sender, EventArgs e)
         {
-            await Navigation.PopAsync();
+            Navigation.PopAsync();
         }
 
-        private async void OnHomeNavigationClicked(object sender, EventArgs e)
+        private void OnHomeNavigationClicked(object sender, TappedEventArgs e)
         {
-            try
-            {
-                Debug.WriteLine("AccountSettingsPage: OnHomeClicked - using DirectNavigationHelper");
-                await DirectNavigationHelper.GoToHomePageAsync();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"AccountSettingsPage: Error navigating to HomePage: {ex.Message}");
-                await DisplayAlert("Navigation Error",
-                    "Could not navigate to home page. Please try again or restart the app.",
-                    "OK");
-            }
+            // Navigate to home page
+            Navigation.PopToRootAsync();
         }
 
-        private async void OnPostsNavigationClicked(object sender, EventArgs e)
+        private void OnPostsNavigationClicked(object sender, TappedEventArgs e)
         {
-            try
-            {
-                Debug.WriteLine("AccountSettingsPage: OnPostsClicked - using DirectNavigationHelper");
-                await DirectNavigationHelper.GoToPostsPageAsync();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"AccountSettingsPage: Error navigating to PostsPage: {ex.Message}");
-                await DisplayAlert("Navigation Error",
-                    "Could not navigate to posts page. Please try again or restart the app.",
-                    "OK");
-            }
+            // Navigate to posts page
+            // Implementation depends on your navigation structure
         }
 
-        private async void OnFAQNavigationClicked(object sender, EventArgs e)
+        private void OnFAQNavigationClicked(object sender, TappedEventArgs e)
         {
-            try
-            {
-                await Navigation.PushAsync(new FAQPage());
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"AccountSettingsPage: Error navigating to FAQPage: {ex.Message}");
-                await DisplayAlert("Navigation Error",
-                    "Could not navigate to FAQ page. Please try again or restart the app.",
-                    "OK");
-            }
+            // Navigate to FAQ page
+            // Implementation depends on your navigation structure
         }
         #endregion
 
-        #region Account Settings Handlers
+        #region Email Management
         private void OnChangeEmailClicked(object sender, EventArgs e)
         {
-            // Show change email popup
+            // Show the change email popup
             ChangeEmailPopup.IsVisible = true;
         }
 
         private void OnCancelEmailChangeClicked(object sender, EventArgs e)
         {
-            // Hide popup and clear fields
+            // Hide the popup and clear fields
             ChangeEmailPopup.IsVisible = false;
             NewEmailEntry.Text = string.Empty;
             EmailPasswordEntry.Text = string.Empty;
@@ -217,405 +103,418 @@ namespace UltimateHoopers.Pages
 
         private async void OnConfirmEmailChangeClicked(object sender, EventArgs e)
         {
+            // Validate input
+            if (string.IsNullOrWhiteSpace(NewEmailEntry.Text))
+            {
+                await DisplayAlert("Error", "Please enter a new email address.", "OK");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(EmailPasswordEntry.Text))
+            {
+                await DisplayAlert("Error", "Please enter your password to confirm this change.", "OK");
+                return;
+            }
+
             try
             {
-                // Validate input
-                if (string.IsNullOrWhiteSpace(NewEmailEntry.Text))
-                {
-                    await DisplayAlert("Error", "Please enter a new email address", "OK");
-                    return;
-                }
+                // In a real app, you would call your authentication service here
+                // to update the email address
 
-                if (string.IsNullOrWhiteSpace(EmailPasswordEntry.Text))
-                {
-                    await DisplayAlert("Error", "Please enter your password", "OK");
-                    return;
-                }
-
-                if (!IsValidEmail(NewEmailEntry.Text))
-                {
-                    await DisplayAlert("Error", "Please enter a valid email address", "OK");
-                    return;
-                }
-
-                // Verify password (in a real app, you would check this with your auth service)
-                bool passwordValid = true; // Replace with actual validation
-
-                if (!passwordValid)
-                {
-                    await DisplayAlert("Error", "Incorrect password", "OK");
-                    return;
-                }
-
-                // Update email (in a real app, you would call your auth service)
-                string newEmail = NewEmailEntry.Text;
-
-                // Show loading indicator
-                await DisplayAlert("Email Update", "Processing your request...", "OK");
-
-                // Simulate API call
+                // Simulate API call with delay
                 await Task.Delay(1000);
 
                 // Update UI
-                EmailLabel.Text = newEmail;
-                CurrentEmailLabel.Text = newEmail;
-
-                // Update user object
-                if (App.User != null)
-                {
-                    App.User.Email = newEmail;
-                }
+                EmailLabel.Text = NewEmailEntry.Text;
+                CurrentEmailLabel.Text = NewEmailEntry.Text;
 
                 // Hide popup and clear fields
                 ChangeEmailPopup.IsVisible = false;
                 NewEmailEntry.Text = string.Empty;
                 EmailPasswordEntry.Text = string.Empty;
 
-                // Show success message
-                await DisplayAlert("Success", "Your email has been updated successfully", "OK");
+                await DisplayAlert("Success", "Your email has been updated successfully.", "OK");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error changing email: {ex.Message}");
-                await DisplayAlert("Error", "Failed to update email. Please try again later.", "OK");
+                await DisplayAlert("Error", $"Failed to update email: {ex.Message}", "OK");
             }
         }
+        #endregion
 
+        #region Password Management
         private void OnChangePasswordClicked(object sender, EventArgs e)
         {
-            // Show change password popup
+            // Show the change password popup
+            ClearPasswordFields();
             ChangePasswordPopup.IsVisible = true;
         }
 
         private void OnCancelPasswordChangeClicked(object sender, EventArgs e)
         {
-            // Hide popup and clear fields
+            // Hide the popup and clear fields
             ChangePasswordPopup.IsVisible = false;
+            ClearPasswordFields();
+        }
+
+        private void ClearPasswordFields()
+        {
             CurrentPasswordEntry.Text = string.Empty;
             NewPasswordEntry.Text = string.Empty;
             ConfirmPasswordEntry.Text = string.Empty;
+
+            // Reset UI elements
+            PasswordStrengthLabel.Text = "Password strength: Too weak";
+            PasswordMatchLabel.IsVisible = false;
+            UpdatePasswordButton.IsEnabled = false;
+
+            // Reset strength indicators
+            StrengthIndicator1.BackgroundColor = Color.FromArgb("#E0E0E0");
+            StrengthIndicator2.BackgroundColor = Color.FromArgb("#E0E0E0");
+            StrengthIndicator3.BackgroundColor = Color.FromArgb("#E0E0E0");
+            StrengthIndicator4.BackgroundColor = Color.FromArgb("#E0E0E0");
+
+            // Reset requirement icons
+            LengthCheckIcon.Text = "○";
+            LengthCheckIcon.TextColor = Color.FromArgb("#9E9E9E");
+
+            UppercaseCheckIcon.Text = "○";
+            UppercaseCheckIcon.TextColor = Color.FromArgb("#9E9E9E");
+
+            LowercaseCheckIcon.Text = "○";
+            LowercaseCheckIcon.TextColor = Color.FromArgb("#9E9E9E");
+
+            NumberCheckIcon.Text = "○";
+            NumberCheckIcon.TextColor = Color.FromArgb("#9E9E9E");
+
+            SpecialCheckIcon.Text = "○";
+            SpecialCheckIcon.TextColor = Color.FromArgb("#9E9E9E");
         }
 
         private async void OnConfirmPasswordChangeClicked(object sender, EventArgs e)
         {
+            // Validate input should be done in real-time through the TextChanged events
+            // But we can add extra validation here if needed
+
             try
             {
-                // Validate input
-                if (string.IsNullOrWhiteSpace(CurrentPasswordEntry.Text))
-                {
-                    await DisplayAlert("Error", "Please enter your current password", "OK");
-                    return;
-                }
+                // In a real app, you would call your authentication service here
+                // to update the password
 
-                if (string.IsNullOrWhiteSpace(NewPasswordEntry.Text))
-                {
-                    await DisplayAlert("Error", "Please enter a new password", "OK");
-                    return;
-                }
-
-                if (NewPasswordEntry.Text.Length < 8)
-                {
-                    await DisplayAlert("Error", "Password must be at least 8 characters long", "OK");
-                    return;
-                }
-
-                if (NewPasswordEntry.Text != ConfirmPasswordEntry.Text)
-                {
-                    await DisplayAlert("Error", "New passwords do not match", "OK");
-                    return;
-                }
-
-                // Verify current password (in a real app, you would check this with your auth service)
-                bool passwordValid = true; // Replace with actual validation
-
-                if (!passwordValid)
-                {
-                    await DisplayAlert("Error", "Incorrect current password", "OK");
-                    return;
-                }
-
-                // Update password (in a real app, you would call your auth service)
-                string newPassword = NewPasswordEntry.Text;
-
-                // Show loading indicator
-                await DisplayAlert("Password Update", "Processing your request...", "OK");
-
-                // Simulate API call
+                // Simulate API call with delay
                 await Task.Delay(1000);
 
                 // Hide popup and clear fields
                 ChangePasswordPopup.IsVisible = false;
-                CurrentPasswordEntry.Text = string.Empty;
-                NewPasswordEntry.Text = string.Empty;
-                ConfirmPasswordEntry.Text = string.Empty;
+                ClearPasswordFields();
 
-                // Show success message
-                await DisplayAlert("Success", "Your password has been updated successfully", "OK");
+                await DisplayAlert("Success", "Your password has been updated successfully.", "OK");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error changing password: {ex.Message}");
-                await DisplayAlert("Error", "Failed to update password. Please try again later.", "OK");
+                await DisplayAlert("Error", $"Failed to update password: {ex.Message}", "OK");
             }
         }
 
-        private async void OnTwoFactorToggled(object sender, ToggledEventArgs e)
+        // Password visibility toggle methods
+        private void OnToggleCurrentPasswordVisibility(object sender, EventArgs e)
         {
-            try
+            CurrentPasswordEntry.IsPassword = !CurrentPasswordEntry.IsPassword;
+            ShowCurrentPasswordButton.Text = CurrentPasswordEntry.IsPassword ? "👁" : "👁‍🗨";
+        }
+
+        private void OnToggleNewPasswordVisibility(object sender, EventArgs e)
+        {
+            NewPasswordEntry.IsPassword = !NewPasswordEntry.IsPassword;
+            ShowNewPasswordButton.Text = NewPasswordEntry.IsPassword ? "👁" : "👁‍🗨";
+        }
+
+        private void OnToggleConfirmPasswordVisibility(object sender, EventArgs e)
+        {
+            ConfirmPasswordEntry.IsPassword = !ConfirmPasswordEntry.IsPassword;
+            ShowConfirmPasswordButton.Text = ConfirmPasswordEntry.IsPassword ? "👁" : "👁‍🗨";
+        }
+
+        // Password strength and validation methods
+        private void OnNewPasswordTextChanged(object sender, TextChangedEventArgs e)
+        {
+            string password = NewPasswordEntry.Text ?? string.Empty;
+
+            // Update requirement checkmarks
+            bool hasLength = password.Length >= 8;
+            bool hasUppercase = password.Any(char.IsUpper);
+            bool hasLowercase = password.Any(char.IsLower);
+            bool hasNumber = password.Any(char.IsDigit);
+            bool hasSpecial = password.Any(c => !char.IsLetterOrDigit(c));
+
+            // Update requirement icons
+            LengthCheckIcon.Text = hasLength ? "✓" : "○";
+            LengthCheckIcon.TextColor = hasLength ? Color.FromArgb("#4CAF50") : Color.FromArgb("#9E9E9E");
+
+            UppercaseCheckIcon.Text = hasUppercase ? "✓" : "○";
+            UppercaseCheckIcon.TextColor = hasUppercase ? Color.FromArgb("#4CAF50") : Color.FromArgb("#9E9E9E");
+
+            LowercaseCheckIcon.Text = hasLowercase ? "✓" : "○";
+            LowercaseCheckIcon.TextColor = hasLowercase ? Color.FromArgb("#4CAF50") : Color.FromArgb("#9E9E9E");
+
+            NumberCheckIcon.Text = hasNumber ? "✓" : "○";
+            NumberCheckIcon.TextColor = hasNumber ? Color.FromArgb("#4CAF50") : Color.FromArgb("#9E9E9E");
+
+            SpecialCheckIcon.Text = hasSpecial ? "✓" : "○";
+            SpecialCheckIcon.TextColor = hasSpecial ? Color.FromArgb("#4CAF50") : Color.FromArgb("#9E9E9E");
+
+            // Calculate strength score (0-5)
+            int strengthScore = 0;
+            if (hasLength) strengthScore++;
+            if (hasUppercase) strengthScore++;
+            if (hasLowercase) strengthScore++;
+            if (hasNumber) strengthScore++;
+            if (hasSpecial) strengthScore++;
+
+            // Update strength meter
+            Color weakColor = Color.FromArgb("#F44336");    // Red
+            Color fairColor = Color.FromArgb("#FF9800");    // Orange
+            Color goodColor = Color.FromArgb("#2196F3");    // Blue
+            Color strongColor = Color.FromArgb("#4CAF50");  // Green
+
+            // Reset all indicators to default
+            StrengthIndicator1.BackgroundColor = Color.FromArgb("#E0E0E0");
+            StrengthIndicator2.BackgroundColor = Color.FromArgb("#E0E0E0");
+            StrengthIndicator3.BackgroundColor = Color.FromArgb("#E0E0E0");
+            StrengthIndicator4.BackgroundColor = Color.FromArgb("#E0E0E0");
+
+            // Update strength text and indicators
+            if (string.IsNullOrEmpty(password))
             {
-                bool isEnabled = e.Value;
+                PasswordStrengthLabel.Text = "Password strength: Too weak";
+                PasswordStrengthLabel.TextColor = Color.FromArgb("#9E9E9E");
+            }
+            else if (strengthScore <= 2)
+            {
+                PasswordStrengthLabel.Text = "Password strength: Weak";
+                PasswordStrengthLabel.TextColor = weakColor;
+                StrengthIndicator1.BackgroundColor = weakColor;
+            }
+            else if (strengthScore == 3)
+            {
+                PasswordStrengthLabel.Text = "Password strength: Fair";
+                PasswordStrengthLabel.TextColor = fairColor;
+                StrengthIndicator1.BackgroundColor = fairColor;
+                StrengthIndicator2.BackgroundColor = fairColor;
+            }
+            else if (strengthScore == 4)
+            {
+                PasswordStrengthLabel.Text = "Password strength: Good";
+                PasswordStrengthLabel.TextColor = goodColor;
+                StrengthIndicator1.BackgroundColor = goodColor;
+                StrengthIndicator2.BackgroundColor = goodColor;
+                StrengthIndicator3.BackgroundColor = goodColor;
+            }
+            else if (strengthScore == 5)
+            {
+                PasswordStrengthLabel.Text = "Password strength: Strong";
+                PasswordStrengthLabel.TextColor = strongColor;
+                StrengthIndicator1.BackgroundColor = strongColor;
+                StrengthIndicator2.BackgroundColor = strongColor;
+                StrengthIndicator3.BackgroundColor = strongColor;
+                StrengthIndicator4.BackgroundColor = strongColor;
+            }
 
-                if (isEnabled)
+            // Check for password match and update button state
+            CheckPasswordsMatch();
+        }
+
+        private void OnConfirmPasswordTextChanged(object sender, TextChangedEventArgs e)
+        {
+            CheckPasswordsMatch();
+        }
+
+        private void CheckPasswordsMatch()
+        {
+            string newPassword = NewPasswordEntry.Text ?? string.Empty;
+            string confirmPassword = ConfirmPasswordEntry.Text ?? string.Empty;
+
+            // Check if passwords match, but only show message when user has started typing confirmation
+            if (!string.IsNullOrEmpty(confirmPassword))
+            {
+                PasswordMatchLabel.IsVisible = true;
+
+                if (newPassword == confirmPassword)
                 {
-                    // In a real app, you would start the 2FA setup process
-                    bool confirm = await DisplayAlert("Enable 2FA",
-                        "Two-factor authentication adds an extra layer of security to your account. Would you like to set it up now?",
-                        "Yes", "No");
-
-                    if (confirm)
-                    {
-                        // This would navigate to a 2FA setup page in a real app
-                        await DisplayAlert("2FA Setup",
-                            "This would start the 2FA setup process in a real application. For now, we'll simulate that it was enabled successfully.",
-                            "OK");
-                    }
-                    else
-                    {
-                        // User canceled, revert the switch
-                        TwoFactorSwitch.IsToggled = false;
-                    }
+                    PasswordMatchLabel.Text = "✓ Passwords match";
+                    PasswordMatchLabel.TextColor = Color.FromArgb("#4CAF50");
                 }
                 else
                 {
-                    // Confirm disabling 2FA
-                    bool confirm = await DisplayAlert("Disable 2FA",
-                        "Are you sure you want to disable two-factor authentication? This will reduce the security of your account.",
-                        "Disable", "Cancel");
-
-                    if (!confirm)
-                    {
-                        // User canceled, revert the switch
-                        TwoFactorSwitch.IsToggled = true;
-                    }
+                    PasswordMatchLabel.Text = "✗ Passwords don't match";
+                    PasswordMatchLabel.TextColor = Color.FromArgb("#F44336");
                 }
             }
-            catch (Exception ex)
+            else
             {
-                Debug.WriteLine($"Error toggling 2FA: {ex.Message}");
-                await DisplayAlert("Error", "Failed to update two-factor authentication settings", "OK");
-
-                // Reset the switch to its previous state
-                TwoFactorSwitch.IsToggled = !e.Value;
+                PasswordMatchLabel.IsVisible = false;
             }
+
+            // Enable update button only when all conditions are met
+            bool hasValidPassword = !string.IsNullOrEmpty(CurrentPasswordEntry.Text) &&
+                                   !string.IsNullOrEmpty(NewPasswordEntry.Text) &&
+                                   NewPasswordEntry.Text.Length >= 8 &&
+                                   NewPasswordEntry.Text.Any(char.IsUpper) &&
+                                   NewPasswordEntry.Text.Any(char.IsLower) &&
+                                   NewPasswordEntry.Text.Any(char.IsDigit) &&
+                                   NewPasswordEntry.Text.Any(c => !char.IsLetterOrDigit(c)) &&
+                                   NewPasswordEntry.Text == ConfirmPasswordEntry.Text;
+
+            UpdatePasswordButton.IsEnabled = hasValidPassword;
         }
+        #endregion
 
-        private async void OnNotificationsToggled(object sender, ToggledEventArgs e)
-        {
-            try
-            {
-                bool isEnabled = e.Value;
-
-                // In a real app, you would update user preferences
-                await Task.Delay(100); // Simulate saving preference
-
-                string status = isEnabled ? "enabled" : "disabled";
-                await DisplayAlert("Notifications", $"Push notifications have been {status}", "OK");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error toggling notifications: {ex.Message}");
-                await DisplayAlert("Error", "Failed to update notification settings", "OK");
-
-                // Reset the switch to its previous state
-                NotificationsSwitch.IsToggled = !e.Value;
-            }
-        }
-
-        private async void OnLocationToggled(object sender, ToggledEventArgs e)
-        {
-            try
-            {
-                //bool isEnabled = e.Value;
-
-                //if (isEnabled)
-                //{
-                //    // Request location permission
-                //    //var status = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
-                //    var status = true;
-
-                //    if (status != PermissionStatus.Granted)
-                //    {
-                //        // Permission denied, revert the switch
-                //        LocationSwitch.IsToggled = false;
-
-                //        await DisplayAlert("Permission Required",
-                //            "Location permission is required for this feature. Please enable it in your device settings.",
-                //            "OK");
-
-                //        return;
-                //    }
-                //}
-
-                // In a real app, you would update user preferences
-                await Task.Delay(100); // Simulate saving preference
-
-                //string status = isEnabled ? "enabled" : "disabled";
-                await DisplayAlert("Location Services", $"Location services have been ", "OK");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error toggling location: {ex.Message}");
-                await DisplayAlert("Error", "Failed to update location settings", "OK");
-
-                // Reset the switch to its previous state
-                LocationSwitch.IsToggled = !e.Value;
-            }
-        }
-
-        private async void OnDeleteAccountClicked(object sender, EventArgs e)
-        {
-            try
-            {
-                // Confirm account deletion
-                bool confirm = await DisplayAlert("Delete Account",
-                    "Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently lost.",
-                    "Delete", "Cancel");
-
-                if (!confirm)
-                {
-                    return;
-                }
-
-                // Double confirm
-                bool confirmAgain = await DisplayAlert("Final Confirmation",
-                    "Please confirm once more that you want to permanently delete your account.",
-                    "Delete Account", "Cancel");
-
-                if (!confirmAgain)
-                {
-                    return;
-                }
-
-                // Show loading indicator
-                await DisplayAlert("Account Deletion", "Processing your request...", "OK");
-
-                // In a real app, you would call your auth service
-                if (_authService != null)
-                {
-                    await _authService.LogoutAsync();
-                }
-                else
-                {
-                    // Manual logout
-                    App.AuthToken = null;
-                    App.User = null;
-                    await SecureStorage.Default.SetAsync("auth_token", string.Empty);
-                    await SecureStorage.Default.SetAsync("user_id", string.Empty);
-                }
-
-                // Simulate API call
-                await Task.Delay(1000);
-
-                // Navigate to login page
-                Application.Current.MainPage = new LoginPage();
-
-                // Show success message
-                await Application.Current.MainPage.DisplayAlert("Account Deleted",
-                    "Your account has been successfully deleted. We're sorry to see you go!",
-                    "OK");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error deleting account: {ex.Message}");
-                await DisplayAlert("Error", "Failed to delete account. Please try again later.", "OK");
-            }
-        }
-
+        #region Subscription Management
         private async void OnUpgradeClicked(object sender, EventArgs e)
         {
-            try
-            {
-                if (_isPro)
-                {
-                    // For Pro users, this shows subscription management
-                    await DisplayAlert("Manage Subscription",
-                        "This would open the subscription management page in a real application.",
-                        "OK");
-                }
-                else
-                {
-                    // For free users, show upgrade options
-                    string action = await DisplayActionSheet("Upgrade to Pro",
-                        "Cancel",
-                        null,
-                        "Monthly Plan - $4.99/month",
-                        "Annual Plan - $49.99/year (Save 16%)",
-                        "Lifetime Access - $199.99");
+            // Navigate to the subscription page or show subscription options
+            bool confirmed = await DisplayAlert("Upgrade to Pro",
+                "Would you like to upgrade to the Pro plan for $4.99/month?",
+                "Purchase", "Cancel");
 
-                    if (action != "Cancel" && !string.IsNullOrEmpty(action))
-                    {
-                        // In a real app, this would navigate to payment page
-                        await Navigation.PushAsync(new PaymentPage());
-                    }
-                }
-            }
-            catch (Exception ex)
+            if (confirmed)
             {
-                Debug.WriteLine($"Error handling upgrade: {ex.Message}");
-                await DisplayAlert("Error", "Failed to process upgrade request. Please try again later.", "OK");
+                // In a real app, you would integrate with your payment provider here
+                // After successful payment, update the UI
+
+                // For demo purposes:
+                await DisplayAlert("Success", "Thank you for upgrading to Pro! Your account has been updated.", "OK");
+
+                // Update UI to reflect new subscription
+                CurrentPlanLabel.Text = "Pro Plan";
+                UpgradeButton.IsVisible = false;
+                CancelSubscriptionButton.IsVisible = true;
+
+                // Clear existing features
+                PlanFeaturesLayout.Clear();
+
+                // Add label back
+                PlanFeaturesLayout.Add(new Label
+                {
+                    Text = "Features:",
+                    FontAttributes = FontAttributes.Bold,
+                    TextColor = (Color)Application.Current.Resources["PrimaryTextColor"]
+                });
+
+                // Add pro features
+                AddFeatureToList("Advanced statistics");
+                AddFeatureToList("Video analysis tools");
+                AddFeatureToList("Unlimited posts");
+                AddFeatureToList("Ad-free experience");
             }
         }
 
         private async void OnCancelSubscriptionClicked(object sender, EventArgs e)
         {
-            try
+            bool confirmed = await DisplayAlert("Cancel Subscription",
+                "Are you sure you want to cancel your Pro subscription? You will lose access to premium features at the end of your billing period.",
+                "Yes, Cancel", "Keep Subscription");
+
+            if (confirmed)
             {
-                // Confirm subscription cancellation
-                bool confirm = await DisplayAlert("Cancel Subscription",
-                    "Are you sure you want to cancel your Pro subscription? You will lose access to Pro features at the end of your current billing period.",
-                    "Cancel Subscription", "Keep Subscription");
+                // In a real app, you would call your subscription service here
 
-                if (!confirm)
-                {
-                    return;
-                }
-
-                // Show loading indicator
-                await DisplayAlert("Subscription Cancellation", "Processing your request...", "OK");
-
-                // Simulate API call
-                await Task.Delay(1000);
-
-                // Update UI to reflect changes
-                _isPro = false;
-                CurrentPlanLabel.Text = "Free Plan (Pro until end of billing period)";
-                CancelSubscriptionButton.IsVisible = false;
-                UpgradeButton.Text = "Resubscribe";
-
-                // Show success message
                 await DisplayAlert("Subscription Cancelled",
-                    "Your subscription has been cancelled. You will continue to have access to Pro features until the end of your current billing period.",
+                    "Your subscription has been cancelled. You will have access to Pro features until the end of your current billing period.",
                     "OK");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error cancelling subscription: {ex.Message}");
-                await DisplayAlert("Error", "Failed to cancel subscription. Please try again later.", "OK");
+
+                // Update UI
+                // In a real app, you might not change this immediately
+                // but rather when the subscription actually expires
+                CurrentPlanLabel.Text = "Free Plan (Pro until end of billing period)";
+                UpgradeButton.IsVisible = true;
+                CancelSubscriptionButton.IsVisible = false;
             }
         }
         #endregion
 
-        #region Helper Methods
-        private bool IsValidEmail(string email)
+        #region Permissions & Settings
+        private void OnTwoFactorToggled(object sender, ToggledEventArgs e)
         {
-            try
+            // In a real app, you would call your authentication service here
+            // to enable or disable two-factor authentication
+
+            if (e.Value)
             {
-                var addr = new System.Net.Mail.MailAddress(email);
-                return addr.Address == email;
+                // Would typically navigate to a 2FA setup page in a real app
+                DisplayAlert("Two-Factor Authentication",
+                    "Two-factor authentication has been enabled for your account.",
+                    "OK");
             }
-            catch
+            else
             {
-                return false;
+                DisplayAlert("Two-Factor Authentication",
+                    "Two-factor authentication has been disabled for your account.",
+                    "OK");
+            }
+        }
+
+        private void OnNotificationsToggled(object sender, ToggledEventArgs e)
+        {
+            // In a real app, you would update the user's notification preferences
+            if (e.Value)
+            {
+                // Enable notifications logic
+            }
+            else
+            {
+                // Disable notifications logic
+            }
+        }
+
+        private void OnLocationToggled(object sender, ToggledEventArgs e)
+        {
+            // In a real app, you would update the user's location permissions
+            if (e.Value)
+            {
+                // Request location permissions if needed
+            }
+            else
+            {
+                // Handle disabling location
+            }
+        }
+        #endregion
+
+        #region Account Deletion
+        private async void OnDeleteAccountClicked(object sender, EventArgs e)
+        {
+            bool confirmed = await DisplayAlert("Delete Account",
+                "Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently lost.",
+                "Delete Account", "Cancel");
+
+            if (confirmed)
+            {
+                // Ask for password to confirm
+                string password = await DisplayPromptAsync("Confirm Deletion",
+                    "Please enter your password to confirm account deletion:",
+                    "Delete", "Cancel",
+                    placeholder: "Password",
+                    maxLength: 50,
+                    keyboard: Keyboard.Text);
+
+                if (!string.IsNullOrEmpty(password))
+                {
+                    // In a real app, you would verify the password and then delete the account
+
+                    // Simulate API call with delay
+                    await Task.Delay(1000);
+
+                    // Navigate back to login screen or app entry point
+                    await DisplayAlert("Account Deleted",
+                        "Your account has been successfully deleted. We're sorry to see you go!",
+                        "OK");
+
+                    // Navigate back to login
+                    await Navigation.PopToRootAsync();
+
+                    // In a real app, you would also sign the user out here
+                }
             }
         }
         #endregion
