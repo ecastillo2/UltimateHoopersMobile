@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Microsoft.Maui.Controls;
+using Microsoft.Maui.Controls.Shapes;
+using Microsoft.Maui.Graphics;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.Maui.Controls;
-using Microsoft.Maui.Graphics;
 using UltimateHoopers.Services;
-
 // Create alias for the Animation classes to avoid ambiguity
 using ControlsAnimation = Microsoft.Maui.Controls.Animation;
 using MauiAnimation = Microsoft.Maui.Animations.Animation;
@@ -36,7 +36,6 @@ namespace UltimateHoopers.Pages
             var menuItems = new List<(string Icon, string Title, Action Callback)>
             {
               
-
                 ("👤", "Account", () => Navigation.PushAsync(new AccountSettingsPage())),
                 ("❓", "FAQ", () => Navigation.PushAsync(new FAQPage())),
                 ("ℹ️", "About App", () => Navigation.PushAsync(new AboutPage())),
@@ -50,7 +49,187 @@ namespace UltimateHoopers.Pages
                 MenuItemsContainer.Children.Add(menuItem);
             }
         }
+        private async void OnNotificationsClicked(object sender, EventArgs e)
+        {
+            // You would typically load notifications from your database or API
+            // For now, we'll just show a placeholder list
+            await DisplayNotificationsPanel();
+        }
 
+        private async Task DisplayNotificationsPanel()
+        {
+            // Sample notifications - in a real app, you would fetch these from your backend
+            var notifications = new List<(string Message, string Time, bool IsRead)>
+    {
+        ("John Smith liked your post", "1h ago", false),
+        ("Sarah invited you to a game tomorrow", "3h ago", false),
+        ("Basketball tournament registration closing soon", "5h ago", false),
+        ("Michael commented on your highlight", "Yesterday", true),
+        ("New court added near your location", "2d ago", true),
+    };
+
+            // Create notifications panel layout
+            var notificationLayout = new VerticalStackLayout
+            {
+                Spacing = 15,
+                Padding = new Thickness(20),
+                BackgroundColor = Colors.White
+            };
+
+            // Add header
+            notificationLayout.Add(new Label
+            {
+                Text = "Notifications",
+                FontSize = 22,
+                FontAttributes = FontAttributes.Bold,
+                TextColor = (Color)Application.Current.Resources["PrimaryTextColor"],
+                Margin = new Thickness(0, 0, 0, 10)
+            });
+
+            // Add each notification
+            foreach (var (message, time, isRead) in notifications)
+            {
+                var frame = new Frame
+                {
+                    Padding = new Thickness(15),
+                    CornerRadius = 10,
+                    BackgroundColor = isRead ? Colors.White : (Color)Application.Current.Resources["SecondaryColor"],
+                    BorderColor = (Color)Application.Current.Resources["BorderColor"],
+                    HasShadow = true
+                };
+
+                var grid = new Grid
+                {
+                    ColumnDefinitions = new ColumnDefinitionCollection
+            {
+                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) },
+                new ColumnDefinition { Width = GridLength.Auto }
+            }
+                };
+
+                var contentStack = new VerticalStackLayout { Spacing = 5 };
+                contentStack.Add(new Label
+                {
+                    Text = message,
+                    FontSize = 16,
+                    TextColor = (Color)Application.Current.Resources["PrimaryTextColor"]
+                });
+
+                contentStack.Add(new Label
+                {
+                    Text = time,
+                    FontSize = 12,
+                    TextColor = (Color)Application.Current.Resources["SecondaryTextColor"]
+                });
+
+                grid.Add(contentStack);
+                Grid.SetColumn(contentStack, 0);
+
+                if (!isRead)
+                {
+                    var indicator = new Ellipse
+                    {
+                        Fill = new SolidColorBrush((Color)Application.Current.Resources["PrimaryColor"]),
+                        WidthRequest = 10,
+                        HeightRequest = 10,
+                        HorizontalOptions = LayoutOptions.End,
+                        VerticalOptions = LayoutOptions.Start,
+                        Margin = new Thickness(0, 5, 0, 0)
+                    };
+                    grid.Add(indicator);
+                    Grid.SetColumn(indicator, 1);
+                }
+
+                frame.Content = grid;
+                notificationLayout.Add(frame);
+            }
+
+            // Mark all as read button
+            var markAllReadButton = new Button
+            {
+                Text = "Mark All as Read",
+                BackgroundColor = Colors.Transparent,
+                TextColor = (Color)Application.Current.Resources["PrimaryColor"],
+                BorderColor = (Color)Application.Current.Resources["PrimaryColor"],
+                BorderWidth = 1,
+                CornerRadius = 5,
+                HeightRequest = 40,
+                HorizontalOptions = LayoutOptions.Start,
+                Margin = new Thickness(0, 10, 0, 0)
+            };
+
+            notificationLayout.Add(markAllReadButton);
+
+            // Show in a popup
+            var scrollView = new ScrollView { Content = notificationLayout };
+            var closeButton = new Button
+            {
+                Text = "Close",
+                BackgroundColor = (Color)Application.Current.Resources["PrimaryColor"],
+                TextColor = Colors.White,
+                CornerRadius = 25,
+                HeightRequest = 50,
+                Margin = new Thickness(20)
+            };
+
+            var popup = new ContentPage
+            {
+                Content = new Grid
+                {
+                    RowDefinitions = new RowDefinitionCollection
+            {
+                new RowDefinition { Height = new GridLength(1, GridUnitType.Star) },
+                new RowDefinition { Height = GridLength.Auto }
+            },
+                    Children =
+            {
+                scrollView,
+                closeButton
+            }
+                }
+            };
+
+            // Set grid positioning for children
+            Grid.SetRow(scrollView, 0);
+            Grid.SetRow(closeButton, 1);
+
+            closeButton.Clicked += (s, e) =>
+            {
+                // Update notification badge count - in real app this would be based on unread count
+                UpdateNotificationBadge(0);
+                Navigation.PopModalAsync();
+            };
+
+            markAllReadButton.Clicked += (s, e) =>
+            {
+                // In a real app, you would call an API to mark notifications as read
+                // Then update UI accordingly
+                UpdateNotificationBadge(0);
+            };
+
+            await Navigation.PushModalAsync(popup);
+        }
+
+        // Call this method to update the notification badge count
+        public void UpdateNotificationBadge(int count)
+        {
+            if (count > 0)
+            {
+                NotificationBadge.IsVisible = true;
+                NotificationCountLabel.Text = count > 9 ? "9+" : count.ToString();
+            }
+            else
+            {
+                NotificationBadge.IsVisible = false;
+            }
+        }
+
+        private void InitializeNotifications()
+        {
+            // For demo purposes, show 3 notifications
+            // In a real app, you would get this count from your backend
+            UpdateNotificationBadge(3);
+        }
         // Create individual menu item
         private Frame CreateMenuItem(string icon, string title, Action callback)
         {

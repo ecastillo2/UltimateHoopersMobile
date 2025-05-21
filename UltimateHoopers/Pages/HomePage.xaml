@@ -14,7 +14,7 @@
 
             <!-- Header with Profile Icon -->
             <Grid Grid.Row="0" 
-                  ColumnDefinitions="Auto,Auto,*,Auto"
+                  ColumnDefinitions="Auto,Auto,*,Auto,Auto"
                   Margin="0,10,0,20">
 
                 <!-- Hamburger Menu Button -->
@@ -71,8 +71,52 @@
                        HorizontalOptions="Center" 
                        VerticalOptions="Center"/>
 
-                <!-- Profile Icon -->
+                <!-- Notification Icon -->
                 <Frame Grid.Column="3"
+           CornerRadius="25"
+           HeightRequest="50"
+           WidthRequest="50"
+           Padding="0"
+           BorderColor="{StaticResource BorderColor}"
+           BackgroundColor="{StaticResource CardBackgroundColor}"
+           HasShadow="True"
+           Margin="0,0,10,0">
+                    <Grid>
+                        <!-- Bell Icon -->
+                        <Label Text="🔔" 
+                   FontSize="22" 
+                   HorizontalOptions="Center" 
+                               
+                   VerticalOptions="Center" />
+
+                        <!-- Notification Badge - Only visible when there are notifications -->
+                        <Frame x:Name="NotificationBadge"
+                   BackgroundColor="#E53935"
+                   CornerRadius="10"
+                   HeightRequest="20"
+                   WidthRequest="20"
+                   Padding="0"
+                   HasShadow="False"
+                   HorizontalOptions="End"
+                   VerticalOptions="Start"
+                   Margin="0,5,5,0">
+                            <Label x:Name="NotificationCountLabel"
+                       Text="3"
+                       FontSize="12"
+                       FontAttributes="Bold"
+                       TextColor="White"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center" />
+                        </Frame>
+                    </Grid>
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnNotificationsClicked" />
+                    </Frame.GestureRecognizers>
+                </Frame>
+
+
+                <!-- Profile Icon -->
+                <Frame Grid.Column="4"
                        CornerRadius="25"
                        HeightRequest="50"
                        WidthRequest="50"
