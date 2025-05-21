@@ -1,0 +1,423 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="UltimateHoopers.Pages.AboutPage"
+             NavigationPage.HasNavigationBar="False"
+             BackgroundColor="{StaticResource PageBackgroundColor}">
+
+    <Grid RowDefinitions="Auto,*,Auto"
+          Padding="20"
+          x:Name="MainGrid">
+
+        <!-- Header -->
+        <Grid Grid.Row="0" 
+              ColumnDefinitions="*,Auto"
+              Margin="0,10,0,20">
+
+            <VerticalStackLayout Grid.Column="0">
+                <Label Text="About Ultimate Hoopers"
+                       FontSize="28"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource PrimaryColor}" />
+
+                <Label Text="Learn more about our app and team"
+                       FontSize="16"
+                       TextColor="{StaticResource SecondaryTextColor}" />
+            </VerticalStackLayout>
+
+            <!-- Back Button -->
+            <Frame Grid.Column="1"
+                   CornerRadius="25"
+                   HeightRequest="50"
+                   WidthRequest="50"
+                   Padding="0"
+                   BorderColor="{StaticResource BorderColor}"
+                   BackgroundColor="{StaticResource CardBackgroundColor}"
+                   HasShadow="True">
+
+                <Label Text="←"
+                       FontSize="24"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center" />
+
+                <Frame.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnBackClicked" />
+                </Frame.GestureRecognizers>
+            </Frame>
+        </Grid>
+
+        <!-- Content Area -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="20">
+
+                <!-- App Logo and Info -->
+                <Frame Padding="20"
+                       CornerRadius="10"
+                       HasShadow="True"
+                       BorderColor="{StaticResource BorderColor}"
+                       BackgroundColor="{StaticResource CardBackgroundColor}">
+
+                    <VerticalStackLayout Spacing="20" HorizontalOptions="Center">
+                        <!-- App Logo -->
+                        <Image x:Name="AppLogoImage"
+                               Source="logo_uh.png"
+                               HeightRequest="120"
+                               WidthRequest="120"
+                               HorizontalOptions="Center" />
+
+                        <VerticalStackLayout Spacing="5" HorizontalOptions="Center">
+                            <Label Text="Ultimate Hoopers"
+                                   FontSize="24"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource PrimaryTextColor}"
+                                   HorizontalOptions="Center" />
+
+                            <Label x:Name="VersionLabel"
+                                   Text="Version 1.0.0"
+                                   FontSize="16"
+                                   TextColor="{StaticResource SecondaryTextColor}"
+                                   HorizontalOptions="Center" />
+                        </VerticalStackLayout>
+
+                        <Label Text="Connect with basketball players, share your highlights, track your stats, and improve your game!"
+                               TextColor="{StaticResource PrimaryTextColor}"
+                               HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- App Description -->
+                <Frame Padding="20"
+                       CornerRadius="10"
+                       HasShadow="True"
+                       BorderColor="{StaticResource BorderColor}"
+                       BackgroundColor="{StaticResource CardBackgroundColor}">
+
+                    <VerticalStackLayout Spacing="15">
+                        <Label Text="About the App"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource PrimaryTextColor}" />
+
+                        <Label Text="Ultimate Hoopers is the premier social platform for basketball enthusiasts. Whether you're a casual player shooting hoops on weekends or a serious athlete looking to take your game to the next level, our app helps you connect, learn, and grow."
+                               TextColor="{StaticResource PrimaryTextColor}" />
+
+                        <Label Text="Created by basketball lovers for basketball lovers, Ultimate Hoopers makes it easy to find local games, share your achievements, track your statistics, and connect with other players in your area or around the world."
+                               TextColor="{StaticResource PrimaryTextColor}" />
+
+                        <Label Text="With Ultimate Hoopers, you can:"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource PrimaryTextColor}"
+                               Margin="0,5,0,0" />
+
+                        <VerticalStackLayout Spacing="8">
+                            <HorizontalStackLayout Spacing="10">
+                                <Label Text="🏀" FontSize="16" VerticalOptions="Start" />
+                                <Label Text="Create your player profile and showcase your skills" 
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                            </HorizontalStackLayout>
+
+                            <HorizontalStackLayout Spacing="10">
+                                <Label Text="🏀" FontSize="16" VerticalOptions="Start" />
+                                <Label Text="Connect with other basketball players in your area" 
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                            </HorizontalStackLayout>
+
+                            <HorizontalStackLayout Spacing="10">
+                                <Label Text="🏀" FontSize="16" VerticalOptions="Start" />
+                                <Label Text="Share photos and videos of your best plays and games" 
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                            </HorizontalStackLayout>
+
+                            <HorizontalStackLayout Spacing="10">
+                                <Label Text="🏀" FontSize="16" VerticalOptions="Start" />
+                                <Label Text="Track your game statistics and monitor your progress" 
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                            </HorizontalStackLayout>
+
+                            <HorizontalStackLayout Spacing="10">
+                                <Label Text="🏀" FontSize="16" VerticalOptions="Start" />
+                                <Label Text="Discover basketball courts and pickup games nearby" 
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                            </HorizontalStackLayout>
+
+                            <HorizontalStackLayout Spacing="10">
+                                <Label Text="🏀" FontSize="16" VerticalOptions="Start" />
+                                <Label Text="Learn new skills with training tips and drills" 
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                            </HorizontalStackLayout>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Meet the Team -->
+                <Frame Padding="20"
+                       CornerRadius="10"
+                       HasShadow="True"
+                       BorderColor="{StaticResource BorderColor}"
+                       BackgroundColor="{StaticResource CardBackgroundColor}">
+
+                    <VerticalStackLayout Spacing="15">
+                        <Label Text="Meet the Team"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource PrimaryTextColor}" />
+
+                        <Label Text="Ultimate Hoopers was created by a passionate team of developers, designers, and basketball enthusiasts who wanted to build the perfect app for the basketball community."
+                               TextColor="{StaticResource PrimaryTextColor}" />
+
+                        <Grid RowDefinitions="Auto,Auto,Auto"
+                              ColumnDefinitions="Auto,*"
+                              RowSpacing="15"
+                              ColumnSpacing="15">
+
+                            <!-- Founder -->
+                            <Image Grid.Row="0" Grid.Column="0"
+                                   Source="founder.png"
+                                   HeightRequest="60"
+                                   WidthRequest="60"
+                                   Aspect="AspectFill" />
+
+                            <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="5">
+                                <Label Text="Michael Johnson"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                                <Label Text="Founder &amp; CEO"
+                                       FontSize="14"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
+                                <Label Text="Former college player with a passion for technology and basketball. Michael founded Ultimate Hoopers to bring the basketball community together."
+                                       FontSize="14"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                            </VerticalStackLayout>
+
+                            <!-- Lead Developer -->
+                            <Image Grid.Row="1" Grid.Column="0"
+                                   Source="developer.png"
+                                   HeightRequest="60"
+                                   WidthRequest="60"
+                                   Aspect="AspectFill" />
+
+                            <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="5">
+                                <Label Text="Sarah Williams"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                                <Label Text="Lead Developer"
+                                       FontSize="14"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
+                                <Label Text="Software engineer with 10+ years of experience in mobile app development. Sarah leads our technical team and ensures the app runs smoothly."
+                                       FontSize="14"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                            </VerticalStackLayout>
+
+                            <!-- Lead Designer -->
+                            <Image Grid.Row="2" Grid.Column="0"
+                                   Source="designer.png"
+                                   HeightRequest="60"
+                                   WidthRequest="60"
+                                   Aspect="AspectFill" />
+
+                            <VerticalStackLayout Grid.Row="2" Grid.Column="1" Spacing="5">
+                                <Label Text="David Chen"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                                <Label Text="Lead Designer"
+                                       FontSize="14"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
+                                <Label Text="UX/UI specialist with a background in sports apps. David focuses on creating an intuitive and enjoyable user experience for all basketball fans."
+                                       FontSize="14"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
+                            </VerticalStackLayout>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Contact & Support -->
+                <Frame Padding="20"
+                       CornerRadius="10"
+                       HasShadow="True"
+                       BorderColor="{StaticResource BorderColor}"
+                       BackgroundColor="{StaticResource CardBackgroundColor}">
+
+                    <VerticalStackLayout Spacing="15">
+                        <Label Text="Contact &amp; Support"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource PrimaryTextColor}" />
+
+                        <Label Text="We're always looking to improve Ultimate Hoopers. If you have any questions, suggestions, or need assistance, please don't hesitate to reach out to our support team."
+                               TextColor="{StaticResource PrimaryTextColor}" />
+
+                        <Grid RowDefinitions="Auto,Auto,Auto"
+                              ColumnDefinitions="Auto,*"
+                              RowSpacing="15"
+                              ColumnSpacing="15">
+
+                            <!-- Email -->
+                            <Label Grid.Row="0" Grid.Column="0"
+                                   Text="📧"
+                                   FontSize="20" />
+                            <Label Grid.Row="0" Grid.Column="1"
+                                   Text="support@ultimatehoopers.com"
+                                   TextColor="{StaticResource PrimaryTextColor}" />
+
+                            <!-- Website -->
+                            <Label Grid.Row="1" Grid.Column="0"
+                                   Text="🌐"
+                                   FontSize="20" />
+                            <Label Grid.Row="1" Grid.Column="1"
+                                   Text="www.ultimatehoopers.com"
+                                   TextColor="{StaticResource PrimaryTextColor}" />
+
+                            <!-- Social Media -->
+                            <Label Grid.Row="2" Grid.Column="0"
+                                   Text="📱"
+                                   FontSize="20" />
+                            <Label Grid.Row="2" Grid.Column="1"
+                                   Text="@UltimateHoopers on Instagram, Twitter &amp; Facebook"
+                                   TextColor="{StaticResource PrimaryTextColor}" />
+                        </Grid>
+
+                        <!-- Support Button -->
+                        <Button Text="Contact Support"
+                                BackgroundColor="{StaticResource PrimaryColor}"
+                                TextColor="White"
+                                CornerRadius="25"
+                                HeightRequest="50"
+                                Margin="0,10,0,0"
+                                Clicked="OnContactSupportClicked" />
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Legal Info -->
+                <Frame Padding="20"
+                       CornerRadius="10"
+                       HasShadow="True"
+                       BorderColor="{StaticResource BorderColor}"
+                       BackgroundColor="{StaticResource CardBackgroundColor}">
+
+                    <VerticalStackLayout Spacing="15">
+                        <Label Text="Legal Information"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource PrimaryTextColor}" />
+
+                        <Grid RowDefinitions="Auto,Auto,Auto"
+                              ColumnSpacing="10">
+
+                            <Button Grid.Row="0"
+                                    Text="Terms of Service"
+                                    BackgroundColor="Transparent"
+                                    TextColor="{StaticResource PrimaryColor}"
+                                    BorderColor="{StaticResource BorderColor}"
+                                    BorderWidth="1"
+                                    CornerRadius="5"
+                                    HeightRequest="40"
+                                    Clicked="OnTermsClicked" />
+
+                            <Button Grid.Row="1"
+                                    Text="Privacy Policy"
+                                    BackgroundColor="Transparent"
+                                    TextColor="{StaticResource PrimaryColor}"
+                                    BorderColor="{StaticResource BorderColor}"
+                                    BorderWidth="1"
+                                    CornerRadius="5"
+                                    HeightRequest="40"
+                                    Margin="0,10,0,0"
+                                    Clicked="OnPrivacyPolicyClicked" />
+
+                            <Button Grid.Row="2"
+                                    Text="Licenses"
+                                    BackgroundColor="Transparent"
+                                    TextColor="{StaticResource PrimaryColor}"
+                                    BorderColor="{StaticResource BorderColor}"
+                                    BorderWidth="1"
+                                    CornerRadius="5"
+                                    HeightRequest="40"
+                                    Margin="0,10,0,0"
+                                    Clicked="OnLicensesClicked" />
+                        </Grid>
+
+                        <Label Text="© 2025 Ultimate Hoopers. All rights reserved."
+                               FontSize="14"
+                               TextColor="{StaticResource SecondaryTextColor}"
+                               HorizontalOptions="Center"
+                               Margin="0,10,0,0" />
+                    </VerticalStackLayout>
+                </Frame>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Footer Navigation -->
+        <Grid Grid.Row="2"
+              ColumnDefinitions="*,*,*,*"
+              BackgroundColor="{StaticResource CardBackgroundColor}"
+              HeightRequest="70"
+              Margin="-20,0,-20,0"
+              Padding="0,5,0,20">
+
+            <VerticalStackLayout Grid.Column="0"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Spacing="2">
+                <Label Text="🏠"
+                       FontSize="20"
+                       HorizontalOptions="Center" />
+                <Label Text="Home"
+                       FontSize="12"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+
+                <VerticalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnHomeNavigationClicked" />
+                </VerticalStackLayout.GestureRecognizers>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Grid.Column="1"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Spacing="2">
+                <Label Text="📋"
+                       FontSize="20"
+                       HorizontalOptions="Center" />
+                <Label Text="Posts"
+                       FontSize="12"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+                <VerticalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnPostsNavigationClicked" />
+                </VerticalStackLayout.GestureRecognizers>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Grid.Column="2"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Spacing="2">
+                <Label Text="❓"
+                       FontSize="20"
+                       TextColor="{StaticResource PrimaryColor}"
+                       HorizontalOptions="Center" />
+                <Label Text="About"
+                       FontSize="12"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource PrimaryColor}"
+                       HorizontalOptions="Center" />
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Grid.Column="3"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Spacing="2">
+                <Label Text="⚙️"
+                       FontSize="20"
+                       HorizontalOptions="Center" />
+                <Label Text="Account"
+                       FontSize="12"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+
+                <VerticalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnAccountNavigationClicked" />
+                </VerticalStackLayout.GestureRecognizers>
+            </VerticalStackLayout>
+        </Grid>
+    </Grid>
+</ContentPage>

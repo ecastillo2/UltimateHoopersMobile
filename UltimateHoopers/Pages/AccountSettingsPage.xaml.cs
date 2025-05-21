@@ -480,7 +480,11 @@ namespace UltimateHoopers.Pages
             }
         }
         #endregion
-
+        private void OnToggleEmailPasswordVisibility(object sender, EventArgs e)
+        {
+            EmailPasswordEntry.IsPassword = !EmailPasswordEntry.IsPassword;
+            ShowEmailPasswordButton.Text = EmailPasswordEntry.IsPassword ? "👁" : "👁‍🗨";
+        }
         #region Account Deletion
         private async void OnDeleteAccountClicked(object sender, EventArgs e)
         {

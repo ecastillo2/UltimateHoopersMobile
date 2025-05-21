@@ -107,6 +107,7 @@ namespace UltimateHoopers
                 builder.Services.AddTransient<UserProfilePage>();
                 builder.Services.AddTransient<FAQPage>();
                 builder.Services.AddTransient<AccountSettingsPage>();
+                builder.Services.AddTransient<AboutPage>();
                 DiagnosticHelper.Log("Pages registered");
 
 #if DEBUG

@@ -122,6 +122,7 @@ namespace UltimateHoopers
                 try { Routing.RegisterRoute("userprofilepage", typeof(Pages.UserProfilePage)); } catch { }
                 try { Routing.RegisterRoute("faqepage", typeof(Pages.FAQPage)); } catch { }
                 try { Routing.RegisterRoute("accountsettingspage", typeof(Pages.AccountSettingsPage)); } catch { }
+                try { Routing.RegisterRoute("aboutpage", typeof(Pages.AboutPage)); } catch { }
             }
         }
 
@@ -193,6 +194,12 @@ namespace UltimateHoopers
             {
                 Routing.RegisterRoute("accountsettingspage", typeof(Pages.AccountSettingsPage));
                 _registeredRoutes.Add("accountsettingspage");
+            }
+
+            if (!_registeredRoutes.Contains("aboutpage"))
+            {
+                Routing.RegisterRoute("aboutpage", typeof(Pages.AboutPage));
+                _registeredRoutes.Add("aboutpage");
             }
         }
 

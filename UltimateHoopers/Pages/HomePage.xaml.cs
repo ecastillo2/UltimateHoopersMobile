@@ -38,10 +38,9 @@ namespace UltimateHoopers.Pages
               
 
                 ("👤", "Account", () => Navigation.PushAsync(new AccountSettingsPage())),
-                
                 ("❓", "FAQ", () => Navigation.PushAsync(new FAQPage())),
-                ("📱", "About App", () => Navigation.PushAsync(new AboutPage())),
-                ("📤", "Logout", () => LogoutUser())
+                ("ℹ️", "About App", () => Navigation.PushAsync(new AboutPage())),
+                ("🔓", "Logout", () => LogoutUser())
             };
 
             // Add menu items to container
@@ -381,6 +380,6 @@ namespace UltimateHoopers.Pages
     public class EventsPage : ContentPage { }
     public class SettingsPage : ContentPage { }
     public class HelpPage : ContentPage { }
-    public class AboutPage : ContentPage { }
+    
     public class MessagesPage : ContentPage { }
 }

@@ -614,11 +614,7 @@
                                        TextColor="White"
                                        FontSize="20"
                                        FontAttributes="Bold" />
-                                <Label x:Name="UserEmailLabel"
-                                       Text="user@example.com"
-                                       TextColor="White"
-                                       FontSize="14"
-                                       Opacity="0.8" />
+                              
                             </VerticalStackLayout>
                         </VerticalStackLayout>
                     </Grid>
