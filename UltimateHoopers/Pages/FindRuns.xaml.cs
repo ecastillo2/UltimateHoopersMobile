@@ -32,6 +32,24 @@ namespace UltimateHoopers.Pages
 
             // Load data when page appears
             Loaded += OnPageLoaded;
+
+
+            // Try to get view model from DI
+            var serviceProvider = MauiProgram.CreateMauiApp().Services;
+            var postService = serviceProvider.GetService<IPrivateRunService>();
+
+            if (postService != null)
+            {
+                _viewModel = new PrivateRunViewModel(postService);
+            }
+            else
+            {
+                // Fallback if service is not available through DI
+                _viewModel = new PrivateRunViewModel(new PrivateRunService());
+            }
+
+            // Set the binding context
+            BindingContext = _viewModel;
             // Update UI based on user account type
             UpdateCreateRunButtonVisibility();
         }
