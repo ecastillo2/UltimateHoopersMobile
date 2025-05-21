@@ -2,14 +2,9 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:UltimateHoopers.ViewModels"
-             x:Class="UltimateHoopers.Pages.FindRunsPage"
-             Title="Find Runs"
+             x:Class="UltimateHoopers.Pages.FindRunsPage" 
              NavigationPage.HasNavigationBar="False"
              BackgroundColor="{StaticResource PageBackgroundColor}">
-
-    <ContentPage.BindingContext>
-        <vm:PrivateRunViewModel />
-    </ContentPage.BindingContext>
 
     <Grid RowDefinitions="Auto,*,Auto"
           Padding="20">
@@ -307,7 +302,7 @@
                                                     WidthRequest="80"
                                                     VerticalOptions="Start"
                                                     HorizontalOptions="End"
-                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:RunViewModel}}, Path=JoinRunCommand}"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:FindRunsViewModel}}, Path=JoinRunCommand}"
                                                     CommandParameter="{Binding}" />
 
                                             <Label Grid.Row="1"
@@ -319,7 +314,7 @@
                                         </Grid>
 
                                         <Frame.GestureRecognizers>
-                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:RunViewModel}}, Path=ViewPrivateRunDetailsCommand}"
+                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:FindRunsViewModel}}, Path=ViewPrivateRunDetailsCommand}"
                                                                 CommandParameter="{Binding}" />
                                         </Frame.GestureRecognizers>
                                     </Frame>
