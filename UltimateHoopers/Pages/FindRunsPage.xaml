@@ -8,7 +8,7 @@
              BackgroundColor="{StaticResource PageBackgroundColor}">
 
     <ContentPage.BindingContext>
-        <vm:RunViewModel />
+        <vm:PrivateRunViewModel />
     </ContentPage.BindingContext>
 
     <Grid RowDefinitions="Auto,*,Auto"

@@ -265,14 +265,14 @@ namespace UltimateHoopers.Pages
 
        
 
-        public void FilterByLocation(string location)
-        {
-            if (_allHoopers == null || _allHoopers.Count == 0)
-                return;
+        //public void FilterByLocation(string location)
+        //{
+        //    if (_allHoopers == null || _allHoopers.Count == 0)
+        //        return;
 
-            var filtered = _allHoopers.Where(h => h.Location.Contains(location)).ToList();
-            FilteredHoopers = new ObservableCollection<PrivateRunViewModel>(filtered);
-        }
+        //    var filtered = _allHoopers.Where(h => h.Location.Contains(location)).ToList();
+        //    FilteredHoopers = new ObservableCollection<PrivateRunViewModel>(filtered);
+        //}
     }
 
 }

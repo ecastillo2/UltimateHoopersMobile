@@ -37,8 +37,6 @@ namespace UltimateHoopers.ViewModels
         public string? PaymentMethod { get; set; }
         public string? TeamType { get; set; }
         public int? PlayerLimit { get; set; }
-
-       
-        
+        public string? Username { get; set; }  // Add the missing Username property
     }
 }
