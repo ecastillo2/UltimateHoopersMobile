@@ -55,12 +55,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Compile Remove="Pages\RunDetailsPage.xaml.cs" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<MauiXaml Remove="Pages\CodeSplashScreen.xaml" />
-		<MauiXaml Remove="Pages\RunDetailsPage.xaml" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -93,6 +88,9 @@
 		<Compile Update="Pages\CodeSplashScreen.xaml.cs">
 			<DependentUpon>CodeSplashScreen.xaml</DependentUpon>
 		</Compile>
+		<Compile Update="Pages\FindRunsPage.xaml.cs">
+		  <DependentUpon>FindRunsPage.xaml</DependentUpon>
+		</Compile>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -114,7 +112,7 @@
 		<MauiXaml Update="Pages\FAQPage.xaml">
 		  <Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
-		<MauiXaml Update="Pages\FindRuns.xaml">
+		<MauiXaml Update="Pages\FindRunsPage.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
 		<MauiXaml Update="Pages\HomePage.xaml">
@@ -137,6 +135,9 @@
 		</MauiXaml>
 		<MauiXaml Update="Pages\PostsPage.xaml">
 			<Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
+		<MauiXaml Update="Pages\RunDetailsPage.xaml">
+		  <Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
 		<MauiXaml Update="Pages\ShopPage.xaml">
 			<Generator>MSBuild:Compile</Generator>

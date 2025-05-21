@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:UltimateHoopers.ViewModels"
              x:Class="UltimateHoopers.Pages.RunDetailsPage"
              NavigationPage.HasNavigationBar="False"
              BackgroundColor="{StaticResource PageBackgroundColor}">
@@ -20,7 +21,7 @@
                        FontAttributes="Bold"
                        TextColor="{StaticResource PrimaryColor}" />
 
-                <Label Text="{Binding Run.Location}"
+                <Label Text="{Binding Run.Address}"
                        FontSize="16"
                        TextColor="{StaticResource SecondaryTextColor}" />
             </VerticalStackLayout>
@@ -101,7 +102,7 @@
                                        FontSize="16"
                                        VerticalOptions="Start" />
                                 <Label Grid.Row="1" Grid.Column="1"
-                                       Text="{Binding Run.Location}"
+                                       Text="{Binding Run.Address}"
                                        FontSize="16"
                                        TextColor="{StaticResource PrimaryTextColor}"
                                        Margin="10,0,0,0" />
@@ -151,12 +152,21 @@
                                    Text="{Binding GameTypeText}"
                                    TextColor="{StaticResource PrimaryTextColor}" />
 
-                            <!-- Privacy -->
+                            <!-- Cost -->
                             <Label Grid.Row="3" Grid.Column="0"
-                                   Text="Privacy:"
+                                   Text="Cost:"
                                    FontAttributes="Bold"
                                    TextColor="{StaticResource PrimaryTextColor}" />
                             <Label Grid.Row="3" Grid.Column="1"
+                                   Text="{Binding CostText}"
+                                   TextColor="{StaticResource PrimaryTextColor}" />
+
+                            <!-- Privacy -->
+                            <Label Grid.Row="4" Grid.Column="0"
+                                   Text="Privacy:"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource PrimaryTextColor}" />
+                            <Label Grid.Row="4" Grid.Column="1"
                                    Text="{Binding PrivacyText}"
                                    TextColor="{StaticResource PrimaryTextColor}" />
                         </Grid>
@@ -187,13 +197,13 @@
                                    TextColor="{StaticResource PrimaryTextColor}" />
 
                             <Label Grid.Column="1"
-                                   Text="{Binding Run.PlayerCount}"
+                                   Text="{Binding Run.PlayerCountDisplay}"
                                    TextColor="{StaticResource SecondaryTextColor}" />
                         </Grid>
 
                         <!-- Player List -->
                         <CollectionView x:Name="PlayersCollectionView"
-                                        ItemsSource="{Binding Players}"
+                                        ItemsSource="{Binding Run.Players}"
                                         SelectionMode="None"
                                         EmptyView="No players have joined yet.">
                             <CollectionView.ItemTemplate>
@@ -214,6 +224,7 @@
                                                    VerticalOptions="Center" />
                                             <!-- Profile image when available -->
                                             <Image IsVisible="False"
+                                                   Source="{Binding ProfileImageUrl}"
                                                    Aspect="AspectFill"
                                                    HorizontalOptions="Center" 
                                                    VerticalOptions="Center" />
@@ -253,7 +264,7 @@
                 </Frame>
 
                 <!-- Action Buttons -->
-                <Button Text="Join This Run"
+                <Button Text="{Binding JoinButtonText}"
                         BackgroundColor="{StaticResource PrimaryColor}"
                         TextColor="White"
                         FontAttributes="Bold"
@@ -261,7 +272,8 @@
                         HeightRequest="55"
                         FontSize="16"
                         Margin="0,10,0,0"
-                        Clicked="OnJoinRunClicked" />
+                        IsEnabled="{Binding CanJoin}"
+                        Command="{Binding JoinRunCommand}" />
 
                 <Button Text="Share Run"
                         BackgroundColor="Transparent"
@@ -273,7 +285,7 @@
                         HeightRequest="55"
                         FontSize="16"
                         Margin="0,0,0,20"
-                        Clicked="OnShareRunClicked" />
+                        Command="{Binding ShareRunCommand}" />
             </VerticalStackLayout>
         </ScrollView>
 

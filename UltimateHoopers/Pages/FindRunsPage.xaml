@@ -1,0 +1,422 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:UltimateHoopers.ViewModels"
+             x:Class="UltimateHoopers.Pages.FindRunsPage"
+             Title="Find Runs"
+             NavigationPage.HasNavigationBar="False"
+             BackgroundColor="{StaticResource PageBackgroundColor}">
+
+    <ContentPage.BindingContext>
+        <vm:RunViewModel />
+    </ContentPage.BindingContext>
+
+    <Grid RowDefinitions="Auto,*,Auto"
+          Padding="20">
+
+        <!-- Header with Title -->
+        <Grid Grid.Row="0" 
+              ColumnDefinitions="*,Auto"
+              Margin="0,10,0,20">
+
+            <VerticalStackLayout Grid.Column="0">
+                <Label Text="Find Runs"
+                       FontSize="28"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource PrimaryColor}" />
+
+                <Label Text="Join games in your area"
+                       FontSize="16"
+                       TextColor="{StaticResource SecondaryTextColor}" />
+            </VerticalStackLayout>
+
+            <!-- Back Button -->
+            <Frame Grid.Column="1"
+                   CornerRadius="25"
+                   HeightRequest="50"
+                   WidthRequest="50"
+                   Padding="0"
+                   BorderColor="{StaticResource BorderColor}"
+                   BackgroundColor="{StaticResource CardBackgroundColor}"
+                   HasShadow="True">
+
+                <Label Text="←"
+                       FontSize="24"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       TextColor="{StaticResource PrimaryTextColor}" />
+
+                <Frame.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnBackClicked" />
+                </Frame.GestureRecognizers>
+            </Frame>
+        </Grid>
+
+        <!-- Content Area -->
+        <RefreshView Grid.Row="1"
+                    IsRefreshing="{Binding IsRefreshing}" 
+                    Command="{Binding RefreshCommand}">
+            <ScrollView>
+                <VerticalStackLayout Spacing="20">
+
+                    <!-- Search Section -->
+                    <Frame BorderColor="{StaticResource BorderColor}"
+                           CornerRadius="10"
+                           HasShadow="True"
+                           Padding="15"
+                           BackgroundColor="{StaticResource CardBackgroundColor}">
+
+                        <VerticalStackLayout Spacing="15">
+                            <Label Text="Search Pickup Games"
+                                   FontSize="18"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource PrimaryTextColor}" />
+
+                            <!-- Search Input -->
+                            <Frame Padding="15,0" 
+                                   CornerRadius="25" 
+                                   HasShadow="False"
+                                   BorderColor="{StaticResource BorderColor}"
+                                   HeightRequest="50">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <Label Text="🔍" 
+                                           FontSize="20" 
+                                           VerticalOptions="Center"
+                                           TextColor="{StaticResource SecondaryTextColor}" />
+                                    <Entry Grid.Column="1" 
+                                           Placeholder="Search by location..." 
+                                           PlaceholderColor="{StaticResource SecondaryTextColor}"
+                                           TextColor="{StaticResource PrimaryTextColor}"
+                                           BackgroundColor="Transparent"
+                                           Margin="5,0,0,0"
+                                           VerticalOptions="Center"
+                                           Text="{Binding SearchText}"
+                                           x:Name="SearchEntry" />
+                                </Grid>
+                            </Frame>
+
+                            <!-- Filters -->
+                            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                                <Frame Grid.Column="0"
+                                       Padding="10" 
+                                       CornerRadius="10" 
+                                       HasShadow="False"
+                                       BackgroundColor="White"
+                                       BorderColor="{StaticResource BorderColor}">
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <Label Text="📅" 
+                                               FontSize="18" 
+                                               VerticalOptions="Center"
+                                               TextColor="{StaticResource PrimaryTextColor}" />
+                                        <Picker Grid.Column="1" 
+                                                Title="Select Date" 
+                                                TitleColor="{StaticResource PrimaryTextColor}"
+                                                Margin="5,0,0,0"
+                                                TextColor="{StaticResource PrimaryTextColor}"
+                                                BackgroundColor="Transparent"
+                                                x:Name="DatePicker"
+                                                SelectedItem="{Binding SelectedDate}">
+                                            <Picker.Items>
+                                                <x:String>All</x:String>
+                                                <x:String>Today</x:String>
+                                                <x:String>Tomorrow</x:String>
+                                                <x:String>This Weekend</x:String>
+                                                <x:String>Next Week</x:String>
+                                            </Picker.Items>
+                                        </Picker>
+                                    </Grid>
+                                </Frame>
+
+                                <Frame Grid.Column="1"
+                                       Padding="10" 
+                                       CornerRadius="10" 
+                                       HasShadow="False"
+                                       BackgroundColor="White"
+                                       BorderColor="{StaticResource BorderColor}">
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <Label Text="👥" 
+                                               FontSize="18" 
+                                               VerticalOptions="Center"
+                                               TextColor="{StaticResource PrimaryTextColor}" />
+                                        <Picker Grid.Column="1" 
+                                                Title="Skill Level" 
+                                                TitleColor="{StaticResource PrimaryTextColor}"
+                                                TextColor="{StaticResource PrimaryTextColor}"
+                                                Margin="5,0,0,0"
+                                                BackgroundColor="Transparent"
+                                                x:Name="SkillLevelPicker"
+                                                SelectedItem="{Binding SelectedSkillLevel}">
+                                            <Picker.Items>
+                                                <x:String>All Levels</x:String>
+                                                <x:String>Beginner</x:String>
+                                                <x:String>Intermediate</x:String>
+                                                <x:String>Advanced</x:String>
+                                            </Picker.Items>
+                                        </Picker>
+                                    </Grid>
+                                </Frame>
+                            </Grid>
+
+                            <!-- Map Toggle and Create Run Button -->
+                            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                                <Button Grid.Column="0" 
+                                        Text="{Binding MapViewToggleText}"
+                                        BackgroundColor="Transparent"
+                                        TextColor="{StaticResource PrimaryColor}"
+                                        BorderColor="{StaticResource PrimaryColor}"
+                                        BorderWidth="1"
+                                        CornerRadius="20"
+                                        WidthRequest="150"
+                                        Command="{Binding ToggleMapViewCommand}" />
+
+                                <Button Grid.Column="1" 
+                                        Text="Create Run"
+                                        x:Name="CreateRunButton"
+                                        BackgroundColor="{StaticResource PrimaryColor}"
+                                        TextColor="White"
+                                        CornerRadius="20"
+                                        WidthRequest="150"
+                                        Command="{Binding CreateRunCommand}" />
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Frame>
+
+                    <!-- Map View (Conditionally visible) -->
+                    <Grid IsVisible="{Binding MapViewEnabled}" 
+                          HeightRequest="400"
+                          BackgroundColor="#E8EAF6"
+                          HorizontalOptions="FillAndExpand">
+                        <!-- This would be replaced with an actual map control -->
+                        <Image Source="map_placeholder.png"
+                               Aspect="AspectFill" />
+                        <Label Text="Map View Coming Soon"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"
+                               TextColor="{StaticResource SecondaryTextColor}"
+                               FontSize="18"/>
+                    </Grid>
+
+                    <!-- List View (Conditionally visible) -->
+                    <VerticalStackLayout IsVisible="{Binding MapViewEnabled, Converter={StaticResource InvertBoolConverter}}">
+                        <!-- Nearby Runs Section -->
+                        <Label Text="Upcoming Runs Near You"
+                               FontSize="20"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource PrimaryTextColor}"
+                               Margin="0,10,0,5" />
+
+                        <!-- Run Items List -->
+                        <CollectionView ItemsSource="{Binding Runs}"
+                                        SelectionMode="None"
+                                        EmptyView="No runs found matching your criteria.">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <!-- Run Item -->
+                                    <Frame BorderColor="{StaticResource BorderColor}"
+                                           CornerRadius="10"
+                                           HasShadow="True"
+                                           Padding="0"
+                                           Margin="0,0,0,15"
+                                           BackgroundColor="{StaticResource CardBackgroundColor}">
+
+                                        <Grid RowDefinitions="Auto,Auto" 
+                                              ColumnDefinitions="Auto,*,Auto"
+                                              Padding="15">
+
+                                            <!-- Court Icon -->
+                                            <Frame Grid.RowSpan="2"
+                                                   Grid.Column="0"
+                                                   CornerRadius="40"
+                                                   HeightRequest="80"
+                                                   WidthRequest="80"
+                                                   Padding="0"
+                                                   BorderColor="{StaticResource BorderColor}"
+                                                   HasShadow="False"
+                                                   IsClippedToBounds="True">
+                                                <Image Source="{Binding CourtImageUrl}"
+                                                       Aspect="AspectFill"
+                                                       HorizontalOptions="FillAndExpand"
+                                                       VerticalOptions="FillAndExpand" />
+                                            </Frame>
+
+                                            <!-- Court Info -->
+                                            <VerticalStackLayout Grid.Row="0"
+                                                                 Grid.Column="1"
+                                                                 Margin="15,0,0,0">
+                                                <Label Text="{Binding Name}"
+                                                       FontSize="18"
+                                                       FontAttributes="Bold"
+                                                       TextColor="{StaticResource PrimaryTextColor}" />
+                                                <Label Text="{Binding Address}"
+                                                       FontSize="14"
+                                                       TextColor="{StaticResource SecondaryTextColor}" />
+                                                <HorizontalStackLayout Spacing="15" Margin="0,5,0,0">
+                                                    <HorizontalStackLayout>
+                                                        <Label Text="📅" 
+                                                               FontSize="14" 
+                                                               VerticalOptions="Center"
+                                                               TextColor="{StaticResource PrimaryTextColor}" />
+                                                        <Label Text="{Binding FormattedDate}" 
+                                                               FontSize="14" 
+                                                               Margin="5,0,0,0"
+                                                               TextColor="{StaticResource PrimaryTextColor}" />
+                                                    </HorizontalStackLayout>
+                                                    <HorizontalStackLayout>
+                                                        <Label Text="⏰" 
+                                                               FontSize="14" 
+                                                               VerticalOptions="Center"
+                                                               TextColor="{StaticResource PrimaryTextColor}" />
+                                                        <Label Text="{Binding Time}" 
+                                                               FontSize="14" 
+                                                               Margin="5,0,0,0"
+                                                               TextColor="{StaticResource PrimaryTextColor}" />
+                                                    </HorizontalStackLayout>
+                                                </HorizontalStackLayout>
+                                                <HorizontalStackLayout Spacing="15" Margin="0,5,0,0">
+                                                    <HorizontalStackLayout>
+                                                        <Label Text="👥" 
+                                                               FontSize="14" 
+                                                               VerticalOptions="Center"
+                                                               TextColor="{StaticResource PrimaryTextColor}" />
+                                                        <Label Text="{Binding PlayerCountDisplay}" 
+                                                               FontSize="14" 
+                                                               Margin="5,0,0,0"
+                                                               TextColor="{StaticResource PrimaryTextColor}" />
+                                                    </HorizontalStackLayout>
+                                                    <HorizontalStackLayout>
+                                                        <Label Text="🏀" 
+                                                               FontSize="14" 
+                                                               VerticalOptions="Center"
+                                                               TextColor="{StaticResource PrimaryTextColor}" />
+                                                        <Label Text="{Binding SkillLevel}" 
+                                                               FontSize="14" 
+                                                               Margin="5,0,0,0"
+                                                               TextColor="{StaticResource PrimaryTextColor}" />
+                                                    </HorizontalStackLayout>
+                                                </HorizontalStackLayout>
+                                            </VerticalStackLayout>
+
+                                            <!-- Join Button -->
+                                            <Button Grid.Row="0"
+                                                    Grid.Column="2"
+                                                    Text="Join"
+                                                    BackgroundColor="{StaticResource PrimaryColor}"
+                                                    TextColor="White"
+                                                    CornerRadius="20"
+                                                    HeightRequest="40"
+                                                    WidthRequest="80"
+                                                    VerticalOptions="Start"
+                                                    HorizontalOptions="End"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:RunViewModel}}, Path=JoinRunCommand}"
+                                                    CommandParameter="{Binding}" />
+
+                                            <Label Grid.Row="1"
+                                                   Grid.Column="2"
+                                                   Text="{Binding DistanceText}"
+                                                   TextColor="{StaticResource SecondaryTextColor}"
+                                                   HorizontalOptions="End"
+                                                   VerticalOptions="End" />
+                                        </Grid>
+
+                                        <Frame.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:RunViewModel}}, Path=ViewRunDetailsCommand}"
+                                                                CommandParameter="{Binding}" />
+                                        </Frame.GestureRecognizers>
+                                    </Frame>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+
+                        <!-- Load More Button -->
+                        <Button Text="Load More"
+                                BackgroundColor="Transparent"
+                                TextColor="{StaticResource PrimaryColor}"
+                                BorderColor="{StaticResource PrimaryColor}"
+                                BorderWidth="1"
+                                CornerRadius="20"
+                                Margin="0,10,0,20"
+                                Command="{Binding LoadMoreCommand}" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </ScrollView>
+        </RefreshView>
+
+        <!-- Navigation Footer -->
+        <Grid Grid.Row="2"
+              ColumnDefinitions="*,*,*,*"
+              BackgroundColor="{StaticResource CardBackgroundColor}"
+              HeightRequest="70"
+              Margin="-20,0,-20,0"
+              Padding="0,5,0,20">
+
+            <VerticalStackLayout Grid.Column="0"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Spacing="2">
+                <Label Text="🏠"
+                       FontSize="20"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+                <Label Text="Home"
+                       FontSize="12"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+
+                <VerticalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnHomeNavigationClicked" />
+                </VerticalStackLayout.GestureRecognizers>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Grid.Column="1"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Spacing="2">
+                <Label Text="📊"
+                       FontSize="20"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+                <Label Text="Stats"
+                       FontSize="12"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+
+                <VerticalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnStatsNavigationClicked" />
+                </VerticalStackLayout.GestureRecognizers>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Grid.Column="2"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Spacing="2">
+                <Label Text="🏀"
+                       FontSize="20"
+                       TextColor="{StaticResource PrimaryColor}"
+                       HorizontalOptions="Center" />
+                <Label Text="Games"
+                       FontSize="12"
+                       TextColor="{StaticResource PrimaryColor}"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center" />
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Grid.Column="3"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Spacing="2">
+                <Label Text="👤"
+                       FontSize="20"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+                <Label Text="Profile"
+                       FontSize="12"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       HorizontalOptions="Center" />
+
+                <VerticalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnProfileNavigationClicked" />
+                </VerticalStackLayout.GestureRecognizers>
+            </VerticalStackLayout>
+        </Grid>
+    </Grid>
+</ContentPage>

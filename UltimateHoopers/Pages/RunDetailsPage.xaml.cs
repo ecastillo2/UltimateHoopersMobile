@@ -1,193 +1,74 @@
-﻿using Microsoft.Maui.Controls;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Threading.Tasks;
+﻿using System;
+using System.Diagnostics;
+using Microsoft.Maui.Controls;
+using UltimateHoopers.Models;
+using UltimateHoopers.ViewModels;
 
 namespace UltimateHoopers.Pages
 {
     public partial class RunDetailsPage : ContentPage
     {
-        // Properties for binding
-        public Run Run { get; private set; }
-        public ObservableCollection<Player> Players { get; private set; }
-        public string FormattedDate => Run.Date.ToString("dddd, MMMM d, yyyy");
-        public string GameTypeText => $"{GetGameTypeFromPlayerCount(Run.PlayerLimit)}";
-        public string PrivacyText => Run.IsPublic ? "Public (anyone can join)" : "Private (invitation only)";
+        private RunDetailsViewModel _viewModel;
 
+        // Default constructor (needed for design-time support)
+        public RunDetailsPage()
+        {
+            InitializeComponent();
+
+            // Create default ViewModel with an empty run
+            _viewModel = new RunDetailsViewModel(new Run());
+            BindingContext = _viewModel;
+        }
+
+        // Main constructor with a run parameter
         public RunDetailsPage(Run run)
         {
-            Run = run;
-            Players = new ObservableCollection<Player>();
-
             InitializeComponent();
-            InitializePageData();
 
-            // Set the page binding context
-            BindingContext = this;
+            // Create ViewModel with the provided run
+            _viewModel = new RunDetailsViewModel(run);
+            BindingContext = _viewModel;
         }
 
-        private void InitializePageData()
+        protected override void OnAppearing()
         {
-            // Load sample player data
-            LoadSamplePlayers();
+            base.OnAppearing();
+
+            // Refresh the run details when the page appears
+            _viewModel.RefreshRunDetails();
         }
 
-        private void LoadSamplePlayers()
+        private async void OnBackClicked(object sender, EventArgs e)
         {
-            // Clear existing players
-            Players.Clear();
+            await Navigation.PopAsync();
+        }
 
-            // Add host as first player
-            Players.Add(new Player
+        private async void OnHomeNavigationClicked(object sender, TappedEventArgs e)
+        {
+            try
             {
-                Id = "host123",
-                Name = Run.HostName,
-                IsHost = true
-            });
+                Debug.WriteLine("RunDetailsPage: OnHomeClicked - using navigation");
 
-            // Add some sample players
-            var sampleNames = new List<string>
-            {
-                "LeBron James",
-                "Stephen Curry",
-                "Kevin Durant",
-                "Giannis Antetokounmpo",
-                "James Harden",
-                "Luka Doncic"
-            };
-
-            // Add random subset of players up to the current player count
-            var random = new Random();
-            var shuffledNames = sampleNames.OrderBy(x => random.Next()).ToList();
-
-            for (int i = 0; i < Math.Min(Run.CurrentPlayerCount - 1, shuffledNames.Count); i++)
-            {
-                Players.Add(new Player
-                {
-                    Id = $"player{i}",
-                    Name = shuffledNames[i],
-                    IsHost = false
-                });
+                await Shell.Current.GoToAsync("//HomePage");
             }
-        }
-
-        private string GetGameTypeFromPlayerCount(int playerCount)
-        {
-            return playerCount switch
+            catch (Exception ex)
             {
-                10 => "5-on-5 (Full Court)",
-                8 => "4-on-4",
-                6 => "3-on-3 (Half Court)",
-                4 => "2-on-2",
-                2 => "1-on-1",
-                _ => $"Custom ({playerCount} players)"
-            };
-        }
+                Debug.WriteLine($"RunDetailsPage: Error navigating to HomePage: {ex.Message}");
 
-        #region Navigation
-        private void OnBackClicked(object sender, EventArgs e)
-        {
-            Navigation.PopAsync();
-        }
-
-        private void OnHomeNavigationClicked(object sender, TappedEventArgs e)
-        {
-            Navigation.PopToRootAsync();
-        }
-
-        private void OnSquadNavigationClicked(object sender, TappedEventArgs e)
-        {
-            // Navigate to squads page
-            // Implementation depends on your navigation structure
-        }
-
-        private void OnSettingsNavigationClicked(object sender, TappedEventArgs e)
-        {
-            // Navigate to settings page
-            // Implementation depends on your navigation structure
-        }
-        #endregion
-
-        #region Event Handlers
-        private async void OnJoinRunClicked(object sender, EventArgs e)
-        {
-            // Check if the run is already full
-            if (Run.CurrentPlayerCount >= Run.PlayerLimit)
-            {
-                await DisplayAlert("Run Full", "This run is already at capacity. Would you like to join the waitlist?", "Join Waitlist", "Cancel");
-                return;
-            }
-
-            // Confirm joining
-            bool confirmed = await DisplayAlert(
-                "Join Run",
-                $"Are you sure you want to join '{Run.Name}' on {FormattedDate}?",
-                "Join", "Cancel");
-
-            if (confirmed)
-            {
-                // Simulate API call
-                await SimulateLoadingAsync("Joining run...");
-
-                // Add the current user to the players list
-                Players.Add(new Player
-                {
-                    Id = "currentUser",
-                    Name = "You",
-                    IsHost = false
-                });
-
-                // Update player count
-                Run.CurrentPlayerCount++;
-                OnPropertyChanged(nameof(Run));
-
-                // Show success message
-                await DisplayAlert(
-                    "Success",
-                    $"You've joined '{Run.Name}'! See you on the court!",
+                await DisplayAlert("Navigation Error",
+                    "Could not navigate to home page. Please try again.",
                     "OK");
             }
         }
 
-        private async void OnShareRunClicked(object sender, EventArgs e)
+        private async void OnSquadNavigationClicked(object sender, TappedEventArgs e)
         {
-            // Show share options
-            string action = await DisplayActionSheet(
-                "Share Run",
-                "Cancel",
-                null,
-                "Share to Social Media",
-                "Share via Message",
-                "Copy Link");
-
-            if (action == "Share to Social Media" || action == "Share via Message" || action == "Copy Link")
-            {
-                await DisplayAlert("Share", $"You selected: {action}", "OK");
-
-                // In a real app, you would implement the actual sharing functionality here
-                // using the Share plugin or platform-specific sharing APIs
-            }
+            await DisplayAlert("Squad", "Squad page coming soon!", "OK");
         }
-        #endregion
 
-        #region Helper Methods
-        private async Task SimulateLoadingAsync(string message)
+        private async void OnSettingsNavigationClicked(object sender, TappedEventArgs e)
         {
-            // Show loading indicator
-            await DisplayAlert("Processing", message, "Please wait");
-
-            // Simulate delay
-            await Task.Delay(1000);
+            await DisplayAlert("Settings", "Settings page coming soon!", "OK");
         }
-        #endregion
-    }
-
-    // Player model class
-    public class Player
-    {
-        public string Id { get; set; }
-        public string Name { get; set; }
-        public bool IsHost { get; set; }
     }
 }
