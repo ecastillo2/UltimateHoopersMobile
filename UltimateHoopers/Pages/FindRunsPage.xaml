@@ -54,6 +54,32 @@
             <ScrollView>
                 <VerticalStackLayout Spacing="20">
 
+                    <!-- DEBUG SECTION - Remove this after testing -->
+                    <Frame BorderColor="Red" 
+                           BackgroundColor="LightYellow" 
+                           Padding="10">
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="=== DEBUG INFO ===" 
+                                   FontAttributes="Bold" 
+                                   TextColor="Red" />
+
+                            <Label Text="{Binding Runs.Count, StringFormat='Runs Count: {0}'}" 
+                                   TextColor="Blue" 
+                                   FontAttributes="Bold" />
+
+                            <Label Text="{Binding IsLoading, StringFormat='Is Loading: {0}'}" 
+                                   TextColor="Green" />
+
+                            <Label Text="{Binding SelectedDate, StringFormat='Selected Date: {0}'}" 
+                                   TextColor="Purple" />
+
+                            <Button Text="Test Load Runs" 
+                                    Command="{Binding RefreshCommand}" 
+                                    BackgroundColor="Orange" 
+                                    HeightRequest="40" />
+                        </VerticalStackLayout>
+                    </Frame>
+
                     <!-- Search Section -->
                     <Frame BorderColor="{StaticResource BorderColor}"
                            CornerRadius="10"
@@ -191,6 +217,29 @@
                                FontSize="18"/>
                     </Grid>
 
+                    <!-- Simple ListView Test (Remove after debugging) -->
+                    <Frame BorderColor="Orange" 
+                           BackgroundColor="LightBlue" 
+                           Padding="10"
+                           IsVisible="{Binding MapViewEnabled, Converter={StaticResource InvertBoolConverter}}">
+                        <VerticalStackLayout>
+                            <Label Text="=== SIMPLE LISTVIEW TEST ===" 
+                                   FontAttributes="Bold" 
+                                   TextColor="Red" />
+
+                            <ListView ItemsSource="{Binding Runs}" 
+                                      HeightRequest="200"
+                                      BackgroundColor="White">
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextCell Text="{Binding Name}" 
+                                                  Detail="{Binding Location}" />
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                        </VerticalStackLayout>
+                    </Frame>
+
                     <!-- List View (Conditionally visible) -->
                     <VerticalStackLayout IsVisible="{Binding MapViewEnabled, Converter={StaticResource InvertBoolConverter}}">
                         <!-- Nearby Runs Section -->
@@ -200,124 +249,131 @@
                                TextColor="{StaticResource PrimaryTextColor}"
                                Margin="0,10,0,5" />
 
+                        <!-- Loading Indicator -->
+                        <ActivityIndicator IsRunning="{Binding IsLoading}"
+                                           IsVisible="{Binding IsLoading}"
+                                           Color="{StaticResource PrimaryColor}"
+                                           HeightRequest="50" />
+
                         <!-- Run Items List -->
+                        <!-- Run Items List - FIXED VERSION -->
                         <CollectionView ItemsSource="{Binding Runs}"
-                                        SelectionMode="None"
-                                        EmptyView="No runs found matching your criteria.">
+                SelectionMode="None"
+                BackgroundColor="Transparent"
+                HeightRequest="600">
+
+                            <!-- Empty View -->
+                            <CollectionView.EmptyView>
+                                <StackLayout Padding="20" HorizontalOptions="Center" VerticalOptions="Center">
+                                    <Label Text="No runs found matching your criteria." 
+                   TextColor="{StaticResource SecondaryTextColor}"
+                   FontSize="16"
+                   HorizontalOptions="Center" />
+                                    <Button Text="Refresh" 
+                    Command="{Binding RefreshCommand}"
+                    BackgroundColor="{StaticResource PrimaryColor}"
+                    TextColor="White"
+                    Margin="0,10,0,0" />
+                                </StackLayout>
+                            </CollectionView.EmptyView>
+
+                            <!-- Item Template - SIMPLIFIED -->
                             <CollectionView.ItemTemplate>
                                 <DataTemplate>
-                                    <!-- Run Item -->
-                                    <Frame BorderColor="{StaticResource BorderColor}"
-                                           CornerRadius="10"
-                                           HasShadow="True"
-                                           Padding="0"
-                                           Margin="0,0,0,15"
-                                           BackgroundColor="{StaticResource CardBackgroundColor}">
+                                    <Grid Padding="15" RowSpacing="10">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
 
-                                        <Grid RowDefinitions="Auto,Auto" 
-                                              ColumnDefinitions="Auto,*,Auto"
-                                              Padding="15">
+                                        <!-- Main Container Frame -->
+                                        <Frame Grid.Row="0"
+                       BorderColor="{StaticResource BorderColor}"
+                       CornerRadius="10"
+                       HasShadow="True"
+                       Padding="15"
+                       Margin="0,0,0,10"
+                       BackgroundColor="{StaticResource CardBackgroundColor}">
 
-                                            <!-- Court Icon -->
-                                            <Frame Grid.RowSpan="2"
-                                                   Grid.Column="0"
-                                                   CornerRadius="40"
-                                                   HeightRequest="80"
-                                                   WidthRequest="80"
-                                                   Padding="0"
-                                                   BorderColor="{StaticResource BorderColor}"
-                                                   HasShadow="False"
-                                                   IsClippedToBounds="True">
-                                                <Image Source="{Binding CourtImageUrl}"
-                                                       Aspect="AspectFill"
-                                                       HorizontalOptions="FillAndExpand"
-                                                       VerticalOptions="FillAndExpand" />
-                                            </Frame>
+                                            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,*,Auto" RowSpacing="10">
 
-                                            <!-- Court Info -->
-                                            <VerticalStackLayout Grid.Row="0"
-                                                                 Grid.Column="1"
-                                                                 Margin="15,0,0,0">
-                                                <Label Text="{Binding Name}"
-                                                       FontSize="18"
-                                                       FontAttributes="Bold"
-                                                       TextColor="{StaticResource PrimaryTextColor}" />
-                                                <Label Text="{Binding Address}"
-                                                       FontSize="14"
-                                                       TextColor="{StaticResource SecondaryTextColor}" />
-                                                <HorizontalStackLayout Spacing="15" Margin="0,5,0,0">
-                                                    <HorizontalStackLayout>
-                                                        <Label Text="📅" 
-                                                               FontSize="14" 
-                                                               VerticalOptions="Center"
-                                                               TextColor="{StaticResource PrimaryTextColor}" />
-                                                        <Label Text="{Binding FormattedDate}" 
-                                                               FontSize="14" 
-                                                               Margin="5,0,0,0"
-                                                               TextColor="{StaticResource PrimaryTextColor}" />
-                                                    </HorizontalStackLayout>
-                                                    <HorizontalStackLayout>
-                                                        <Label Text="⏰" 
-                                                               FontSize="14" 
-                                                               VerticalOptions="Center"
-                                                               TextColor="{StaticResource PrimaryTextColor}" />
-                                                        <Label Text="{Binding Time}" 
-                                                               FontSize="14" 
-                                                               Margin="5,0,0,0"
-                                                               TextColor="{StaticResource PrimaryTextColor}" />
-                                                    </HorizontalStackLayout>
-                                                </HorizontalStackLayout>
-                                                <HorizontalStackLayout Spacing="15" Margin="0,5,0,0">
-                                                    <HorizontalStackLayout>
-                                                        <Label Text="👥" 
-                                                               FontSize="14" 
-                                                               VerticalOptions="Center"
-                                                               TextColor="{StaticResource PrimaryTextColor}" />
-                                                        <Label Text="{Binding PlayerCountDisplay}" 
-                                                               FontSize="14" 
-                                                               Margin="5,0,0,0"
-                                                               TextColor="{StaticResource PrimaryTextColor}" />
-                                                    </HorizontalStackLayout>
-                                                    <HorizontalStackLayout>
-                                                        <Label Text="🏀" 
-                                                               FontSize="14" 
-                                                               VerticalOptions="Center"
-                                                               TextColor="{StaticResource PrimaryTextColor}" />
-                                                        <Label Text="{Binding SkillLevel}" 
-                                                               FontSize="14" 
-                                                               Margin="5,0,0,0"
-                                                               TextColor="{StaticResource PrimaryTextColor}" />
-                                                    </HorizontalStackLayout>
-                                                </HorizontalStackLayout>
-                                            </VerticalStackLayout>
+                                                <!-- Court Image -->
+                                                <Frame Grid.Row="0" Grid.Column="0" Grid.RowSpan="3"
+                               CornerRadius="40"
+                               HeightRequest="80"
+                               WidthRequest="80"
+                               Padding="0"
+                               BorderColor="{StaticResource BorderColor}"
+                               HasShadow="False"
+                               IsClippedToBounds="True"
+                               VerticalOptions="Start">
+                                                    <Image Source="{Binding CourtImageUrl}"
+                                   Aspect="AspectFill" />
+                                                </Frame>
 
-                                            <!-- Join Button -->
-                                            <Button Grid.Row="0"
-                                                    Grid.Column="2"
-                                                    Text="Join"
-                                                    BackgroundColor="{StaticResource PrimaryColor}"
-                                                    TextColor="White"
-                                                    CornerRadius="20"
-                                                    HeightRequest="40"
-                                                    WidthRequest="80"
-                                                    VerticalOptions="Start"
-                                                    HorizontalOptions="End"
-                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:PrivateRunsViewModel}}, Path=JoinRunCommand}"
-                                                    CommandParameter="{Binding}" />
+                                                <!-- Run Name and Address -->
+                                                <StackLayout Grid.Row="0" Grid.Column="1" Spacing="5" Margin="15,0,0,0">
+                                                    <Label Text="{Binding Name}"
+                                   FontSize="18"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource PrimaryTextColor}"
+                                   LineBreakMode="TailTruncation" />
+                                                    <Label Text="{Binding Address}"
+                                   FontSize="14"
+                                   TextColor="{StaticResource SecondaryTextColor}"
+                                   LineBreakMode="TailTruncation" />
+                                                </StackLayout>
 
-                                            <Label Grid.Row="1"
-                                                   Grid.Column="2"
-                                                   Text="{Binding DistanceText}"
-                                                   TextColor="{StaticResource SecondaryTextColor}"
-                                                   HorizontalOptions="End"
-                                                   VerticalOptions="End" />
-                                        </Grid>
+                                                <!-- Join Button -->
+                                                <Button Grid.Row="0" Grid.Column="2"
+                                Text="Join"
+                                BackgroundColor="{StaticResource PrimaryColor}"
+                                TextColor="White"
+                                CornerRadius="20"
+                                HeightRequest="40"
+                                WidthRequest="80"
+                                VerticalOptions="Start"
+                                HorizontalOptions="End"
+                                Clicked="OnJoinButtonClicked" />
 
-                                        <Frame.GestureRecognizers>
-                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:PrivateRunsViewModel}}, Path=ViewPrivateRunDetailsCommand}"
-                                                                CommandParameter="{Binding}" />
-                                        </Frame.GestureRecognizers>
-                                    </Frame>
+                                                <!-- Date and Time Info -->
+                                                <StackLayout Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="15" Margin="15,0,0,0">
+                                                    <StackLayout Orientation="Horizontal" Spacing="5">
+                                                        <Label Text="📅" FontSize="14" VerticalOptions="Center" />
+                                                        <Label Text="{Binding FormattedDate}" FontSize="14" TextColor="{StaticResource PrimaryTextColor}" />
+                                                    </StackLayout>
+                                                    <StackLayout Orientation="Horizontal" Spacing="5">
+                                                        <Label Text="⏰" FontSize="14" VerticalOptions="Center" />
+                                                        <Label Text="{Binding Time}" FontSize="14" TextColor="{StaticResource PrimaryTextColor}" />
+                                                    </StackLayout>
+                                                </StackLayout>
+
+                                                <!-- Distance -->
+                                                <Label Grid.Row="1" Grid.Column="2"
+                               Text="{Binding DistanceText}"
+                               TextColor="{StaticResource SecondaryTextColor}"
+                               FontSize="12"
+                               HorizontalOptions="End"
+                               VerticalOptions="End" />
+
+                                                <!-- Players and Skill Level -->
+                                                <StackLayout Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Spacing="15" Margin="15,0,0,0">
+                                                    <StackLayout Orientation="Horizontal" Spacing="5">
+                                                        <Label Text="👥" FontSize="14" VerticalOptions="Center" />
+                                                        <Label Text="{Binding PlayerCountDisplay}" FontSize="14" TextColor="{StaticResource PrimaryTextColor}" />
+                                                    </StackLayout>
+                                                    <StackLayout Orientation="Horizontal" Spacing="5">
+                                                        <Label Text="🏀" FontSize="14" VerticalOptions="Center" />
+                                                        <Label Text="{Binding SkillLevel}" FontSize="14" TextColor="{StaticResource PrimaryTextColor}" />
+                                                    </StackLayout>
+                                                </StackLayout>
+                                            </Grid>
+
+                                            <!-- Tap Gesture for Details -->
+                                            <Frame.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnRunItemTapped" />
+                                            </Frame.GestureRecognizers>
+                                        </Frame>
+                                    </Grid>
                                 </DataTemplate>
                             </CollectionView.ItemTemplate>
                         </CollectionView>
@@ -413,5 +469,10 @@
                 </VerticalStackLayout.GestureRecognizers>
             </VerticalStackLayout>
         </Grid>
+
+        <!-- Hidden element for binding context reference -->
+        <ContentView x:Name="BindingContextProxy" 
+                     BindingContext="{Binding}" 
+                     IsVisible="False" />
     </Grid>
 </ContentPage>
