@@ -262,7 +262,7 @@ namespace UltimateHoopers.Pages
             }
 
             // If we get here, user is a host and can create runs
-            await DisplayAlert("Create Run", "Create run feature coming soon!", "OK");
+            await Navigation.PushAsync(new CreateRunPage());
         }
 
         private async void OnUpgradeAccountClicked(object sender, EventArgs e)

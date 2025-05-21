@@ -14,6 +14,7 @@ namespace Domain
         public Court(Court court)
         {
             CourtId = court.CourtId;
+            ProfileId = court.ProfileId;
             ImageURL = court.ImageURL;
             Name = court.Name;
             Latitude = court.Latitude;
@@ -32,6 +33,7 @@ namespace Domain
 
         [Key]
         public string? CourtId { get; set; }
+        public string? ProfileId { get; set; }
         public string? ImageURL { get; set; }
         public string? Name { get; set; }
         public string? Latitude { get; set; }

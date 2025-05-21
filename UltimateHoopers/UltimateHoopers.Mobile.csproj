@@ -55,7 +55,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Compile Remove="Pages\RunDetailsPage.xaml.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<MauiXaml Remove="Pages\CodeSplashScreen.xaml" />
+		<MauiXaml Remove="Pages\RunDetailsPage.xaml" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -99,6 +104,9 @@
 		</MauiXaml>
 		<MauiXaml Update="Pages\CreateAccountPage.xaml">
 			<Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
+		<MauiXaml Update="Pages\CreateRunPage.xaml">
+		  <Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
 		<MauiXaml Update="Pages\EditProfilePage.xaml">
 			<Generator>MSBuild:Compile</Generator>
