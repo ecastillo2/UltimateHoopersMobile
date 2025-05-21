@@ -158,7 +158,7 @@
                             <Slider Value="{Binding PlayerLimit}"
                                     Minimum="4"
                                     Maximum="20"
-                                    StepFrequency="2" />
+                                     />
                             <Label Text="{Binding PlayerLimit, StringFormat='{0} players'}"
                                    HorizontalOptions="Center" />
                         </VerticalStackLayout>

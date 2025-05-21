@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using Microsoft.Maui.Controls;
-using UltimateHoopers.Viewmodels;
+using UltimateHoopers.Converter;
 using UltimateHoopers.ViewModels;
 
 namespace UltimateHoopers.Pages
@@ -87,25 +87,5 @@ namespace UltimateHoopers.Pages
         }
     }
 
-    // Boolean converter for inverting boolean values in XAML
-    public class InvertBoolConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        {
-            if (value is bool boolValue)
-            {
-                return !boolValue;
-            }
-            return value;
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        {
-            if (value is bool boolValue)
-            {
-                return !boolValue;
-            }
-            return value;
-        }
-    }
+  
 }
