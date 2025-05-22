@@ -285,15 +285,16 @@
 
                                                 <!-- Join Button -->
                                                 <Button Grid.Row="0" Grid.Column="2"
-                                                        Text="Join"
-                                                        BackgroundColor="{StaticResource PrimaryColor}"
-                                                        TextColor="White"
-                                                        CornerRadius="20"
-                                                        HeightRequest="40"
-                                                        WidthRequest="80"
-                                                        VerticalOptions="Start"
-                                                        HorizontalOptions="End"
-                                                        Clicked="OnJoinButtonClicked" />
+        Text="Join"
+        BackgroundColor="{StaticResource PrimaryColor}"
+        TextColor="White"
+        CornerRadius="20"
+        HeightRequest="40"
+        WidthRequest="80"
+        VerticalOptions="Start"
+        HorizontalOptions="End"
+        Clicked="OnJoinButtonClicked"
+        CommandParameter="{Binding .}" />
 
                                                 <!-- Date and Time Info -->
                                                 <StackLayout Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="15" Margin="15,0,0,0">

@@ -376,18 +376,39 @@ namespace UltimateHoopers.Pages
 
         // Add this method to your HomePage.xaml.cs file in the #region Navigation Functions section
 
-        private async void OnViewAllRunsClicked(object sender, TappedEventArgs e)
+        private async void OnViewRunDetailsClicked(object sender, EventArgs e)
         {
             try
             {
-                await Navigation.PushAsync(new FindRunsPage());
+                if (sender is Button button && button.CommandParameter is string runId)
+                {
+                    // You can use the runId here to navigate to specific run details
+                    await Navigation.PushAsync(new FindRunsPage());
+                }
+                else
+                {
+                    await Navigation.PushAsync(new FindRunsPage());
+                }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error navigating to FindRunsPage: {ex.Message}");
-                await DisplayAlert("Navigation Error", "Could not navigate to runs page", "OK");
+                System.Diagnostics.Debug.WriteLine($"Error navigating to run details: {ex.Message}");
+                await DisplayAlert("Navigation Error", "Could not navigate to run details", "OK");
             }
         }
+
+        private async void OnViewAllRunsClicked(object sender, EventArgs e)
+{
+    try
+    {
+        await Navigation.PushAsync(new FindRunsPage());
+    }
+    catch (Exception ex)
+    {
+        System.Diagnostics.Debug.WriteLine($"Error navigating to FindRunsPage: {ex.Message}");
+        await DisplayAlert("Navigation Error", "Could not navigate to runs page", "OK");
+    }
+}
         // IMPORTANT: Fixed event handler signatures for XAML compatibility
         private async void OnProfileClicked(object sender, TappedEventArgs e)
         {
@@ -399,7 +420,7 @@ namespace UltimateHoopers.Pages
             await Navigation.PushAsync(new StatsPage());
         }
 
-        private async void OnFindGamesClicked(object sender, TappedEventArgs e)
+        private async void OnFindGamesClicked(object sender, EventArgs e)
         {
             await Navigation.PushAsync(new FindRunsPage());
         }
