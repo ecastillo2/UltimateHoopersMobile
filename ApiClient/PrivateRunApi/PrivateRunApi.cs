@@ -40,7 +40,7 @@ namespace WebAPI.ApiClients
         {
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            var response = await _httpClient.GetAsync($"{_baseUrl}/api/PrivateRun/cursor", cancellationToken);
+            var response = await _httpClient.GetAsync($"{_baseUrl}/api/PrivateRun/GetPrivateRuns", cancellationToken);
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -108,7 +108,6 @@ namespace WebAPI.ApiClients
             var response = await _httpClient.DeleteAsync($"{_baseUrl}/api/PrivateRun/DeletePrivateRun?privateRunId={privateRunId}", cancellationToken);
             return response.IsSuccessStatusCode;
         }
-
 
 
         public async Task<CursorPaginatedResultDto<PrivateRunViewModelDto>> GetPrivateRunsWithCursorAsync(string cursor = null, int limit = 20, string direction = "next", string sortBy = "Points", string accessToken = null, CancellationToken cancellationToken = default)

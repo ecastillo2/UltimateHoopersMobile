@@ -206,8 +206,7 @@ namespace UltimateHoopers.Services
                                     State = item.State,
                                     Zip = item.Zip,
                                     RunDate = item.RunDate,
-                                    
-                                    // Add these properties for the UI with non-null defaults
+
                                     //UserName =  item.court,
                                     //RelativeTime = FormatRelativeTime(item.PostedDate),
                                     //ProfileImageURL = item.ThumbnailUrl ?? item.PostFileURL,
