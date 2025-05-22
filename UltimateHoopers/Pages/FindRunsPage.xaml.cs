@@ -10,29 +10,74 @@ using UltimateHoopers.Models;
 using UltimateHoopers.Services;
 using UltimateHoopers.ViewModels;
 using System.Collections.Generic;
+using UltimateHoopers.ViewModels.UltimateHoopers.ViewModels;
 
 namespace UltimateHoopers.Pages
 {
     public partial class FindRunsPage : ContentPage
     {
-        private FindRunsViewModel _viewModel;
+        private PrivateRunsViewModel _viewModel;
+        private IAuthService _authService;
+        private IPrivateRunService _privateRunService;
+        private bool _isUserHost = false;
 
         public FindRunsPage()
         {
             InitializeComponent();
-
-            Debug.WriteLine("=== FindRunsPage Constructor Start ===");
-
-            // Create and initialize the ViewModel
-            _viewModel = new FindRunsViewModel();
-            BindingContext = _viewModel;
-
-            Debug.WriteLine($"ViewModel created and bound. BindingContext is null: {BindingContext == null}");
-
-            // Additional setup that couldn't be done in XAML
+            InitializeServices();
+            InitializeViewModel();
             SetupUI();
 
-            Debug.WriteLine("=== FindRunsPage Constructor End ===");
+            Debug.WriteLine("=== FindRunsPage Constructor Complete ===");
+        }
+
+        public FindRunsPage(IAuthService authService = null, IPrivateRunService privateRunService = null)
+        {
+            InitializeComponent();
+            _authService = authService;
+            _privateRunService = privateRunService;
+            InitializeViewModel();
+            SetupUI();
+
+            Debug.WriteLine("=== FindRunsPage Constructor with DI Complete ===");
+        }
+
+        private void InitializeServices()
+        {
+            try
+            {
+                // Try to get services from DI container
+                var serviceProvider = MauiProgram.CreateMauiApp()?.Services;
+
+                if (serviceProvider != null)
+                {
+                    _authService ??= serviceProvider.GetService<IAuthService>();
+                    _privateRunService ??= serviceProvider.GetService<IPrivateRunService>();
+                }
+
+                Debug.WriteLine($"Services initialized - AuthService: {_authService != null}, PrivateRunService: {_privateRunService != null}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error initializing services: {ex.Message}");
+                // Services will be null, but app can still function with fallbacks
+            }
+        }
+
+        private void InitializeViewModel()
+        {
+            try
+            {
+                _viewModel = new PrivateRunsViewModel(_privateRunService);
+                BindingContext = _viewModel;
+
+                Debug.WriteLine($"ViewModel created and bound. BindingContext is null: {BindingContext == null}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error initializing ViewModel: {ex.Message}");
+                throw;
+            }
         }
 
         protected override async void OnAppearing()
@@ -42,12 +87,16 @@ namespace UltimateHoopers.Pages
 
             try
             {
-                // Update Create Run button visibility based on user account type
-                UpdateCreateRunButtonVisibility();
+                // Check host status and update Create Run button
+                await CheckHostStatusAndUpdateButton();
 
-                // Force load data when page appears
-                await _viewModel.LoadRunsAsync();
-                Debug.WriteLine($"After LoadRunsAsync - Runs count: {_viewModel.Runs?.Count ?? -1}");
+                // Load data when page appears
+                if (_viewModel?.LoadRunsCommand?.CanExecute(null) == true)
+                {
+                    _viewModel.LoadRunsCommand.Execute(null);
+                }
+
+                Debug.WriteLine($"After LoadRunsCommand - Runs count: {_viewModel?.Runs?.Count ?? -1}");
             }
             catch (Exception ex)
             {
@@ -58,6 +107,425 @@ namespace UltimateHoopers.Pages
             Debug.WriteLine("=== FindRunsPage OnAppearing End ===");
         }
 
+        private async Task CheckHostStatusAndUpdateButton()
+        {
+            try
+            {
+                Debug.WriteLine("=== CheckHostStatusAndUpdateButton Start ===");
+
+                _isUserHost = await DetermineHostStatus();
+                Debug.WriteLine($"Host status determined: {_isUserHost}");
+
+                UpdateCreateRunButton();
+                Debug.WriteLine("=== CheckHostStatusAndUpdateButton End ===");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error checking host status: {ex.Message}");
+                _isUserHost = false;
+                UpdateCreateRunButton();
+            }
+        }
+
+        private async Task<bool> DetermineHostStatus()
+        {
+            try
+            {
+                // Method 1: Check using AuthService (preferred)
+                if (_authService != null)
+                {
+                    Debug.WriteLine("Checking host status via AuthService...");
+                    bool isHost = await _authService.IsUserHostAsync();
+                    Debug.WriteLine($"AuthService result: {isHost}");
+                    if (isHost) return true;
+                }
+
+                // Method 2: Check App.User directly (fallback)
+                if (App.User != null)
+                {
+                    Debug.WriteLine($"Checking App.User.AccountType: {App.User.AccountType}");
+                    Debug.WriteLine($"Checking App.User.IsHost: {App.User.IsHost}");
+
+                    bool isHost = App.User.AccountType == Domain.AccountType.Host || (App.User.IsHost ?? false);
+                    Debug.WriteLine($"App.User result: {isHost}");
+                    if (isHost) return true;
+                }
+
+                // Method 3: Check secure storage (last resort)
+                try
+                {
+                    Debug.WriteLine("Checking secure storage for user data...");
+                    string userData = await SecureStorage.GetAsync("user_data");
+
+                    if (!string.IsNullOrEmpty(userData))
+                    {
+                        var user = System.Text.Json.JsonSerializer.Deserialize<Domain.User>(userData,
+                            new System.Text.Json.JsonSerializerOptions
+                            {
+                                PropertyNameCaseInsensitive = true
+                            });
+
+                        if (user != null)
+                        {
+                            bool isHost = user.AccountType == Domain.AccountType.Host || (user.IsHost ?? false);
+                            Debug.WriteLine($"Secure storage result: {isHost}");
+                            return isHost;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error checking secure storage: {ex.Message}");
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error in DetermineHostStatus: {ex.Message}");
+                return false;
+            }
+        }
+
+        private void UpdateCreateRunButton()
+        {
+            try
+            {
+                Debug.WriteLine($"=== UpdateCreateRunButton: IsHost = {_isUserHost} ===");
+
+                if (CreateRunButton == null)
+                {
+                    Debug.WriteLine("WARNING: CreateRunButton not found!");
+                    return;
+                }
+
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    try
+                    {
+                        if (_isUserHost)
+                        {
+                            // User is a host - show create run button
+                            CreateRunButton.Text = "⭐ Create Run";
+                            CreateRunButton.BackgroundColor = (Color)Application.Current.Resources["PrimaryColor"];
+                            CreateRunButton.TextColor = Colors.White;
+                            CreateRunButton.BorderColor = Colors.Transparent;
+                            CreateRunButton.BorderWidth = 0;
+                            Debug.WriteLine("Button updated for HOST user");
+                        }
+                        else
+                        {
+                            // User is not a host - show upgrade button
+                            CreateRunButton.Text = "⬆️ Upgrade to Host";
+                            CreateRunButton.BackgroundColor = Colors.Orange;
+                            CreateRunButton.TextColor = Colors.White;
+                            CreateRunButton.BorderColor = Colors.DarkOrange;
+                            CreateRunButton.BorderWidth = 1;
+                            Debug.WriteLine("Button updated for FREE user");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Error updating button on main thread: {ex.Message}");
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error updating create run button: {ex.Message}");
+            }
+        }
+
+        private async void OnCreateRunButtonClicked(object sender, EventArgs e)
+        {
+            try
+            {
+                Debug.WriteLine($"=== OnCreateRunButtonClicked: IsHost = {_isUserHost} ===");
+
+                if (_isUserHost)
+                {
+                    Debug.WriteLine("Navigating to CreateRunPage...");
+                    await Navigation.PushAsync(new CreateRunPage());
+                }
+                else
+                {
+                    Debug.WriteLine("Showing upgrade options...");
+                    await ShowUpgradeToHostDialog();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error handling create run button click: {ex.Message}");
+                await DisplayAlert("Error", "Unable to process request. Please try again.", "OK");
+            }
+        }
+
+        private async Task ShowUpgradeToHostDialog()
+        {
+            try
+            {
+                bool upgrade = await DisplayAlert(
+                    "Host Account Required",
+                    "Creating runs requires a Host account ($9.99/month).\n\n" +
+                    "Host Benefits:\n" +
+                    "• Create unlimited runs\n" +
+                    "• Manage player lists\n" +
+                    "• Set custom pricing\n" +
+                    "• Priority support\n" +
+                    "• Advanced analytics\n\n" +
+                    "Would you like to upgrade your account?",
+                    "Upgrade Now",
+                    "Maybe Later");
+
+                if (upgrade)
+                {
+                    await HandleUpgradeFlow();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error showing upgrade dialog: {ex.Message}");
+            }
+        }
+
+        private async Task HandleUpgradeFlow()
+        {
+            try
+            {
+                string action = await DisplayActionSheet(
+                    "Choose Upgrade Method",
+                    "Cancel",
+                    null,
+                    "💳 In-App Purchase ($9.99)",
+                    "🎫 Enter Upgrade Code",
+                    "📞 Contact Support");
+
+                switch (action)
+                {
+                    case "💳 In-App Purchase ($9.99)":
+                        await ProcessInAppPurchase();
+                        break;
+                    case "🎫 Enter Upgrade Code":
+                        await ProcessUpgradeCode();
+                        break;
+                    case "📞 Contact Support":
+                        await ShowContactSupport();
+                        break;
+                    default:
+                        Debug.WriteLine("User cancelled upgrade");
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error handling upgrade flow: {ex.Message}");
+                await DisplayAlert("Error", "Unable to process upgrade. Please try again.", "OK");
+            }
+        }
+
+        private async Task ProcessInAppPurchase()
+        {
+            try
+            {
+                Debug.WriteLine("Processing in-app purchase...");
+
+                // Show processing indicator
+                var isProcessing = true;
+                var loadingTask = Task.Run(async () =>
+                {
+                    while (isProcessing)
+                    {
+                        await Task.Delay(100);
+                    }
+                });
+
+                // Simulate payment processing (replace with real payment SDK)
+                await Task.Delay(2000);
+                bool paymentSuccess = true; // Replace with actual payment result
+
+                isProcessing = false;
+                await loadingTask;
+
+                if (paymentSuccess)
+                {
+                    bool upgradeSuccess = false;
+
+                    if (_authService != null)
+                    {
+                        upgradeSuccess = await _authService.UpgradeToHostAccountAsync();
+                    }
+                    else if (App.User != null)
+                    {
+                        App.User.AccountType = Domain.AccountType.Host;
+                        upgradeSuccess = true;
+                    }
+
+                    if (upgradeSuccess)
+                    {
+                        _isUserHost = true;
+                        UpdateCreateRunButton();
+
+                        await DisplayAlert(
+                            "🎉 Upgrade Successful!",
+                            "Your account has been upgraded to Host!\n\n" +
+                            "You can now create unlimited runs and access all Host features.",
+                            "Awesome!");
+
+                        await CheckHostStatusAndUpdateButton();
+                    }
+                    else
+                    {
+                        await DisplayAlert("Upgrade Failed",
+                            "Payment was processed but account upgrade failed. Please contact support.",
+                            "OK");
+                    }
+                }
+                else
+                {
+                    await DisplayAlert("Payment Failed",
+                        "Your payment could not be processed. Please try again.",
+                        "OK");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error processing in-app purchase: {ex.Message}");
+                await DisplayAlert("Purchase Error",
+                    "There was a problem processing your purchase. Please try again.",
+                    "OK");
+            }
+        }
+
+        private async Task ProcessUpgradeCode()
+        {
+            try
+            {
+                string code = await DisplayPromptAsync(
+                    "Enter Upgrade Code",
+                    "Enter your upgrade code to unlock Host features:",
+                    "Activate",
+                    "Cancel",
+                    "Enter code here...",
+                    maxLength: 20);
+
+                if (string.IsNullOrWhiteSpace(code))
+                {
+                    return;
+                }
+
+                Debug.WriteLine($"Processing upgrade code: {code}");
+
+                if (IsValidUpgradeCode(code.Trim()))
+                {
+                    bool upgradeSuccess = false;
+
+                    if (_authService != null)
+                    {
+                        upgradeSuccess = await _authService.UpgradeToHostAccountAsync();
+                    }
+                    else if (App.User != null)
+                    {
+                        App.User.AccountType = Domain.AccountType.Host;
+                        upgradeSuccess = true;
+                    }
+
+                    if (upgradeSuccess)
+                    {
+                        _isUserHost = true;
+                        UpdateCreateRunButton();
+
+                        await DisplayAlert(
+                            "🎉 Code Activated!",
+                            $"Upgrade code '{code}' has been activated!\n\n" +
+                            "Your account is now upgraded to Host with full access to all features.",
+                            "Great!");
+
+                        await CheckHostStatusAndUpdateButton();
+                    }
+                    else
+                    {
+                        await DisplayAlert("Activation Failed",
+                            "Valid code but upgrade failed. Please contact support.",
+                            "OK");
+                    }
+                }
+                else
+                {
+                    await DisplayAlert(
+                        "Invalid Code",
+                        $"The code '{code}' is not valid.\n\n" +
+                        "Please check your code and try again, or contact support if you believe this is an error.",
+                        "OK");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error processing upgrade code: {ex.Message}");
+                await DisplayAlert("Code Error",
+                    "Unable to process upgrade code. Please try again.",
+                    "OK");
+            }
+        }
+
+        private bool IsValidUpgradeCode(string code)
+        {
+            var validCodes = new[]
+            {
+                "HOSTME2024",
+                "UPGRADE",
+                "BASKETBALL",
+                "HOOPS",
+                "PREMIUM",
+                "DEMO123",
+                "TESTHOST",
+                "FREEBETA"
+            };
+
+            return validCodes.Contains(code.ToUpperInvariant());
+        }
+
+        private async Task ShowContactSupport()
+        {
+            string action = await DisplayActionSheet(
+                "Contact Support",
+                "Cancel",
+                null,
+                "📧 Email Support",
+                "📱 Call Support",
+                "💬 Live Chat");
+
+            switch (action)
+            {
+                case "📧 Email Support":
+                    await DisplayAlert(
+                        "Email Support",
+                        "Send us an email at:\nsupport@ultimatehoopers.com\n\n" +
+                        "Please include:\n" +
+                        "• Your username\n" +
+                        "• Request for Host upgrade\n" +
+                        "• Any questions you have",
+                        "OK");
+                    break;
+                case "📱 Call Support":
+                    await DisplayAlert(
+                        "Call Support",
+                        "Call us at:\n1-800-HOOPERS\n(1-800-466-7377)\n\n" +
+                        "Support Hours:\n" +
+                        "Mon-Fri: 9AM-6PM EST\n" +
+                        "Sat-Sun: 10AM-4PM EST",
+                        "OK");
+                    break;
+                case "💬 Live Chat":
+                    await DisplayAlert(
+                        "Live Chat",
+                        "Live chat coming soon!\n\n" +
+                        "For now, please email us at support@ultimatehoopers.com",
+                        "OK");
+                    break;
+            }
+        }
+
+        // Event handlers for run interactions
         private async void OnJoinButtonClicked(object sender, EventArgs e)
         {
             try
@@ -67,8 +535,8 @@ namespace UltimateHoopers.Pages
                 if (sender is Button button && button.BindingContext is Run run)
                 {
                     Debug.WriteLine($"Join button clicked for run: {run.Name}");
-                    // Fix: Use Execute instead of ExecuteAsync
-                    if (_viewModel.JoinRunCommand.CanExecute(run))
+
+                    if (_viewModel?.JoinRunCommand?.CanExecute(run) == true)
                     {
                         _viewModel.JoinRunCommand.Execute(run);
                     }
@@ -94,8 +562,8 @@ namespace UltimateHoopers.Pages
                 if (sender is Frame frame && frame.BindingContext is Run run)
                 {
                     Debug.WriteLine($"Run item tapped: {run.Name}");
-                    // Fix: Use Execute instead of ExecuteAsync
-                    if (_viewModel.ViewPrivateRunDetailsCommand.CanExecute(run))
+
+                    if (_viewModel?.ViewPrivateRunDetailsCommand?.CanExecute(run) == true)
                     {
                         _viewModel.ViewPrivateRunDetailsCommand.Execute(run);
                     }
@@ -114,56 +582,53 @@ namespace UltimateHoopers.Pages
 
         private void SetupUI()
         {
-            // Set default picker values if not already set
-            if (DatePicker.SelectedItem == null && DatePicker.Items.Count > 0)
-            {
-                DatePicker.SelectedIndex = 0;
-            }
-
-            if (SkillLevelPicker.SelectedItem == null && SkillLevelPicker.Items.Count > 0)
-            {
-                SkillLevelPicker.SelectedIndex = 0;
-            }
-
-            // Register boolean converter if needed
-            if (!Resources.TryGetValue("InvertBoolConverter", out _))
-            {
-                Resources.Add("InvertBoolConverter", new InvertBoolConverter());
-            }
-        }
-
-        // Update the Create Run button visibility based on account type
-        private void UpdateCreateRunButtonVisibility()
-        {
             try
             {
-                // Check if user is authenticated and has a Host account
-                bool isHost = App.User?.IsHost ?? false;
+                // Set default picker values if available
+                if (DatePicker?.Items?.Count > 0 && DatePicker.SelectedItem == null)
+                {
+                    DatePicker.SelectedIndex = 0;
+                }
 
-                // Find the Create Run button by name
+                if (SkillLevelPicker?.Items?.Count > 0 && SkillLevelPicker.SelectedItem == null)
+                {
+                    SkillLevelPicker.SelectedIndex = 0;
+                }
+
+                // Register converter if needed
+                if (Resources != null && !Resources.TryGetValue("InvertBoolConverter", out _))
+                {
+                    Resources.Add("InvertBoolConverter", new InvertBoolConverter());
+                }
+
+                // Wire up Create Run button
                 if (CreateRunButton != null)
                 {
-                    // Update button based on account type
-                    if (!isHost)
-                    {
-                        CreateRunButton.Text = "Upgrade to Host";
-                    }
-                    else
-                    {
-                        CreateRunButton.Text = "Create Run";
-                    }
+                    CreateRunButton.Clicked += OnCreateRunButtonClicked;
+                    Debug.WriteLine("Create Run button click handler attached");
+                }
+                else
+                {
+                    Debug.WriteLine("WARNING: CreateRunButton not found during SetupUI");
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error updating create run button visibility: {ex.Message}");
+                Debug.WriteLine($"Error in SetupUI: {ex.Message}");
             }
         }
 
         // Navigation methods
         private async void OnBackClicked(object sender, TappedEventArgs e)
         {
-            await Navigation.PopAsync();
+            try
+            {
+                await Navigation.PopAsync();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error navigating back: {ex.Message}");
+            }
         }
 
         private async void OnHomeNavigationClicked(object sender, TappedEventArgs e)
@@ -197,636 +662,13 @@ namespace UltimateHoopers.Pages
 
         private async void OnProfileNavigationClicked(object sender, TappedEventArgs e)
         {
-            await DisplayAlert("Profile", "Profile page coming soon!", "OK");
-        }
-    }
-
-    // Enhanced ViewModel with comprehensive debugging
-    public class FindRunsViewModel : BindableObject
-    {
-        private ObservableCollection<Run> _allRuns;
-        private ObservableCollection<Run> _runs;
-        private bool _isLoading;
-        private bool _isRefreshing;
-        private string _searchText = "";
-        private string _selectedDate = "All";
-        private string _selectedSkillLevel = "All Levels";
-        private bool _mapViewEnabled = false;
-
-        public FindRunsViewModel()
-        {
-            Debug.WriteLine("=== FindRunsViewModel Constructor Start ===");
-
-            // Initialize collections immediately
-            _allRuns = new ObservableCollection<Run>();
-            _runs = new ObservableCollection<Run>();
-
-            Debug.WriteLine($"Collections initialized. _allRuns: {_allRuns != null}, _runs: {_runs != null}");
-
-            // Initialize commands - Fix: Create async commands properly
-            RefreshCommand = new Command(async () => await LoadRunsAsync());
-            JoinRunCommand = new Command<Run>(async (run) => await JoinRun(run));
-            ViewPrivateRunDetailsCommand = new Command<Run>(async (run) => await ViewRunDetails(run));
-            CreateRunCommand = new Command(async () => await CreateRun());
-            ToggleMapViewCommand = new Command(() => MapViewEnabled = !MapViewEnabled);
-            LoadMoreCommand = new Command(async () => await LoadMoreRuns());
-
-            Debug.WriteLine("Commands initialized");
-
-            Debug.WriteLine("=== FindRunsViewModel Constructor End ===");
-        }
-
-        public ObservableCollection<Run> Runs
-        {
-            get
-            {
-                Debug.WriteLine($"Runs getter called. Count: {_runs?.Count ?? -1}");
-                return _runs;
-            }
-            private set
-            {
-                Debug.WriteLine($"Runs setter called. New count: {value?.Count ?? -1}, Old count: {_runs?.Count ?? -1}");
-                _runs = value;
-                OnPropertyChanged();
-                Debug.WriteLine("Runs PropertyChanged notification sent");
-            }
-        }
-
-        public bool IsNotLoading => !_isLoading;
-
-        public bool IsLoading
-        {
-            get => _isLoading;
-            set
-            {
-                if (_isLoading != value)
-                {
-                    _isLoading = value;
-                    OnPropertyChanged();
-                    OnPropertyChanged(nameof(IsNotLoading));
-                    Debug.WriteLine($"IsLoading changed to: {_isLoading}");
-                }
-            }
-        }
-
-        public bool IsRefreshing
-        {
-            get => _isRefreshing;
-            set
-            {
-                _isRefreshing = value;
-                OnPropertyChanged();
-                Debug.WriteLine($"IsRefreshing changed to: {_isRefreshing}");
-            }
-        }
-
-        public string SearchText
-        {
-            get => _searchText;
-            set
-            {
-                _searchText = value;
-                OnPropertyChanged();
-                FilterRuns();
-            }
-        }
-
-        public string SelectedDate
-        {
-            get => _selectedDate;
-            set
-            {
-                _selectedDate = value;
-                OnPropertyChanged();
-                FilterRuns();
-            }
-        }
-
-        public string SelectedSkillLevel
-        {
-            get => _selectedSkillLevel;
-            set
-            {
-                _selectedSkillLevel = value;
-                OnPropertyChanged();
-                FilterRuns();
-            }
-        }
-
-        public bool MapViewEnabled
-        {
-            get => _mapViewEnabled;
-            set
-            {
-                _mapViewEnabled = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(MapViewToggleText));
-            }
-        }
-
-        public string MapViewToggleText => MapViewEnabled ? "List View" : "Map View";
-
-        // Commands
-        public Command RefreshCommand { get; }
-        public Command<Run> JoinRunCommand { get; }
-        public Command<Run> ViewPrivateRunDetailsCommand { get; }
-        public Command CreateRunCommand { get; }
-        public Command ToggleMapViewCommand { get; }
-        public Command LoadMoreCommand { get; }
-
-        public async Task LoadRunsAsync()
-        {
             try
             {
-                IsLoading = true;
-
-                // Add a small delay to ensure the loading indicator is visible
-                await Task.Delay(300);
-
-                Debug.WriteLine("=== LoadRunsAsync Start ===");
-
-                // Clear existing runs
-                _allRuns.Clear();
-
-                // Try to load runs from service first, then fall back to mock data
-                bool dataLoaded = false;
-
-                try
-                {
-                    // Try to get private run service from DI
-                    var serviceProvider = MauiProgram.CreateMauiApp().Services;
-                    var privateRunService = serviceProvider.GetService<IPrivateRunService>();
-
-                    if (privateRunService == null)
-                    {
-                        // Fallback if service is not available through DI
-                        privateRunService = new PrivateRunService();
-                    }
-
-                    Debug.WriteLine("Attempting to load runs from service...");
-
-                        // Load private runs from service
-                        var privateRuns = await privateRunService.GetPrivateRunsAsync();
-
-                        if (privateRuns != null && privateRuns.Count > 0)
-                        {
-                            Debug.WriteLine($"Loaded {privateRuns.Count} private runs from service");
-
-                            // Convert PrivateRun objects to Run objects
-                            foreach (var privateRun in privateRuns)
-                            {
-                                try
-                                {
-                                    var run = ConvertPrivateRunToRun(privateRun);
-
-
-
-                                    _allRuns.Add(run);
-                                }
-                                catch (Exception ex)
-                                {
-                                    Debug.WriteLine($"Error converting private run to run model: {ex.Message}");
-                                }
-                            }
-
-                            dataLoaded = true;
-                            Debug.WriteLine($"Successfully converted {_allRuns.Count} runs");
-                        }
-                        else
-                        {
-                            Debug.WriteLine("No private runs returned from service");
-                        }
-                  
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Error loading runs from service: {ex.Message}");
-                }
-
-                // If no data was loaded from service, use mock data
-                if (!dataLoaded)
-                {
-                    Debug.WriteLine("Loading mock data...");
-                    LoadMockRuns();
-                    dataLoaded = true;
-                }
-
-                // Apply initial filter
-                FilterRuns();
-
-                Debug.WriteLine($"=== LoadRunsAsync Complete - Total runs: {_allRuns.Count} ===");
+                await DisplayAlert("Profile", "Profile page coming soon!", "OK");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error in LoadRunsAsync: {ex.Message}");
-                Debug.WriteLine($"Stack trace: {ex.StackTrace}");
-
-                // Load mock data as fallback
-                LoadMockRuns();
-                FilterRuns();
-            }
-            finally
-            {
-                IsLoading = false;
-            }
-        }
-
-        private Run ConvertPrivateRunToRun(Domain.PrivateRun privateRun)
-        {
-            var run = new Run
-            {
-                Id = privateRun.PrivateRunId ?? Guid.NewGuid().ToString(),
-                Name = privateRun.Name ?? "Basketball Run",
-                Location = privateRun.Name ?? "Court",
-                Address = $"{privateRun.Address ?? ""}, {privateRun.City ?? ""}, {privateRun.State ?? ""}, {privateRun.Zip ?? ""}".Trim(',', ' '),
-                Date = privateRun.RunDate ?? DateTime.Now.AddDays(1),
-                Time = $"{privateRun.RunTime ?? "6:00 PM"} - {privateRun.EndTime ?? "8:00 PM"}",
-                HostName = "Host", // This would need to be loaded from the profile
-                HostId = privateRun.ProfileId ?? "",
-                SkillLevel = privateRun.SkillLevel ?? "All Levels",
-                GameType = privateRun.TeamType ?? "5-on-5",
-                IsPublic = privateRun.Type?.ToLower() != "private",
-                Description = privateRun.Description ?? "Come play basketball!",
-                PlayerLimit = privateRun.PlayerLimit ?? 10,
-                CurrentPlayerCount = new Random().Next(3, (privateRun.PlayerLimit ?? 10) - 2), // Random current count
-                CourtImageUrl = privateRun.ImageUrl ?? "All Levels",
-                Cost = privateRun.Cost ?? 0,
-                Distance = Math.Round(new Random().NextDouble() * 5 + 0.5, 1), // Random distance 0.5-5.5 miles
-                Players = new ObservableCollection<Player>()
-            };
-
-            return run;
-        }
-
-        private void LoadMockRuns()
-        {
-            Debug.WriteLine("=== LoadMockRuns Start ===");
-
-            try
-            {
-                // Create mock runs with detailed logging
-                var mockRuns = new List<Run>();
-
-                var run1 = new Run
-                {
-                    Id = "1",
-                    Name = "Downtown Pickup Game",
-                    Location = "Downtown Court",
-                    Address = "123 Main St, Conyers, GA",
-                    Date = DateTime.Now.AddDays(2),
-                    Time = "7:00 PM - 9:00 PM",
-                    HostName = "Michael Jordan",
-                    HostId = "user123",
-                    SkillLevel = "All Levels",
-                    GameType = "5-on-5",
-                    IsPublic = true,
-                    Description = "Weekly pickup game, open to all skill levels. Bring light and dark shirts!",
-                    PlayerLimit = 10,
-                    CurrentPlayerCount = 6,
-                    CourtImageUrl = "https://images.unsplash.com/photo-1518626413561-907586085645?q=80&w=1000&auto=format&fit=crop",
-                    Cost = 0,
-                    Distance = 1.2,
-                    Players = new ObservableCollection<Player>()
-                };
-
-                var run2 = new Run
-                {
-                    Id = "2",
-                    Name = "Pro Run",
-                    Location = "Elite Sports Center",
-                    Address = "456 Elm St, Conyers, GA",
-                    Date = DateTime.Now.AddDays(1),
-                    Time = "6:00 PM - 8:00 PM",
-                    HostName = "LeBron James",
-                    HostId = "user456",
-                    SkillLevel = "Advanced",
-                    GameType = "5-on-5",
-                    IsPublic = true,
-                    Description = "High-level run for experienced players. Full court games with refs.",
-                    PlayerLimit = 15,
-                    CurrentPlayerCount = 15,
-                    CourtImageUrl = "https://images.unsplash.com/photo-1505666287802-931dc83d1b52?q=80&w=1000&auto=format&fit=crop",
-                    Cost = 10,
-                    Distance = 3.5,
-                    Players = new ObservableCollection<Player>()
-                };
-
-                var run3 = new Run
-                {
-                    Id = "3",
-                    Name = "Morning Shootaround",
-                    Location = "Community Center",
-                    Address = "789 Oak Ave, Conyers, GA",
-                    Date = DateTime.Now.AddDays(3),
-                    Time = "8:00 AM - 10:00 AM",
-                    HostName = "Steph Curry",
-                    HostId = "user789",
-                    SkillLevel = "Intermediate",
-                    GameType = "3-on-3",
-                    IsPublic = true,
-                    Description = "Early morning games for those who like to start their day with basketball.",
-                    PlayerLimit = 12,
-                    CurrentPlayerCount = 8,
-                    CourtImageUrl = "https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=1000&auto=format&fit=crop",
-                    Cost = 5,
-                    Distance = 2.1,
-                    Players = new ObservableCollection<Player>()
-                };
-
-                mockRuns.Add(run1);
-                mockRuns.Add(run2);
-                mockRuns.Add(run3);
-
-                Debug.WriteLine($"Created {mockRuns.Count} mock runs");
-
-                // Add each run to _allRuns with logging
-                foreach (var run in mockRuns)
-                {
-                    // Add some mock players
-                    for (int i = 0; i < Math.Min(3, run.CurrentPlayerCount); i++)
-                    {
-                        run.Players.Add(new Player
-                        {
-                            Id = $"player{i}_{run.Id}",
-                            Name = $"Player {i + 1}",
-                            IsHost = i == 0
-                        });
-                    }
-
-                    _allRuns.Add(run);
-                    Debug.WriteLine($"Added run: {run.Name} (ID: {run.Id}) with {run.Players.Count} players");
-                }
-
-                Debug.WriteLine($"Total runs in _allRuns: {_allRuns.Count}");
-
-                // Verify each run
-                for (int i = 0; i < _allRuns.Count; i++)
-                {
-                    var run = _allRuns[i];
-                    Debug.WriteLine($"Run {i}: {run.Name} - Valid: {run != null}");
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"EXCEPTION in LoadMockRuns: {ex.Message}");
-                Debug.WriteLine($"Stack trace: {ex.StackTrace}");
-            }
-
-            Debug.WriteLine("=== LoadMockRuns End ===");
-        }
-
-        private void FilterRuns()
-        {
-            Debug.WriteLine("=== FilterRuns Start ===");
-
-            try
-            {
-                Debug.WriteLine($"_allRuns count: {_allRuns?.Count ?? -1}");
-                Debug.WriteLine($"Current filters - Date: '{SelectedDate}', Skill: '{SelectedSkillLevel}', Search: '{SearchText}'");
-
-                if (_allRuns == null || _allRuns.Count == 0)
-                {
-                    Debug.WriteLine("No runs to filter, creating empty collection");
-                    Runs = new ObservableCollection<Run>();
-                    return;
-                }
-
-                var filtered = _allRuns.AsEnumerable();
-                Debug.WriteLine($"Starting with {filtered.Count()} runs");
-
-                // Filter by search text
-                if (!string.IsNullOrWhiteSpace(SearchText))
-                {
-                    filtered = filtered.Where(r =>
-                        (r.Name?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                        (r.Location?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                        (r.Address?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false));
-                    Debug.WriteLine($"After search filter: {filtered.Count()} runs");
-                }
-
-                // Filter by skill level
-                if (SelectedSkillLevel != "All Levels")
-                {
-                    filtered = filtered.Where(r => r.SkillLevel == SelectedSkillLevel);
-                    Debug.WriteLine($"After skill level filter: {filtered.Count()} runs");
-                }
-
-                // Filter by date
-                if (SelectedDate != "All")
-                {
-                    var today = DateTime.Today;
-                    switch (SelectedDate)
-                    {
-                        case "Today":
-                            filtered = filtered.Where(r => r.Date.Date == today);
-                            break;
-                        case "Tomorrow":
-                            filtered = filtered.Where(r => r.Date.Date == today.AddDays(1));
-                            break;
-                        case "This Weekend":
-                            var saturday = today.AddDays((int)DayOfWeek.Saturday - (int)today.DayOfWeek);
-                            var sunday = saturday.AddDays(1);
-                            filtered = filtered.Where(r => r.Date.Date == saturday || r.Date.Date == sunday);
-                            break;
-                        case "Next Week":
-                            var nextWeekStart = today.AddDays(7 - (int)today.DayOfWeek);
-                            var nextWeekEnd = nextWeekStart.AddDays(6);
-                            filtered = filtered.Where(r => r.Date.Date >= nextWeekStart && r.Date.Date <= nextWeekEnd);
-                            break;
-                    }
-                    Debug.WriteLine($"After date filter: {filtered.Count()} runs");
-                }
-
-                var filteredList = filtered.ToList();
-                Debug.WriteLine($"Final filtered count: {filteredList.Count}");
-
-                // Log details of filtered runs
-                for (int i = 0; i < filteredList.Count; i++)
-                {
-                    var run = filteredList[i];
-                    Debug.WriteLine($"Filtered Run {i}: {run.Name} - Date: {run.Date:yyyy-MM-dd}");
-                }
-
-                // Update the Runs collection on the UI thread
-                MainThread.BeginInvokeOnMainThread(() =>
-                {
-                    try
-                    {
-                        Debug.WriteLine("Updating Runs collection on UI thread");
-                        Runs = new ObservableCollection<Run>(filteredList);
-                        Debug.WriteLine($"Runs collection updated. New count: {Runs.Count}");
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine($"Error updating Runs collection: {ex.Message}");
-                    }
-                });
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"EXCEPTION in FilterRuns: {ex.Message}");
-                Debug.WriteLine($"Stack trace: {ex.StackTrace}");
-            }
-
-            Debug.WriteLine("=== FilterRuns End ===");
-        }
-
-        private async Task JoinRun(Run run)
-        {
-            Debug.WriteLine($"JoinRun called for: {run?.Name ?? "null"}");
-
-            if (run == null) return;
-
-            try
-            {
-                if (run.IsFull)
-                {
-                    bool joinWaitlist = await Application.Current.MainPage.DisplayAlert(
-                        "Run is Full",
-                        "This run is currently full. Would you like to join the waitlist?",
-                        "Join Waitlist", "Cancel");
-
-                    if (joinWaitlist)
-                    {
-                        await Application.Current.MainPage.DisplayAlert(
-                            "Waitlist",
-                            "You've been added to the waitlist. We'll notify you if a spot opens up!",
-                            "OK");
-                    }
-                    return;
-                }
-
-                if (run.Cost > 0)
-                {
-                    bool payNow = await Application.Current.MainPage.DisplayAlert(
-                        "Payment Required",
-                        $"This run requires a payment of ${run.Cost:F2}. Would you like to pay now?",
-                        "Pay Now", "Cancel");
-
-                    if (!payNow) return;
-                }
-
-                bool confirmed = await Application.Current.MainPage.DisplayAlert(
-                    "Join Run",
-                    $"Would you like to join this run at {run.Location} on {run.FormattedDate}?",
-                    "Join", "Cancel");
-
-                if (confirmed)
-                {
-                    run.CurrentPlayerCount++;
-                    await Application.Current.MainPage.DisplayAlert(
-                        "Success",
-                        $"You've joined the run at {run.Location}! See you on the court!",
-                        "OK");
-                    OnPropertyChanged(nameof(Runs));
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error joining run: {ex.Message}");
-                await Application.Current.MainPage.DisplayAlert("Error",
-                    "Could not join the run. Please try again later.", "OK");
-            }
-        }
-
-        private async Task ViewRunDetails(Run run)
-        {
-            Debug.WriteLine($"ViewRunDetails called for: {run?.Name ?? "null"}");
-            try
-            {
-                if (run == null) return;
-
-                await MainThread.InvokeOnMainThreadAsync(async () =>
-                {
-                    var detailsPage = new PrivateRunDetailsPage(run);
-                    await Application.Current.MainPage.Navigation.PushAsync(detailsPage);
-                });
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error viewing run details: {ex.Message}");
-                await Application.Current.MainPage.DisplayAlert("Error",
-                    "Could not open run details. Please try again.", "OK");
-            }
-        }
-
-        private async Task CreateRun()
-        {
-            Debug.WriteLine("CreateRun called");
-            try
-            {
-                bool isHost = App.User?.IsHost ?? false;
-
-                if (!isHost)
-                {
-                    bool upgrade = await Application.Current.MainPage.DisplayAlert(
-                        "Host Account Required",
-                        "Creating a run requires a Host account. Would you like to upgrade?",
-                        "Upgrade Now", "Cancel");
-
-                    if (upgrade)
-                    {
-                        await Application.Current.MainPage.DisplayAlert(
-                            "Upgrade",
-                            "Account upgrade coming soon!",
-                            "OK");
-                    }
-                    return;
-                }
-
-                await Application.Current.MainPage.DisplayAlert(
-                    "Create Run",
-                    "Creating a new run will be available soon!",
-                    "OK");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error creating run: {ex.Message}");
-                await Application.Current.MainPage.DisplayAlert("Error",
-                    "Could not create a run. Please try again later.", "OK");
-            }
-        }
-
-        private async Task LoadMoreRuns()
-        {
-            Debug.WriteLine("LoadMoreRuns called");
-            try
-            {
-                IsLoading = true;
-                await Task.Delay(1000);
-
-                // Add more mock runs
-                _allRuns.Add(new Run
-                {
-                    Id = "4",
-                    Name = "Weekend Warriors",
-                    Location = "Recreation Center",
-                    Address = "555 Maple St, Conyers, GA",
-                    Date = DateTime.Now.AddDays(5),
-                    Time = "2:00 PM - 4:00 PM",
-                    HostName = "Kyrie Irving",
-                    HostId = "user555",
-                    SkillLevel = "Intermediate",
-                    GameType = "5-on-5",
-                    IsPublic = true,
-                    Description = "Weekend basketball for players with some experience.",
-                    PlayerLimit = 10,
-                    CurrentPlayerCount = 6,
-                    CourtImageUrl = "https://images.unsplash.com/photo-1518036232006-8c9ed5097053?q=80&w=1000&auto=format&fit=crop",
-                    Cost = 0,
-                    Distance = 5.1,
-                    Players = new ObservableCollection<Player>()
-                });
-
-                FilterRuns();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error loading more runs: {ex.Message}");
-            }
-            finally
-            {
-                IsLoading = false;
+                Debug.WriteLine($"Error in profile navigation: {ex.Message}");
             }
         }
     }

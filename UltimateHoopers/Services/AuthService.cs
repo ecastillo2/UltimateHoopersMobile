@@ -12,7 +12,6 @@ namespace UltimateHoopers.Services
         private readonly IAuthenticateUser _authenticateUser;
         private readonly ILogger<AuthService> _logger;
         private const string TOKEN_KEY = "auth_token";
-      
         private const string TOKEN_EXPIRATION_KEY = "token_expiration";
         private const string USER_ID_KEY = "user_id";
         private const string USER_KEY = "user_data";
@@ -35,7 +34,6 @@ namespace UltimateHoopers.Services
                 {
                     // Store the token and user details in secure storage
                     await SecureStorage.SetAsync(TOKEN_KEY, user.Token);
-              
                     await SecureStorage.SetAsync(USER_ID_KEY, user.UserId);
                     await SecureStorage.SetAsync(EMAIL_KEY, email);
                     await SecureStorage.SetAsync(PASSWORD_KEY, password);
@@ -53,7 +51,6 @@ namespace UltimateHoopers.Services
                     // Update the global references for easy access
                     App.AuthToken = user.Token;
                     App.User = user;
-                   
 
                     return user;
                 }
@@ -190,6 +187,84 @@ namespace UltimateHoopers.Services
             {
                 _logger.LogError(ex, "Error during user registration");
                 throw new AuthenticationException("Registration failed: " + ex.Message, ex);
+            }
+        }
+
+        public async Task<bool> IsUserHostAsync()
+        {
+            try
+            {
+                // Check if user is authenticated first
+                if (!await IsAuthenticatedAsync())
+                {
+                    _logger.LogWarning("Cannot check host status: User not authenticated");
+                    return false;
+                }
+
+                // Check the current user's account type
+                if (App.User?.AccountType == AccountType.Host)
+                {
+                    return true;
+                }
+
+                // Double-check by loading fresh user data from storage
+                var user = await LoadUserDataAsync();
+                bool isHost = user?.AccountType == AccountType.Host;
+
+                _logger.LogInformation($"Host status check: UserId={user?.UserId}, AccountType={user?.AccountType}, IsHost={isHost}");
+
+                return isHost;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking host status");
+                return false;
+            }
+        }
+
+        public async Task<bool> UpgradeToHostAccountAsync()
+        {
+            try
+            {
+                if (!await IsAuthenticatedAsync())
+                {
+                    throw new InvalidOperationException("User must be authenticated to upgrade account");
+                }
+
+                if (App.User == null)
+                {
+                    throw new InvalidOperationException("User data not available");
+                }
+
+                _logger.LogInformation($"Starting account upgrade for user: {App.User.UserId}");
+
+                // In a real app, this would call an API to upgrade the account
+                // Example:
+                // var upgradeRequest = new UpgradeAccountRequest 
+                // {
+                //     UserId = App.User.UserId,
+                //     NewAccountType = AccountType.Host,
+                //     PaymentMethod = paymentMethod
+                // };
+                // var result = await _apiClient.UpgradeAccountAsync(upgradeRequest);
+
+                // For now, we'll simulate the upgrade with a delay
+                await Task.Delay(2000); // Simulate API call
+
+                // Update the user's account type
+                App.User.AccountType = AccountType.Host;
+
+                // Save the updated user data to secure storage
+                await SaveUserDataAsync(App.User);
+
+                _logger.LogInformation($"Account successfully upgraded to Host for user: {App.User.UserId}");
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error upgrading account to Host");
+                throw;
             }
         }
 

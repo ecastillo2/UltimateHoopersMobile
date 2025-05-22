@@ -111,13 +111,13 @@
                                         <Label Text="📅" 
                                                FontSize="18" 
                                                VerticalOptions="Center"
-                                               TextColor="{StaticResource PrimaryTextColor}" />
+                                               TextColor="black" />
                                         <Picker Grid.Column="1" 
                                                 Title="Select Date" 
                                                 TitleColor="{StaticResource PrimaryTextColor}"
                                                 Margin="5,0,0,0"
                                                 TextColor="{StaticResource PrimaryTextColor}"
-                                                BackgroundColor="Transparent"
+                                                BackgroundColor="LightGray"
                                                 x:Name="DatePicker"
                                                 SelectedItem="{Binding SelectedDate}">
                                             <Picker.Items>
@@ -141,13 +141,13 @@
                                         <Label Text="👥" 
                                                FontSize="18" 
                                                VerticalOptions="Center"
-                                               TextColor="{StaticResource PrimaryTextColor}" />
+                                               TextColor="black" />
                                         <Picker Grid.Column="1" 
                                                 Title="Skill Level" 
-                                                TitleColor="{StaticResource PrimaryTextColor}"
+                                                TitleColor="LightGrey"
                                                 TextColor="{StaticResource PrimaryTextColor}"
                                                 Margin="5,0,0,0"
-                                                BackgroundColor="Transparent"
+                                                BackgroundColor="LightGray"
                                                 x:Name="SkillLevelPicker"
                                                 SelectedItem="{Binding SelectedSkillLevel}">
                                             <Picker.Items>
@@ -164,10 +164,10 @@
                             <!-- Map Toggle and Create Run Button -->
                             <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                                 <Button Grid.Column="0" 
-                                        Text="{Binding MapViewToggleText}"
-                                        BackgroundColor="Transparent"
-                                        TextColor="{StaticResource PrimaryColor}"
-                                        BorderColor="{StaticResource PrimaryColor}"
+                                        Text="Search"
+                                        
+                                        BackgroundColor="{StaticResource PrimaryColor}"
+                                        TextColor="LightGrey"
                                         BorderWidth="1"
                                         CornerRadius="20"
                                         WidthRequest="150"
@@ -262,6 +262,7 @@
                                                        WidthRequest="80"
                                                        Padding="0"
                                                        BorderColor="{StaticResource BorderColor}"
+                                                       BackgroundColor="Transparent"
                                                        HasShadow="False"
                                                        IsClippedToBounds="True"
                                                        VerticalOptions="Start">

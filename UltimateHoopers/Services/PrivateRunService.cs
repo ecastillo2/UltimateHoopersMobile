@@ -201,15 +201,16 @@ namespace UltimateHoopers.Services
                                     PlayerLimit = item.PlayerLimit,
                                     Name = item.Name,
                                     ImageUrl = item.Court.ImageURL,
-                                    Address = item.Address,
+                                    Address = item.Court.Address,
                                     City = item.City,
                                     State = item.State,
                                     Zip = item.Zip,
                                     RunDate = item.RunDate,
-
-                                    //UserName =  item.court,
-                                    //RelativeTime = FormatRelativeTime(item.PostedDate),
-                                    //ProfileImageURL = item.ThumbnailUrl ?? item.PostFileURL,
+                                    UserName = "test",
+                                    RunTime =   item.RunTime,
+                                    EndTime = item.EndTime
+                                    //RelativeTime = FormatRelativeTime(item.RunDate),
+                                    //CurrentPlayerCount = 8,
                                     //PostCommentCount = 0,
                                     //LikedPost = false,
                                     //SavedPost = false
