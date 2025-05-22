@@ -37,7 +37,7 @@ namespace Domain
         public Court? Court { get; set; }
 
         [NotMapped]
-        public string? ImageURL { get; set; }
+        public string? ImageUrl { get; set; }
 
         [NotMapped]
         public string? InviteCount { get; set; }

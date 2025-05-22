@@ -42,6 +42,9 @@ namespace UltimateHoopers.Pages
 
             try
             {
+                // Update Create Run button visibility based on user account type
+                UpdateCreateRunButtonVisibility();
+
                 // Force load data when page appears
                 await _viewModel.LoadRunsAsync();
                 Debug.WriteLine($"After LoadRunsAsync - Runs count: {_viewModel.Runs?.Count ?? -1}");
@@ -230,12 +233,6 @@ namespace UltimateHoopers.Pages
 
             Debug.WriteLine("Commands initialized");
 
-            // Load data immediately in constructor for testing
-            Task.Run(async () => {
-                await Task.Delay(100); // Small delay to ensure UI is ready
-                await LoadRunsAsync();
-            });
-
             Debug.WriteLine("=== FindRunsViewModel Constructor End ===");
         }
 
@@ -346,57 +343,119 @@ namespace UltimateHoopers.Pages
                 // Add a small delay to ensure the loading indicator is visible
                 await Task.Delay(300);
 
-                // Try to get profile service from DI
-                var serviceProvider = MauiProgram.CreateMauiApp().Services;
-                var profileService = serviceProvider.GetService<IPrivateRunService>();
+                Debug.WriteLine("=== LoadRunsAsync Start ===");
 
-                if (profileService == null)
-                {
-                    // Fallback if service is not available through DI
-                    profileService = new PrivateRunService();
-                }
-
-                // Load profiles
-                var profiles = await profileService.GetPrivateRunsAsync();
-
-                // Convert to view models
+                // Clear existing runs
                 _allRuns.Clear();
-                if (profiles != null)
+
+                // Try to load runs from service first, then fall back to mock data
+                bool dataLoaded = false;
+
+                try
                 {
-                    foreach (var profile in profiles)
+                    // Try to get private run service from DI
+                    var serviceProvider = MauiProgram.CreateMauiApp().Services;
+                    var privateRunService = serviceProvider.GetService<IPrivateRunService>();
+
+                    if (privateRunService == null)
                     {
-                        try
-                        {
-                            var hooper = new PrivateRunViewModel
-                            {
-                                Username = profile.UserName ?? "",
-                                
-                            };
-
-                            // Initialize computed properties
-                            hooper.InitProperties();
-
-                            _allRuns.Add(hooper);
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"Error converting profile to hooper model: {ex.Message}");
-                        }
+                        // Fallback if service is not available through DI
+                        privateRunService = new PrivateRunService();
                     }
+
+                    Debug.WriteLine("Attempting to load runs from service...");
+
+                        // Load private runs from service
+                        var privateRuns = await privateRunService.GetPrivateRunsAsync();
+
+                        if (privateRuns != null && privateRuns.Count > 0)
+                        {
+                            Debug.WriteLine($"Loaded {privateRuns.Count} private runs from service");
+
+                            // Convert PrivateRun objects to Run objects
+                            foreach (var privateRun in privateRuns)
+                            {
+                                try
+                                {
+                                    var run = ConvertPrivateRunToRun(privateRun);
+
+
+
+                                    _allRuns.Add(run);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Debug.WriteLine($"Error converting private run to run model: {ex.Message}");
+                                }
+                            }
+
+                            dataLoaded = true;
+                            Debug.WriteLine($"Successfully converted {_allRuns.Count} runs");
+                        }
+                        else
+                        {
+                            Debug.WriteLine("No private runs returned from service");
+                        }
+                  
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error loading runs from service: {ex.Message}");
                 }
 
-                // Initialize filtered hoopers with all hoopers
-                FilteredHoopers = new ObservableCollection<PrivateRunViewModel>(_allRuns);
+                // If no data was loaded from service, use mock data
+                if (!dataLoaded)
+                {
+                    Debug.WriteLine("Loading mock data...");
+                    LoadMockRuns();
+                    dataLoaded = true;
+                }
+
+                // Apply initial filter
+                FilterRuns();
+
+                Debug.WriteLine($"=== LoadRunsAsync Complete - Total runs: {_allRuns.Count} ===");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error loading profiles: {ex.Message}");
-                throw; // Let the page handle this exception
+                Debug.WriteLine($"Error in LoadRunsAsync: {ex.Message}");
+                Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+
+                // Load mock data as fallback
+                LoadMockRuns();
+                FilterRuns();
             }
             finally
             {
                 IsLoading = false;
             }
+        }
+
+        private Run ConvertPrivateRunToRun(Domain.PrivateRun privateRun)
+        {
+            var run = new Run
+            {
+                Id = privateRun.PrivateRunId ?? Guid.NewGuid().ToString(),
+                Name = privateRun.Name ?? "Basketball Run",
+                Location = privateRun.Name ?? "Court",
+                Address = $"{privateRun.Address ?? ""}, {privateRun.City ?? ""}, {privateRun.State ?? ""}, {privateRun.Zip ?? ""}".Trim(',', ' '),
+                Date = privateRun.RunDate ?? DateTime.Now.AddDays(1),
+                Time = $"{privateRun.RunTime ?? "6:00 PM"} - {privateRun.EndTime ?? "8:00 PM"}",
+                HostName = "Host", // This would need to be loaded from the profile
+                HostId = privateRun.ProfileId ?? "",
+                SkillLevel = privateRun.SkillLevel ?? "All Levels",
+                GameType = privateRun.TeamType ?? "5-on-5",
+                IsPublic = privateRun.Type?.ToLower() != "private",
+                Description = privateRun.Description ?? "Come play basketball!",
+                PlayerLimit = privateRun.PlayerLimit ?? 10,
+                CurrentPlayerCount = new Random().Next(3, (privateRun.PlayerLimit ?? 10) - 2), // Random current count
+                CourtImageUrl = privateRun.ImageUrl ?? "All Levels",
+                Cost = privateRun.Cost ?? 0,
+                Distance = Math.Round(new Random().NextDouble() * 5 + 0.5, 1), // Random distance 0.5-5.5 miles
+                Players = new ObservableCollection<Player>()
+            };
+
+            return run;
         }
 
         private void LoadMockRuns()

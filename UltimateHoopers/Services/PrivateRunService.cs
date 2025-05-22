@@ -199,8 +199,14 @@ namespace UltimateHoopers.Services
                                     Status = item.Status,
                                     SkillLevel = item.SkillLevel,
                                     PlayerLimit = item.PlayerLimit,
+                                    Name = item.Name,
+                                    ImageUrl = item.Court.ImageURL,
+                                    Address = item.Address,
+                                    City = item.City,
+                                    State = item.State,
+                                    Zip = item.Zip,
+                                    RunDate = item.RunDate,
                                     
-
                                     // Add these properties for the UI with non-null defaults
                                     //UserName =  item.court,
                                     //RelativeTime = FormatRelativeTime(item.PostedDate),

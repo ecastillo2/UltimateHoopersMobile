@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -20,6 +21,7 @@ namespace Domain.DtoModel
         {
             PrivateRunId = privateRun.PrivateRunId;
             CourtId = privateRun.CourtId;
+            Name = privateRun.Name;
             ProfileId = privateRun.ProfileId;
             Status = privateRun.Status;
             RunDate = privateRun.RunDate;
@@ -35,7 +37,7 @@ namespace Domain.DtoModel
             PaymentMethod = privateRun.PaymentMethod;
             TeamType = privateRun.TeamType;
             PlayerLimit = privateRun.PlayerLimit;
-          
+            Court = privateRun.Court;
 
         }
 
@@ -44,9 +46,13 @@ namespace Domain.DtoModel
         public string? ProfileId { get; set; }
         public string? Status { get; set; }
         public DateTime? RunDate { get; set; }
+
         public decimal? Cost { get; set; }
-        public string? Title { get; set; }
-        public string? Location { get; set; }
+        public string? Name { get; set; }
+        public string? Address { get; set; }
+        public string? City { get; set; }
+        public string? State { get; set; }
+        public string? Zip { get; set; }
         public string? Description { get; set; }
         public string? RunTime { get; set; }
         public string? EndTime { get; set; }
@@ -57,5 +63,10 @@ namespace Domain.DtoModel
         public string? PaymentMethod { get; set; }
         public string? TeamType { get; set; }
         public int? PlayerLimit { get; set; }
+        public Court Court { get; set; }
+        public IList<PrivateRunInvite> PrivateRunInviteList { get; set; }
+        [NotMapped]
+        public string? ImageUrl { get; }
+    
     }
 }

@@ -11,6 +11,7 @@ namespace UltimateHoopers.Models
         public const string HomePage = "//HomePage";
         public const string PostsPage = "//PostsPage";
         public const string StatsPage = "//StatsPage";
+        public const string FindRunsPage = "//FindRunsPage";
         // Add other routes...
     }
 }

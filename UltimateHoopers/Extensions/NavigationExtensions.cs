@@ -147,6 +147,9 @@ namespace UltimateHoopers.Helpers
                 case "statspage":
                     return serviceProvider.GetService<StatsPage>() ?? new StatsPage();
 
+                case "findrunspage":
+                    return serviceProvider.GetService<FindRunsPage>() ?? new FindRunsPage();
+
                 // Add other page types as needed
 
                 default:

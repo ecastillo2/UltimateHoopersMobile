@@ -116,6 +116,7 @@ namespace WebAPI.Controllers
                     // Create a detailed view model with all the additional data
                     var detailedViewModel = new PrivateRunDetailViewModelDto(item)
                     {
+                        PrivateRun = item,
                         Court = court != null ? new Court(court) : null,
                         PrivateRunInvite = invites != null ? new PrivateRunInvite(invites) : null,
                         

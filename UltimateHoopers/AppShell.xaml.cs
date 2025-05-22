@@ -123,6 +123,7 @@ namespace UltimateHoopers
                 try { Routing.RegisterRoute("faqepage", typeof(Pages.FAQPage)); } catch { }
                 try { Routing.RegisterRoute("accountsettingspage", typeof(Pages.AccountSettingsPage)); } catch { }
                 try { Routing.RegisterRoute("aboutpage", typeof(Pages.AboutPage)); } catch { }
+                try { Routing.RegisterRoute("findrunspage", typeof(Pages.FindRunsPage)); } catch { }
             }
         }
 

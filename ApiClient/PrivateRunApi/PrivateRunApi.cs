@@ -40,7 +40,7 @@ namespace WebAPI.ApiClients
         {
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            var response = await _httpClient.GetAsync($"{_baseUrl}/api/PrivateRun/GetPrivateRuns", cancellationToken);
+            var response = await _httpClient.GetAsync($"{_baseUrl}/api/PrivateRun/cursor", cancellationToken);
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
