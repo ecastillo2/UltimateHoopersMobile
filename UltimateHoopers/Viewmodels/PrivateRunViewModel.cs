@@ -132,75 +132,7 @@ namespace UltimateHoopers.ViewModels
 
         public bool IsNotLoading => !_isLoading;
 
-        public async Task LoadPrivateRunsAsync()
-        {
-            try
-            {
-                IsLoading = true;
-                await Task.Delay(300);
-
-                // Try to get service from DI
-                var serviceProvider = MauiProgram.CreateMauiApp().Services;
-                var privateRunService = serviceProvider.GetService<IPrivateRunService>();
-
-                if (privateRunService != null)
-                {
-                    // Load from service
-                    var privateRuns = await privateRunService.GetPrivateRunsAsync();
-
-                    _runs.Clear();
-                    if (privateRuns != null)
-                    {
-                        foreach (var privateRun in privateRuns)
-                        {
-                            var runViewModel = new PrivateRunViewModel
-                            {
-                                PrivateRunId = privateRun.PrivateRunId,
-                                CourtId = privateRun.CourtId,
-                                ProfileId = privateRun.ProfileId,
-                                Status = privateRun.Status,
-                                RunDate = DateTime.TryParse(privateRun.RunDate?.ToString(), out var date) ? date : null,
-                                Cost = privateRun.Cost,
-                                Description = privateRun.Description,
-                                RunTime = privateRun.RunTime,
-                                EndTime = privateRun.EndTime,
-                                Type = privateRun.Type,
-                                CreatedDate = privateRun.CreatedDate,
-                                PrivateRunNumber = privateRun.PrivateRunNumber,
-                                SkillLevel = privateRun.SkillLevel,
-                                PaymentMethod = privateRun.PaymentMethod,
-                                TeamType = privateRun.TeamType,
-                                PlayerLimit = privateRun.PlayerLimit,
-
-                                // Set default UI properties
-                                CurrentPlayerCount = 0,
-                                Distance = 0,
-                                IsPublic = privateRun.Type?.ToLower() != "private"
-                            };
-
-                            _runs.Add(runViewModel);
-                        }
-                    }
-                }
-                else
-                {
-                    // Fallback service creation
-                    var fallbackService = new PrivateRunService();
-                    // Note: This might not work without proper DI setup
-                }
-
-                Runs = new ObservableCollection<PrivateRunViewModel>(_runs);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error loading private runs: {ex.Message}");
-                throw;
-            }
-            finally
-            {
-                IsLoading = false;
-            }
-        }
+        
 
         public void FilterRuns(string searchText)
         {

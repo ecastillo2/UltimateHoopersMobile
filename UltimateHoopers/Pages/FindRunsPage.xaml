@@ -2,9 +2,17 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:UltimateHoopers.ViewModels"
+             xmlns:converters="clr-namespace:UltimateHoopers.Converter"
              x:Class="UltimateHoopers.Pages.FindRunsPage" 
              NavigationPage.HasNavigationBar="False"
              BackgroundColor="{StaticResource PageBackgroundColor}">
+
+    <!-- Add converters to page resources -->
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:InvertBoolConverter x:Key="InvertBoolConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,*,Auto"
           Padding="20">
@@ -54,31 +62,6 @@
             <ScrollView>
                 <VerticalStackLayout Spacing="20">
 
-                    <!-- DEBUG SECTION - Remove this after testing -->
-                    <Frame BorderColor="Red" 
-                           BackgroundColor="LightYellow" 
-                           Padding="10">
-                        <VerticalStackLayout Spacing="5">
-                            <Label Text="=== DEBUG INFO ===" 
-                                   FontAttributes="Bold" 
-                                   TextColor="Red" />
-
-                            <Label Text="{Binding Runs.Count, StringFormat='Runs Count: {0}'}" 
-                                   TextColor="Blue" 
-                                   FontAttributes="Bold" />
-
-                            <Label Text="{Binding IsLoading, StringFormat='Is Loading: {0}'}" 
-                                   TextColor="Green" />
-
-                            <Label Text="{Binding SelectedDate, StringFormat='Selected Date: {0}'}" 
-                                   TextColor="Purple" />
-
-                            <Button Text="Test Load Runs" 
-                                    Command="{Binding RefreshCommand}" 
-                                    BackgroundColor="Orange" 
-                                    HeightRequest="40" />
-                        </VerticalStackLayout>
-                    </Frame>
 
                     <!-- Search Section -->
                     <Frame BorderColor="{StaticResource BorderColor}"
@@ -217,29 +200,6 @@
                                FontSize="18"/>
                     </Grid>
 
-                    <!-- Simple ListView Test (Remove after debugging) -->
-                    <Frame BorderColor="Orange" 
-                           BackgroundColor="LightBlue" 
-                           Padding="10"
-                           IsVisible="{Binding MapViewEnabled, Converter={StaticResource InvertBoolConverter}}">
-                        <VerticalStackLayout>
-                            <Label Text="=== SIMPLE LISTVIEW TEST ===" 
-                                   FontAttributes="Bold" 
-                                   TextColor="Red" />
-
-                            <ListView ItemsSource="{Binding Runs}" 
-                                      HeightRequest="200"
-                                      BackgroundColor="White">
-                                <ListView.ItemTemplate>
-                                    <DataTemplate>
-                                        <TextCell Text="{Binding Name}" 
-                                                  Detail="{Binding Location}" />
-                                    </DataTemplate>
-                                </ListView.ItemTemplate>
-                            </ListView>
-                        </VerticalStackLayout>
-                    </Frame>
-
                     <!-- List View (Conditionally visible) -->
                     <VerticalStackLayout IsVisible="{Binding MapViewEnabled, Converter={StaticResource InvertBoolConverter}}">
                         <!-- Nearby Runs Section -->
@@ -256,28 +216,27 @@
                                            HeightRequest="50" />
 
                         <!-- Run Items List -->
-                        <!-- Run Items List - FIXED VERSION -->
                         <CollectionView ItemsSource="{Binding Runs}"
-                SelectionMode="None"
-                BackgroundColor="Transparent"
-                HeightRequest="600">
+                                        SelectionMode="None"
+                                        BackgroundColor="Transparent"
+                                        HeightRequest="600">
 
                             <!-- Empty View -->
                             <CollectionView.EmptyView>
                                 <StackLayout Padding="20" HorizontalOptions="Center" VerticalOptions="Center">
                                     <Label Text="No runs found matching your criteria." 
-                   TextColor="{StaticResource SecondaryTextColor}"
-                   FontSize="16"
-                   HorizontalOptions="Center" />
+                                           TextColor="{StaticResource SecondaryTextColor}"
+                                           FontSize="16"
+                                           HorizontalOptions="Center" />
                                     <Button Text="Refresh" 
-                    Command="{Binding RefreshCommand}"
-                    BackgroundColor="{StaticResource PrimaryColor}"
-                    TextColor="White"
-                    Margin="0,10,0,0" />
+                                            Command="{Binding RefreshCommand}"
+                                            BackgroundColor="{StaticResource PrimaryColor}"
+                                            TextColor="White"
+                                            Margin="0,10,0,0" />
                                 </StackLayout>
                             </CollectionView.EmptyView>
 
-                            <!-- Item Template - SIMPLIFIED -->
+                            <!-- Item Template -->
                             <CollectionView.ItemTemplate>
                                 <DataTemplate>
                                     <Grid Padding="15" RowSpacing="10">
@@ -287,53 +246,53 @@
 
                                         <!-- Main Container Frame -->
                                         <Frame Grid.Row="0"
-                       BorderColor="{StaticResource BorderColor}"
-                       CornerRadius="10"
-                       HasShadow="True"
-                       Padding="15"
-                       Margin="0,0,0,10"
-                       BackgroundColor="{StaticResource CardBackgroundColor}">
+                                               BorderColor="{StaticResource BorderColor}"
+                                               CornerRadius="10"
+                                               HasShadow="True"
+                                               Padding="15"
+                                               Margin="0,0,0,10"
+                                               BackgroundColor="{StaticResource CardBackgroundColor}">
 
                                             <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,*,Auto" RowSpacing="10">
 
                                                 <!-- Court Image -->
                                                 <Frame Grid.Row="0" Grid.Column="0" Grid.RowSpan="3"
-                               CornerRadius="40"
-                               HeightRequest="80"
-                               WidthRequest="80"
-                               Padding="0"
-                               BorderColor="{StaticResource BorderColor}"
-                               HasShadow="False"
-                               IsClippedToBounds="True"
-                               VerticalOptions="Start">
+                                                       CornerRadius="40"
+                                                       HeightRequest="80"
+                                                       WidthRequest="80"
+                                                       Padding="0"
+                                                       BorderColor="{StaticResource BorderColor}"
+                                                       HasShadow="False"
+                                                       IsClippedToBounds="True"
+                                                       VerticalOptions="Start">
                                                     <Image Source="{Binding CourtImageUrl}"
-                                   Aspect="AspectFill" />
+                                                           Aspect="AspectFill" />
                                                 </Frame>
 
                                                 <!-- Run Name and Address -->
                                                 <StackLayout Grid.Row="0" Grid.Column="1" Spacing="5" Margin="15,0,0,0">
                                                     <Label Text="{Binding Name}"
-                                   FontSize="18"
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource PrimaryTextColor}"
-                                   LineBreakMode="TailTruncation" />
+                                                           FontSize="18"
+                                                           FontAttributes="Bold"
+                                                           TextColor="{StaticResource PrimaryTextColor}"
+                                                           LineBreakMode="TailTruncation" />
                                                     <Label Text="{Binding Address}"
-                                   FontSize="14"
-                                   TextColor="{StaticResource SecondaryTextColor}"
-                                   LineBreakMode="TailTruncation" />
+                                                           FontSize="14"
+                                                           TextColor="{StaticResource SecondaryTextColor}"
+                                                           LineBreakMode="TailTruncation" />
                                                 </StackLayout>
 
                                                 <!-- Join Button -->
                                                 <Button Grid.Row="0" Grid.Column="2"
-                                Text="Join"
-                                BackgroundColor="{StaticResource PrimaryColor}"
-                                TextColor="White"
-                                CornerRadius="20"
-                                HeightRequest="40"
-                                WidthRequest="80"
-                                VerticalOptions="Start"
-                                HorizontalOptions="End"
-                                Clicked="OnJoinButtonClicked" />
+                                                        Text="Join"
+                                                        BackgroundColor="{StaticResource PrimaryColor}"
+                                                        TextColor="White"
+                                                        CornerRadius="20"
+                                                        HeightRequest="40"
+                                                        WidthRequest="80"
+                                                        VerticalOptions="Start"
+                                                        HorizontalOptions="End"
+                                                        Clicked="OnJoinButtonClicked" />
 
                                                 <!-- Date and Time Info -->
                                                 <StackLayout Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="15" Margin="15,0,0,0">
@@ -349,11 +308,11 @@
 
                                                 <!-- Distance -->
                                                 <Label Grid.Row="1" Grid.Column="2"
-                               Text="{Binding DistanceText}"
-                               TextColor="{StaticResource SecondaryTextColor}"
-                               FontSize="12"
-                               HorizontalOptions="End"
-                               VerticalOptions="End" />
+                                                       Text="{Binding DistanceText}"
+                                                       TextColor="{StaticResource SecondaryTextColor}"
+                                                       FontSize="12"
+                                                       HorizontalOptions="End"
+                                                       VerticalOptions="End" />
 
                                                 <!-- Players and Skill Level -->
                                                 <StackLayout Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Spacing="15" Margin="15,0,0,0">
@@ -469,10 +428,5 @@
                 </VerticalStackLayout.GestureRecognizers>
             </VerticalStackLayout>
         </Grid>
-
-        <!-- Hidden element for binding context reference -->
-        <ContentView x:Name="BindingContextProxy" 
-                     BindingContext="{Binding}" 
-                     IsVisible="False" />
     </Grid>
 </ContentPage>

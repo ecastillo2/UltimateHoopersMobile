@@ -54,6 +54,7 @@ namespace UltimateHoopers.Pages
 
             Debug.WriteLine("=== FindRunsPage OnAppearing End ===");
         }
+
         private async void OnJoinButtonClicked(object sender, EventArgs e)
         {
             try
@@ -63,7 +64,11 @@ namespace UltimateHoopers.Pages
                 if (sender is Button button && button.BindingContext is Run run)
                 {
                     Debug.WriteLine($"Join button clicked for run: {run.Name}");
-                    await _viewModel.JoinRunCommand.ExecuteAsync(run);
+                    // Fix: Use Execute instead of ExecuteAsync
+                    if (_viewModel.JoinRunCommand.CanExecute(run))
+                    {
+                        _viewModel.JoinRunCommand.Execute(run);
+                    }
                 }
                 else
                 {
@@ -86,7 +91,11 @@ namespace UltimateHoopers.Pages
                 if (sender is Frame frame && frame.BindingContext is Run run)
                 {
                     Debug.WriteLine($"Run item tapped: {run.Name}");
-                    await _viewModel.ViewPrivateRunDetailsCommand.ExecuteAsync(run);
+                    // Fix: Use Execute instead of ExecuteAsync
+                    if (_viewModel.ViewPrivateRunDetailsCommand.CanExecute(run))
+                    {
+                        _viewModel.ViewPrivateRunDetailsCommand.Execute(run);
+                    }
                 }
                 else
                 {
@@ -99,6 +108,7 @@ namespace UltimateHoopers.Pages
                 await DisplayAlert("Error", $"Could not view run details: {ex.Message}", "OK");
             }
         }
+
         private void SetupUI()
         {
             // Set default picker values if not already set
@@ -210,7 +220,7 @@ namespace UltimateHoopers.Pages
 
             Debug.WriteLine($"Collections initialized. _allRuns: {_allRuns != null}, _runs: {_runs != null}");
 
-            // Initialize commands
+            // Initialize commands - Fix: Create async commands properly
             RefreshCommand = new Command(async () => await LoadRunsAsync());
             JoinRunCommand = new Command<Run>(async (run) => await JoinRun(run));
             ViewPrivateRunDetailsCommand = new Command<Run>(async (run) => await ViewRunDetails(run));
@@ -329,51 +339,64 @@ namespace UltimateHoopers.Pages
 
         public async Task LoadRunsAsync()
         {
-            Debug.WriteLine("=== LoadRunsAsync Start ===");
-
             try
             {
                 IsLoading = true;
-                IsRefreshing = true;
 
-                Debug.WriteLine("Loading and Refreshing flags set to true");
+                // Add a small delay to ensure the loading indicator is visible
+                await Task.Delay(300);
 
-                // Small delay for loading indicator
-                await Task.Delay(100);
+                // Try to get profile service from DI
+                var serviceProvider = MauiProgram.CreateMauiApp().Services;
+                var profileService = serviceProvider.GetService<IPrivateRunService>();
 
-                // Clear existing runs
+                if (profileService == null)
+                {
+                    // Fallback if service is not available through DI
+                    profileService = new PrivateRunService();
+                }
+
+                // Load profiles
+                var profiles = await profileService.GetPrivateRunsAsync();
+
+                // Convert to view models
                 _allRuns.Clear();
-                Debug.WriteLine("_allRuns cleared");
+                if (profiles != null)
+                {
+                    foreach (var profile in profiles)
+                    {
+                        try
+                        {
+                            var hooper = new PrivateRunViewModel
+                            {
+                                Username = profile.UserName ?? "",
+                                
+                            };
 
-                // Load mock data
-                LoadMockRuns();
-                Debug.WriteLine($"After LoadMockRuns: _allRuns count = {_allRuns.Count}");
+                            // Initialize computed properties
+                            hooper.InitProperties();
 
-                // Apply current filters
-                FilterRuns();
-                Debug.WriteLine($"After FilterRuns: Runs count = {Runs.Count}");
+                            _allRuns.Add(hooper);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Error converting profile to hooper model: {ex.Message}");
+                        }
+                    }
+                }
 
-                // Force property change notification
-                OnPropertyChanged(nameof(Runs));
-                Debug.WriteLine("Forced property change notification for Runs");
+                // Initialize filtered hoopers with all hoopers
+                FilteredHoopers = new ObservableCollection<PrivateRunViewModel>(_allRuns);
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"ERROR in LoadRunsAsync: {ex.Message}");
-                Debug.WriteLine($"Stack trace: {ex.StackTrace}");
-
-                await MainThread.InvokeOnMainThreadAsync(async () => {
-                    await Application.Current.MainPage.DisplayAlert("Error", $"Failed to load runs: {ex.Message}", "OK");
-                });
+                Console.WriteLine($"Error loading profiles: {ex.Message}");
+                throw; // Let the page handle this exception
             }
             finally
             {
                 IsLoading = false;
-                IsRefreshing = false;
-                Debug.WriteLine("Loading and Refreshing flags set to false");
             }
-
-            Debug.WriteLine("=== LoadRunsAsync End ===");
         }
 
         private void LoadMockRuns()
@@ -704,8 +727,6 @@ namespace UltimateHoopers.Pages
                     "Could not create a run. Please try again later.", "OK");
             }
         }
-
-        
 
         private async Task LoadMoreRuns()
         {
