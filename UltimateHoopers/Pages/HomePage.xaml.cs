@@ -373,6 +373,21 @@ namespace UltimateHoopers.Pages
         #endregion
 
         #region Navigation Functions
+
+        // Add this method to your HomePage.xaml.cs file in the #region Navigation Functions section
+
+        private async void OnViewAllRunsClicked(object sender, TappedEventArgs e)
+        {
+            try
+            {
+                await Navigation.PushAsync(new FindRunsPage());
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error navigating to FindRunsPage: {ex.Message}");
+                await DisplayAlert("Navigation Error", "Could not navigate to runs page", "OK");
+            }
+        }
         // IMPORTANT: Fixed event handler signatures for XAML compatibility
         private async void OnProfileClicked(object sender, TappedEventArgs e)
         {

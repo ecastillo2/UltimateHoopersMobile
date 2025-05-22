@@ -19,19 +19,19 @@
 
                 <!-- Hamburger Menu Button -->
                 <Frame Grid.Column="0"
-       CornerRadius="25"
-       HeightRequest="50"
-       WidthRequest="50"
-       Padding="10"
-       BorderColor="{StaticResource BorderColor}"
-       BackgroundColor="{StaticResource CardBackgroundColor}"
-       HasShadow="True">
+                       CornerRadius="25"
+                       HeightRequest="50"
+                       WidthRequest="50"
+                       Padding="10"
+                       BorderColor="{StaticResource BorderColor}"
+                       BackgroundColor="{StaticResource CardBackgroundColor}"
+                       HasShadow="True">
                     <!-- Use Image control to display menu.png -->
                     <Image Source="menu.png"
-           HeightRequest="24"
-           WidthRequest="24"
-           HorizontalOptions="Center"
-           VerticalOptions="Center" />
+                           HeightRequest="24"
+                           WidthRequest="24"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center" />
                     <Frame.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnHamburgerButtonTapped" />
                     </Frame.GestureRecognizers>
@@ -73,47 +73,45 @@
 
                 <!-- Notification Icon -->
                 <Frame Grid.Column="3"
-           CornerRadius="25"
-           HeightRequest="50"
-           WidthRequest="50"
-           Padding="0"
-           BorderColor="{StaticResource BorderColor}"
-           BackgroundColor="{StaticResource CardBackgroundColor}"
-           HasShadow="True"
-           Margin="0,0,10,0">
+                       CornerRadius="25"
+                       HeightRequest="50"
+                       WidthRequest="50"
+                       Padding="0"
+                       BorderColor="{StaticResource BorderColor}"
+                       BackgroundColor="{StaticResource CardBackgroundColor}"
+                       HasShadow="True"
+                       Margin="0,0,10,0">
                     <Grid>
                         <!-- Bell Icon -->
                         <Label Text="🔔" 
-                   FontSize="22" 
-                   HorizontalOptions="Center" 
-                               
-                   VerticalOptions="Center" />
+                               FontSize="22" 
+                               HorizontalOptions="Center" 
+                               VerticalOptions="Center" />
 
                         <!-- Notification Badge - Only visible when there are notifications -->
                         <Frame x:Name="NotificationBadge"
-                   BackgroundColor="#E53935"
-                   CornerRadius="10"
-                   HeightRequest="20"
-                   WidthRequest="20"
-                   Padding="0"
-                   HasShadow="False"
-                   HorizontalOptions="End"
-                   VerticalOptions="Start"
-                   Margin="0,5,5,0">
+                               BackgroundColor="#E53935"
+                               CornerRadius="10"
+                               HeightRequest="20"
+                               WidthRequest="20"
+                               Padding="0"
+                               HasShadow="False"
+                               HorizontalOptions="End"
+                               VerticalOptions="Start"
+                               Margin="0,5,5,0">
                             <Label x:Name="NotificationCountLabel"
-                       Text="3"
-                       FontSize="12"
-                       FontAttributes="Bold"
-                       TextColor="White"
-                       HorizontalOptions="Center"
-                       VerticalOptions="Center" />
+                                   Text="3"
+                                   FontSize="12"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center" />
                         </Frame>
                     </Grid>
                     <Frame.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnNotificationsClicked" />
                     </Frame.GestureRecognizers>
                 </Frame>
-
 
                 <!-- Profile Icon -->
                 <Frame Grid.Column="4"
@@ -143,6 +141,143 @@
             <!-- Content -->
             <ScrollView Grid.Row="1" Margin="0,15,0,0">
                 <VerticalStackLayout Spacing="20">
+
+                    <!-- Joined Runs Section - NEW SECTION -->
+                    <VerticalStackLayout Spacing="10" Margin="0,0,0,20">
+                        <!-- Section Header with View All Button -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Text="My Joined Runs"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource PrimaryTextColor}"
+                                   VerticalOptions="Center" />
+
+                            <Button Grid.Column="1"
+                                    Text="View All"
+                                    FontSize="14"
+                                    BackgroundColor="Transparent"
+                                    TextColor="{StaticResource PrimaryColor}"
+                                    Padding="10,5"
+                                    CornerRadius="15"
+                                    BorderColor="{StaticResource PrimaryColor}"
+                                    BorderWidth="1"
+                                    HeightRequest="35"
+                                    Clicked="OnViewAllRunsClicked" />
+                        </Grid>
+
+                        <!-- No Joined Runs Message (displayed when no runs are joined) -->
+                        <Frame x:Name="NoRunsMessage"
+                               IsVisible="true"
+                               BorderColor="{StaticResource BorderColor}"
+                               BackgroundColor="{StaticResource CardBackgroundColor}"
+                               CornerRadius="10"
+                               HasShadow="True"
+                               Padding="15"
+                               Margin="0,5,0,0">
+                            <VerticalStackLayout Spacing="10" HorizontalOptions="Center" Padding="20">
+                                <Label Text="🏀"
+                                       FontSize="36"
+                                       HorizontalOptions="Center" />
+                                <Label Text="No Runs Joined Yet"
+                                       FontSize="18"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource PrimaryTextColor}"
+                                       HorizontalOptions="Center" />
+                                <Label Text="Join a run to see it here"
+                                       FontSize="14"
+                                       TextColor="{StaticResource SecondaryTextColor}"
+                                       HorizontalOptions="Center" />
+                                <Button Text="Find Runs"
+                                        BackgroundColor="{StaticResource PrimaryColor}"
+                                        TextColor="White"
+                                        CornerRadius="20"
+                                        Margin="0,10,0,0"
+                                        Clicked="OnFindGamesClicked" />
+                            </VerticalStackLayout>
+                        </Frame>
+
+                        <!-- Joined Runs Collection -->
+                        <CollectionView x:Name="JoinedRunsCollection"
+                                        IsVisible="false"
+                                        HeightRequest="170"
+                                        ItemsLayout="HorizontalList">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Frame BorderColor="{StaticResource BorderColor}"
+                                           BackgroundColor="{StaticResource CardBackgroundColor}"
+                                           CornerRadius="10"
+                                           HasShadow="True"
+                                           Padding="0"
+                                           Margin="0,5,15,5"
+                                           WidthRequest="280">
+                                        <Grid RowDefinitions="Auto,*,Auto">
+                                            <!-- Run Image with Overlay -->
+                                            <Grid RowSpacing="0">
+                                                <Image Source="{Binding CourtImageUrl}"
+                                                       Aspect="AspectFill"
+                                                       HeightRequest="80" />
+                                                <!-- Semi-transparent overlay for better text visibility -->
+                                                <BoxView Color="Black" 
+                                                         Opacity="0.3" 
+                                                         HeightRequest="80" />
+                                                <!-- Run Name -->
+                                                <Label Text="{Binding Name}"
+                                                       TextColor="White"
+                                                       FontSize="18"
+                                                       FontAttributes="Bold"
+                                                       Margin="15,0,15,0"
+                                                       VerticalOptions="Center" />
+                                            </Grid>
+
+                                            <!-- Run Details -->
+                                            <VerticalStackLayout Grid.Row="1" Padding="15,10">
+                                                <!-- Date and Time -->
+                                                <StackLayout Orientation="Horizontal" Margin="0,0,0,5">
+                                                    <Label Text="📅" FontSize="14" VerticalOptions="Center" />
+                                                    <Label Text="{Binding FormattedDate}"
+                                                           FontSize="14"
+                                                           TextColor="{StaticResource PrimaryTextColor}"
+                                                           Margin="5,0,0,0" />
+                                                </StackLayout>
+
+                                                <!-- Time -->
+                                                <StackLayout Orientation="Horizontal" Margin="0,0,0,5">
+                                                    <Label Text="⏰" FontSize="14" VerticalOptions="Center" />
+                                                    <Label Text="{Binding Time}"
+                                                           FontSize="14"
+                                                           TextColor="{StaticResource PrimaryTextColor}"
+                                                           Margin="5,0,0,0" />
+                                                </StackLayout>
+
+                                                <!-- Location -->
+                                                <StackLayout Orientation="Horizontal">
+                                                    <Label Text="📍" FontSize="14" VerticalOptions="Center" />
+                                                    <Label Text="{Binding Address}"
+                                                           FontSize="14"
+                                                           TextColor="{StaticResource PrimaryTextColor}"
+                                                           Margin="5,0,0,0"
+                                                           MaxLines="1"
+                                                           LineBreakMode="TailTruncation" />
+                                                </StackLayout>
+                                            </VerticalStackLayout>
+
+                                            <!-- View Details Button -->
+                                            <Button Grid.Row="2"
+                                                    Text="View Details"
+                                                    BackgroundColor="{StaticResource PrimaryColor}"
+                                                    TextColor="White"
+                                                    CornerRadius="10"
+                                                    Margin="0,0,0,15"
+                                                    Padding="15"
+                                                    HeightRequest="40"
+                                                    Clicked="OnViewRunDetailsClicked"
+                                                    CommandParameter="{Binding Id}" />
+                                        </Grid>
+                                    </Frame>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
 
                     <!-- Feature Cards -->
                     <Label Text="Features"
@@ -441,16 +576,16 @@
                             <Grid ColumnDefinitions="Auto,*,Auto" Padding="15,10" RowSpacing="0">
                                 <!-- User avatar -->
                                 <Frame Grid.Column="0" 
-       CornerRadius="20" 
-       HeightRequest="40" 
-       WidthRequest="40"
-       Padding="0"
-       IsClippedToBounds="True"
-       BorderColor="{StaticResource BorderColor}">
+                                       CornerRadius="20" 
+                                       HeightRequest="40" 
+                                       WidthRequest="40"
+                                       Padding="0"
+                                       IsClippedToBounds="True"
+                                       BorderColor="{StaticResource BorderColor}">
                                     <Image Source="logo_uh.png"
-           Aspect="AspectFill"
-           HorizontalOptions="Center" 
-           VerticalOptions="Center" />
+                                           Aspect="AspectFill"
+                                           HorizontalOptions="Center" 
+                                           VerticalOptions="Center" />
                                 </Frame>
 
                                 <!-- Username and time -->
@@ -658,7 +793,7 @@
                                        TextColor="White"
                                        FontSize="20"
                                        FontAttributes="Bold" />
-                              
+
                             </VerticalStackLayout>
                         </VerticalStackLayout>
                     </Grid>
