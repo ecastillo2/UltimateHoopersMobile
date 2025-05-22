@@ -682,7 +682,7 @@
                                      HorizontalOptions="Center"
                                      VerticalOptions="Center"
                                      Spacing="2"
-                                     Opacity="0.6">
+                                     >
                     <Label Text="🔍"
                            FontSize="20"
                            HorizontalOptions="Center" />
@@ -700,7 +700,7 @@
                                      HorizontalOptions="Center"
                                      VerticalOptions="Center"
                                      Spacing="2"
-                                     Opacity="0.6">
+                                     >
                     <Label Text="📅"
                            FontSize="20"
                            HorizontalOptions="Center" />
@@ -717,7 +717,7 @@
                                      HorizontalOptions="Center"
                                      VerticalOptions="Center"
                                      Spacing="2"
-                                     Opacity="0.6">
+                                     >
                     <Label Text="⚙️"
                            FontSize="20"
                            HorizontalOptions="Center" />

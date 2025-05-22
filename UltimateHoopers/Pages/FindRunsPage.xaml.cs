@@ -7,9 +7,12 @@ using System.Threading.Tasks;
 using UltimateHoopers.Converter;
 using UltimateHoopers.Helpers;
 using UltimateHoopers.Models;
+using Microsoft.Maui.Controls.Shapes;
 using UltimateHoopers.Services;
 using UltimateHoopers.ViewModels;
 using System.Collections.Generic;
+using ControlsAnimation = Microsoft.Maui.Controls.Animation;
+using MauiAnimation = Microsoft.Maui.Animations.Animation;
 
 namespace UltimateHoopers.Pages
 {
@@ -862,27 +865,56 @@ namespace UltimateHoopers.Pages
                 {
                     bool upgrade = await Application.Current.MainPage.DisplayAlert(
                         "Host Account Required",
-                        "Creating a run requires a Host account. Would you like to upgrade?",
-                        "Upgrade Now", "Cancel");
+                        "Creating a run requires a Host account ($9.99/month). Would you like to upgrade or continue anyway?",
+                        "Upgrade Now", "Continue");
 
                     if (upgrade)
                     {
                         await Application.Current.MainPage.DisplayAlert(
-                            "Upgrade",
-                            "Account upgrade coming soon!",
+                            "Account Upgrade",
+                            "Account upgrade feature coming soon! For now, you can still create a run.",
                             "OK");
                     }
-                    return;
+
+                    // Allow them to continue regardless of upgrade choice for demo purposes
                 }
 
-                await Application.Current.MainPage.DisplayAlert(
-                    "Create Run",
-                    "Creating a new run will be available soon!",
-                    "OK");
+                // Navigate to CreateRunPage
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    try
+                    {
+                        // Try multiple navigation approaches for reliability
+                        if (Application.Current.MainPage is Shell shell)
+                        {
+                            await shell.Navigation.PushAsync(new CreateRunPage());
+                        }
+                        else if (Application.Current.MainPage.Navigation != null)
+                        {
+                            await Application.Current.MainPage.Navigation.PushAsync(new CreateRunPage());
+                        }
+                        else
+                        {
+                            // Fallback: show error
+                            await Application.Current.MainPage.DisplayAlert(
+                                "Navigation Error",
+                                "Could not navigate to create run page. Please try again.",
+                                "OK");
+                        }
+                    }
+                    catch (Exception navEx)
+                    {
+                        Debug.WriteLine($"Navigation error: {navEx.Message}");
+                        await Application.Current.MainPage.DisplayAlert(
+                            "Navigation Error",
+                            "Could not navigate to create run page. Please try again.",
+                            "OK");
+                    }
+                });
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error creating run: {ex.Message}");
+                Debug.WriteLine($"Error in CreateRun: {ex.Message}");
                 await Application.Current.MainPage.DisplayAlert("Error",
                     "Could not create a run. Please try again later.", "OK");
             }
