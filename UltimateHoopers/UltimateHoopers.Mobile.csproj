@@ -115,6 +115,9 @@
 		<MauiXaml Update="Pages\FindRunsPage.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
+		<MauiXaml Update="Pages\ForgotPasswordPage.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
 		<MauiXaml Update="Pages\HomePage.xaml">
 			<Generator>MSBuild:UpdateDesignTimeXaml</Generator>
 		</MauiXaml>
