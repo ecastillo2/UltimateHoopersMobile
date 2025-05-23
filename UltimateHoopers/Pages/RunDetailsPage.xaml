@@ -23,7 +23,8 @@
 
                 <Label Text="{Binding Run.Address}"
                        FontSize="16"
-                       TextColor="{StaticResource SecondaryTextColor}" />
+                       TextColor="{StaticResource SecondaryTextColor}" 
+                       Margin="0,5,0,0"/>
             </VerticalStackLayout>
 
             <!-- Back Button -->
@@ -81,12 +82,13 @@
                         </Frame>
 
                         <!-- Date and Time Info -->
-                        <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="8">
+                        <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="12">
                             <Label Text="{Binding FormattedDate}"
                                    FontSize="18"
+                                   FontAttributes="Bold"
                                    TextColor="{StaticResource PrimaryTextColor}" />
 
-                            <Grid ColumnDefinitions="Auto,*" RowSpacing="8">
+                            <Grid ColumnDefinitions="Auto,*" RowSpacing="12">
                                 <Label Grid.Row="0" Grid.Column="0"
                                        Text="🕒"
                                        FontSize="16"
@@ -124,12 +126,13 @@
                                FontAttributes="Bold"
                                TextColor="{StaticResource PrimaryTextColor}" />
 
-                        <Grid ColumnDefinitions="Auto,*" RowSpacing="15">
+                        <Grid ColumnDefinitions="Auto,*" RowSpacing="15" ColumnSpacing="15">
                             <!-- Host Info -->
                             <Label Grid.Row="0" Grid.Column="0"
                                    Text="Host:"
                                    FontAttributes="Bold"
-                                   TextColor="{StaticResource PrimaryTextColor}" />
+                                   TextColor="{StaticResource PrimaryTextColor}"
+                                   WidthRequest="100" />
                             <Label Grid.Row="0" Grid.Column="1"
                                    Text="{Binding Run.HostName}"
                                    TextColor="{StaticResource PrimaryTextColor}" />
@@ -177,7 +180,8 @@
                                TextColor="{StaticResource PrimaryTextColor}"
                                Margin="0,10,0,0" />
                         <Label Text="{Binding Run.Description}"
-                               TextColor="{StaticResource PrimaryTextColor}" />
+                               TextColor="{StaticResource PrimaryTextColor}"
+                               LineBreakMode="WordWrap" />
                     </VerticalStackLayout>
                 </Frame>
 
@@ -191,7 +195,7 @@
                     <VerticalStackLayout Spacing="15">
                         <Grid ColumnDefinitions="*,Auto">
                             <Label Grid.Column="0"
-                                   Text="Players"
+                                   Text="Joined Players"
                                    FontSize="18"
                                    FontAttributes="Bold"
                                    TextColor="{StaticResource PrimaryTextColor}" />
@@ -201,42 +205,75 @@
                                    TextColor="{StaticResource SecondaryTextColor}" />
                         </Grid>
 
+                        <!-- Player List Header -->
+                        <Label Text="Players who have joined this run:" 
+                               TextColor="{StaticResource SecondaryTextColor}"
+                               FontSize="14" 
+                               Margin="0,-10,0,0"
+                               IsVisible="{Binding Run.HasPlayers}" />
+
                         <!-- Player List -->
                         <CollectionView x:Name="PlayersCollectionView"
-                                        ItemsSource="{Binding Run.Players}"
-                                        SelectionMode="None"
+                                        ItemsSource="{Binding JoinedPlayers}"
+                                        SelectionMode="Single"
+                                        HeightRequest="200"
                                         EmptyView="No players have joined yet.">
                             <CollectionView.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid Padding="0,8" ColumnDefinitions="Auto,*">
+                                    <Grid Padding="0,8" ColumnDefinitions="Auto,*,Auto" Margin="0,4">
                                         <!-- Player Avatar -->
                                         <Frame Grid.Column="0"
                                                CornerRadius="20"
-                                               HeightRequest="40"
-                                               WidthRequest="40"
+                                               HeightRequest="50"
+                                               WidthRequest="50"
                                                Padding="0"
                                                IsClippedToBounds="True"
                                                BorderColor="{StaticResource BorderColor}">
-                                            <!-- Default profile icon -->
+                                            <!-- Default profile icon (shown when no image available) -->
                                             <Label Text="👤" 
-                                                   FontSize="20" 
+                                                   FontSize="22" 
                                                    HorizontalOptions="Center" 
-                                                   VerticalOptions="Center" />
+                                                   VerticalOptions="Center"
+                                                   IsVisible="{Binding HasProfileImage, Converter={StaticResource InvertBoolConverter}}" />
+
                                             <!-- Profile image when available -->
-                                            <Image IsVisible="False"
-                                                   Source="{Binding ProfileImageUrl}"
+                                            <Image Source="{Binding ProfileImageUrl}"
                                                    Aspect="AspectFill"
-                                                   HorizontalOptions="Center" 
-                                                   VerticalOptions="Center" />
+                                                   HorizontalOptions="Fill" 
+                                                   VerticalOptions="Fill"
+                                                   IsVisible="{Binding HasProfileImage}" />
                                         </Frame>
 
-                                        <!-- Player Name -->
-                                        <Label Grid.Column="1"
-                                               Text="{Binding Name}"
-                                               FontSize="16"
-                                               TextColor="{StaticResource PrimaryTextColor}"
-                                               VerticalOptions="Center"
-                                               Margin="15,0,0,0" />
+                                        <!-- Player Details -->
+                                        <VerticalStackLayout Grid.Column="1" 
+                                                           Spacing="2" 
+                                                           VerticalOptions="Center"
+                                                           Margin="15,0,0,0">
+                                            <!-- Player Name -->
+                                            <Label Text="{Binding Name}"
+                                                   FontSize="16"
+                                                   FontAttributes="Bold"
+                                                   TextColor="{StaticResource PrimaryTextColor}"/>
+
+                                            <!-- Player Username -->
+                                            <Label Text="{Binding Username}"
+                                                   FontSize="14"
+                                                   TextColor="{StaticResource SecondaryTextColor}"/>
+                                        </VerticalStackLayout>
+
+                                        <!-- Host Badge (only shown for host) -->
+                                        <Frame Grid.Column="2" 
+                                               IsVisible="{Binding IsHost}"
+                                               BackgroundColor="{StaticResource PrimaryColor}"
+                                               CornerRadius="12"
+                                               Padding="8,3"
+                                               Margin="0,0,5,0"
+                                               VerticalOptions="Center">
+                                            <Label Text="Host" 
+                                                   TextColor="White" 
+                                                   FontSize="12"
+                                                   FontAttributes="Bold"/>
+                                        </Frame>
                                     </Grid>
                                 </DataTemplate>
                             </CollectionView.ItemTemplate>

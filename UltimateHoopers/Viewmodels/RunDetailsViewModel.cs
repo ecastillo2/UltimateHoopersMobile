@@ -2,6 +2,8 @@
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using System.Collections.ObjectModel;
+using System.Linq;
 using Microsoft.Maui.Controls;
 using UltimateHoopers.Models;
 
@@ -12,6 +14,7 @@ namespace UltimateHoopers.ViewModels
         private RunDto _run;
         private bool _isBusy;
         private bool _isUserJoined;
+        private ObservableCollection<Player> _joinedPlayers;
 
         // Properties
         public RunDto Run
@@ -29,6 +32,12 @@ namespace UltimateHoopers.ViewModels
                 OnPropertyChanged(nameof(CostText));
                 OnPropertyChanged(nameof(JoinButtonText));
                 OnPropertyChanged(nameof(CanJoin));
+
+                // Ensure run has Players collection
+                InitializePlayersCollection();
+
+                // Update the joined players list
+                RefreshJoinedPlayersList();
             }
         }
 
@@ -55,6 +64,16 @@ namespace UltimateHoopers.ViewModels
             }
         }
 
+        public ObservableCollection<Player> JoinedPlayers
+        {
+            get => _joinedPlayers;
+            set
+            {
+                _joinedPlayers = value;
+                OnPropertyChanged();
+            }
+        }
+
         // Computed properties
         public string FormattedDate => Run?.FormattedDate ?? string.Empty;
 
@@ -77,27 +96,148 @@ namespace UltimateHoopers.ViewModels
         // Commands
         public ICommand JoinRunCommand { get; }
         public ICommand ShareRunCommand { get; }
+        public ICommand ViewPlayerProfileCommand { get; }
 
         // Constructor
         public RunDetailsViewModel(RunDto run)
         {
+            // Initialize joined players collection
+            _joinedPlayers = new ObservableCollection<Player>();
+
             Run = run;
 
             // Initialize commands
             JoinRunCommand = new Command(async () => await JoinRun());
             ShareRunCommand = new Command(async () => await ShareRun());
+            ViewPlayerProfileCommand = new Command<Player>(async (player) => await ViewPlayerProfile(player));
+
+            // Initialize players collection if needed
+            InitializePlayersCollection();
 
             // Check if user is already joined
             CheckUserJoined();
+
+            // Initialize the joined players list
+            RefreshJoinedPlayersList();
         }
 
         // Methods
+        private void InitializePlayersCollection()
+        {
+            if (Run != null)
+            {
+                // Ensure Players collection is initialized
+                if (Run.Players == null)
+                {
+                    Run.Players = new ObservableCollection<Player>();
+                }
+
+                // If Players collection is empty but CurrentPlayerCount > 0,
+                // populate with sample players
+                if (Run.Players.Count == 0 && Run.CurrentPlayerCount > 0)
+                {
+                    // Add host as first player
+                    if (!string.IsNullOrEmpty(Run.HostName))
+                    {
+                        Run.Players.Add(new Player
+                        {
+                            Id = Run.HostId,
+                            Name = Run.HostName,
+                            Username = "@" + Run.HostName.ToLower().Replace(" ", ""),
+                            ProfileImageUrl = "https://via.placeholder.com/200x200.png?text=" + Uri.EscapeDataString(Run.HostName.Substring(0, 1)),
+                            IsHost = true,
+                            HasJoined = true
+                        });
+                    }
+
+                    // Add sample players based on CurrentPlayerCount
+                    string[] sampleNames = { "Michael", "Sarah", "Jason", "Tiffany", "Carlos", "Zoe", "David", "Maya", "Kevin", "Lisa" };
+                    for (int i = Run.Players.Count; i < Math.Min(Run.CurrentPlayerCount, sampleNames.Length + 1); i++)
+                    {
+                        string playerName = sampleNames[i - (Run.Players.Count > 0 ? 1 : 0)];
+                        Run.Players.Add(new Player
+                        {
+                            Id = Guid.NewGuid().ToString(),
+                            Name = playerName,
+                            Username = "@" + playerName.ToLower(),
+                            ProfileImageUrl = "https://via.placeholder.com/200x200.png?text=" + Uri.EscapeDataString(playerName.Substring(0, 1)),
+                            IsHost = false,
+                            HasJoined = true
+                        });
+                    }
+
+                    // Add more generic players if needed
+                    for (int i = Run.Players.Count; i < Run.CurrentPlayerCount; i++)
+                    {
+                        Run.Players.Add(new Player
+                        {
+                            Id = Guid.NewGuid().ToString(),
+                            Name = $"Player {i + 1}",
+                            Username = $"@player{i + 1}",
+                            IsHost = false,
+                            HasJoined = true
+                        });
+                    }
+
+                    // Notify property changed
+                    OnPropertyChanged(nameof(Run));
+                }
+            }
+        }
+
+        private void RefreshJoinedPlayersList()
+        {
+            try
+            {
+                // Clear the existing list
+                if (JoinedPlayers == null)
+                {
+                    JoinedPlayers = new ObservableCollection<Player>();
+                }
+                else
+                {
+                    JoinedPlayers.Clear();
+                }
+
+                // If Run and Players exist, filter for joined players
+                if (Run?.Players != null && Run.Players.Count > 0)
+                {
+                    var joinedPlayers = Run.Players
+                        .Where(p => p.HasJoined)
+                        .ToList();
+
+                    // Add to the observable collection
+                    foreach (var player in joinedPlayers)
+                    {
+                        JoinedPlayers.Add(player);
+                    }
+
+                    Debug.WriteLine($"Found {JoinedPlayers.Count} joined players");
+                }
+
+                // Notify property changed
+                OnPropertyChanged(nameof(JoinedPlayers));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error refreshing joined players list: {ex.Message}");
+            }
+        }
+
         public void RefreshRunDetails()
         {
             try
             {
                 // In a real app, this would refresh the run details from a service
+
+                // Ensure Players collection is properly initialized
+                InitializePlayersCollection();
+
+                // Check if user is already joined
                 CheckUserJoined();
+
+                // Refresh the joined players list
+                RefreshJoinedPlayersList();
             }
             catch (Exception ex)
             {
@@ -168,6 +308,9 @@ namespace UltimateHoopers.ViewModels
 
                     IsUserJoined = false;
 
+                    // Refresh joined players list
+                    RefreshJoinedPlayersList();
+
                     await Application.Current.MainPage.DisplayAlert(
                         "Success",
                         $"You have left the run at {Run.Name}",
@@ -222,12 +365,18 @@ namespace UltimateHoopers.ViewModels
                     {
                         Id = App.User?.UserId ?? Guid.NewGuid().ToString(),
                         Name = App.User?.UserName ?? "You",
-                        IsHost = false
+                        Username = "@" + (App.User?.UserName ?? "you").ToLower().Replace(" ", ""),
+                        ProfileImageUrl = App.User?.Profile?.ImageURL ?? "",
+                        IsHost = false,
+                        HasJoined = true
                     };
 
                     Run.Players.Add(player);
                     Run.CurrentPlayerCount++;
                     IsUserJoined = true;
+
+                    // Refresh joined players list
+                    RefreshJoinedPlayersList();
 
                     await Application.Current.MainPage.DisplayAlert(
                         "Success",
@@ -285,6 +434,31 @@ namespace UltimateHoopers.ViewModels
                 await Application.Current.MainPage.DisplayAlert(
                     "Error",
                     "There was a problem sharing this run. Please try again.",
+                    "OK");
+            }
+        }
+
+        private async Task ViewPlayerProfile(Player player)
+        {
+            if (player == null)
+                return;
+
+            try
+            {
+                await Application.Current.MainPage.DisplayAlert(
+                    "Player Profile",
+                    $"Viewing profile for {player.Name} ({player.Username})",
+                    "OK");
+
+                // In a real app, you would navigate to the player's profile page
+                // await Shell.Current.GoToAsync($"//PlayerProfilePage?id={player.Id}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error viewing player profile: {ex.Message}");
+                await Application.Current.MainPage.DisplayAlert(
+                    "Error",
+                    "Could not view player profile at this time.",
                     "OK");
             }
         }
