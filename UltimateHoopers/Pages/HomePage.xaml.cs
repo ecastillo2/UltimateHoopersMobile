@@ -5,28 +5,190 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UltimateHoopers.Services;
+using UltimateHoopers.Models;
+
+using System.Linq;
+using System.Diagnostics;
 // Create alias for the Animation classes to avoid ambiguity
 using ControlsAnimation = Microsoft.Maui.Controls.Animation;
 using MauiAnimation = Microsoft.Maui.Animations.Animation;
+using Domain.DtoModel;
+using Domain;
+using UltimateHoopers.ViewModels.UltimateHoopers.ViewModels;
 
 namespace UltimateHoopers.Pages
 {
     public partial class HomePage : ContentPage
     {
         private readonly IAuthService _authService;
+        private readonly IRunService _runService;
+        private readonly IJoinedRunService _joinedRunService;
         private bool isMenuOpen = false;
+        private bool isLoadingJoinedRuns = false;
 
         public HomePage()
         {
             InitializeComponent();
             SetupMenu();
 
-            // Try to get auth service from DI in case it's available
+            // Try to get services from DI in case they're available
             var serviceProvider = MauiProgram.CreateMauiApp().Services;
             _authService = serviceProvider.GetService<IAuthService>();
+            _runService = serviceProvider.GetService<IRunService>();
 
-            // You can load user data here if needed
+            // Load user data and joined runs
             LoadUserData();
+            LoadJoinedRunsAsync();
+
+            // Initialize notifications
+            InitializeNotifications();
+        }
+
+        // Load joined runs from the API
+        private async Task LoadJoinedRunsAsync()
+        {
+            try
+            {
+                if (isLoadingJoinedRuns)
+                    return;
+
+                isLoadingJoinedRuns = true;
+
+                // Show loading state
+                NoRunsMessage.IsVisible = true;
+                JoinedRunsCollection.IsVisible = false;
+
+                // Try to get profile service from DI
+                var serviceProvider = MauiProgram.CreateMauiApp().Services;
+                var profileService = serviceProvider.GetService<IRunService>();
+
+                if (profileService == null)
+                {
+                    // Fallback if service is not available through DI
+                    profileService = new RunService();
+                }
+
+                // Check if we have a run service available
+                //if (_runService == null)
+                //{
+                //    Debug.WriteLine("RunService not available - can't load joined runs");
+                //    NoRunsMessage.IsVisible = true;
+                //    JoinedRunsCollection.IsVisible = false;
+                //    isLoadingJoinedRuns = false;
+                //    return;
+                //}
+
+                // Get user's joined runs from the API
+                Debug.WriteLine("Fetching joined runs from API...");
+                var joinedRuns = await GetUserJoinedRunsAsync();
+
+                // Check if we got any runs back
+                if (joinedRuns == null || !joinedRuns.Any())
+                {
+                    Debug.WriteLine("No joined runs found");
+                    NoRunsMessage.IsVisible = true;
+                    JoinedRunsCollection.IsVisible = false;
+                    isLoadingJoinedRuns = false;
+                    return;
+                }
+
+                // Bind the runs to the CollectionView
+                JoinedRunsCollection.ItemsSource = joinedRuns;
+
+                // Update UI visibility
+                NoRunsMessage.IsVisible = false;
+                JoinedRunsCollection.IsVisible = true;
+
+                Debug.WriteLine($"Loaded {joinedRuns.Count} joined runs successfully");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error loading joined runs: {ex.Message}");
+
+                // Show the no runs message on error
+                NoRunsMessage.IsVisible = true;
+                JoinedRunsCollection.IsVisible = false;
+            }
+            finally
+            {
+                isLoadingJoinedRuns = false;
+            }
+        }
+
+        // Get joined runs from the API
+        private async Task<List<RunViewModel>> GetUserJoinedRunsAsync()
+        {
+            try
+            {
+                // Get current user ID
+                string userId = App.User?.UserId;
+
+                if (string.IsNullOrEmpty(userId))
+                {
+                    Debug.WriteLine("User ID is null or empty - can't fetch joined runs");
+                    return new List<RunViewModel>();
+                }
+
+                // Call the API to get all runs
+                var runs = await _runService.GetRunsAsync();
+
+                if (runs == null)
+                {
+                    Debug.WriteLine("API returned null for runs");
+                    return new List<RunViewModel>();
+                }
+
+                // Filter runs that the user has joined
+                var joinedRuns = new List<RunViewModel>();
+
+                foreach (var run in runs)
+                {
+                    // Check if the user has joined this run by checking the JoinedRunList
+                    bool userHasJoined = run.JoinedRunList != null &&
+                                        run.JoinedRunList.Any(jr => jr.ProfileId == App.User?.Profile?.ProfileId);
+
+                    if (userHasJoined)
+                    {
+                        // Map the run to a view model
+                        var runViewModel = new RunViewModel
+                        {
+                            RunId = run.RunId,
+                            Name = run.Name ?? "Basketball Run",
+                            Address = run.Court?.Address ?? "Address not available",
+                            City = run.Court?.City ?? "City not available",
+                            State = run.Court?.State ?? "State not available",
+                            RunDate = DateTime.UtcNow,
+                            RunTime = run.RunTime ?? "TBD",
+                            EndTime = run.EndTime ?? "TBD",
+                            PlayerLimit = run.PlayerLimit ?? 10,
+                            CurrentPlayerCount = run.JoinedRunList?.Count ?? 0,
+                            CourtImageUrl = run.Court?.ImageURL ?? "logo_uh.png"
+                        };
+
+                        joinedRuns.Add(runViewModel);
+                    }
+                }
+
+                Debug.WriteLine($"Found {joinedRuns.Count} joined runs out of {runs.Count} total runs");
+                return joinedRuns;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error in GetJoinedRunsAsync: {ex.Message}");
+                throw; // Rethrow to be handled by the calling method
+            }
+        }
+
+        // Helper to parse a run date from string
+        private DateTime? ParseRunDate(string dateStr)
+        {
+            if (string.IsNullOrEmpty(dateStr))
+                return DateTime.Now.AddDays(1);
+
+            if (DateTime.TryParse(dateStr, out DateTime result))
+                return result;
+
+            return DateTime.Now.AddDays(1);
         }
 
         // Set up side menu items
@@ -35,7 +197,7 @@ namespace UltimateHoopers.Pages
             // Define menu items
             var menuItems = new List<(string Icon, string Title, Action Callback)>
             {
-              
+
                 ("👤", "Account", () => Navigation.PushAsync(new AccountSettingsPage())),
                 ("❓", "FAQ", () => Navigation.PushAsync(new FAQPage())),
                 ("ℹ️", "About App", () => Navigation.PushAsync(new AboutPage())),
@@ -49,6 +211,7 @@ namespace UltimateHoopers.Pages
                 MenuItemsContainer.Children.Add(menuItem);
             }
         }
+
         private async void OnNotificationsClicked(object sender, EventArgs e)
         {
             // You would typically load notifications from your database or API
@@ -230,6 +393,7 @@ namespace UltimateHoopers.Pages
             // In a real app, you would get this count from your backend
             UpdateNotificationBadge(3);
         }
+
         // Create individual menu item
         private Frame CreateMenuItem(string icon, string title, Action callback)
         {
@@ -290,21 +454,27 @@ namespace UltimateHoopers.Pages
         {
             // You might want to load this from a service or local storage
             // For now, using placeholder data
-            UsernameLabel.Text = App.User.Profile.UserName;
-            
-
-            // Load profile image if available
-            if (!string.IsNullOrEmpty(App.User.Profile.ImageURL))
+            if (App.User != null && App.User.Profile != null)
             {
-                try
+                UsernameLabel.Text = App.User.Profile.UserName;
+
+                // Load profile image if available
+                if (!string.IsNullOrEmpty(App.User.Profile.ImageURL))
                 {
-                    ProfileImage.Source = App.User.Profile.ImageURL;
-                    ProfileImage.IsVisible = true;
+                    try
+                    {
+                        ProfileImage.Source = App.User.Profile.ImageURL;
+                        ProfileImage.IsVisible = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error loading profile image: {ex.Message}");
+                    }
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error loading profile image: {ex.Message}");
-                }
+            }
+            else
+            {
+                UsernameLabel.Text = "Player";
             }
         }
 
@@ -382,13 +552,23 @@ namespace UltimateHoopers.Pages
             {
                 if (sender is Button button && button.CommandParameter is string runId)
                 {
-                    // You can use the runId here to navigate to specific run details
-                    await Navigation.PushAsync(new FindRunsPage());
+                    // Find the run with this ID
+                    var runs = JoinedRunsCollection.ItemsSource as List<RunViewModel>;
+                    if (runs != null)
+                    {
+                        var run = runs.FirstOrDefault(r => r.RunId == runId);
+                        if (run != null)
+                        {
+                            // Convert to RunDto for the details page
+                            var runDto = run.ToRunModel();
+                            await Navigation.PushAsync(new RunDetailsPage(runDto));
+                            return;
+                        }
+                    }
                 }
-                else
-                {
-                    await Navigation.PushAsync(new FindRunsPage());
-                }
+
+                // If we couldn't find the run or the sender doesn't have a run ID
+                await Navigation.PushAsync(new FindRunsPage());
             }
             catch (Exception ex)
             {
@@ -398,17 +578,18 @@ namespace UltimateHoopers.Pages
         }
 
         private async void OnViewAllRunsClicked(object sender, EventArgs e)
-{
-    try
-    {
-        await Navigation.PushAsync(new FindRunsPage());
-    }
-    catch (Exception ex)
-    {
-        System.Diagnostics.Debug.WriteLine($"Error navigating to FindRunsPage: {ex.Message}");
-        await DisplayAlert("Navigation Error", "Could not navigate to runs page", "OK");
-    }
-}
+        {
+            try
+            {
+                await Navigation.PushAsync(new FindRunsPage());
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error navigating to FindRunsPage: {ex.Message}");
+                await DisplayAlert("Navigation Error", "Could not navigate to runs page", "OK");
+            }
+        }
+
         // IMPORTANT: Fixed event handler signatures for XAML compatibility
         private async void OnProfileClicked(object sender, TappedEventArgs e)
         {
@@ -581,6 +762,18 @@ namespace UltimateHoopers.Pages
             await frame.ScaleTo(0.95, 100, Easing.CubicOut);
             await frame.ScaleTo(1, 100, Easing.CubicIn);
         }
+
+        // Override OnAppearing to refresh joined runs when page appears
+        protected override void OnAppearing()
+        {
+            base.OnAppearing();
+
+            // Refresh joined runs when the page appears
+            if (!isLoadingJoinedRuns)
+            {
+                LoadJoinedRunsAsync();
+            }
+        }
     }
 
     // Placeholder pages for navigation
@@ -590,11 +783,11 @@ namespace UltimateHoopers.Pages
     //public class HoopersPage : ContentPage { }
     public class TeamsPage : ContentPage { }
     //public class PostsPage : ContentPage { }
-   // public class ShopPage : ContentPage { }
+    // public class ShopPage : ContentPage { }
     public class LeaguesPage : ContentPage { }
     public class EventsPage : ContentPage { }
     public class SettingsPage : ContentPage { }
     public class HelpPage : ContentPage { }
-    
+
     public class MessagesPage : ContentPage { }
 }

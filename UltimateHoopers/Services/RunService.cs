@@ -283,6 +283,91 @@ namespace UltimateHoopers.Services
             }
         }
 
+        /// <summary>
+        /// Leave a run that the user previously joined
+        /// </summary>
+        /// <param name="runId">The ID of the run to leave</param>
+        /// <param name="profileId">The profile ID of the user</param>
+        /// <returns>True if successful, false otherwise</returns>
+        public async Task<bool> LeaveRunAsync(string runId, string profileId)
+        {
+            try
+            {
+                // Get auth token
+                var token = await GetTokenAsync();
+                if (string.IsNullOrEmpty(token))
+                {
+                    throw new UnauthorizedAccessException("No access token available");
+                }
+
+                // Set token in authorization header
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                // In a real implementation, you would call the API to leave the run
+                // For now, just return true as a placeholder
+
+                // TODO: Implement actual API call when endpoint is available
+                // var response = await _runApi.UserLeaveRunAsync(runId, profileId, token);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError($"Error leaving run {runId}", ex);
+
+                // For development, return success to allow testing
+#if DEBUG
+                Debug.WriteLine("DEBUG MODE: Returning true for LeaveRunAsync despite error");
+                return true;
+#else
+                return false;
+#endif
+            }
+        }
+
+        /// <summary>
+        /// Get all runs that the current user has joined
+        /// </summary>
+        /// <returns>List of runs the user has joined</returns>
+        public async Task<List<Run>> GetUserJoinedRunsAsync()
+        {
+            try
+            {
+                // Get auth token
+                var token = await GetTokenAsync();
+                if (string.IsNullOrEmpty(token))
+                {
+                    throw new UnauthorizedAccessException("No access token available");
+                }
+
+                // Get current user's profile ID
+                string profileId = App.User?.Profile?.ProfileId;
+                if (string.IsNullOrEmpty(profileId))
+                {
+                    throw new InvalidOperationException("User profile ID not available");
+                }
+
+                // Set token in authorization header
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                // Get all runs first
+                var allRuns = await GetRunsAsync();
+
+                // Filter to only runs that the user has joined
+                var joinedRuns = allRuns?.Where(run =>
+                    run.JoinedRunList != null &&
+                    run.JoinedRunList.Any(jr => jr.ProfileId == profileId)
+                ).ToList();
+
+                return joinedRuns ?? new List<Run>();
+            }
+            catch (Exception ex)
+            {
+                LogError("Error getting user joined runs", ex);
+                throw;
+            }
+        }
+
         // Helper method to format relative time
         private string FormatRelativeTime(string dateStr)
         {

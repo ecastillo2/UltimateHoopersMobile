@@ -25,6 +25,13 @@ namespace DataLayer.DAL.Interface
         Task<List<JoinedRun>> GetJoinedRunsByProfileId(string profileId);
 
         /// <summary>
+        /// Get joined runs by profile ID
+        /// </summary>
+        /// <param name="profileId">Profile ID</param>
+        /// <returns>List of joined runs for the specified profile</returns>
+        Task<Run> GetRunById(string runId);
+
+        /// <summary>
         /// Get a joined run by ID
         /// </summary>
         /// <param name="joinedRunId">Joined run ID</param>

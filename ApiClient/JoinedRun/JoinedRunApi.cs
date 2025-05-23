@@ -1,522 +1,66 @@
 ﻿using Domain;
-using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
+using Domain.DtoModel;
+using Microsoft.Extensions.Configuration;
+using System;
+using System.Collections.Generic;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using UltimateHoopers.Models;
 
-namespace ApiClient
+namespace WebAPI.ApiClients
 {
-    public static class JoinedRunApi
+    /// <summary>
+    /// Implementation of Run API client
+    /// </summary>
+    public class JoinedRunApi : IJoinedRunApi
     {
-        static WebApi _api = new WebApi();
+        private readonly HttpClient _httpClient;
+        private readonly string _baseUrl;
+        private readonly JsonSerializerOptions _jsonOptions;
 
-        /// <summary>
-        /// Get SavedPosts
-        /// </summary>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task<List<JoinedRun>> GetJoinedRuns(string token)
+        public JoinedRunApi(HttpClient httpClient, IConfiguration configuration)
         {
-            WebApi _api = new WebApi();
-            List<JoinedRun> modelList = new List<JoinedRun>();
+            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+            _baseUrl = configuration["ApiSettings:BaseUrl"] ?? "https://ultimatehoopersapi.azurewebsites.net";
 
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
+            _jsonOptions = new JsonSerializerOptions
             {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                try
-                {
-                    var response = await client.GetAsync("api/JoinedRun/GetJoinedRuns/");
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        modelList = JsonConvert.DeserializeObject<List<JoinedRun>>(responseString);
-
-                    }
-                }
-
-                catch (Exception ex)
-                {
-                    var x = ex;
-                }
-
-            }
-
-            return modelList;
-
+                PropertyNameCaseInsensitive = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
         }
 
+  
         /// <summary>
-        /// Create SavedPost
+        /// Get Run by ID
         /// </summary>
-        /// <param name="obj"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task<bool> CreateJoinedRun(JoinedRun obj, string token)
+        public async Task<List<JoinedRun>> GetUserJoinedRunsAsync(string profileId, string accessToken, CancellationToken cancellationToken = default)
         {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            var userJsonString = JsonConvert.SerializeObject(obj);
-            var clientBaseAddress = _api.Intial();
+            var response = await _httpClient.GetAsync($"{_baseUrl}/api/JoinedRun/GetUserJoinedRunsAsync?profileId={profileId}", cancellationToken);
+            response.EnsureSuccessStatusCode();
 
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                HttpContent content = new StringContent(userJsonString, Encoding.UTF8, "application/json");
-               
-                try
-                {
-                    var response = await client.PostAsync("api/JoinedRun/CreateJoinedRun/", content);
-
-                }
-
-                catch (Exception ex)
-                {
-                    var x = ex;
-
-                }
-
-            }
-            return true;
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            return JsonSerializer.Deserialize<List<JoinedRun>>(content, _jsonOptions);
         }
 
-        /// <summary>
-        /// Get SavedPost By Id
+       
+        /// Delete a Run
         /// </summary>
-        /// <param name="postId"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task<JoinedRun> GetJoinedRunById(string JoinedRunId, string token)
+        public async Task<bool> RemoveUserJoinRunAsync(string profileId, string runId, string accessToken, CancellationToken cancellationToken = default)
         {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            JoinedRun obj = new JoinedRun();
-            string urlParameters = "?joinedRunId=" + JoinedRunId;
-
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer "+ token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-               
-                try
-                {
-                    var response = await client.GetAsync("api/JoinedRun/GetJoinedRunById" + urlParameters);
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                    if (response.IsSuccessStatusCode)
-                    {
-
-                        obj = JsonConvert.DeserializeObject<JoinedRun>(responseString);
-
-
-                    }
-                }
-
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.ToString());
-
-                }
-
-            }
-            return obj;
+            var response = await _httpClient.DeleteAsync($"{_baseUrl}/api/JoinedRun/RemoveUserJoinRunAsync?profileId={profileId}&runId={runId}", cancellationToken);
+            return response.IsSuccessStatusCode;
         }
 
 
-
-        /// <summary>
-        /// Updates the invite status for a player in a private run.
-        /// </summary>
-        /// <param name="ProfileId">The profile ID of the player whose invite status is being updated.</param>
-        /// <param name="PrivateRunId">The ID of the private run.</param>
-        /// <param name="AcceptedInvite">The updated status of the invite (Accepted, Declined, Undecided, etc.).</param>
-        /// <param name="token">The authentication token for the request.</param>
-        /// <returns>A JsonResult indicating success or failure of the operation.</returns>
-        public static async Task<JsonResult> UpdatePlayerJoinedRun(string ProfileId, string JoinedRunId, string AcceptedInvite, string token)
-        {
-            JoinedRun obj = new JoinedRun();
-            string urlParameters = "?profileId=" + ProfileId;
-            string urlParameters2 = "&joinedRunId=" + JoinedRunId;
-            string urlParameters3 = "&acceptedInvite=" + AcceptedInvite;
-
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
-            {
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                try
-                {
-                    // Construct the full URL with query parameters
-                    var fullUrl = "api/JoinedRun/UpdatePlayerJoinedRun" + urlParameters + urlParameters2 + urlParameters3;
-
-                    // Send GET request to update the invite status
-                    var response = await client.GetAsync(fullUrl);
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                    // Check if the response is successful
-                    if (response.IsSuccessStatusCode)
-                    {
-                        // Deserialize the response JSON into an object (if needed)
-                        obj = JsonConvert.DeserializeObject<JoinedRun>(responseString);
-
-                        // Return a JsonResult with success
-                        return new JsonResult(new { success = true, message = "Invite updated successfully" });
-                    }
-                    else
-                    {
-                        // Log the error message if the response is not successful
-                        Console.WriteLine($"Error: {response.StatusCode}, {responseString}");
-
-                        // Return a JsonResult with failure status
-                        return new JsonResult(new { success = false, message = $"Error: {response.StatusCode} - {responseString}" });
-                    }
-                }
-                catch (Exception ex)
-                {
-                    // Log any exceptions that occur during the HTTP request
-                    Console.WriteLine($"Exception occurred: {ex.Message}");
-
-                    // Return a JsonResult with failure status
-                    return new JsonResult(new { success = false, message = "Exception occurred: " + ex.Message });
-                }
-            }
-        }
-
-
-
-        /// <summary>
-        /// Get SavedPost By Id
-        /// </summary>
-        /// <param name="postId"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task<List<JoinedRun>> GetJoinedRunsByProfileId(string ProfileId, string token)
-        {
-
-            List<JoinedRun> modelList = new List<JoinedRun>();
-            string urlParameters = "?profileId=" + ProfileId;
-
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                try
-                {
-                    var response = await client.GetAsync("api/JoinedRun/GetJoinedRunsByProfileId" + urlParameters);
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                    if (response.IsSuccessStatusCode)
-                    {
-
-                        modelList = JsonConvert.DeserializeObject<List<JoinedRun>>(responseString);
-
-
-                    }
-                }
-
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.ToString());
-
-                }
-
-            }
-            return modelList;
-        }
-
-
-
-        /// <summary>
-        /// Update SavedPost
-        /// </summary>
-        /// <param name="obj"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task<bool> UpdateJoinedRun(JoinedRun obj, string token)
-        {
-            
-            var userJsonString = JsonConvert.SerializeObject(obj);
-
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer "+ token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                HttpContent content = new StringContent(userJsonString, Encoding.UTF8, "application/json");
-                try
-                {
-                    var response = await client.PostAsync("api/JoinedRun/UpdateJoinedRun", content);
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                }
-
-                catch (Exception ex)
-                {
-                    var x = ex;
-
-                }
-
-                return true;
-            }
-
-        }
-
-
-        /// <summary>
-        /// Delete SavedPost
-        /// </summary>
-        /// <param name="postId"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task DeletePrivateRunInvite(string privateRunInviteId, string token)
-        {
-            WebApi _api = new WebApi();
-            
-            string urlParameters = "?privateRunInviteId=" + privateRunInviteId;
-
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                try
-                {
-                    var response = await client.DeleteAsync("api/PrivateRunInvite/DeletePrivateRunInvite" + urlParameters);
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                    if (response.IsSuccessStatusCode)
-                    {
-
-                    }
-                }
-
-                catch (Exception ex)
-                {
-                    var x = ex;
-
-                }
-
-            }
-          
-        }
-
-        /// <summary>
-        /// Get SavedPost By Id
-        /// </summary>
-        /// <param name="postId"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task RemoveProfileFromRun(string ProfileId, string runId,  string token)
-        {
-
-            JoinedRun obj = new JoinedRun();
-            string urlParameters = "?profileId=" + ProfileId;
-            string urlParameters2 = "&runId=" + runId;
-          
-
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                try
-                {
-                    var response = await client.GetAsync("api/JoinedRun/RemoveProfileFromRun" + urlParameters + urlParameters2 );
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                    if (response.IsSuccessStatusCode)
-                    {
-
-                        obj = JsonConvert.DeserializeObject<JoinedRun>(responseString);
-
-
-                    }
-                }
-
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.ToString());
-
-                }
-
-            }
-            ;
-        }
-
-
-        /// <summary>
-        /// Get SavedPost By Id
-        /// </summary>
-        /// <param name="postId"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task ClearJoinedRunByPrivateRun(string PrivateRunId,  string token)
-        {
-
-            JoinedRun obj = new JoinedRun();
-            string urlParameters = "?privateRunId=" + PrivateRunId;
-           
-
-
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                try
-                {
-                    var response = await client.GetAsync("api/JoinedRun/ClearJoinedRunByPrivateRun" + urlParameters );
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                    if (response.IsSuccessStatusCode)
-                    {
-
-                        obj = JsonConvert.DeserializeObject<JoinedRun>(responseString);
-
-
-                    }
-                }
-
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.ToString());
-
-                }
-
-            }
-            ;
-        }
-
-
-        /// <summary>
-        /// Is EmailAvailable
-        /// </summary>
-        /// <param name="email"></param>
-        /// <returns></returns>
-        public static async Task<bool> IsProfileIdIdAlreadyInvitedToRunInPrivateRunInvites(string profileId, string privateRunId, string token)
-        {
-            string isAvailable = string.Empty;
-
-            WebApi _api = new WebApi();
-            User _user = new User();
-            string urlParameters = "?profileId=" + profileId;
-            string urlParametersTwo = "&privateRunId=" + privateRunId;
-
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                try
-                {
-                    var response = await client.GetAsync("api/PrivateRunInvite/IsProfileIdIdAlreadyInvitedToRunInPrivateRunInvites" + urlParameters + urlParametersTwo);
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                    if (response.IsSuccessStatusCode)
-                    {
-
-                        isAvailable = responseString.ToString();
-
-
-                    }
-                }
-
-                catch (Exception ex)
-                {
-                    var x = ex;
-
-                }
-
-                return Convert.ToBoolean(isAvailable);
-            }
-
-        }
-
-
-        /// <summary>
-        /// Get SavedPost By Id
-        /// </summary>
-        /// <param name="postId"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task<bool> GetPrivateRunsByProfileId(string ProfileId,string PrivateRun, string token)
-        {
-            string isAvailable = string.Empty;
-           
-            string urlParameters = "?profileId=" + ProfileId;
-            string urlParametersTwo = "?privateRunId=" + PrivateRun;
-
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                try
-                {
-                    var response = await client.GetAsync("api/PrivateRunInvite/GetPrivateRunsByProfileId" + urlParameters + urlParametersTwo);
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                    if (response.IsSuccessStatusCode)
-                    {
-
-                        isAvailable = responseString.ToString();
-
-
-                    }
-                }
-
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.ToString());
-
-                }
-
-            }
-            return Convert.ToBoolean(isAvailable);
-        }
+       
     }
 }

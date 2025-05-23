@@ -32,5 +32,19 @@ namespace Domain.DtoModel
                 SquadId = SquadId
             };
         }
+
+        /// <summary>
+        /// Constructor with required fields
+        /// </summary>
+        public CreateJoinedRunDto(string runId, string profileId)
+        {
+            RunId = runId;
+            ProfileId = profileId;
+        }
+
+        /// <summary>
+        /// Default constructor for serialization
+        /// </summary>
+        public CreateJoinedRunDto() { }
     }
 }

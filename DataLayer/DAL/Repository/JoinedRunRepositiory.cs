@@ -108,6 +108,9 @@ namespace DataLayer.DAL.Repository
             }
         }
 
+
+
+
         /// <summary>
         /// Check if profile is already invited to run
         /// </summary>
@@ -414,6 +417,21 @@ namespace DataLayer.DAL.Repository
         {
             Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        public async Task<Run> GetRunById(string runId)
+        {
+            try
+            {
+                return await _context.Run
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(jr => jr.RunId == runId);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error retrieving joined run {JoinedRunId}", runId);
+                throw;
+            }
         }
     }
 
