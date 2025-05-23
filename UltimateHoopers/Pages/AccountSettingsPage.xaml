@@ -427,7 +427,8 @@
                         <Label Text="←"
                                FontSize="24"
                                HorizontalOptions="Center"
-                               VerticalOptions="Center" />
+                               VerticalOptions="Center"
+                               TextColor="{StaticResource PrimaryTextColor}"/>
                         <Frame.GestureRecognizers>
                             <TapGestureRecognizer Tapped="OnCancelEmailChangeClicked" />
                         </Frame.GestureRecognizers>

@@ -34,6 +34,8 @@ namespace UltimateHoopers.Models
         public bool IsFull => CurrentPlayerCount >= PlayerLimit;
         public string CostText => Cost > 0 ? $"${Cost:F2}" : "Free";
         public string PrivacyText => IsPublic ? "Public" : "Private";
+        public bool HasPlayers => Players != null && Players.Count > 0;
+
         public RunDto()
         {
             // Initialize with sample players if not already set

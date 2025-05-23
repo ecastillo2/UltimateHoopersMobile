@@ -19,12 +19,14 @@
                 <Label Text="{Binding Run.Name}"
                        FontSize="28"
                        FontAttributes="Bold"
-                       TextColor="{StaticResource PrimaryColor}" />
+                       TextColor="{StaticResource PrimaryColor}"
+                       LineBreakMode="WordWrap" />
 
                 <Label Text="{Binding Run.Address}"
                        FontSize="16"
                        TextColor="{StaticResource SecondaryTextColor}" 
-                       Margin="0,5,0,0"/>
+                       Margin="0,5,0,0"
+                       LineBreakMode="WordWrap" />
             </VerticalStackLayout>
 
             <!-- Back Button -->
@@ -40,7 +42,8 @@
                 <Label Text="←"
                        FontSize="24"
                        HorizontalOptions="Center"
-                       VerticalOptions="Center" />
+                       VerticalOptions="Center"
+                       TextColor="{StaticResource PrimaryTextColor}"/>
 
                 <Frame.GestureRecognizers>
                     <TapGestureRecognizer Tapped="OnBackClicked" />
@@ -84,104 +87,136 @@
                         <!-- Date and Time Info -->
                         <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="12">
                             <Label Text="{Binding FormattedDate}"
-                                   FontSize="18"
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource PrimaryTextColor}" />
+           FontSize="18"
+           FontAttributes="Bold"
+           TextColor="{StaticResource PrimaryTextColor}"
+           LineBreakMode="WordWrap" />
 
-                            <Grid ColumnDefinitions="Auto,*" RowSpacing="12">
+                            <!-- Fixed Grid with explicit RowDefinitions -->
+                            <Grid ColumnDefinitions="Auto,*" 
+          RowDefinitions="Auto,Auto" 
+          RowSpacing="12">
+
+                                <!-- Time Row -->
                                 <Label Grid.Row="0" Grid.Column="0"
-                                       Text="🕒"
-                                       FontSize="16"
-                                       VerticalOptions="Start" />
+               Text="🕒"
+               FontSize="16"
+               VerticalOptions="Start" />
                                 <Label Grid.Row="0" Grid.Column="1"
-                                       Text="{Binding Run.Time}"
-                                       FontSize="16"
-                                       TextColor="{StaticResource PrimaryTextColor}"
-                                       Margin="10,0,0,0" />
+               Text="{Binding Run.Time}"
+               FontSize="16"
+               TextColor="{StaticResource PrimaryTextColor}"
+               Margin="10,0,0,0"
+               LineBreakMode="WordWrap" />
 
+                                <!-- Location Row -->
                                 <Label Grid.Row="1" Grid.Column="0"
-                                       Text="📍"
-                                       FontSize="16"
-                                       VerticalOptions="Start" />
+               Text="📍"
+               FontSize="16"
+               VerticalOptions="Start" />
                                 <Label Grid.Row="1" Grid.Column="1"
-                                       Text="{Binding Run.Address}"
-                                       FontSize="16"
-                                       TextColor="{StaticResource PrimaryTextColor}"
-                                       Margin="10,0,0,0" />
+               Text="{Binding Run.Address}"
+               FontSize="16"
+               TextColor="{StaticResource PrimaryTextColor}"
+               Margin="10,0,0,0"
+               LineBreakMode="WordWrap" />
                             </Grid>
                         </VerticalStackLayout>
                     </Grid>
                 </Frame>
 
                 <!-- Run Details -->
+                <!-- Run Details -->
                 <Frame Padding="20"
-                       CornerRadius="10"
-                       HasShadow="True"
-                       BorderColor="{StaticResource BorderColor}"
-                       BackgroundColor="{StaticResource CardBackgroundColor}">
+       CornerRadius="10"
+       HasShadow="True"
+       BorderColor="{StaticResource BorderColor}"
+       BackgroundColor="{StaticResource CardBackgroundColor}">
 
                     <VerticalStackLayout Spacing="15">
                         <Label Text="Run Details"
-                               FontSize="18"
-                               FontAttributes="Bold"
-                               TextColor="{StaticResource PrimaryTextColor}" />
+               FontSize="18"
+               FontAttributes="Bold"
+               TextColor="{StaticResource PrimaryTextColor}" />
 
-                        <Grid ColumnDefinitions="Auto,*" RowSpacing="15" ColumnSpacing="15">
-                            <!-- Host Info -->
+                        <!-- Details Items with Fixed Layout -->
+                        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" 
+              ColumnDefinitions="Auto,*" 
+              RowSpacing="12" 
+              ColumnSpacing="15">
+
+                            <!-- Row labels column -->
                             <Label Grid.Row="0" Grid.Column="0"
-                                   Text="Host:"
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource PrimaryTextColor}"
-                                   WidthRequest="100" />
-                            <Label Grid.Row="0" Grid.Column="1"
-                                   Text="{Binding Run.HostName}"
-                                   TextColor="{StaticResource PrimaryTextColor}" />
+                   Text="Host:"
+                   FontAttributes="Bold"
+                   TextColor="{StaticResource PrimaryTextColor}"
+                   VerticalOptions="Start"
+                   WidthRequest="80" />
 
-                            <!-- Skill Level -->
                             <Label Grid.Row="1" Grid.Column="0"
-                                   Text="Skill Level:"
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource PrimaryTextColor}" />
-                            <Label Grid.Row="1" Grid.Column="1"
-                                   Text="{Binding Run.SkillLevel}"
-                                   TextColor="{StaticResource PrimaryTextColor}" />
+                   Text="Skill Level:"
+                   FontAttributes="Bold"
+                   TextColor="{StaticResource PrimaryTextColor}"
+                   VerticalOptions="Start"
+                   WidthRequest="80" />
 
-                            <!-- Game Type -->
                             <Label Grid.Row="2" Grid.Column="0"
-                                   Text="Game Type:"
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource PrimaryTextColor}" />
-                            <Label Grid.Row="2" Grid.Column="1"
-                                   Text="{Binding GameTypeText}"
-                                   TextColor="{StaticResource PrimaryTextColor}" />
+                   Text="Game Type:"
+                   FontAttributes="Bold"
+                   TextColor="{StaticResource PrimaryTextColor}"
+                   VerticalOptions="Start"
+                   WidthRequest="80" />
 
-                            <!-- Cost -->
                             <Label Grid.Row="3" Grid.Column="0"
-                                   Text="Cost:"
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource PrimaryTextColor}" />
-                            <Label Grid.Row="3" Grid.Column="1"
-                                   Text="{Binding CostText}"
-                                   TextColor="{StaticResource PrimaryTextColor}" />
+                   Text="Cost:"
+                   FontAttributes="Bold"
+                   TextColor="{StaticResource PrimaryTextColor}"
+                   VerticalOptions="Start"
+                   WidthRequest="80" />
 
-                            <!-- Privacy -->
                             <Label Grid.Row="4" Grid.Column="0"
-                                   Text="Privacy:"
-                                   FontAttributes="Bold"
-                                   TextColor="{StaticResource PrimaryTextColor}" />
+                   Text="Privacy:"
+                   FontAttributes="Bold"
+                   TextColor="{StaticResource PrimaryTextColor}"
+                   VerticalOptions="Start"
+                   WidthRequest="80" />
+
+                            <!-- Value labels column -->
+                            <Label Grid.Row="0" Grid.Column="1"
+                   Text="{Binding Run.HostName}"
+                   TextColor="{StaticResource PrimaryTextColor}"
+                   LineBreakMode="WordWrap" />
+
+                            <Label Grid.Row="1" Grid.Column="1"
+                   Text="{Binding Run.SkillLevel}"
+                   TextColor="{StaticResource PrimaryTextColor}"
+                   LineBreakMode="WordWrap" />
+
+                            <Label Grid.Row="2" Grid.Column="1"
+                   Text="{Binding GameTypeText}"
+                   TextColor="{StaticResource PrimaryTextColor}"
+                   LineBreakMode="WordWrap" />
+
+                            <Label Grid.Row="3" Grid.Column="1"
+                   Text="{Binding CostText}"
+                   TextColor="{StaticResource PrimaryTextColor}"
+                   LineBreakMode="WordWrap" />
+
                             <Label Grid.Row="4" Grid.Column="1"
-                                   Text="{Binding PrivacyText}"
-                                   TextColor="{StaticResource PrimaryTextColor}" />
+                   Text="{Binding PrivacyText}"
+                   TextColor="{StaticResource PrimaryTextColor}"
+                   LineBreakMode="WordWrap" />
                         </Grid>
 
                         <!-- Description -->
                         <Label Text="Description"
-                               FontAttributes="Bold"
-                               TextColor="{StaticResource PrimaryTextColor}"
-                               Margin="0,10,0,0" />
+               FontAttributes="Bold"
+               TextColor="{StaticResource PrimaryTextColor}"
+               Margin="0,10,0,0" />
+
                         <Label Text="{Binding Run.Description}"
-                               TextColor="{StaticResource PrimaryTextColor}"
-                               LineBreakMode="WordWrap" />
+               TextColor="{StaticResource PrimaryTextColor}"
+               LineBreakMode="WordWrap" />
                     </VerticalStackLayout>
                 </Frame>
 
@@ -241,6 +276,7 @@
                                                    Aspect="AspectFill"
                                                    HorizontalOptions="Fill" 
                                                    VerticalOptions="Fill"
+                                                   BackgroundColor="Transparent"
                                                    IsVisible="{Binding HasProfileImage}" />
                                         </Frame>
 
@@ -253,12 +289,14 @@
                                             <Label Text="{Binding Name}"
                                                    FontSize="16"
                                                    FontAttributes="Bold"
-                                                   TextColor="{StaticResource PrimaryTextColor}"/>
+                                                   TextColor="{StaticResource PrimaryTextColor}"
+                                                   LineBreakMode="WordWrap" />
 
                                             <!-- Player Username -->
                                             <Label Text="{Binding Username}"
                                                    FontSize="14"
-                                                   TextColor="{StaticResource SecondaryTextColor}"/>
+                                                   TextColor="{StaticResource SecondaryTextColor}"
+                                                   LineBreakMode="WordWrap" />
                                         </VerticalStackLayout>
 
                                         <!-- Host Badge (only shown for host) -->

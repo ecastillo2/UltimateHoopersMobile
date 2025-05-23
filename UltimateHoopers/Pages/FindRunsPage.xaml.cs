@@ -581,8 +581,25 @@ namespace UltimateHoopers.Pages
                 Cost = privateRun.Cost ?? 0,
                 Distance = Math.Round(new Random().NextDouble() * 5 + 0.5, 1),
                 
-                //Players = new ObservableCollection<Player>()
+                Players = new ObservableCollection<Player>()
             };
+
+            // Add players from JoinedRunList if available
+            if (privateRun.JoinedRunList != null && privateRun.JoinedRunList.Any())
+            {
+                foreach (var joinedRun in privateRun.JoinedRunList)
+                {
+                    run.Players.Add(new Player
+                    {
+                        Id = joinedRun.ProfileId ?? Guid.NewGuid().ToString(),
+                        Name = joinedRun.UserName ?? "Player",
+                        Username = "@" + (joinedRun.UserName?.ToLower().Replace(" ", "") ?? "player"),
+                        ProfileImageUrl = joinedRun.ImageURL ?? "",
+                        IsHost = joinedRun.ProfileId == privateRun.ProfileId,
+                        HasJoined = true
+                    });
+                }
+            }
 
             return run;
         }

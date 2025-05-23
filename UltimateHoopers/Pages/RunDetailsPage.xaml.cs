@@ -3,6 +3,7 @@ using System;
 using System.Diagnostics;
 using UltimateHoopers.Models;
 using UltimateHoopers.ViewModels;
+using UltimateHoopers.Converter;
 
 namespace UltimateHoopers.Pages
 {
@@ -13,6 +14,12 @@ namespace UltimateHoopers.Pages
         public RunDetailsPage(RunDto run)
         {
             InitializeComponent();
+
+            // Register the InvertBoolConverter if not already registered
+            if (!Resources.TryGetValue("InvertBoolConverter", out _))
+            {
+                Resources.Add("InvertBoolConverter", new InvertBoolConverter());
+            }
 
             // Create the view model with the run parameter
             _viewModel = new RunDetailsViewModel(run);
@@ -29,6 +36,12 @@ namespace UltimateHoopers.Pages
         public RunDetailsPage()
         {
             InitializeComponent();
+
+            // Register the InvertBoolConverter if not already registered
+            if (!Resources.TryGetValue("InvertBoolConverter", out _))
+            {
+                Resources.Add("InvertBoolConverter", new InvertBoolConverter());
+            }
 
             // Create a default run if no parameter is provided
             var defaultRun = new RunDto
@@ -49,6 +62,31 @@ namespace UltimateHoopers.Pages
                 Cost = 0,
                 Distance = 1.5
             };
+
+            // Make sure the sample run has a Players collection
+            if (defaultRun.Players == null)
+            {
+                defaultRun.Players = new System.Collections.ObjectModel.ObservableCollection<Player>();
+
+                // Add a few sample players
+                defaultRun.Players.Add(new Player
+                {
+                    Id = "host123",
+                    Name = "Sample Host",
+                    Username = "@samplehost",
+                    IsHost = true,
+                    HasJoined = true
+                });
+
+                defaultRun.Players.Add(new Player
+                {
+                    Id = "player1",
+                    Name = "John Smith",
+                    Username = "@johnsmith",
+                    IsHost = false,
+                    HasJoined = true
+                });
+            }
 
             _viewModel = new RunDetailsViewModel(defaultRun);
             BindingContext = _viewModel;
@@ -122,6 +160,9 @@ namespace UltimateHoopers.Pages
 
             // Update the height of the players collection
             UpdatePlayersCollectionHeight();
+
+            // Force refresh of joined players list
+            _viewModel?.RefreshJoinedPlayersList();
         }
 
         private void UpdatePlayersCollectionHeight()
@@ -129,7 +170,10 @@ namespace UltimateHoopers.Pages
             try
             {
                 // Adjust the height of the players collection based on player count
-                int playerCount = _viewModel?.Run?.Players?.Count ?? 0;
+                int playerCount = _viewModel?.JoinedPlayers?.Count ?? 0;
+
+                // Log the player count for debugging
+                Debug.WriteLine($"Updating players collection height - Player count: {playerCount}");
 
                 // Set minimum height to show at least 3 players
                 double minHeight = 150;
