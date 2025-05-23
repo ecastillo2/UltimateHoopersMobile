@@ -38,15 +38,22 @@ namespace WebAPI.ApiClients
         /// <summary>
         /// Get Run by ID
         /// </summary>
-        public async Task<List<JoinedRun>> GetUserJoinedRunsAsync(string profileId, string accessToken, CancellationToken cancellationToken = default)
+        public async Task<List<JoinedRunDetailViewModelDto>> GetUserJoinedRunsAsync(string profileId, string accessToken, CancellationToken cancellationToken = default)
         {
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            try
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            var response = await _httpClient.GetAsync($"{_baseUrl}/api/JoinedRun/GetUserJoinedRunsAsync?profileId={profileId}", cancellationToken);
-            response.EnsureSuccessStatusCode();
+                var response = await _httpClient.GetAsync($"{_baseUrl}/api/JoinedRun/GetUserJoinedRunsAsync/{profileId}", cancellationToken);
+                response.EnsureSuccessStatusCode();
 
-            var content = await response.Content.ReadAsStringAsync(cancellationToken);
-            return JsonSerializer.Deserialize<List<JoinedRun>>(content, _jsonOptions);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+                return JsonSerializer.Deserialize<List<JoinedRunDetailViewModelDto>>(content, _jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
         }
 
        

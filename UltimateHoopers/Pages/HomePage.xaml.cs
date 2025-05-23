@@ -116,7 +116,7 @@ namespace UltimateHoopers.Pages
         }
 
         // Get joined runs from the API
-        private async Task<List<RunViewModel>> GetUserJoinedRunsAsync()
+        private async Task<List<JoinedRunViewModel>> GetUserJoinedRunsAsync()
         {
             try
             {
@@ -126,43 +126,45 @@ namespace UltimateHoopers.Pages
                 if (string.IsNullOrEmpty(userId))
                 {
                     Debug.WriteLine("User ID is null or empty - can't fetch joined runs");
-                    return new List<RunViewModel>();
+                    return new List<JoinedRunViewModel>();
                 }
+                // Try to get profile service from DI
+                var serviceProvider = MauiProgram.CreateMauiApp().Services;
+                var profileService = serviceProvider.GetService<IJoinedRunService>();
 
                 // Call the API to get all runs
-                var runs = await _runService.GetRunsAsync();
+                var runs = await profileService.GetUserJoinedRunsAsync(App.User?.Profile?.ProfileId);
 
                 if (runs == null)
                 {
                     Debug.WriteLine("API returned null for runs");
-                    return new List<RunViewModel>();
+                    return new List<JoinedRunViewModel>();
                 }
 
                 // Filter runs that the user has joined
-                var joinedRuns = new List<RunViewModel>();
+                var joinedRuns = new List<JoinedRunViewModel>();
 
                 foreach (var run in runs)
                 {
                     // Check if the user has joined this run by checking the JoinedRunList
-                    bool userHasJoined = run.JoinedRunList != null &&
-                                        run.JoinedRunList.Any(jr => jr.ProfileId == App.User?.Profile?.ProfileId);
+                    bool userHasJoined = run != null;
 
                     if (userHasJoined)
                     {
                         // Map the run to a view model
-                        var runViewModel = new RunViewModel
+                        var runViewModel = new JoinedRunViewModel
                         {
                             RunId = run.RunId,
-                            Name = run.Name ?? "Basketball Run",
-                            Address = run.Court?.Address ?? "Address not available",
-                            City = run.Court?.City ?? "City not available",
-                            State = run.Court?.State ?? "State not available",
-                            RunDate = DateTime.UtcNow,
-                            RunTime = run.RunTime ?? "TBD",
-                            EndTime = run.EndTime ?? "TBD",
-                            PlayerLimit = run.PlayerLimit ?? 10,
-                            CurrentPlayerCount = run.JoinedRunList?.Count ?? 0,
-                            CourtImageUrl = run.Court?.ImageURL ?? "logo_uh.png"
+                            Name = run.Run.Name ?? "Basketball Run",
+                            //Address = run.Court?.Address ?? "Address not available",
+                            //City = run.Court?.City ?? "City not available",
+                            //State = run.Court?.State ?? "State not available",
+                            //RunDate = DateTime.UtcNow,
+                            //RunTime = run.Run.RunTime ?? "TBD",
+                            //EndTime = run.Run.EndTime ?? "TBD",
+                            //PlayerLimit = run.Run.PlayerLimit ?? 10,
+                            //CurrentPlayerCount = run.Run.JoinedRunList?.Count ?? 0,
+                            //CourtImageUrl = run.Run.Court.Court?.ImageURL ?? "logo_uh.png"
                         };
 
                         joinedRuns.Add(runViewModel);

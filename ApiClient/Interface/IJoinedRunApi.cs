@@ -21,7 +21,7 @@ namespace WebAPI.ApiClients
         /// <summary>
         /// Get Run by ID
         /// </summary>
-        Task<List<JoinedRun>> GetUserJoinedRunsAsync(string profileId, string accessToken, CancellationToken cancellationToken = default);
+        Task<List<JoinedRunDetailViewModelDto>> GetUserJoinedRunsAsync(string profileId, string accessToken, CancellationToken cancellationToken = default);
 
  
 

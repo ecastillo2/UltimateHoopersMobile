@@ -19,7 +19,7 @@ namespace UltimateHoopers.ViewModels
         /// <summary>
         /// ViewModel for individual Private Run items - represents a single run
         /// </summary>
-        public class RunViewModel : BindableObject
+        public class JoinedRunViewModel : BindableObject
         {
             // Base properties from Domain.PrivateRun
             public string? RunId { get; set; }
@@ -69,9 +69,9 @@ namespace UltimateHoopers.ViewModels
             /// Converts this PrivateRunViewModel to a Run model for navigation
             /// </summary>
             /// <returns>Run object that can be used with PrivateRunDetailsPage</returns>
-            public RunDto ToRunModel()
+            public JoinedRunDto ToJoinedRunModel()
             {
-                var run = new RunDto
+                var run = new JoinedRunDto
                 {
                     Id = RunId ?? Guid.NewGuid().ToString(),
                     Name = Name ?? "Basketball Run",
@@ -92,8 +92,7 @@ namespace UltimateHoopers.ViewModels
                     Distance = Distance
                 };
 
-                // Initialize Players collection
-                run.Players = new ObservableCollection<Player>();
+               
 
                 return run;
             }
@@ -103,22 +102,22 @@ namespace UltimateHoopers.ViewModels
         /// ViewModel for the Private Run collection/list page
         /// Implements proper MVVM pattern with commands and data loading
         /// </summary>
-        public class RunsViewModel : BindableObject
+        public class JoinedRunsViewModel : BindableObject
         {
-            private readonly IRunService _runService;
-            private ObservableCollection<RunViewModel> _runs = new ObservableCollection<RunViewModel>();
-            private ObservableCollection<RunViewModel> _filteredRuns = new ObservableCollection<RunViewModel>();
+            private readonly IJoinedRunService _runService;
+            private ObservableCollection<JoinedRunViewModel> _runs = new ObservableCollection<JoinedRunViewModel>();
+            private ObservableCollection<JoinedRunViewModel> _filteredRuns = new ObservableCollection<JoinedRunViewModel>();
             private bool _isLoading;
             private bool _isRefreshing;
             private string _searchText = string.Empty;
 
-            public RunsViewModel(IRunService privateRunService = null)
+            public JoinedRunsViewModel(IJoinedRunService privateRunService = null)
             {
                 _runService = privateRunService;
                 InitializeCommands();
             }
 
-            public ObservableCollection<RunViewModel> Runs
+            public ObservableCollection<JoinedRunViewModel> Runs
             {
                 get => _filteredRuns;
                 private set
@@ -172,22 +171,22 @@ namespace UltimateHoopers.ViewModels
             }
 
             // Commands
-            public ICommand LoadRunsCommand { get; private set; }
+            public ICommand LoadJoinedRunsCommand { get; private set; }
             public ICommand RefreshCommand { get; private set; }
-            public ICommand JoinRunCommand { get; private set; }
-            public ICommand ViewRunDetailsCommand { get; private set; }
+            public ICommand JoinedRunCommand { get; private set; }
+            public ICommand ViewJoinedRunDetailsCommand { get; private set; }
             public ICommand SearchCommand { get; private set; }
 
             private void InitializeCommands()
             {
-                LoadRunsCommand = new Command(async () => await LoadRunsAsync());
+                LoadJoinedRunsCommand = new Command(async () => await LoadJoinedRunsAsync());
                 RefreshCommand = new Command(async () => await RefreshRunsAsync());
-                JoinRunCommand = new Command<RunDto>(async (run) => await JoinRunAsync(run));
-                ViewRunDetailsCommand = new Command<RunDto>(async (run) => await ViewRunDetailsAsync(run));
+                JoinedRunCommand = new Command<JoinedRunDto>(async (run) => await JoinedRunAsync(run));
+                ViewJoinedRunDetailsCommand = new Command<JoinedRunDto>(async (run) => await ViewJoinedRunDetailsAsync(run));
                 SearchCommand = new Command<string>((searchText) => FilterRuns(searchText));
             }
 
-            public async Task LoadRunsAsync()
+            public async Task LoadJoinedRunsAsync()
             {
                 if (IsLoading) return;
 
@@ -197,7 +196,7 @@ namespace UltimateHoopers.ViewModels
                     Debug.WriteLine("Starting to load runs from API...");
 
                     // Load runs from API service (with fallback to mock data)
-                    var runs = await LoadRunsFromService();
+                    var runs = await LoadJoinedRunsFromService();
 
                     // Clear existing runs and add new ones
                     _runs.Clear();
@@ -247,7 +246,7 @@ namespace UltimateHoopers.ViewModels
                 try
                 {
                     IsRefreshing = true;
-                    await LoadRunsAsync();
+                    await LoadJoinedRunsAsync();
                 }
                 finally
                 {
@@ -255,19 +254,19 @@ namespace UltimateHoopers.ViewModels
                 }
             }
 
-            private async Task<List<RunViewModel>> LoadRunsFromService()
+            private async Task<List<JoinedRunViewModel>> LoadJoinedRunsFromService()
             {
-                var runs = new List<RunViewModel>();
+                var runs = new List<JoinedRunViewModel>();
 
             
                 // Try to get profile service from DI
                 var serviceProvider = MauiProgram.CreateMauiApp().Services;
-                var profileService = serviceProvider.GetService<IRunService>();
+                var profileService = serviceProvider.GetService<IJoinedRunService>();
 
                 if (profileService == null)
                 {
                     // Fallback if service is not available through DI
-                    profileService = new RunService();
+                    profileService = new JoinedRunService();
                 }
 
                 try
@@ -275,7 +274,7 @@ namespace UltimateHoopers.ViewModels
                         Debug.WriteLine("Loading runs from API service...");
 
                         // Load from actual API service
-                        var serviceRuns = await profileService.GetRunsAsync();
+                        var serviceRuns = await profileService.GetUserJoinedRunsAsync(App.User?.ProfileId);
 
                         if (serviceRuns != null && serviceRuns.Any())
                         {
@@ -302,41 +301,34 @@ namespace UltimateHoopers.ViewModels
                 return runs;
             }
 
-            private RunViewModel MapToViewModel(Domain.Run domainRun)
+            private JoinedRunViewModel MapToViewModel(JoinedRun domainRun)
             {
-                return new RunViewModel
+                return new JoinedRunViewModel
                 {
                     RunId = domainRun.RunId,
-                    CourtId = domainRun.CourtId,
-                    ProfileId = domainRun.ProfileId,
-                    Status = domainRun.Status,
-                    RunDate = domainRun.RunDate,
-                    Cost = domainRun.Cost,
-                    Name = domainRun.Name,
-                    Address = domainRun.Court.Address,
-                    City = domainRun.Court.City,
-                    State = domainRun.Court.State,
-                    Zip = domainRun.Court.Zip,
-                    Description = domainRun.Description,
-                    RunTime = domainRun.RunTime,
-                    EndTime = domainRun.EndTime,
-                    Type = domainRun.Type,
-                    CreatedDate = domainRun.CreatedDate,
-                    RunNumber = domainRun.RunNumber,
-                    SkillLevel = domainRun.SkillLevel,
-                    PaymentMethod = domainRun.PaymentMethod,
-                    TeamType = domainRun.TeamType,
-                    PlayerLimit = domainRun.PlayerLimit,
+                    CourtId = domainRun.Run.Court.CourtId,
+                    //ProfileId = domainRun.ProfileId,
+                    //Status = domainRun.Status,
+                    //RunDate = domainRun.RunDate,
+                    //Cost = domainRun.Cost,
+                    //Name = domainRun.Name,
+                    //Address = domainRun.Court.Address,
+                    //City = domainRun.Court.City,
+                    //State = domainRun.Court.State,
+                    //Zip = domainRun.Court.Zip,
+                    //Description = domainRun.Description,
+                    //RunTime = domainRun.RunTime,
+                    //EndTime = domainRun.EndTime,
+                    //Type = domainRun.Type,
+                    //CreatedDate = domainRun.CreatedDate,
+                    //RunNumber = domainRun.RunNumber,
+                    //SkillLevel = domainRun.SkillLevel,
+                    //PaymentMethod = domainRun.PaymentMethod,
+                    //TeamType = domainRun.TeamType,
+                    //PlayerLimit = domainRun.PlayerLimit,
                     Username = "test",
 
-                    // Map additional properties from API response
-                    // These should come from the API, but provide defaults if not available
-                    CurrentPlayerCount =  domainRun.PlayerCount ?? 0,
-                    Distance = CalculateDistance(domainRun.Court.Address, domainRun.Court.City, domainRun.Court.State),
-                    //HostName = domainRun.HostName ?? "Host",
-                    GameType = domainRun.TeamType ?? "5-on-5",
-                    IsPublic = domainRun.IsPublic ?? true,
-                    CourtImageUrl = domainRun.ImageUrl ?? ""
+                 
                 };
             }
 
@@ -348,11 +340,11 @@ namespace UltimateHoopers.ViewModels
                 return Math.Round(random.NextDouble() * 9.5 + 0.5, 1);
             }
 
-            private List<RunViewModel> GetMockRuns()
+            private List<JoinedRunViewModel> GetMockRuns()
             {
-                return new List<RunViewModel>
+                return new List<JoinedRunViewModel>
             {
-                new RunViewModel
+                new JoinedRunViewModel
                 {
                     RunId = "1",
                     Name = "Downtown Basketball",
@@ -372,7 +364,7 @@ namespace UltimateHoopers.ViewModels
                     IsPublic = true,
                     Description = "Competitive pickup game"
                 },
-                new RunViewModel
+                new JoinedRunViewModel
                 {
                     RunId = "2",
                     Name = "Morning Shootaround",
@@ -399,13 +391,13 @@ namespace UltimateHoopers.ViewModels
             {
                 if (_runs == null || _runs.Count == 0)
                 {
-                    Runs = new ObservableCollection<RunViewModel>();
+                    Runs = new ObservableCollection<JoinedRunViewModel>();
                     return;
                 }
 
                 if (string.IsNullOrWhiteSpace(searchText))
                 {
-                    Runs = new ObservableCollection<RunViewModel>(_runs);
+                    Runs = new ObservableCollection<JoinedRunViewModel>(_runs);
                     return;
                 }
 
@@ -418,10 +410,10 @@ namespace UltimateHoopers.ViewModels
                     (r.HostName?.ToLower().Contains(searchText) ?? false)
                 ).ToList();
 
-                Runs = new ObservableCollection<RunViewModel>(filtered);
+                Runs = new ObservableCollection<JoinedRunViewModel>(filtered);
             }
 
-            private async Task JoinRunAsync(RunDto run)
+            private async Task JoinedRunAsync(JoinedRunDto run)
             {
                 try
                 {
@@ -438,7 +430,7 @@ namespace UltimateHoopers.ViewModels
                     }
 
                     // Join the run (implement actual join logic)
-                    bool joinSuccess = await JoinRunService(run);
+                    bool joinSuccess = await JoinedRunService(run);
 
                     if (joinSuccess)
                     {
@@ -463,7 +455,7 @@ namespace UltimateHoopers.ViewModels
                 }
             }
 
-            private async Task<bool> JoinRunService(RunDto run)
+            private async Task<bool> JoinedRunService(JoinedRunDto run)
             {
                 try
                 {
@@ -495,7 +487,7 @@ namespace UltimateHoopers.ViewModels
                 }
             }
 
-            private async Task ViewRunDetailsAsync(RunDto run)
+            private async Task ViewJoinedRunDetailsAsync(JoinedRunDto run)
             {
                 try
                 {
@@ -504,7 +496,7 @@ namespace UltimateHoopers.ViewModels
                     if (run == null) return;
 
                     // Navigate to run details page
-                    await Application.Current.MainPage.Navigation.PushAsync(new RunDetailsPage(run));
+                   // await Application.Current.MainPage.Navigation.PushAsync(new JoinedRunDetailsPage(run));
                 }
                 catch (Exception ex)
                 {

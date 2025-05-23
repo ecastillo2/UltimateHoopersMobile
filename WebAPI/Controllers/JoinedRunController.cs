@@ -102,7 +102,7 @@ namespace WebAPI.Controllers
         /// <response code="500">If there was an internal server error</response>
         [HttpGet("GetUserJoinedRunsAsync/{profileId}")]
         //[Authorize]
-        [ProducesResponseType(typeof(List<JoinedRun>), StatusCodes.Status200OK)]
+        //[ProducesResponseType(typeof(List<JoinedRun>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetUserJoinedRunsAsync(string profileId, CancellationToken cancellationToken = default)
         {
