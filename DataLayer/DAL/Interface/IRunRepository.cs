@@ -10,17 +10,17 @@ namespace DataLayer.DAL.Interface
     /// <summary>
     /// Interface for PrivateRun repository operations with consistent cancellation token support
     /// </summary>
-    public interface IPrivateRunRepository : IDisposable, IAsyncDisposable
+    public interface IRunRepository : IDisposable, IAsyncDisposable
     {
         /// <summary>
         /// Get all PrivateRuns
         /// </summary>
-        Task<List<PrivateRun>> GetPrivateRunsAsync(CancellationToken cancellationToken = default);
+        Task<List<Run>> GetRunsAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get PrivateRuns with offset-based pagination
         /// </summary>
-        Task<(List<PrivateRun> PrivateRuns, int TotalCount, int TotalPages)> GetPrivateRunsPaginatedAsync(
+        Task<(List<Run> Runs, int TotalCount, int TotalPages)> GetRunsPaginatedAsync(
             int page = 1,
             int pageSize = 20,
             CancellationToken cancellationToken = default);
@@ -34,7 +34,7 @@ namespace DataLayer.DAL.Interface
         /// <param name="sortBy">Field to sort by (e.g., "Points", "PlayerNumber", "Status")</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>Courts and the next cursor value</returns>
-        Task<(List<PrivateRun> PrivateRuns, string NextCursor)> GetPrivateRunsWithCursorAsync(
+        Task<(List<Run> Runs, string NextCursor)> GetRunsWithCursorAsync(
             string cursor = null,
             int limit = 20,
             string direction = "next",
@@ -44,14 +44,14 @@ namespace DataLayer.DAL.Interface
         /// <summary>
         /// Stream all PrivateRuns for efficient memory usage with large datasets
         /// </summary>
-        IAsyncEnumerable<PrivateRun> StreamAllPrivateRunsAsync(
+        IAsyncEnumerable<Run> StreamAllRunsAsync(
             [EnumeratorCancellation] CancellationToken cancellationToken = default);
 
 
         /// <summary>
         /// Get PrivateRun by ID
         /// </summary>
-        Task<PrivateRun> GetPrivateRunByIdAsync(
+        Task<Run> GetRunByIdAsync(
             string privateRunId,
             CancellationToken cancellationToken = default);
 
@@ -65,22 +65,22 @@ namespace DataLayer.DAL.Interface
         /// <summary>
         /// Get PrivateRun by ID
         /// </summary>
-        Task<List<Profile>> GetPrivateRunInviteAsync(
+        Task<List<Profile>> GetJoinedRunAsync(
             string privateRunId,
             CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Update a profile
         /// </summary>
-        Task<bool> UpdatePrivateRunAsync(
-            PrivateRun privateRun,
+        Task<bool> UpdateRunAsync(
+            Run privateRun,
             CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Batch update multiple PrivateRun at once
+        /// Batch update multiple Run at once
         /// </summary>
-        Task<int> BatchUpdatePrivateRunsAsync(
-            IEnumerable<PrivateRun> PrivateRuns,
+        Task<int> BatchUpdateRunsAsync(
+            IEnumerable<Run> PrivateRuns,
             CancellationToken cancellationToken = default);
 
 

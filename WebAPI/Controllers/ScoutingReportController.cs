@@ -26,7 +26,7 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="context"></param>
         /// <param name="configuration"></param>
-        public ScoutingReportController(HUDBContext context, IConfiguration configuration)
+        public ScoutingReportController(ApplicationContext context, IConfiguration configuration)
         {
            
             this._configuration = configuration;

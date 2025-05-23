@@ -19,12 +19,12 @@ namespace DataLayer.DAL.Repository
     /// </summary>
     public class ProfileRepository : IProfileRepository
     {
-        private readonly HUDBContext _context;
+        private readonly ApplicationContext _context;
         private readonly ILogger<ProfileRepository> _logger;
         private readonly IConfiguration _configuration;
         private bool _disposed = false;
 
-        public ProfileRepository(HUDBContext context, IConfiguration configuration, ILogger<ProfileRepository> logger = null)
+        public ProfileRepository(ApplicationContext context, IConfiguration configuration, ILogger<ProfileRepository> logger = null)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));

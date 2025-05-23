@@ -17,7 +17,7 @@ namespace DataLayer.DAL.Repository
     public class PostRepository : IPostRepository, IDisposable
     {
         private readonly IConfiguration _config;
-        private readonly HUDBContext _context;
+        private readonly ApplicationContext _context;
         private static readonly object _cacheLock = new object();
         private static Dictionary<string, object> _cacheItems = new Dictionary<string, object>();
         private static DateTime _cacheLastRefreshed = DateTime.MinValue;
@@ -26,7 +26,7 @@ namespace DataLayer.DAL.Repository
         /// <summary>
         /// Post Repository constructor
         /// </summary>
-        public PostRepository(HUDBContext context, IConfiguration config)
+        public PostRepository(ApplicationContext context, IConfiguration config)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _config = config ?? throw new ArgumentNullException(nameof(config));

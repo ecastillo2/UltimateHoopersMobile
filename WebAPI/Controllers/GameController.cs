@@ -24,7 +24,7 @@ namespace WebWebAPI.Controllers
         /// </summary>
         /// <param name="context"></param>
         /// <param name="configuration"></param>
-        public GameController(HUDBContext context, IConfiguration configuration)
+        public GameController(ApplicationContext context, IConfiguration configuration)
         {
             this._configuration = configuration;
             this.repository = new GameRepository(context);

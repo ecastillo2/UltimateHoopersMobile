@@ -10,9 +10,9 @@ namespace DataLayer.DAL.Repository
     public class ScoutingReportRepository : IScoutingReportRepository, IDisposable
     {
         public IConfiguration Configuration { get; }
-        private HUDBContext _context;
+        private ApplicationContext _context;
        
-        public ScoutingReportRepository(HUDBContext context)
+        public ScoutingReportRepository(ApplicationContext context)
         {
             _context = context;
 

@@ -11,13 +11,13 @@ namespace DataLayer.DAL.Repository
     public class PostCommentRepository : IPostCommentRepository, IDisposable
     {
         public IConfiguration Configuration { get; }
-        private HUDBContext _context;
+        private ApplicationContext _context;
 
         /// <summary>
         /// PostComment Repository
         /// </summary>
         /// <param name="context"></param>
-        public PostCommentRepository(HUDBContext context)
+        public PostCommentRepository(ApplicationContext context)
         {
             _context = context;
 

@@ -10,13 +10,13 @@ namespace DataLayer.DAL.Repository
     public class FollowingRepository : IFollowingRepository, IDisposable
     {
         public IConfiguration Configuration { get; }
-        private HUDBContext _context;
+        private ApplicationContext _context;
 
         /// <summary>
         /// Following Repository
         /// </summary>
         /// <param name="context"></param>
-        public FollowingRepository(HUDBContext context)
+        public FollowingRepository(ApplicationContext context)
         {
             _context = context;
             

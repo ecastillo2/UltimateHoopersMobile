@@ -8,9 +8,9 @@ using System.Xml.Linq;
 
 namespace Domain.DtoModel
 {
-    public class PrivateRunUpdateModelDto
+    public class RunUpdateModelDto
     {
-        public string? PrivateRunId { get; set; }
+        public string? RunId { get; set; }
         public string? CourtId { get; set; }
         public string? ProfileId { get; set; }
         public string? Status { get; set; }
@@ -24,25 +24,25 @@ namespace Domain.DtoModel
         public string? EndTime { get; set; }
         public string? Type { get; set; }
         public string? CreatedDate { get; set; }
-        public string? PrivateRunNumber { get; set; }
+        public string? RunNumber { get; set; }
         public string? SkillLevel { get; set; }
         public string? PaymentMethod { get; set; }
         public string? TeamType { get; set; }
         public int? PlayerLimit { get; set; }
 
-        public void UpdatePrivateRun(PrivateRun privateRun)
+        public void UpdateRun(Run run)
         {
-            privateRun.Status = Status;
-            privateRun.Cost = Cost;
-            privateRun.Status = Status;
+            run.Status = Status;
+            run.Cost = Cost;
+            run.Status = Status;
 
-            privateRun.Description = Description;
-            privateRun.RunTime = RunTime;
-            privateRun.EndTime = EndTime;
-            privateRun.Type = Type;
-            privateRun.SkillLevel = SkillLevel;
-            privateRun.PaymentMethod = PaymentMethod;
-            privateRun.PlayerLimit = PlayerLimit;
+            run.Description = Description;
+            run.RunTime = RunTime;
+            run.EndTime = EndTime;
+            run.Type = Type;
+            run.SkillLevel = SkillLevel;
+            run.PaymentMethod = PaymentMethod;
+            run.PlayerLimit = PlayerLimit;
         }
     }
 }

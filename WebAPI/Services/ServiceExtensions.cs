@@ -25,7 +25,7 @@ namespace WebAPI.Extensions
         public static IServiceCollection AddDataServices(this IServiceCollection services, IConfiguration configuration)
         {
             // Register the main DbContext
-            services.AddDbContext<HUDBContext>(options =>
+            services.AddDbContext<ApplicationContext>(options =>
                 options.UseSqlServer(
                     configuration.GetConnectionString("UnderGroundhoopersDB"),
                     sqlOptions => sqlOptions.EnableRetryOnFailure(
@@ -45,8 +45,8 @@ namespace WebAPI.Extensions
             services.AddScoped<ICourtRepository, CourtRepository>();
             services.AddScoped<INotificationRepository, NotificationRepository>();
             services.AddScoped<IProductRepository, ProductRepository>();
-            services.AddScoped<IPrivateRunRepository, PrivateRunRepository>();
-            services.AddScoped<IPrivateRunInviteRepository, PrivateRunInviteRepository>();
+            services.AddScoped<IRunRepository, RunRepository>();
+            services.AddScoped<IJoinedRunRepository, JoinedRunRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<IFollowerRepository, FollowerRepository>();
             services.AddScoped<IFollowingRepository, FollowingRepository>();

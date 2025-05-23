@@ -19,12 +19,12 @@ namespace DataLayer.DAL.Repository
     /// <typeparam name="TEntity">The entity type this repository handles</typeparam>
     public class GenericRepository<TEntity> : IGenericRepository<TEntity> where TEntity : class
     {
-        protected readonly HUDBContext _context;
+        protected readonly ApplicationContext _context;
         protected readonly DbSet<TEntity> _dbSet;
         protected readonly ILogger _logger;
         private bool _disposed = false;
 
-        public GenericRepository(HUDBContext context, ILogger logger = null)
+        public GenericRepository(ApplicationContext context, ILogger logger = null)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _dbSet = context.Set<TEntity>();

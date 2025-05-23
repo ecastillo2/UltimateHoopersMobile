@@ -27,7 +27,7 @@ namespace WebAPI.Controllers
         /// Initializes a new instance of the AuthenticationController
         /// </summary>
         /// <param name="authenticateService">Service for authentication operations</param>
-        public AuthenticationController(IAuthService authenticateService, HUDBContext context, IConfiguration configuration)
+        public AuthenticationController(IAuthService authenticateService, ApplicationContext context, IConfiguration configuration)
         {
             _authService = authenticateService ?? throw new ArgumentNullException(nameof(authenticateService));
             _configuration = configuration;

@@ -21,7 +21,7 @@ namespace WebApi.Controllers
         /// </summary>
         /// <param name="context"></param>
         /// <param name="configuration"></param>
-        public ContactController(HUDBContext context, IConfiguration configuration)
+        public ContactController(ApplicationContext context, IConfiguration configuration)
         {
             this._configuration = configuration;
             this.repository = new ContactRepository(context);

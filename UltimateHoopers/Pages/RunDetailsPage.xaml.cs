@@ -6,26 +6,26 @@ using UltimateHoopers.ViewModels;
 
 namespace UltimateHoopers.Pages
 {
-    public partial class PrivateRunDetailsPage : ContentPage
+    public partial class RunDetailsPage : ContentPage
     {
-        private PrivateRunDetailsViewModel _viewModel;
+        private RunDetailsViewModel _viewModel;
 
-        public PrivateRunDetailsPage(Run run)
+        public RunDetailsPage(RunDto run)
         {
             InitializeComponent();
 
             // Create the view model with the run parameter
-            _viewModel = new PrivateRunDetailsViewModel(run);
+            _viewModel = new RunDetailsViewModel(run);
             BindingContext = _viewModel;
         }
 
         // Parameterless constructor for XAML preview and DI
-        public PrivateRunDetailsPage()
+        public RunDetailsPage()
         {
             InitializeComponent();
 
             // Create a default run if no parameter is provided
-            var defaultRun = new Run
+            var defaultRun = new RunDto
             {
                 Id = "default",
                 Name = "Sample Run",
@@ -44,7 +44,7 @@ namespace UltimateHoopers.Pages
                 Distance = 1.5
             };
 
-            _viewModel = new PrivateRunDetailsViewModel(defaultRun);
+            _viewModel = new RunDetailsViewModel(defaultRun);
             BindingContext = _viewModel;
         }
 

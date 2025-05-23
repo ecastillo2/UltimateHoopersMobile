@@ -13,15 +13,15 @@ using System.Threading.Tasks;
 namespace WebAPI.ApiClients
 {
     /// <summary>
-    /// Implementation of PrivateRun API client
+    /// Implementation of Run API client
     /// </summary>
-    public class PrivateRunApi : IPrivateRunApi
+    public class RunApi : IRunApi
     {
         private readonly HttpClient _httpClient;
         private readonly string _baseUrl;
         private readonly JsonSerializerOptions _jsonOptions;
 
-        public PrivateRunApi(HttpClient httpClient, IConfiguration configuration)
+        public RunApi(HttpClient httpClient, IConfiguration configuration)
         {
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             _baseUrl = configuration["ApiSettings:BaseUrl"] ?? "https://ultimatehoopersapi.azurewebsites.net";
@@ -34,83 +34,83 @@ namespace WebAPI.ApiClients
         }
 
         /// <summary>
-        /// Get all PrivateRuns
+        /// Get all Runs
         /// </summary>
-        public async Task<List<PrivateRun>> GetPrivateRunsAsync(string accessToken, CancellationToken cancellationToken = default)
+        public async Task<List<Run>> GetRunsAsync(string accessToken, CancellationToken cancellationToken = default)
         {
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            var response = await _httpClient.GetAsync($"{_baseUrl}/api/PrivateRun/GetPrivateRuns", cancellationToken);
+            var response = await _httpClient.GetAsync($"{_baseUrl}/api/Run/GetRuns", cancellationToken);
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
-            return JsonSerializer.Deserialize<List<PrivateRun>>(content, _jsonOptions);
+            return JsonSerializer.Deserialize<List<Run>>(content, _jsonOptions);
         }
 
 
 
         /// <summary>
-        /// Get PrivateRun by ID
+        /// Get eRun by ID
         /// </summary>
-        public async Task<PrivateRun> GetPrivateRunByIdAsync(string privateRunId, string accessToken, CancellationToken cancellationToken = default)
+        public async Task<Run> GetRunByIdAsync(string runId, string accessToken, CancellationToken cancellationToken = default)
         {
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            var response = await _httpClient.GetAsync($"{_baseUrl}/api/PrivateRun/GetPrivateRunById?privateRunId={privateRunId}", cancellationToken);
+            var response = await _httpClient.GetAsync($"{_baseUrl}/api/Run/GetRunById?runId={runId}", cancellationToken);
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
-            return JsonSerializer.Deserialize<PrivateRun>(content, _jsonOptions);
+            return JsonSerializer.Deserialize<Run>(content, _jsonOptions);
         }
 
         /// <summary>
-        /// Create a new PrivateRun
+        /// Create a new Run
         /// </summary>
-        public async Task<PrivateRun> CreatePrivateRunAsync(PrivateRun privateRun, string accessToken, CancellationToken cancellationToken = default)
+        public async Task<Run> CreateRunAsync(Run run, string accessToken, CancellationToken cancellationToken = default)
         {
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
             var jsonContent = new StringContent(
-                JsonSerializer.Serialize(privateRun, _jsonOptions),
+                JsonSerializer.Serialize(run, _jsonOptions),
                 Encoding.UTF8,
                 "application/json");
 
-            var response = await _httpClient.PostAsync($"{_baseUrl}/api/PrivateRun/CreatePrivateRun", jsonContent, cancellationToken);
+            var response = await _httpClient.PostAsync($"{_baseUrl}/api/Run/CreateRun", jsonContent, cancellationToken);
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
-            return JsonSerializer.Deserialize<PrivateRun>(content, _jsonOptions);
+            return JsonSerializer.Deserialize<Run>(content, _jsonOptions);
         }
 
         /// <summary>
-        /// Update an existing PrivateRun
+        /// Update an existing Run
         /// </summary>
-        public async Task<bool> UpdatePrivateRunAsync(PrivateRun privateRun, string accessToken, CancellationToken cancellationToken = default)
+        public async Task<bool> UpdateRunAsync(Run run, string accessToken, CancellationToken cancellationToken = default)
         {
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
             var jsonContent = new StringContent(
-                JsonSerializer.Serialize(privateRun, _jsonOptions),
+                JsonSerializer.Serialize(run, _jsonOptions),
                 Encoding.UTF8,
                 "application/json");
 
-            var response = await _httpClient.PostAsync($"{_baseUrl}/api/PrivateRun/UpdatePrivateRun", jsonContent, cancellationToken);
+            var response = await _httpClient.PostAsync($"{_baseUrl}/api/Run/UpdateRun", jsonContent, cancellationToken);
             return response.IsSuccessStatusCode;
         }
 
         /// <summary>
-        /// Delete a PrivateRun
+        /// Delete a Run
         /// </summary>
-        public async Task<bool> DeletePrivateRunAsync(string privateRunId, string accessToken, CancellationToken cancellationToken = default)
+        public async Task<bool> DeleteRunAsync(string runId, string accessToken, CancellationToken cancellationToken = default)
         {
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            var response = await _httpClient.DeleteAsync($"{_baseUrl}/api/PrivateRun/DeletePrivateRun?privateRunId={privateRunId}", cancellationToken);
+            var response = await _httpClient.DeleteAsync($"{_baseUrl}/api/Run/DeleteRun?runId={runId}", cancellationToken);
             return response.IsSuccessStatusCode;
         }
 
 
-        public async Task<CursorPaginatedResultDto<PrivateRunViewModelDto>> GetPrivateRunsWithCursorAsync(string cursor = null, int limit = 20, string direction = "next", string sortBy = "Points", string accessToken = null, CancellationToken cancellationToken = default)
+        public async Task<CursorPaginatedResultDto<RunViewModelDto>> GetRunsWithCursorAsync(string cursor = null, int limit = 20, string direction = "next", string sortBy = "Points", string accessToken = null, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -131,7 +131,7 @@ namespace WebAPI.ApiClients
                 queryParams.Add($"sortBy={Uri.EscapeDataString(sortBy)}");
 
                 var queryString = string.Join("&", queryParams);
-                var requestUrl = $"{_baseUrl}/api/PrivateRun/cursor{(queryParams.Any() ? "?" + queryString : "")}";
+                var requestUrl = $"{_baseUrl}/api/Run/cursor{(queryParams.Any() ? "?" + queryString : "")}";
 
                 // Make the request
                 var response = await _httpClient.GetAsync(requestUrl, cancellationToken);
@@ -139,7 +139,7 @@ namespace WebAPI.ApiClients
 
                 // Deserialize the response
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
-                return JsonSerializer.Deserialize<CursorPaginatedResultDto<PrivateRunViewModelDto>>(content, _jsonOptions);
+                return JsonSerializer.Deserialize<CursorPaginatedResultDto<RunViewModelDto>>(content, _jsonOptions);
             }
             catch (HttpRequestException ex)
             {

@@ -10,9 +10,9 @@ namespace DataLayer.DAL.Repository
     public class OrderRepository : IOrderRepository, IDisposable
     {
         public IConfiguration Configuration { get; }
-        private HUDBContext _context;
+        private ApplicationContext _context;
        
-        public OrderRepository(HUDBContext context)
+        public OrderRepository(ApplicationContext context)
         {
             _context = context;
 
@@ -57,8 +57,8 @@ namespace DataLayer.DAL.Repository
                                    join profile in _context.Profile
                                    on order.ProfileId equals profile.ProfileId
 
-                                   join privateRun in _context.PrivateRun
-                                   on order.PrivateRunId equals privateRun.PrivateRunId into privateRunGroup
+                                   join privateRun in _context.Run
+                                   on order.RunId equals privateRun.RunId into privateRunGroup
                                    from privateRun in privateRunGroup.DefaultIfEmpty() // Left join to handle nulls
 
                                    where order.ProfileId == profileId // Filter for specific ProfileId
@@ -100,10 +100,10 @@ namespace DataLayer.DAL.Repository
                                            ImageURL = profile.ImageURL,
                                        },
 
-                                       PrivateRun = privateRun != null ? new PrivateRun
+                                       Run = privateRun != null ? new Run
                                        {
-                                           PrivateRunId = privateRun.PrivateRunId,
-                                           PrivateRunNumber = privateRun.PrivateRunNumber
+                                           RunId = privateRun.RunId,
+                                           RunNumber = privateRun.RunNumber
                                        } : null // Handle null PrivateRun
                                    }).ToListAsync();
 
@@ -130,8 +130,8 @@ namespace DataLayer.DAL.Repository
                     var query = await (from order in _context.Order
                                        join profile in _context.Profile
                                        on order.ProfileId equals profile.ProfileId
-                                       join privateRun in _context.PrivateRun
-                                       on order.PrivateRunId equals privateRun.PrivateRunId into privateRunGroup
+                                       join privateRun in _context.Run
+                                       on order.RunId equals privateRun.RunId into privateRunGroup
                                        from privateRun in privateRunGroup.DefaultIfEmpty() // Left join to handle nulls
 
                                        select new Order
@@ -171,10 +171,10 @@ namespace DataLayer.DAL.Repository
                                                ImageURL = profile.ImageURL,
                                            },
 
-                                           PrivateRun = privateRun != null ? new PrivateRun
+                                           Run = privateRun != null ? new Run
                                            {
-                                               PrivateRunId = privateRun.PrivateRunId,
-                                               PrivateRunNumber = privateRun.PrivateRunNumber
+                                               RunId = privateRun.RunId,
+                                               RunNumber = privateRun.RunNumber
                                            } : null // Handle null PrivateRun
                                        }).ToListAsync();
 

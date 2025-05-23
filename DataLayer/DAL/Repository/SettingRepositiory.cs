@@ -10,9 +10,9 @@ namespace DataLayer.DAL.Repository
     public class SettingRepository : ISettingRepository, IDisposable
     {
         public IConfiguration Configuration { get; }
-        private HUDBContext _context;
+        private ApplicationContext _context;
        
-        public SettingRepository(HUDBContext context)
+        public SettingRepository(ApplicationContext context)
         {
             _context = context;
 

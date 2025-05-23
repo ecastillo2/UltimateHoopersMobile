@@ -72,11 +72,11 @@ namespace Domain
 
         [NotMapped]
         [JsonIgnore]
-        public List<PrivateRun>? PrivateRun { get; set; }
+        public List<Run>? Run { get; set; }
 
         [NotMapped]
         [JsonIgnore]
-        public List<PrivateRunInvite>? PrivateRunInvite { get; set; }
+        public List<JoinedRun>? JoinedRunList { get; set; }
         [NotMapped]
         public DateTime? TokenExpiration { get; set; }
     }

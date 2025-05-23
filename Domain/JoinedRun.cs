@@ -5,34 +5,30 @@ using System.Text.Json.Serialization;
 
 namespace Domain
 {
-    public class PrivateRunInvite
+    public class JoinedRun
     {
         // Add a parameterless constructor for JSON deserialization
         [JsonConstructor]
-        public PrivateRunInvite() { }
+        public JoinedRun() { }
 
         // Existing constructor for mapping from ScoutingReport
-        public PrivateRunInvite(List<Profile> profiles)
+        public JoinedRun(List<Profile> profiles)
         {
-            InvitedProfiles = profiles;
-           
-            
-
+            JoinedRunProfiles = profiles;
         }
 
         [Key]
-        public string? PrivateRunInviteId { get; set; }
+        public string? JoinedRunId { get; set; }
         public string? ProfileId { get; set; }
-        public string? PrivateRunId { get; set; }       
+        public string? RunId { get; set; }       
         public string? InvitedDate { get; set; }
         public string? AcceptedInvite { get; set; }
         public string? Type { get; set; }
         public bool? Present { get; set; }
         public string? SquadId { get; set; }
 
-        
 
         [NotMapped]
-        public List<Profile>? InvitedProfiles { get; set; }
+        public List<Profile>? JoinedRunProfiles { get; set; }
     }
 }

@@ -16,28 +16,28 @@ namespace WebAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class PrivateRunController : ControllerBase
+    public class RunController : ControllerBase
     {
-        private readonly IPrivateRunRepository _privateRunRepository;
-        private readonly ILogger<PrivateRunController> _logger;
+        private readonly IRunRepository _runRepository;
+        private readonly ILogger<RunController> _logger;
 
-        public PrivateRunController(IPrivateRunRepository privateRunRepository, ILogger<PrivateRunController> logger)
+        public RunController(IRunRepository privateRunRepository, ILogger<RunController> logger)
         {
-            _privateRunRepository = privateRunRepository ?? throw new ArgumentNullException(nameof(privateRunRepository));
+            _runRepository = privateRunRepository ?? throw new ArgumentNullException(nameof(privateRunRepository));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         /// <summary>
-        /// Get all PrivateRuns
+        /// Get all Runs
         /// </summary>
         [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<PrivateRunViewModelDto>), 200)]
+        [ProducesResponseType(typeof(IEnumerable<RunViewModelDto>), 200)]
         public async Task<IActionResult> GetPrivateRuns(CancellationToken cancellationToken)
         {
             try
             {
-                var privateRuns = await _privateRunRepository.GetPrivateRunsAsync(cancellationToken);
-                var viewModels = privateRuns.Select(p => new PrivateRunViewModelDto(p));
+                var privateRuns = await _runRepository.GetRunsAsync(cancellationToken);
+                var viewModels = privateRuns.Select(p => new RunViewModelDto(p));
 
                 return Ok(viewModels);
             }
@@ -52,7 +52,7 @@ namespace WebAPI.Controllers
         /// Get PrivateRuns with standard pagination
         /// </summary>
         [HttpGet("paginated")]
-        [ProducesResponseType(typeof(PaginatedResultDto<PrivateRunViewModelDto>), 200)]
+        [ProducesResponseType(typeof(PaginatedResultDto<RunViewModelDto>), 200)]
         public async Task<IActionResult> GetPrivateRunsPaginated(
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20,
@@ -60,12 +60,12 @@ namespace WebAPI.Controllers
         {
             try
             {
-                var (privateRuns, totalCount, totalPages) = await _privateRunRepository
-                    .GetPrivateRunsPaginatedAsync(page, pageSize, cancellationToken);
+                var (runs, totalCount, totalPages) = await _runRepository
+                    .GetRunsPaginatedAsync(page, pageSize, cancellationToken);
 
-                var viewModels = privateRuns.Select(p => new PrivateRunViewModelDto(p)).ToList();
+                var viewModels = runs.Select(p => new RunViewModelDto(p)).ToList();
 
-                var result = new PaginatedResultDto<PrivateRunViewModelDto>
+                var result = new PaginatedResultDto<RunViewModelDto>
                 {
                     Items = viewModels,
                     Page = page,
@@ -87,8 +87,8 @@ namespace WebAPI.Controllers
         /// Get profiles with cursor-based pagination for efficient scrolling
         /// </summary>
         [HttpGet("cursor")]
-        [ProducesResponseType(typeof(CursorPaginatedResultDto<PrivateRunViewModelDto>), 200)]
-        public async Task<IActionResult> GetPrivateRunsWithCursor(
+        [ProducesResponseType(typeof(CursorPaginatedResultDto<RunViewModelDto>), 200)]
+        public async Task<IActionResult> GetRunsWithCursor(
             [FromQuery] string cursor = null,
             [FromQuery] int limit = 20,
             [FromQuery] string direction = "next",
@@ -97,11 +97,11 @@ namespace WebAPI.Controllers
         {
             try
             {
-                var (privateRuns, nextCursor) = await _privateRunRepository
-                    .GetPrivateRunsWithCursorAsync(cursor, limit, direction, sortBy, cancellationToken);
+                var (privateRuns, nextCursor) = await _runRepository
+                    .GetRunsWithCursorAsync(cursor, limit, direction, sortBy, cancellationToken);
 
                 // Create a list to hold our detailed profile view models
-                var detailedViewModels = new List<PrivateRunDetailViewModelDto>();
+                var detailedViewModels = new List<RunDetailViewModelDto>();
 
 
                 // Enrich each profile with additional data
@@ -109,16 +109,16 @@ namespace WebAPI.Controllers
                 {
                     // Get additional profile data using the profile's ID
                     var privateRun = item;
-                    var court = await _privateRunRepository.GetCourtAsync(item.CourtId, cancellationToken);
-                    var invites = await _privateRunRepository.GetPrivateRunInviteAsync(item.PrivateRunId, cancellationToken);
+                    var court = await _runRepository.GetCourtAsync(item.CourtId, cancellationToken);
+                    var JoinRunProfileList = await _runRepository.GetJoinedRunAsync(item.RunId, cancellationToken);
                     
 
                     // Create a detailed view model with all the additional data
-                    var detailedViewModel = new PrivateRunDetailViewModelDto(item)
+                    var detailedViewModel = new RunDetailViewModelDto(item)
                     {
-                        PrivateRun = item,
+                        Run = item,
                         Court = court != null ? new Court(court) : null,
-                        PrivateRunInvite = invites != null ? new PrivateRunInvite(invites) : null,
+                        JoinedRunProfileList = JoinRunProfileList,
                         
                     };
 
@@ -128,7 +128,7 @@ namespace WebAPI.Controllers
 
 
 
-                var result = new CursorPaginatedResultDto<PrivateRunDetailViewModelDto>
+                var result = new CursorPaginatedResultDto<RunDetailViewModelDto>
                 {
                     Items = detailedViewModels,
                     NextCursor = nextCursor,
@@ -150,13 +150,13 @@ namespace WebAPI.Controllers
         /// Get PrivateRun by ID
         /// </summary>
         [HttpGet("{id}")]
-        [ProducesResponseType(typeof(PrivateRunDetailViewModelDto), 200)]
+        [ProducesResponseType(typeof(RunDetailViewModelDto), 200)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> GetPrivateRunById(string id, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetRunById(string id, CancellationToken cancellationToken)
         {
             try
             {
-                var privateRun = await _privateRunRepository.GetPrivateRunByIdAsync(id, cancellationToken);
+                var privateRun = await _runRepository.GetRunByIdAsync(id, cancellationToken);
 
                 if (privateRun == null)
                     return NotFound();
@@ -181,25 +181,25 @@ namespace WebAPI.Controllers
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> UpdatePrivateRun(string id, PrivateRunUpdateModelDto model, CancellationToken cancellationToken)
+        public async Task<IActionResult> UpdateRun(string id, RunUpdateModelDto model, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             if (id != model.CourtId)
-                return BadRequest("PrivateRun ID mismatch");
+                return BadRequest("Run ID mismatch");
 
             try
             {
-                var privateRun = await _privateRunRepository.GetPrivateRunByIdAsync(id, cancellationToken);
+                var privateRun = await _runRepository.GetRunByIdAsync(id, cancellationToken);
 
                 if (privateRun == null)
                     return NotFound($"PrivateRun with ID {id} not found");
 
                 // Update PrivateRun properties from model
-                model.UpdatePrivateRun(privateRun);
+                model.UpdateRun(privateRun);
 
-                var success = await _privateRunRepository.UpdatePrivateRunAsync(privateRun, cancellationToken);
+                var success = await _runRepository.UpdateRunAsync(privateRun, cancellationToken);
 
                 if (!success)
                     return StatusCode(500, "Failed to update PrivateRun");

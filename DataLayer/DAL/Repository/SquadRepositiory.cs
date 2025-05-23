@@ -10,10 +10,10 @@ namespace DataLayer.DAL.Repository
     public class SquadRepository : ISquadRepository, IDisposable
     {
         public IConfiguration Configuration { get; }
-        private HUDBContext _context;
+        private ApplicationContext _context;
        
 
-        public SquadRepository(HUDBContext context)
+        public SquadRepository(ApplicationContext context)
         {
             _context = context;
 

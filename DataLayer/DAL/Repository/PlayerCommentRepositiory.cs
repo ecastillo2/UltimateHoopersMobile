@@ -11,13 +11,13 @@ namespace DataLayer.DAL.Repository
     public class PlayerCommentRepository : IPlayerCommentRepository, IDisposable
     {
         public IConfiguration Configuration { get; }
-        private HUDBContext _context;
+        private ApplicationContext _context;
 
         /// <summary>
         /// PlayerComment Repository
         /// </summary>
         /// <param name="context"></param>
-        public PlayerCommentRepository(HUDBContext context)
+        public PlayerCommentRepository(ApplicationContext context)
         {
             _context = context;
                       

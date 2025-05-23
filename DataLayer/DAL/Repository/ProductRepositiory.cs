@@ -10,10 +10,10 @@ namespace DataLayer.DAL.Repository
     public class ProductRepository : IProductRepository, IDisposable
     {
         public IConfiguration Configuration { get; }
-        private HUDBContext _context;
+        private ApplicationContext _context;
        
 
-        public ProductRepository(HUDBContext context)
+        public ProductRepository(ApplicationContext context)
         {
             _context = context;
             

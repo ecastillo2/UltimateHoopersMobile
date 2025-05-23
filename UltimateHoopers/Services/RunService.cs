@@ -15,17 +15,17 @@ using WebAPI.ApiClients;
 
 namespace UltimateHoopers.Services
 {
-    public class PrivateRunService : IPrivateRunService
+    public class RunService : IRunService
     {
-        private readonly IPrivateRunApi _privateRunApi;
+        private readonly IRunApi _runApi;
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
-        private readonly ILogger<PrivateRunService> _logger;
+        private readonly ILogger<RunService> _logger;
         private const string TOKEN_KEY = "auth_token";
         private readonly string _baseUrl;
 
         // Constructor with proper DI
-        public PrivateRunService(HttpClient httpClient, IConfiguration configuration, ILogger<PrivateRunService> logger = null)
+        public RunService(HttpClient httpClient, IConfiguration configuration, ILogger<RunService> logger = null)
         {
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
@@ -47,13 +47,13 @@ namespace UltimateHoopers.Services
                 new MediaTypeWithQualityHeaderValue("application/json"));
 
             // Create the API client last, so it has the properly configured HttpClient
-            _privateRunApi = new PrivateRunApi(_httpClient, _configuration);
+            _runApi = new RunApi(_httpClient, _configuration);
 
-            LogInfo($"PrivateRunService initialized with base URL: {_baseUrl}");
+            LogInfo($"RunService initialized with base URL: {_baseUrl}");
         }
 
         // Simplified constructor for non-DI scenarios
-        public PrivateRunService()
+        public RunService()
         {
             _httpClient = new HttpClient();
             _configuration = new ConfigurationBuilder()
@@ -72,12 +72,12 @@ namespace UltimateHoopers.Services
                 new MediaTypeWithQualityHeaderValue("application/json"));
 
             // Create the API client after HttpClient is configured
-            _privateRunApi = new PrivateRunApi(_httpClient, _configuration);
+            _runApi = new RunApi(_httpClient, _configuration);
 
-            LogInfo($"PrivateRunService initialized with base URL: {_baseUrl} (non-DI constructor)");
+            LogInfo($"RunService initialized with base URL: {_baseUrl} (non-DI constructor)");
         }
 
-        public async Task<PrivateRun> CreatePrivateRunAsync(PrivateRun privateRun)
+        public async Task<Run> CreateRunAsync(Run run)
         {
             try
             {
@@ -88,16 +88,16 @@ namespace UltimateHoopers.Services
                 }
 
                 // Implementation logic
-                throw new NotImplementedException("CreatePrivateRunAsync not implemented yet");
+                throw new NotImplementedException("CreateRunAsync not implemented yet");
             }
             catch (Exception ex)
             {
-                LogError("Error creating PrivateRun", ex);
+                LogError("Error creating Run", ex);
                 throw;
             }
         }
 
-        public async Task<bool> DeletePrivateRunAsync(string privateRunId)
+        public async Task<bool> DeleteRunAsync(string runId)
         {
             try
             {
@@ -108,16 +108,16 @@ namespace UltimateHoopers.Services
                 }
 
                 // Implementation logic
-                throw new NotImplementedException("DeletePrivateRunAsync not implemented yet");
+                throw new NotImplementedException("DeleteRunAsync not implemented yet");
             }
             catch (Exception ex)
             {
-                LogError($"Error deleting PrivateRun {privateRunId}", ex);
+                LogError($"Error deleting Run {runId}", ex);
                 throw;
             }
         }
 
-        public async Task<PrivateRun> GetPrivateRunByIdAsync(string privateRunId)
+        public async Task<Run> GetRunByIdAsync(string runId)
         {
             try
             {
@@ -128,20 +128,20 @@ namespace UltimateHoopers.Services
                 }
 
                 // Implementation logic
-                throw new NotImplementedException("GetPrivateRunByIdAsync not implemented yet");
+                throw new NotImplementedException("GetRunByIdAsync not implemented yet");
             }
             catch (Exception ex)
             {
-                LogError($"Error getting PrivateRun {privateRunId}", ex);
+                LogError($"Error getting Run {runId}", ex);
                 throw;
             }
         }
 
-        public async Task<List<PrivateRun>> GetPrivateRunsAsync()
+        public async Task<List<Run>> GetRunsAsync()
         {
             try
             {
-                LogInfo("GetPrivateRunsAsync called");
+                LogInfo("GetJoinedRunsAsync called");
 
                 // Get token (first from App state, then from secure storage)
                 var token = await GetTokenAsync();
@@ -169,7 +169,7 @@ namespace UltimateHoopers.Services
 
                 try
                 {
-                    var paginatedResult = await _privateRunApi.GetPrivateRunsWithCursorAsync(
+                    var paginatedResult = await _runApi.GetRunsWithCursorAsync(
                         cursor: null,
                         limit: 50, // Request a larger batch
                         direction: "next",
@@ -179,20 +179,20 @@ namespace UltimateHoopers.Services
                     LogInfo($"API call completed. Result: {(paginatedResult != null ? "Success" : "Null")}");
                     LogInfo($"Items count: {paginatedResult?.Items?.Count ?? 0}");
 
-                    // Convert items to PrivateRun objects
+                    // Convert items to Run objects
                     if (paginatedResult != null && paginatedResult.Items != null && paginatedResult.Items.Count > 0)
                     {
                         // Create a list to hold the converted posts
-                        var privateRuns = new List<PrivateRun>();
+                        var run = new List<Run>();
 
                         foreach (var item in paginatedResult.Items)
                         {
                             try
                             {
-                                // Map properties from the DTO to a new Post object
-                                var privateRun = new PrivateRun
+                                // Map properties from the DTO to a new Run object
+                                var runs = new Run
                                 {
-                                    PrivateRunId = item.PrivateRunId,
+                                    RunId = item.RunId,
                                     CourtId = item.CourtId,
                                     ProfileId = item.ProfileId,
                                     Type = item.Type,
@@ -201,10 +201,8 @@ namespace UltimateHoopers.Services
                                     PlayerLimit = item.PlayerLimit,
                                     Name = item.Name,
                                     ImageUrl = item.Court.ImageURL,
-                                    Address = item.Court.Address,
-                                    City = item.City,
-                                    State = item.State,
-                                    Zip = item.Zip,
+                                    Court = item.Court,
+                                    
                                     RunDate = item.RunDate,
                                     UserName = "test",
                                     RunTime =   item.RunTime,
@@ -221,23 +219,23 @@ namespace UltimateHoopers.Services
                                 //privateRun.ThumbnailUrl = FixUrl(privateRun.ThumbnailUrl);
                                 //privateRun.ProfileImageURL = FixUrl(privateRun.ProfileImageURL);
 
-                                privateRuns.Add(privateRun);
+                                run.Add(runs);
                                 //LogInfo($"Added PrivateRun: {privateRun.PrivateRunId}, URL: {privateRun.PostFileURL}, Type: {post.PostType}");
                             }
                             catch (Exception ex)
                             {
-                                LogError($"Error mapping post {item.PrivateRunId}", ex);
+                                LogError($"Error mapping post {item.RunId}", ex);
                                 // Continue with the next post instead of failing the entire process
                             }
                         }
 
-                        LogInfo($"Returning {privateRuns.Count} posts from API");
-                        return privateRuns;
+                        LogInfo($"Returning {run.Count} posts from API");
+                        return run;
                     }
                     else
                     {
                         LogInfo("No posts returned from API, returning empty list");
-                        return new List<PrivateRun>();
+                        return new List<Run>();
                     }
                 }
                 catch (Exception apiEx)
@@ -333,7 +331,7 @@ namespace UltimateHoopers.Services
             return "image";
         }
 
-        public async Task<bool> UpdatePrivateRunAsync(PrivateRun privateRun)
+        public async Task<bool> UpdateRunAsync(Run run)
         {
             try
             {
@@ -344,11 +342,11 @@ namespace UltimateHoopers.Services
                 }
 
                 // Implementation logic
-                throw new NotImplementedException("UpdatePrivateRunAsync not implemented yet");
+                throw new NotImplementedException("UpdateRunAsync not implemented yet");
             }
             catch (Exception ex)
             {
-                LogError($"Error updating PrivateRun {privateRun?.PrivateRunId}", ex);
+                LogError($"Error updating Run {run?.RunId}", ex);
                 throw;
             }
         }
@@ -418,72 +416,6 @@ namespace UltimateHoopers.Services
             }
         }
 
-        // Mock data for development and testing
-        private List<Post> CreateMockPosts()
-        {
-            LogInfo("Creating mock posts for testing");
-
-            return new List<Post>
-            {
-                new Post
-                {
-                    PostId = "1",
-                    UserName = "michael_johnson",
-                    Caption = "Looking for players to join our game this Sunday at Downtown Court. We need 2-3 more players. All skill levels welcome! #basketball #pickup #sunday",
-                    PostFileURL = "https://uhblobstorageaccount.blob.core.windows.net/postfile/a12a3e62-4f16-45b3-9da7-a8f5e957d658.mp4",
-                    ThumbnailUrl = "https://uhblobstorageaccount.blob.core.windows.net/postthumbnail/a12a3e62-4f16-45b3-9da7-a8f5e957d658.png",
-                    PostType = "video",
-                    Likes = 32,
-                    ProfileImageURL = "https://uhblobstorageaccount.blob.core.windows.net/postthumbnail/a12a3e62-4f16-45b3-9da7-a8f5e957d658.png",
-                    RelativeTime = "2 hours ago",
-                    PostCommentCount = 12,
-                    LikedPost = false,
-                    SavedPost = false
-                },
-                new Post
-                {
-                    PostId = "2",
-                    UserName = "sarah_thompson",
-                    Caption = "Just finished my first training session with Coach Williams. His shooting drills are incredible! My three-point percentage has already improved. #basketball #training #threepointer",
-                    PostFileURL = "https://images.unsplash.com/photo-1518626413561-907586085645?q=80&w=1000&auto=format&fit=crop",
-                    PostType = "image",
-                    Likes = 55,
-                    ProfileImageURL = "https://randomuser.me/api/portraits/women/32.jpg",
-                    RelativeTime = "5 hours ago",
-                    PostCommentCount = 8,
-                    LikedPost = true,
-                    SavedPost = false
-                },
-                new Post
-                {
-                    PostId = "3",
-                    UserName = "basketball_highlights",
-                    Caption = "Check out this amazing dunk from last night's game! Who says white men can't jump? 🏀🔥 #basketball #dunk #highlights",
-                    PostFileURL = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-                    ThumbnailUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ElephantsDream.jpg",
-                    PostType = "video",
-                    Likes = 128,
-                    ProfileImageURL = "https://randomuser.me/api/portraits/men/85.jpg",
-                    RelativeTime = "1 day ago",
-                    PostCommentCount = 24,
-                    LikedPost = false,
-                    SavedPost = true
-                },
-                new Post
-                {
-                    PostId = "4",
-                    UserName = "photo_expert",
-                    Caption = "Basketball court at sunset. Perfect lighting for a game! 🏀 #basketball #sunset #court",
-                    PostFileURL = "https://images.unsplash.com/photo-1505666287802-931dc83d1b52?q=80&w=1000&auto=format&fit=crop",
-                    PostType = "image",
-                    Likes = 19,
-                    ProfileImageURL = "https://randomuser.me/api/portraits/women/65.jpg",
-                    RelativeTime = "3 hours ago",
-                    PostCommentCount = 2,
-                    LikedPost = false,
-                    SavedPost = false
-                }
-            };
-        }
+        
     }
 }

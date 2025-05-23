@@ -11,9 +11,9 @@ namespace DataLayer.DAL.Repository
     public class GameRepository : IGameRepository, IDisposable
     {
         public IConfiguration Configuration { get; }
-        private HUDBContext _context;
+        private ApplicationContext _context;
 
-        public GameRepository(HUDBContext context)
+        public GameRepository(ApplicationContext context)
         {
             _context = context;
 
@@ -68,10 +68,10 @@ namespace DataLayer.DAL.Repository
                         game.ProfileList = game.WinnersList.Concat(game.LossersList).ToList();
 
                         // Fetch the associated PrivateRun using PrivateRunId
-                        if (!string.IsNullOrEmpty(game.PrivateRunId))
+                        if (!string.IsNullOrEmpty(game.RunId))
                         {
-                            game.PrivateRun = await context.PrivateRun
-                                .FirstOrDefaultAsync(run => run.PrivateRunId == game.PrivateRunId);
+                            game.Run = await context.Run
+                                .FirstOrDefaultAsync(run => run.RunId == game.RunId);
                         }
 
                      
@@ -242,10 +242,10 @@ namespace DataLayer.DAL.Repository
                         game.ProfileList = game.WinnersList.Concat(game.LossersList).ToList();
 
                         // Fetch the associated PrivateRun using PrivateRunId
-                        if (!string.IsNullOrEmpty(game.PrivateRunId))
+                        if (!string.IsNullOrEmpty(game.RunId))
                         {
-                            game.PrivateRun = await context.PrivateRun
-                                .FirstOrDefaultAsync(run => run.PrivateRunId == game.PrivateRunId);
+                            game.Run = await context.Run
+                                .FirstOrDefaultAsync(run => run.RunId == game.RunId);
                         }
 
                         // Add game to the filtered list
@@ -300,10 +300,10 @@ namespace DataLayer.DAL.Repository
                         game.ProfileList = game.WinnersList.Concat(game.LossersList).ToList();
 
                         // Fetch the associated PrivateRun using PrivateRunId
-                        if (!string.IsNullOrEmpty(game.PrivateRunId))
+                        if (!string.IsNullOrEmpty(game.RunId))
                         {
-                            game.PrivateRun = await context.PrivateRun
-                                .FirstOrDefaultAsync(run => run.PrivateRunId == game.PrivateRunId);
+                            game.Run = await context.Run
+                                .FirstOrDefaultAsync(run => run.RunId == game.RunId);
                         }
                     }
 

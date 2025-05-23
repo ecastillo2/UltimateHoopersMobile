@@ -370,9 +370,9 @@ namespace UltimateHoopers.ViewModels
                 }
 
                 // Create the private run object
-                var privateRun = new PrivateRun
+                var privateRun = new Run
                 {
-                    PrivateRunId = Guid.NewGuid().ToString(),
+                    RunId = Guid.NewGuid().ToString(),
                     CourtId = SelectedCourt.CourtId,
                     ProfileId = App.User?.ProfileId,
                     RunDate = RunDate.Add(RunTime),
@@ -383,7 +383,7 @@ namespace UltimateHoopers.ViewModels
                     EndTime = EndTime.ToString(),
                     Type = !IsPublic ? "Private" : "Public",
                     CreatedDate = DateTime.Now.ToString(),
-                    PrivateRunNumber = new Random().Next(1000, 9999).ToString(),
+                    RunNumber = new Random().Next(1000, 9999).ToString(),
                     SkillLevel = SelectedSkillLevel,
                     TeamType = SelectedGameType,
                     PlayerLimit = PlayerLimit

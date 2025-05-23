@@ -10,11 +10,11 @@ namespace Domain.DtoModel
     {
         public string GameId { get; set; }
         public string CourtId { get; set; }
-        public string PrivateRunId { get; set; }
+        public string RunId { get; set; }
         public string CreatedDate { get; set; }
         public string WinProfileIdsStatusString { get; set; }
         public string LoseProfileIdsStatusString { get; set; }
-        public string PrivateRunNumber { get; set; }
+        public string RunNumber { get; set; }
         public string Location { get; set; }
         public string GameNumber { get; set; }
         public string Status { get; set; }
@@ -24,11 +24,11 @@ namespace Domain.DtoModel
         {
             GameId = game.GameId;
             CourtId = game.CourtId;
-            PrivateRunId = game.PrivateRunId;
+            RunId = game.RunId;
             CreatedDate = game.CreatedDate;
             WinProfileIdsStatusString = game.WinProfileIdsStatusString;
             LoseProfileIdsStatusString = game.LoseProfileIdsStatusString;
-            PrivateRunNumber = game.PrivateRunNumber;
+            RunNumber = game.RunNumber;
             Location = game.Location;
             GameNumber = game.GameNumber;
             Status = game.Status;

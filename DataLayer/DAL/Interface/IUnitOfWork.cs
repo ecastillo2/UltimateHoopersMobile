@@ -53,12 +53,12 @@ namespace DataLayer.DAL
         /// <summary>
         /// Gets the private run repository
         /// </summary>
-        IPrivateRunRepository PrivateRun { get; }
+        IRunRepository Run { get; }
 
         /// <summary>
         /// Gets the private run invite repository
         /// </summary>
-        IPrivateRunInviteRepository PrivateRunInvite { get; }
+        IJoinedRunRepository JoinedRun { get; }
 
         /// <summary>
         /// Begin a database transaction

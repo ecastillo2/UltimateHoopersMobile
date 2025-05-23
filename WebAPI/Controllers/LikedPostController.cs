@@ -26,7 +26,7 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="context"></param>
         /// <param name="configuration"></param>
-        public LikedPostController(HUDBContext context, IConfiguration configuration)
+        public LikedPostController(ApplicationContext context, IConfiguration configuration)
         {
            
             this._configuration = configuration;

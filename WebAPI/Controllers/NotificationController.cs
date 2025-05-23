@@ -26,7 +26,7 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="context"></param>
         /// <param name="configuration"></param>
-        public NotificationController(HUDBContext context, IConfiguration configuration)
+        public NotificationController(ApplicationContext context, IConfiguration configuration)
         {
            
             this._configuration = configuration;

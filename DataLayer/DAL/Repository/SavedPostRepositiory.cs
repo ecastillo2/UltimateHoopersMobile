@@ -10,10 +10,10 @@ namespace DataLayer.DAL.Repository
     public class SavedPostRepository : ISavedPostRepository, IDisposable
     {
         public IConfiguration Configuration { get; }
-        private HUDBContext _context;
+        private ApplicationContext _context;
        
 
-        public SavedPostRepository(HUDBContext context)
+        public SavedPostRepository(ApplicationContext context)
         {
             _context = context;
             

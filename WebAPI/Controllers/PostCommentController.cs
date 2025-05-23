@@ -25,7 +25,7 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="context"></param>
         /// <param name="configuration"></param>
-        public PostCommentController(HUDBContext context, IConfiguration configuration)
+        public PostCommentController(ApplicationContext context, IConfiguration configuration)
         {
            
             this._configuration = configuration;

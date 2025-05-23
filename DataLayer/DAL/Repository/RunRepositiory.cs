@@ -17,36 +17,36 @@ namespace DataLayer.DAL.Repository
     /// <summary>
     /// Implementation of the PrivateRun repository with optimized query methods
     /// </summary>
-    public class PrivateRunRepository : IPrivateRunRepository
+    public class RunRepository : IRunRepository
     {
-        private readonly HUDBContext _context;
-        private readonly ILogger<PrivateRunRepository> _logger;
+        private readonly ApplicationContext _context;
+        private readonly ILogger<RunRepository> _logger;
         private readonly IConfiguration _configuration;
         private bool _disposed = false;
 
-        public PrivateRunRepository(HUDBContext context, IConfiguration configuration, ILogger<PrivateRunRepository> logger = null)
+        public RunRepository(ApplicationContext context, IConfiguration configuration, ILogger<RunRepository> logger = null)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _logger = logger;
         }
 
-        public async Task<List<PrivateRun>> GetPrivateRunsAsync(CancellationToken cancellationToken = default)
+        public async Task<List<Run>> GetRunsAsync(CancellationToken cancellationToken = default)
         {
             try
             {
-                return await _context.PrivateRun
+                return await _context.Run
                     .AsNoTracking()
                     .ToListAsync(cancellationToken);
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Error retrieving PrivateRuns");
+                _logger?.LogError(ex, "Error retrieving Runs");
                 throw;
             }
         }
 
-        public async Task<(List<PrivateRun> PrivateRuns, int TotalCount, int TotalPages)> GetPrivateRunsPaginatedAsync(
+        public async Task<(List<Run> Runs, int TotalCount, int TotalPages)> GetRunsPaginatedAsync(
             int page = 1,
             int pageSize = 20,
             CancellationToken cancellationToken = default)
@@ -56,10 +56,10 @@ namespace DataLayer.DAL.Repository
 
             try
             {
-                var totalCount = await _context.PrivateRun.CountAsync(cancellationToken);
+                var totalCount = await _context.Run.CountAsync(cancellationToken);
                 var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
-                var privateRuns = await _context.PrivateRun
+                var privateRuns = await _context.Run
                     .AsNoTracking()
 
                     .Skip((page - 1) * pageSize)
@@ -70,12 +70,12 @@ namespace DataLayer.DAL.Repository
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Error retrieving paginated PrivateRuns");
+                _logger?.LogError(ex, "Error retrieving paginated Runs");
                 throw;
             }
         }
 
-        public async Task<(List<PrivateRun> PrivateRuns, string NextCursor)> GetPrivateRunsWithCursorAsync(
+        public async Task<(List<Run> Runs, string NextCursor)> GetRunsWithCursorAsync(
             string cursor = null,
             int limit = 20,
             string direction = "next",
@@ -85,7 +85,7 @@ namespace DataLayer.DAL.Repository
             try
             {
                 // Default query starting point
-                IQueryable<PrivateRun> query = _context.PrivateRun.AsNoTracking();
+                IQueryable<Run> query = _context.Run.AsNoTracking();
 
                 // Parse the cursor if provided
                 CursorData cursorData = null;
@@ -119,9 +119,9 @@ namespace DataLayer.DAL.Repository
                     privateRuns.RemoveAt(limit);
 
                     // Create cursor for next page based on last item properties
-                    var newCursorData = new PrivateRunCursorData
+                    var newCursorData = new RunCursorData
                     {
-                        Id = lastItem.PrivateRunId,
+                        Id = lastItem.RunId,
                         
                         Status = lastItem.Status
                     };
@@ -140,12 +140,12 @@ namespace DataLayer.DAL.Repository
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Error getting PrivateRuns with cursor");
+                _logger?.LogError(ex, "Error getting Runs with cursor");
                 throw;
             }
         }
 
-        public async IAsyncEnumerable<PrivateRun> StreamAllPrivateRunsAsync(
+        public async IAsyncEnumerable<Run> StreamAllRunsAsync(
     [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             var batchSize = 100;
@@ -153,13 +153,13 @@ namespace DataLayer.DAL.Repository
 
             while (true)
             {
-                List<PrivateRun> batch;
+                List<Run> batch;
                 try
                 {
-                    batch = await _context.PrivateRun
+                    batch = await _context.Run
                         .AsNoTracking()
-                        .Where(p => string.Compare(p.PrivateRunId, lastId) > 0)
-                        .OrderBy(p => p.PrivateRunId)
+                        .Where(p => string.Compare(p.RunId, lastId) > 0)
+                        .OrderBy(p => p.RunId)
                         .Take(batchSize)
                         .ToListAsync(cancellationToken);
                 }
@@ -175,7 +175,7 @@ namespace DataLayer.DAL.Repository
                 foreach (var privateRun in batch)
                 {
                     yield return privateRun;
-                    lastId = privateRun.PrivateRunId;
+                    lastId = privateRun.RunId;
                 }
 
                 if (batch.Count < batchSize)
@@ -184,20 +184,20 @@ namespace DataLayer.DAL.Repository
         }
 
 
-        public async Task<PrivateRun> GetPrivateRunByIdAsync(
-            string privateRunId,
+        public async Task<Run> GetRunByIdAsync(
+            string runId,
             CancellationToken cancellationToken = default)
         {
             try
             {
-                return await _context.PrivateRun
+                return await _context.Run
                     .AsNoTracking()
 
-                    .FirstOrDefaultAsync(p => p.PrivateRunId == privateRunId, cancellationToken);
+                    .FirstOrDefaultAsync(p => p.RunId == runId, cancellationToken);
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Error getting PrivateRun {PrivateRunId}", privateRunId);
+                _logger?.LogError(ex, "Error getting PrivateRun {PrivateRunId}", runId);
                 throw;
             }
         }
@@ -221,15 +221,15 @@ namespace DataLayer.DAL.Repository
         }
 
 
-        public async Task<List<Profile>> GetPrivateRunInviteAsync(
+        public async Task<List<Profile>> GetJoinedRunAsync(
       string privateRunId,
       CancellationToken cancellationToken = default)
         {
             try
             {
-                var result = await (from pri in _context.PrivateRunInvite
+                var result = await (from pri in _context.JoinedRun
                                     join p in _context.Profile on pri.ProfileId equals p.ProfileId
-                                    where pri.PrivateRunId == privateRunId
+                                    where pri.RunId == privateRunId
                                     select p)  // Just select the Profile objects directly
                     .AsNoTracking()
                     .ToListAsync(cancellationToken);
@@ -243,8 +243,8 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<bool> UpdatePrivateRunAsync(
-            PrivateRun privateRun,
+        public async Task<bool> UpdateRunAsync(
+            Run privateRun,
             CancellationToken cancellationToken = default)
         {
             try
@@ -254,7 +254,7 @@ namespace DataLayer.DAL.Repository
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Error updating PrivateRun {PrivateRunId}", privateRun.PrivateRunId);
+                _logger?.LogError(ex, "Error updating PrivateRun {PrivateRunId}", privateRun.RunId);
                 throw;
             }
         }
@@ -306,7 +306,12 @@ namespace DataLayer.DAL.Repository
             GC.SuppressFinalize(this);
         }
 
-        public Task<int> BatchUpdatePrivateRunsAsync(IEnumerable<PrivateRun> PrivateRuns, CancellationToken cancellationToken = default)
+        public Task<int> BatchUpdateRunsAsync(IEnumerable<Run> PrivateRuns, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<List<Profile>> GetRunInviteAsync(string privateRunId, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
@@ -317,7 +322,7 @@ namespace DataLayer.DAL.Repository
     /// <summary>
     /// Helper class for cursor-based pagination
     /// </summary>
-    internal class PrivateRunCursorData
+    internal class RunCursorData
     {
         public string Id { get; set; }
         public string Zip { get; set; }

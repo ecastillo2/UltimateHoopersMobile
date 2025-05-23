@@ -9,9 +9,9 @@ namespace WebAPI.Models
     // Install Microsoft.AspNetCore.SignalR
     public class ChatHub : Hub
     {
-        private readonly HUDBContext _context;
+        private readonly ApplicationContext _context;
 
-        public ChatHub(HUDBContext context)
+        public ChatHub(ApplicationContext context)
         {
             _context = context;
         }

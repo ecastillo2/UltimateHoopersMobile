@@ -27,7 +27,7 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="context"></param>
         /// <param name="configuration"></param>
-        public ProductController(HUDBContext context, IConfiguration configuration)
+        public ProductController(ApplicationContext context, IConfiguration configuration)
         {
            
             this._configuration = configuration;

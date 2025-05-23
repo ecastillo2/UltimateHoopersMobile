@@ -31,7 +31,7 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="context">Database context</param>
         /// <param name="configuration">Application configuration</param>
-        public PostController(HUDBContext context, IConfiguration configuration)
+        public PostController(ApplicationContext context, IConfiguration configuration)
         {
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _repository = new PostRepository(context, _configuration);

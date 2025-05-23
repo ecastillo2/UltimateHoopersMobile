@@ -7,14 +7,14 @@ using UltimateHoopers.Models;
 
 namespace UltimateHoopers.ViewModels
 {
-    public class PrivateRunDetailsViewModel : BindableObject
+    public class RunDetailsViewModel : BindableObject
     {
-        private Run _run;
+        private RunDto _run;
         private bool _isBusy;
         private bool _isUserJoined;
 
         // Properties
-        public Run Run
+        public RunDto Run
         {
             get => _run;
             set
@@ -79,7 +79,7 @@ namespace UltimateHoopers.ViewModels
         public ICommand ShareRunCommand { get; }
 
         // Constructor
-        public PrivateRunDetailsViewModel(Run run)
+        public RunDetailsViewModel(RunDto run)
         {
             Run = run;
 

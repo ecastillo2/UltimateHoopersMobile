@@ -8,17 +8,17 @@ using DataLayer.Context;
 
 namespace DataLayer.DAL.Repository
 {
-    public class PrivateRunInviteRepository : IPrivateRunInviteRepository, IDisposable
+    public class JoinedRunRepository : IJoinedRunRepository, IDisposable
     {
         public IConfiguration Configuration { get; }
-        private HUDBContext _context;
+        private ApplicationContext _context;
         private EmailMessages _emailMessages;
 
         /// <summary>
         /// PrivateRun Repository
         /// </summary>
         /// <param name="context"></param>
-        public PrivateRunInviteRepository(HUDBContext context)
+        public JoinedRunRepository(ApplicationContext context)
         {
             _context = context;
 
@@ -29,15 +29,15 @@ namespace DataLayer.DAL.Repository
         /// </summary>
         /// <param name="PrivateRunId"></param>
         /// <returns></returns>
-        public async Task<PrivateRunInvite> GetPrivateRunInviteById(string PrivateRunInviteId)
+        public async Task<JoinedRun> GetJoinedRunById(string JoinedRunId)
         {
             using (var context = _context)
             {
                 try
                 {
                     // Use LINQ to query for the Post with the matching PostId
-                    var query = await (from model in context.PrivateRunInvite
-                                       where model.PrivateRunInviteId == PrivateRunInviteId
+                    var query = await (from model in context.JoinedRun
+                                       where model.JoinedRunId == JoinedRunId
                                        select model).FirstOrDefaultAsync();
 
                     return query;
@@ -54,14 +54,14 @@ namespace DataLayer.DAL.Repository
         /// Get PrivateRun Invites
         /// </summary>
         /// <returns></returns>
-        public async Task<List<PrivateRunInvite>> GetPrivateRunInvites()
+        public async Task<List<JoinedRun>> GetJoinedRuns()
         {
             using (var context = _context)
             {
                 try
                 {
                     // Use LINQ to select all posts
-                    var query = await (from model in context.PrivateRunInvite
+                    var query = await (from model in context.JoinedRun
                                        select model).ToListAsync();
 
                     return query;
@@ -79,14 +79,14 @@ namespace DataLayer.DAL.Repository
         /// </summary>
         /// <param name="ProfileId"></param>
         /// <returns></returns>
-        public async Task<List<PrivateRunInvite>> GetPrivateRunInvitesByProfileId(string ProfileId)
+        public async Task<List<JoinedRun>> GetJoinedRunsByProfileId(string ProfileId)
         {
             using (var context = _context)
             {
                 try
                 {
                     // Use LINQ to query for the Post with the matching PostId
-                    var query = await (from model in context.PrivateRunInvite
+                    var query = await (from model in context.JoinedRun
                                        where model.ProfileId == ProfileId
                                        select model).ToListAsync();
 
@@ -108,14 +108,14 @@ namespace DataLayer.DAL.Repository
         /// </summary>
         /// <param name="email"></param>
         /// <returns></returns>
-        public async Task<bool> IsProfileIdIdAlreadyInvitedToRunInPrivateRunInvites(string profileId, string PrivateRunId)
+        public async Task<bool> IsProfileIdIdAlreadyInvitedToRunInJoinedRuns(string profileId, string RunId)
         {
             using (var context = _context)
             {
                 try
                 {
-                    bool item = (from u in context.PrivateRunInvite
-                                 where u.ProfileId == profileId && u.PrivateRunId == PrivateRunId
+                    bool item = (from u in context.JoinedRun
+                                 where u.ProfileId == profileId && u.RunId == RunId
                                  select u).Any();
 
                     return item;
@@ -135,18 +135,18 @@ namespace DataLayer.DAL.Repository
         /// <param name="PrivateRunId"></param>
         /// <param name="AcceptedInvite"></param>
         /// <returns></returns>
-        public async Task UpdatePlayerPrivateRunInvite(string ProfileId, string PrivateRunInviteId, string AcceptedInvite)
+        public async Task UpdatePlayerJoinedRun(string ProfileId, string JoinedRunId, string AcceptedInvite)
         {
             using (var context = _context)
             {
-                var existingItem = context.PrivateRunInvite.Where(s => s.ProfileId == ProfileId && s.PrivateRunInviteId == PrivateRunInviteId).FirstOrDefault<PrivateRunInvite>();
+                var existingItem = context.JoinedRun.Where(s => s.ProfileId == ProfileId && s.JoinedRunId == JoinedRunId).FirstOrDefault<JoinedRun>();
 
                 if (existingItem != null)
                 {
                     existingItem.AcceptedInvite = AcceptedInvite;
                     
 
-                    context.PrivateRunInvite.Update(existingItem);
+                    context.JoinedRun.Update(existingItem);
                     await Save();
                 }
                 else
@@ -154,7 +154,7 @@ namespace DataLayer.DAL.Repository
 
                 }
 
-                var existingOrder = context.Order.Where(s => s.ProfileId == ProfileId && s.PrivateRunInviteId == existingItem.PrivateRunInviteId).FirstOrDefault<Order>();
+                var existingOrder = context.Order.Where(s => s.ProfileId == ProfileId && s.JoinedRunId == existingItem.JoinedRunId).FirstOrDefault<Order>();
 
                 if (existingOrder != null)
                 {
@@ -191,18 +191,18 @@ namespace DataLayer.DAL.Repository
         /// <param name="PrivateRunId"></param>
         /// <param name="AcceptedInvite"></param>
         /// <returns></returns>
-        public async Task UpdatePlayerPresentPrivateRunInvite(string ProfileId, string PrivateRunInviteId, bool preseent)
+        public async Task UpdatePlayerPresentJoinedRun(string ProfileId, string JoinedRunId, bool preseent)
         {
             using (var context = _context)
             {
-                var existingItem = context.PrivateRunInvite.Where(s => s.ProfileId == ProfileId && s.PrivateRunInviteId == PrivateRunInviteId).FirstOrDefault<PrivateRunInvite>();
+                var existingItem = context.JoinedRun.Where(s => s.ProfileId == ProfileId && s.JoinedRunId == JoinedRunId).FirstOrDefault<JoinedRun>();
 
                 if (existingItem != null)
                 {
                     existingItem.Present = preseent;
 
 
-                    context.PrivateRunInvite.Update(existingItem);
+                    context.JoinedRun.Update(existingItem);
                     await Save();
                 }
                 else
@@ -218,7 +218,7 @@ namespace DataLayer.DAL.Repository
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
-        public async Task InsertPrivateRunInvite(PrivateRunInvite model)
+        public async Task InsertJoinedRun(JoinedRun model)
         {
             using (var context = _context)
             {
@@ -228,7 +228,7 @@ namespace DataLayer.DAL.Repository
                     model.InvitedDate = DateTime.Now.ToString();
                     model.Present = false;
 
-                    await context.PrivateRunInvite.AddAsync(model);
+                    await context.JoinedRun.AddAsync(model);
 
                 }
                 catch (Exception ex)
@@ -245,17 +245,17 @@ namespace DataLayer.DAL.Repository
         /// </summary>
         /// <param name="PrivateRunInviteId"></param>
         /// <returns></returns>
-        public async Task DeletePrivateRunInvite(string PrivateRunInviteId)
+        public async Task DeleteJoinedRun(string JoinedRunId)
         {
             using (var context = _context)
             {
-                PrivateRunInvite obj = (from u in context.PrivateRunInvite
-                                  where u.PrivateRunInviteId == PrivateRunInviteId
-                                  select u).FirstOrDefault();
+                JoinedRun obj = (from u in context.JoinedRun
+                                 where u.JoinedRunId == JoinedRunId
+                                 select u).FirstOrDefault();
 
 
 
-                _context.PrivateRunInvite.Remove(obj);
+                _context.JoinedRun.Remove(obj);
                 await Save();
             }
         }
@@ -266,17 +266,17 @@ namespace DataLayer.DAL.Repository
         /// </summary>
         /// <param name="PrivateRunInviteId"></param>
         /// <returns></returns>
-        public async Task ClearPrivateRunInviteByPrivateRun(string PrivateRunId)
+        public async Task ClearRunInviteByRun(string RunId)
         {
             using (var context = _context)
             {
                 // Select all records with PrivateRunId == 7
-                var recordsToDelete = from u in context.PrivateRunInvite
-                                      where u.PrivateRunId == PrivateRunId
+                var recordsToDelete = from u in context.JoinedRun
+                                      where u.RunId == RunId
                                       select u;
 
                 // Remove all selected records
-                context.PrivateRunInvite.RemoveRange(recordsToDelete);
+                context.JoinedRun.RemoveRange(recordsToDelete);
 
                 // Save changes asynchronously
                 await Save();
@@ -290,17 +290,17 @@ namespace DataLayer.DAL.Repository
         /// <param name="profileId"></param>
         /// <param name="privateRunId"></param>
         /// <returns></returns>
-        public async Task<bool> RemoveProfileFromPrivateRun(string profileId, string privateRunId)
+        public async Task<bool> RemoveProfileFromRun(string profileId, string runId)
         {
-            var obj = await _context.PrivateRunInvite
-        .FirstOrDefaultAsync(u => u.ProfileId == profileId && u.PrivateRunId == privateRunId);
+            var obj = await _context.JoinedRun
+        .FirstOrDefaultAsync(u => u.ProfileId == profileId && u.RunId == runId);
 
             if (obj == null)
             {
                 return false; // No matching record found, return failure
             }
 
-            _context.PrivateRunInvite.Remove(obj);
+            _context.JoinedRun.Remove(obj);
             await Save(); // Ensure the deletion is saved
 
             return true; // Successfully removed
@@ -323,7 +323,10 @@ namespace DataLayer.DAL.Repository
         {
             return await _context.SaveChangesAsync();
         }
-         
 
+        public Task ClearJoinedRunByRun(string RunId)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

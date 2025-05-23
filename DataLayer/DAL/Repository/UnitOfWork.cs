@@ -15,7 +15,7 @@ namespace DataLayer.DAL
     /// </summary>
     public class UnitOfWork : IUnitOfWork
     {
-        private readonly HUDBContext _context;
+        private readonly ApplicationContext _context;
         private readonly ILogger<UnitOfWork> _logger;
         private IDbContextTransaction _transaction;
 
@@ -27,8 +27,8 @@ namespace DataLayer.DAL
         private ICourtRepository _courtRepository;
         private IProductRepository _productRepository;
         private IOrderRepository _orderRepository;
-        private IPrivateRunRepository _privateRunRepository;
-        private IPrivateRunInviteRepository _privateRunInviteRepository;
+        private IRunRepository _runRepository;
+        private IJoinedRunRepository _joinedRunRepository;
         private bool _disposed = false;
 
         /// <summary>
@@ -37,7 +37,7 @@ namespace DataLayer.DAL
         /// <param name="context">The database context</param>
         /// <param name="logger">Logger for diagnostic information</param>
         public UnitOfWork(
-            HUDBContext context,
+            ApplicationContext context,
             ILogger<UnitOfWork> logger = null)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
@@ -87,12 +87,12 @@ namespace DataLayer.DAL
         /// <summary>
         /// Gets the private run repository
         /// </summary>
-        public IPrivateRunRepository PrivateRun => _privateRunRepository ??= new PrivateRunRepository(_context, null);
+        public IRunRepository Run => _runRepository ??= new RunRepository(_context, null);
 
         /// <summary>
         /// Gets the private run invite repository
         /// </summary>
-        public IPrivateRunInviteRepository PrivateRunInvite => _privateRunInviteRepository ??= new PrivateRunInviteRepository(_context);
+        public IJoinedRunRepository JoinedRun => _joinedRunRepository ??= new JoinedRunRepository(_context);
 
         /// <summary>
         /// Begin a database transaction

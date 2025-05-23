@@ -14,10 +14,10 @@ namespace DataLayer.DAL.Repository
     public class NotificationRepository : INotificationRepository, IDisposable
     {
         public IConfiguration Configuration { get; }
-        private HUDBContext _context;
+        private ApplicationContext _context;
        
 
-        public NotificationRepository(HUDBContext context)
+        public NotificationRepository(ApplicationContext context)
         {
             _context = context;
             

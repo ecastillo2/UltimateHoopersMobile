@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 
 namespace UltimateHoopers.Models
 {
-    public class Run
+    public class RunDto
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
         public string Name { get; set; }

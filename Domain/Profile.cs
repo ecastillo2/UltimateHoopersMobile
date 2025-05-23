@@ -63,10 +63,10 @@ namespace Domain
         public string? Email { get; set; }
 
         [NotMapped]
-        public List<PrivateRun>? PrivateRunList { get; set; }
+        public List<Run>? RunList { get; set; }
 
         [NotMapped]
-        public List<PrivateRunInvite>? PrivateRunInviteList { get; set; }
+        public List<JoinedRun>? JoinedRunList { get; set; }
         [NotMapped]
         public List<Notification>? NotificationList { get; set; }
 

@@ -6,7 +6,7 @@ using System.Text;
 
 namespace ApiClient
 {
-    public static class PrivateRunInviteApi
+    public static class JoinedRunApi
     {
         static WebApi _api = new WebApi();
 
@@ -15,10 +15,10 @@ namespace ApiClient
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        public static async Task<List<PrivateRunInvite>> GetPrivateRunInvites(string token)
+        public static async Task<List<JoinedRun>> GetJoinedRuns(string token)
         {
             WebApi _api = new WebApi();
-            List<PrivateRunInvite> modelList = new List<PrivateRunInvite>();
+            List<JoinedRun> modelList = new List<JoinedRun>();
 
             var clientBaseAddress = _api.Intial();
             using (var client = new HttpClient())
@@ -31,13 +31,13 @@ namespace ApiClient
 
                 try
                 {
-                    var response = await client.GetAsync("api/PrivateRunInvite/GetPrivateRunInvites/");
+                    var response = await client.GetAsync("api/JoinedRun/GetJoinedRuns/");
                     var responseString = await response.Content.ReadAsStringAsync();
 
 
                     if (response.IsSuccessStatusCode)
                     {
-                        modelList = JsonConvert.DeserializeObject<List<PrivateRunInvite>>(responseString);
+                        modelList = JsonConvert.DeserializeObject<List<JoinedRun>>(responseString);
 
                     }
                 }
@@ -59,7 +59,7 @@ namespace ApiClient
         /// <param name="obj"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        public static async Task<bool> CreatePrivateRunInvite(PrivateRunInvite obj, string token)
+        public static async Task<bool> CreateJoinedRun(JoinedRun obj, string token)
         {
 
             var userJsonString = JsonConvert.SerializeObject(obj);
@@ -76,7 +76,7 @@ namespace ApiClient
                
                 try
                 {
-                    var response = await client.PostAsync("api/PrivateRunInvite/CreatePrivateRunInvite/", content);
+                    var response = await client.PostAsync("api/JoinedRun/CreateJoinedRun/", content);
 
                 }
 
@@ -96,11 +96,11 @@ namespace ApiClient
         /// <param name="postId"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        public static async Task<PrivateRunInvite> GetPrivateRunInviteById(string privateRunInviteId, string token)
+        public static async Task<JoinedRun> GetJoinedRunById(string JoinedRunId, string token)
         {
 
-            PrivateRunInvite obj = new PrivateRunInvite();
-            string urlParameters = "?privateRunInviteId=" + privateRunInviteId;
+            JoinedRun obj = new JoinedRun();
+            string urlParameters = "?joinedRunId=" + JoinedRunId;
 
             var clientBaseAddress = _api.Intial();
             using (var client = new HttpClient())
@@ -113,13 +113,13 @@ namespace ApiClient
                
                 try
                 {
-                    var response = await client.GetAsync("api/PrivateRunInvite/GetPrivateRunInviteById" + urlParameters);
+                    var response = await client.GetAsync("api/JoinedRun/GetJoinedRunById" + urlParameters);
                     var responseString = await response.Content.ReadAsStringAsync();
 
                     if (response.IsSuccessStatusCode)
                     {
 
-                        obj = JsonConvert.DeserializeObject<PrivateRunInvite>(responseString);
+                        obj = JsonConvert.DeserializeObject<JoinedRun>(responseString);
 
 
                     }
@@ -145,11 +145,11 @@ namespace ApiClient
         /// <param name="AcceptedInvite">The updated status of the invite (Accepted, Declined, Undecided, etc.).</param>
         /// <param name="token">The authentication token for the request.</param>
         /// <returns>A JsonResult indicating success or failure of the operation.</returns>
-        public static async Task<JsonResult> UpdatePlayerPrivateRunInvite(string ProfileId, string PrivateRunInviteId, string AcceptedInvite, string token)
+        public static async Task<JsonResult> UpdatePlayerJoinedRun(string ProfileId, string JoinedRunId, string AcceptedInvite, string token)
         {
-            PrivateRunInvite obj = new PrivateRunInvite();
+            JoinedRun obj = new JoinedRun();
             string urlParameters = "?profileId=" + ProfileId;
-            string urlParameters2 = "&privateRunInviteId=" + PrivateRunInviteId;
+            string urlParameters2 = "&joinedRunId=" + JoinedRunId;
             string urlParameters3 = "&acceptedInvite=" + AcceptedInvite;
 
             var clientBaseAddress = _api.Intial();
@@ -163,7 +163,7 @@ namespace ApiClient
                 try
                 {
                     // Construct the full URL with query parameters
-                    var fullUrl = "api/PrivateRunInvite/UpdatePlayerPrivateRunInvite" + urlParameters + urlParameters2 + urlParameters3;
+                    var fullUrl = "api/JoinedRun/UpdatePlayerJoinedRun" + urlParameters + urlParameters2 + urlParameters3;
 
                     // Send GET request to update the invite status
                     var response = await client.GetAsync(fullUrl);
@@ -173,7 +173,7 @@ namespace ApiClient
                     if (response.IsSuccessStatusCode)
                     {
                         // Deserialize the response JSON into an object (if needed)
-                        obj = JsonConvert.DeserializeObject<PrivateRunInvite>(responseString);
+                        obj = JsonConvert.DeserializeObject<JoinedRun>(responseString);
 
                         // Return a JsonResult with success
                         return new JsonResult(new { success = true, message = "Invite updated successfully" });
@@ -206,10 +206,10 @@ namespace ApiClient
         /// <param name="postId"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        public static async Task<List<PrivateRunInvite>> GetPrivateRunInvitesByProfileId(string ProfileId, string token)
+        public static async Task<List<JoinedRun>> GetJoinedRunsByProfileId(string ProfileId, string token)
         {
 
-            List<PrivateRunInvite> modelList = new List<PrivateRunInvite>();
+            List<JoinedRun> modelList = new List<JoinedRun>();
             string urlParameters = "?profileId=" + ProfileId;
 
             var clientBaseAddress = _api.Intial();
@@ -223,13 +223,13 @@ namespace ApiClient
 
                 try
                 {
-                    var response = await client.GetAsync("api/PrivateRunInvite/GetPrivateRunInvitesByProfileId" + urlParameters);
+                    var response = await client.GetAsync("api/JoinedRun/GetJoinedRunsByProfileId" + urlParameters);
                     var responseString = await response.Content.ReadAsStringAsync();
 
                     if (response.IsSuccessStatusCode)
                     {
 
-                        modelList = JsonConvert.DeserializeObject<List<PrivateRunInvite>>(responseString);
+                        modelList = JsonConvert.DeserializeObject<List<JoinedRun>>(responseString);
 
 
                     }
@@ -253,7 +253,7 @@ namespace ApiClient
         /// <param name="obj"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        public static async Task<bool> UpdatePrivateRunInvite(PrivateRunInvite obj, string token)
+        public static async Task<bool> UpdateJoinedRun(JoinedRun obj, string token)
         {
             
             var userJsonString = JsonConvert.SerializeObject(obj);
@@ -269,7 +269,7 @@ namespace ApiClient
                 HttpContent content = new StringContent(userJsonString, Encoding.UTF8, "application/json");
                 try
                 {
-                    var response = await client.PostAsync("api/PrivateRunInvite/UpdatePrivateRunInvite", content);
+                    var response = await client.PostAsync("api/JoinedRun/UpdateJoinedRun", content);
                     var responseString = await response.Content.ReadAsStringAsync();
 
                 }
@@ -334,12 +334,12 @@ namespace ApiClient
         /// <param name="postId"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        public static async Task RemoveProfileFromPrivateRun(string ProfileId, string PrivateRunId,  string token)
+        public static async Task RemoveProfileFromRun(string ProfileId, string runId,  string token)
         {
 
-            PrivateRunInvite obj = new PrivateRunInvite();
+            JoinedRun obj = new JoinedRun();
             string urlParameters = "?profileId=" + ProfileId;
-            string urlParameters2 = "&privateRunId=" + PrivateRunId;
+            string urlParameters2 = "&runId=" + runId;
           
 
             var clientBaseAddress = _api.Intial();
@@ -353,13 +353,13 @@ namespace ApiClient
 
                 try
                 {
-                    var response = await client.GetAsync("api/PrivateRunInvite/RemoveProfileFromPrivateRun" + urlParameters + urlParameters2 );
+                    var response = await client.GetAsync("api/JoinedRun/RemoveProfileFromRun" + urlParameters + urlParameters2 );
                     var responseString = await response.Content.ReadAsStringAsync();
 
                     if (response.IsSuccessStatusCode)
                     {
 
-                        obj = JsonConvert.DeserializeObject<PrivateRunInvite>(responseString);
+                        obj = JsonConvert.DeserializeObject<JoinedRun>(responseString);
 
 
                     }
@@ -382,10 +382,10 @@ namespace ApiClient
         /// <param name="postId"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        public static async Task ClearPrivateRunInviteByPrivateRun(string PrivateRunId,  string token)
+        public static async Task ClearJoinedRunByPrivateRun(string PrivateRunId,  string token)
         {
 
-            PrivateRunInvite obj = new PrivateRunInvite();
+            JoinedRun obj = new JoinedRun();
             string urlParameters = "?privateRunId=" + PrivateRunId;
            
 
@@ -401,13 +401,13 @@ namespace ApiClient
 
                 try
                 {
-                    var response = await client.GetAsync("api/PrivateRunInvite/ClearPrivateRunInviteByPrivateRun" + urlParameters );
+                    var response = await client.GetAsync("api/JoinedRun/ClearJoinedRunByPrivateRun" + urlParameters );
                     var responseString = await response.Content.ReadAsStringAsync();
 
                     if (response.IsSuccessStatusCode)
                     {
 
-                        obj = JsonConvert.DeserializeObject<PrivateRunInvite>(responseString);
+                        obj = JsonConvert.DeserializeObject<JoinedRun>(responseString);
 
 
                     }

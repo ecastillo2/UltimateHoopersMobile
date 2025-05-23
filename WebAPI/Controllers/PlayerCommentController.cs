@@ -25,7 +25,7 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="context"></param>
         /// <param name="configuration"></param>
-        public PlayerCommentController(HUDBContext context, IConfiguration configuration)
+        public PlayerCommentController(ApplicationContext context, IConfiguration configuration)
         {
            
             this._configuration = configuration;

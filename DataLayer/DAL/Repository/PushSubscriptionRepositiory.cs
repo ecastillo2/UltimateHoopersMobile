@@ -14,10 +14,10 @@ namespace DataLayer.DAL.Repository
     public class PushSubscriptionRepository : IPushSubscriptionRepository, IDisposable
     {
         public IConfiguration Configuration { get; }
-        private HUDBContext _context;
+        private ApplicationContext _context;
        
 
-        public PushSubscriptionRepository(HUDBContext context, IConfiguration configuration)
+        public PushSubscriptionRepository(ApplicationContext context, IConfiguration configuration)
         {
             Configuration = configuration;
             _context = context;

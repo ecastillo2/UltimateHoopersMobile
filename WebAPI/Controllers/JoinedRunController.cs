@@ -14,10 +14,10 @@ namespace WebAPI.Controllers
     /// </summary>
     [Route("api/[controller]")]
     [Authorize]
-    public class PrivateRunInviteController : Controller
+    public class JoinedRunController : Controller
     {
         HttpResponseMessage returnMessage = new HttpResponseMessage();
-        private IPrivateRunInviteRepository repository;        
+        private IJoinedRunRepository repository;        
         private readonly IConfiguration _configuration;
 
 
@@ -26,11 +26,11 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="context"></param>
         /// <param name="configuration"></param>
-        public PrivateRunInviteController(HUDBContext context, IConfiguration configuration)
+        public JoinedRunController(ApplicationContext context, IConfiguration configuration)
         {
            
             this._configuration = configuration;
-            this.repository = new PrivateRunInviteRepository(context);
+            this.repository = new JoinedRunRepository(context);
 
         }
 
@@ -38,11 +38,11 @@ namespace WebAPI.Controllers
         /// Get PrivateRunInvites
         /// </summary>
         /// <returns></returns>
-        [HttpGet("GetPrivateRunInvites")]
-        public async Task<List<PrivateRunInvite>> GetPrivateRunInvites()
+        [HttpGet("GetJoinedRuns")]
+        public async Task<List<JoinedRun>> GetJoinedRuns()
         {
 
-            return await repository.GetPrivateRunInvites();
+            return await repository.GetJoinedRuns();
 
         }
 
@@ -52,12 +52,12 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="privateRunInviteId"></param>
         /// <returns></returns>
-        [HttpGet("GetPrivateRunInviteById")]
-        public async Task<PrivateRunInvite> GetPrivateRunInviteById(string privateRunInviteId)
+        [HttpGet("GetJoinedRunById")]
+        public async Task<JoinedRun> GetJoinedRunById(string joinedRunId)
         {
             try
             {
-                return await repository.GetPrivateRunInviteById(privateRunInviteId);
+                return await repository.GetJoinedRunById(joinedRunId);
             }
             catch(Exception ex)
             {
@@ -71,12 +71,12 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="profileId"></param>
         /// <returns></returns>
-        [HttpGet("GetPrivateRunInvitesByProfileId")]
+        [HttpGet("GetJoinedRunsByProfileId")]
         //[Authorize]
-        public async Task<List<PrivateRunInvite>> GetPrivateRunInvitesByProfileIdId(string profileId)
+        public async Task<List<JoinedRun>> GetJoinedRunsByProfileIdId(string profileId)
         {
 
-            return await repository.GetPrivateRunInvitesByProfileId(profileId);
+            return await repository.GetJoinedRunsByProfileId(profileId);
 
         }
 
@@ -85,12 +85,12 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="profileId"></param>
         /// <returns></returns>
-        [HttpGet("IsProfileIdIdAlreadyInvitedToRunInPrivateRunInvites")]
+        [HttpGet("IsProfileIdIdAlreadyInvitedToRunInJoinedRuns")]
         //[Authorize]
-        public async Task<bool> IsProfileIdIdAlreadyInvitedToRunInPrivateRunInvites(string profileId, string privateRunId)
+        public async Task<bool> IsProfileIdIdAlreadyInvitedToRunInJoinedRuns(string profileId, string privateRunId)
         {
 
-            return await repository.IsProfileIdIdAlreadyInvitedToRunInPrivateRunInvites(profileId, privateRunId);
+            return await repository.IsProfileIdIdAlreadyInvitedToRunInJoinedRuns(profileId, privateRunId);
 
         }
 
@@ -100,13 +100,33 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="profileId"></param>
         /// <returns></returns>
-        [HttpGet("UpdatePlayerPrivateRunInvite")]
+        [HttpGet("UpdatePlayerJoinedRun")]
         //[Authorize]
-        public async Task UpdatePlayerPrivateRunInvite(string profileId, string privateRunInviteId, string acceptedInvite )
+        public async Task UpdatePlayerJoinedRun(string profileId, string joinedRunId, string acceptedInvite )
         {
             try
             {
-                await repository.UpdatePlayerPrivateRunInvite(profileId, privateRunInviteId, acceptedInvite);
+                await repository.UpdatePlayerJoinedRun(profileId, joinedRunId, acceptedInvite);
+            }
+            catch (Exception ex)
+            {
+                var x = ex;
+            }
+        }
+
+
+        /// <summary>
+        /// Get JoinedRuns By ProfileId
+        /// </summary>
+        /// <param name="profileId"></param>
+        /// <returns></returns>
+        [HttpGet("UpdatePlayerPresentJoinedRun")]
+        //[Authorize]
+        public async Task UpdatePlayerPresentJoinedRun(string profileId, string privateRunId, bool present)
+        {
+            try
+            {
+                await repository.UpdatePlayerPresentJoinedRun(profileId, privateRunId, present);
             }
             catch (Exception ex)
             {
@@ -120,33 +140,13 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="profileId"></param>
         /// <returns></returns>
-        [HttpGet("UpdatePlayerPresentPrivateRunInvite")]
+        [HttpGet("RemoveProfileFromRun")]
         //[Authorize]
-        public async Task UpdatePlayerPresentPrivateRunInvite(string profileId, string privateRunId, bool present)
+        public async Task<IActionResult> RemoveProfileFromRun(string profileId, string runId)
         {
             try
             {
-                await repository.UpdatePlayerPresentPrivateRunInvite(profileId, privateRunId, present);
-            }
-            catch (Exception ex)
-            {
-                var x = ex;
-            }
-        }
-
-
-        /// <summary>
-        /// Get PrivateRunInvites By ProfileId
-        /// </summary>
-        /// <param name="profileId"></param>
-        /// <returns></returns>
-        [HttpGet("RemoveProfileFromPrivateRun")]
-        //[Authorize]
-        public async Task<IActionResult> RemoveProfileFromPrivateRun(string profileId, string privateRunId)
-        {
-            try
-            {
-                bool result = await repository.RemoveProfileFromPrivateRun(profileId, privateRunId);
+                bool result = await repository.RemoveProfileFromRun(profileId, runId);
                 if (result)
                 {
                     return Ok(new { success = true, message = "Profile removed successfully." });
@@ -166,13 +166,13 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="privateRun"></param>
         /// <returns></returns>
-        [HttpPost("CreatePrivateRunInvite")]
-        public async Task CreatePrivateRunInvite([FromBody] PrivateRunInvite privateRunInvite)
+        [HttpPost("CreateJoinedRun")]
+        public async Task CreateJoinedRun([FromBody] JoinedRun joinedRun)
         {
             
             try
             {
-                  await  repository.InsertPrivateRunInvite(privateRunInvite);
+                  await  repository.InsertJoinedRun(joinedRun);
             }
             catch (Exception ex)
             {
@@ -187,14 +187,14 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="privateRunId"></param>
         /// <returns></returns>
-        [HttpDelete("DeletePrivateRunInvite")]
-        public async Task<HttpResponseMessage> DeletePrivateRunInvite(string privateRunInviteId)
+        [HttpDelete("DeleteJoinedRun")]
+        public async Task<HttpResponseMessage> DeleteJoinedRun(string joinedRunId)
         {
             try
             {
-                await repository.DeletePrivateRunInvite(privateRunInviteId);
+                await repository.DeleteJoinedRun(joinedRunId);
 
-                returnMessage.RequestMessage = new HttpRequestMessage(HttpMethod.Post, "DeletePrivateRunInvite");
+                returnMessage.RequestMessage = new HttpRequestMessage(HttpMethod.Post, "DeleteJoinedRun");
 
                 return await Task.FromResult(returnMessage);
             }
@@ -213,14 +213,14 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="privateRunId"></param>
         /// <returns></returns>
-        [HttpGet("ClearPrivateRunInviteByPrivateRun")]
-        public async Task<HttpResponseMessage> ClearPrivateRunInviteByPrivateRun(string PrivateRunId)
+        [HttpGet("ClearRunInviteByRun")]
+        public async Task<HttpResponseMessage> ClearRunInviteByRun(string runId)
         {
             try
             {
-                await repository.ClearPrivateRunInviteByPrivateRun(PrivateRunId);
+                await repository.ClearJoinedRunByRun(runId);
 
-                returnMessage.RequestMessage = new HttpRequestMessage(HttpMethod.Post, "ClearPrivateRunInviteByPrivateRun");
+                returnMessage.RequestMessage = new HttpRequestMessage(HttpMethod.Post, "ClearRunInviteByRun");
 
                 return await Task.FromResult(returnMessage);
             }

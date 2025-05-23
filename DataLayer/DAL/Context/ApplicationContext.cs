@@ -5,14 +5,14 @@ using System.Reflection.Emit;
 
 namespace DataLayer.Context
 {
-    public partial class HUDBContext : DbContext
+    public partial class ApplicationContext : DbContext
     {
-        public HUDBContext()
+        public ApplicationContext()
         {
 
         }
 
-        public HUDBContext(DbContextOptions<HUDBContext> options)
+        public ApplicationContext(DbContextOptions<ApplicationContext> options)
             : base(options)
         {
 
@@ -27,8 +27,8 @@ namespace DataLayer.Context
         public virtual DbSet<Comment> Comment { get; set; }
         public virtual DbSet<PlayerComment> PlayerComment { get; set; }
         public virtual DbSet<PostComment> PostComment { get; set; }
-        public virtual DbSet<PrivateRun> PrivateRun { get; set; }
-        public virtual DbSet<PrivateRunInvite> PrivateRunInvite { get; set; }
+        public virtual DbSet<Run> Run { get; set; }
+        public virtual DbSet<JoinedRun> JoinedRun { get; set; }
         public virtual DbSet<ErrorException> ErrorException { get; set; }
         public virtual DbSet<Profile> Profile { get; set; }
         public virtual DbSet<Tag> Tag { get; set; }

@@ -8,11 +8,11 @@ namespace Domain
         [Key]
         public string? GameId { get; set; }
         public string? CourtId { get; set; }
-        public string? PrivateRunId { get; set; }
+        public string? RunId { get; set; }
         public string? CreatedDate { get; set; }
         public string? WinProfileIdsStatusString { get; set; }
         public string? LoseProfileIdsStatusString { get; set; }
-        public string? PrivateRunNumber { get; set; }
+        public string? RunNumber { get; set; }
         public string? Location { get; set; }
         public string? GameNumber { get; set; }
         public string? Status { get; set; }
@@ -26,7 +26,7 @@ namespace Domain
         [NotMapped]
         public List<Profile>? LossersList { get; set; }
         [NotMapped]
-        public PrivateRun? PrivateRun { get; set; }
+        public Run? Run { get; set; }
         [NotMapped]
         public Court? Court { get; set; }
     }

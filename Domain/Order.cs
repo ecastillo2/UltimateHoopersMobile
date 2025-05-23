@@ -13,8 +13,8 @@ namespace Domain
         public string? OrderId { get; set; }
         public string? Id { get; set; }
         public string? ProfileId { get; set; }
-        public string? PrivateRunId { get; set; }
-        public string? PrivateRunInviteId { get; set; }
+        public string? RunId { get; set; }
+        public string? JoinedRunId { get; set; }
         public string? Name { get; set; }
         public string OrderNumber { get; set; }
         public string? ConfirmationCode { get; set; }
@@ -76,7 +76,7 @@ namespace Domain
         [NotMapped]
         public Profile? Profile { get; set; }
         [NotMapped]
-        public PrivateRun? PrivateRun { get; set; }
+        public Run? Run { get; set; }
 
         [NotMapped]
         public List<OrderItem>? OrderItems { get; set; }

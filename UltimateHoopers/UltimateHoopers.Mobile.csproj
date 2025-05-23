@@ -91,9 +91,6 @@
 		<Compile Update="Pages\FindRunsPage.xaml.cs">
 		  <DependentUpon>FindRunsPage.xaml</DependentUpon>
 		</Compile>
-		<Compile Update="Pages\PrivateRunDetailsPage.xaml.cs">
-		  <DependentUpon>PrivateRunDetailsPage.xaml</DependentUpon>
-		</Compile>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -139,7 +136,7 @@
 		<MauiXaml Update="Pages\PostsPage.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
-		<MauiXaml Update="Pages\PrivateRunDetailsPage.xaml">
+		<MauiXaml Update="Pages\RunDetailsPage.xaml">
 		  <Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
 		<MauiXaml Update="Pages\ShopPage.xaml">

@@ -11,7 +11,7 @@ namespace DataLayer.DAL.Repository
     /// </summary>
     public class UserRepository : GenericRepository<User>, IUserRepository
     {
-        public UserRepository(HUDBContext context, ILogger<UserRepository> logger = null)
+        public UserRepository(ApplicationContext context, ILogger<UserRepository> logger = null)
             : base(context, logger)
         {
         }

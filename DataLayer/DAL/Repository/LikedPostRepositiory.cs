@@ -10,9 +10,9 @@ namespace DataLayer.DAL.Repository
     public class LikedPostRepository : ILikedPostRepository, IDisposable
     {
         public IConfiguration Configuration { get; }
-        private HUDBContext _context;
+        private ApplicationContext _context;
 
-        public LikedPostRepository(HUDBContext context)
+        public LikedPostRepository(ApplicationContext context)
         {
             _context = context;
             

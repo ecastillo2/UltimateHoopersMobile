@@ -27,7 +27,7 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="context"></param>
         /// <param name="configuration"></param>
-        public SquadController(HUDBContext context, IConfiguration configuration)
+        public SquadController(ApplicationContext context, IConfiguration configuration)
         {
             this._configuration = configuration;
             this.repository = new SquadRepository(context);

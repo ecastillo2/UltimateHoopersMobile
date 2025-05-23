@@ -1,5 +1,8 @@
-﻿using Microsoft.Maui.Controls;
+﻿using Domain;
+using Microsoft.Maui.Controls;
+using Microsoft.Maui.Controls.Shapes;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
@@ -7,10 +10,8 @@ using System.Threading.Tasks;
 using UltimateHoopers.Converter;
 using UltimateHoopers.Helpers;
 using UltimateHoopers.Models;
-using Microsoft.Maui.Controls.Shapes;
 using UltimateHoopers.Services;
 using UltimateHoopers.ViewModels;
-using System.Collections.Generic;
 using ControlsAnimation = Microsoft.Maui.Controls.Animation;
 using MauiAnimation = Microsoft.Maui.Animations.Animation;
 
@@ -68,19 +69,19 @@ namespace UltimateHoopers.Pages
             {
                 Debug.WriteLine("Join button clicked");
 
-                Run run = null;
+                RunDto run = null;
 
                 // Try multiple ways to get the Run object
                 if (sender is Button button)
                 {
                     // Method 1: Check CommandParameter
-                    if (button.CommandParameter is Run commandRun)
+                    if (button.CommandParameter is RunDto commandRun)
                     {
                         run = commandRun;
                         Debug.WriteLine($"Got run from CommandParameter: {run.Name}");
                     }
                     // Method 2: Check BindingContext
-                    else if (button.BindingContext is Run contextRun)
+                    else if (button.BindingContext is RunDto contextRun)
                     {
                         run = contextRun;
                         Debug.WriteLine($"Got run from BindingContext: {run.Name}");
@@ -157,14 +158,14 @@ namespace UltimateHoopers.Pages
         }
 
         // Helper method to find Run in parent context
-        private Run FindRunInParentContext(Element element)
+        private RunDto FindRunInParentContext(Element element)
         {
             try
             {
                 var parent = element.Parent;
                 while (parent != null)
                 {
-                    if (parent.BindingContext is Run run)
+                    if (parent.BindingContext is RunDto run)
                     {
                         Debug.WriteLine($"Found Run in parent: {parent.GetType().Name}");
                         return run;
@@ -183,7 +184,7 @@ namespace UltimateHoopers.Pages
         }
 
         // Fallback method to handle joining manually if command fails
-        private async Task HandleJoinRunFallback(Run run)
+        private async Task HandleJoinRunFallback(RunDto run)
         {
             try
             {
@@ -238,12 +239,12 @@ namespace UltimateHoopers.Pages
             {
                 Debug.WriteLine("Run item tapped");
 
-                if (sender is Frame frame && frame.BindingContext is Run run)
+                if (sender is Frame frame && frame.BindingContext is RunDto run)
                 {
                     Debug.WriteLine($"Run item tapped: {run.Name}");
 
                     // Navigate to run details page
-                    await Navigation.PushAsync(new PrivateRunDetailsPage(run));
+                    await Navigation.PushAsync(new RunDetailsPage(run));
                 }
                 else
                 {
@@ -349,8 +350,8 @@ namespace UltimateHoopers.Pages
     // Enhanced ViewModel with comprehensive debugging
     public class FindRunsViewModel : BindableObject
     {
-        private ObservableCollection<Run> _allRuns;
-        private ObservableCollection<Run> _runs;
+        private ObservableCollection<RunDto> _allRuns;
+        private ObservableCollection<RunDto> _runs;
         private bool _isLoading;
         private bool _isRefreshing;
         private string _searchText = "";
@@ -363,15 +364,15 @@ namespace UltimateHoopers.Pages
             Debug.WriteLine("=== FindRunsViewModel Constructor Start ===");
 
             // Initialize collections immediately
-            _allRuns = new ObservableCollection<Run>();
-            _runs = new ObservableCollection<Run>();
+            _allRuns = new ObservableCollection<RunDto>();
+            _runs = new ObservableCollection<RunDto>();
 
             Debug.WriteLine($"Collections initialized. _allRuns: {_allRuns != null}, _runs: {_runs != null}");
 
             // Initialize commands
             RefreshCommand = new Command(async () => await LoadRunsAsync());
-            JoinRunCommand = new Command<Run>(async (run) => await JoinRun(run));
-            ViewPrivateRunDetailsCommand = new Command<Run>(async (run) => await ViewRunDetails(run));
+            JoinRunCommand = new Command<RunDto>(async (run) => await JoinRun(run));
+            ViewPrivateRunDetailsCommand = new Command<RunDto>(async (run) => await ViewRunDetails(run));
             CreateRunCommand = new Command(async () => await CreateRun());
             ToggleMapViewCommand = new Command(() => MapViewEnabled = !MapViewEnabled);
             LoadMoreCommand = new Command(async () => await LoadMoreRuns());
@@ -380,7 +381,7 @@ namespace UltimateHoopers.Pages
             Debug.WriteLine("=== FindRunsViewModel Constructor End ===");
         }
 
-        public ObservableCollection<Run> Runs
+        public ObservableCollection<RunDto> Runs
         {
             get
             {
@@ -472,8 +473,8 @@ namespace UltimateHoopers.Pages
 
         // Commands
         public Command RefreshCommand { get; }
-        public Command<Run> JoinRunCommand { get; }
-        public Command<Run> ViewPrivateRunDetailsCommand { get; }
+        public Command<RunDto> JoinRunCommand { get; }
+        public Command<RunDto> ViewPrivateRunDetailsCommand { get; }
         public Command CreateRunCommand { get; }
         public Command ToggleMapViewCommand { get; }
         public Command LoadMoreCommand { get; }
@@ -493,16 +494,16 @@ namespace UltimateHoopers.Pages
                 try
                 {
                     var serviceProvider = MauiProgram.CreateMauiApp().Services;
-                    var privateRunService = serviceProvider.GetService<IPrivateRunService>();
+                    var privateRunService = serviceProvider.GetService<IRunService>();
 
                     if (privateRunService == null)
                     {
-                        privateRunService = new PrivateRunService();
+                        privateRunService = new RunService();
                     }
 
                     Debug.WriteLine("Attempting to load runs from service...");
 
-                    var privateRuns = await privateRunService.GetPrivateRunsAsync();
+                    var privateRuns = await privateRunService.GetRunsAsync();
 
                     if (privateRuns != null && privateRuns.Count > 0)
                     {
@@ -512,7 +513,7 @@ namespace UltimateHoopers.Pages
                         {
                             try
                             {
-                                var run = ConvertPrivateRunToRun(privateRun);
+                                var run = ConvertRunToRun(privateRun);
                                 _allRuns.Add(run);
                             }
                             catch (Exception ex)
@@ -558,14 +559,14 @@ namespace UltimateHoopers.Pages
             }
         }
 
-        private Run ConvertPrivateRunToRun(Domain.PrivateRun privateRun)
+        private RunDto ConvertRunToRun(Domain.Run privateRun)
         {
-            var run = new Run
+            var run = new RunDto
             {
-                Id = privateRun.PrivateRunId ?? Guid.NewGuid().ToString(),
+                Id = privateRun.RunId ?? Guid.NewGuid().ToString(),
                 Name = privateRun.Name ?? "Basketball Run",
                 Location = privateRun.Name ?? "Court",
-                Address = $"{privateRun.Address ?? ""}, {privateRun.City ?? ""}, {privateRun.State ?? ""}, {privateRun.Zip ?? ""}".Trim(',', ' '),
+                Address = $"{privateRun.Court.Address ?? ""}, {privateRun.Court.City ?? ""}, {privateRun.Court.State ?? ""}, {privateRun.Court.Zip ?? ""}".Trim(',', ' '),
                 Date = privateRun.RunDate ?? DateTime.Now.AddDays(1),
                 Time = $"{privateRun.RunTime ?? "6:00 PM"} - {privateRun.EndTime ?? "8:00 PM"}",
                 HostName = "Host",
@@ -591,9 +592,9 @@ namespace UltimateHoopers.Pages
 
             try
             {
-                var mockRuns = new List<Run>();
+                var mockRuns = new List<RunDto>();
 
-                var run1 = new Run
+                var run1 = new RunDto
                 {
                     Id = "1",
                     Name = "Downtown Pickup Game",
@@ -615,7 +616,7 @@ namespace UltimateHoopers.Pages
                     Players = new ObservableCollection<Player>()
                 };
 
-                var run2 = new Run
+                var run2 = new RunDto
                 {
                     Id = "2",
                     Name = "Pro Run",
@@ -637,7 +638,7 @@ namespace UltimateHoopers.Pages
                     Players = new ObservableCollection<Player>()
                 };
 
-                var run3 = new Run
+                var run3 = new RunDto
                 {
                     Id = "3",
                     Name = "Morning Shootaround",
@@ -702,7 +703,7 @@ namespace UltimateHoopers.Pages
                 if (_allRuns == null || _allRuns.Count == 0)
                 {
                     Debug.WriteLine("No runs to filter, creating empty collection");
-                    Runs = new ObservableCollection<Run>();
+                    Runs = new ObservableCollection<RunDto>();
                     return;
                 }
 
@@ -757,7 +758,7 @@ namespace UltimateHoopers.Pages
                     try
                     {
                         Debug.WriteLine("Updating Runs collection on UI thread");
-                        Runs = new ObservableCollection<Run>(filteredList);
+                        Runs = new ObservableCollection<RunDto>(filteredList);
                         Debug.WriteLine($"Runs collection updated. New count: {Runs.Count}");
                     }
                     catch (Exception ex)
@@ -775,7 +776,7 @@ namespace UltimateHoopers.Pages
             Debug.WriteLine("=== FilterRuns End ===");
         }
 
-        private async Task JoinRun(Run run)
+        private async Task JoinRun(RunDto run)
         {
             Debug.WriteLine($"JoinRun called for: {run?.Name ?? "null"}");
 
@@ -833,7 +834,7 @@ namespace UltimateHoopers.Pages
             }
         }
 
-        private async Task ViewRunDetails(Run run)
+        private async Task ViewRunDetails(RunDto run)
         {
             Debug.WriteLine($"ViewRunDetails called for: {run?.Name ?? "null"}");
             try
@@ -842,7 +843,7 @@ namespace UltimateHoopers.Pages
 
                 await MainThread.InvokeOnMainThreadAsync(async () =>
                 {
-                    var detailsPage = new PrivateRunDetailsPage(run);
+                    var detailsPage = new RunDetailsPage(run);
                     await Application.Current.MainPage.Navigation.PushAsync(detailsPage);
                 });
             }
@@ -928,7 +929,7 @@ namespace UltimateHoopers.Pages
                 IsLoading = true;
                 await Task.Delay(1000);
 
-                _allRuns.Add(new Run
+                _allRuns.Add(new RunDto
                 {
                     Id = "4",
                     Name = "Weekend Warriors",

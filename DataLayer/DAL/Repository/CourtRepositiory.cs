@@ -19,12 +19,12 @@ namespace DataLayer.DAL.Repository
     /// </summary>
     public class CourtRepository : ICourtRepository
     {
-        private readonly HUDBContext _context;
+        private readonly ApplicationContext _context;
         private readonly ILogger<CourtRepository> _logger;
         private readonly IConfiguration _configuration;
         private bool _disposed = false;
 
-        public CourtRepository(HUDBContext context, IConfiguration configuration, ILogger<CourtRepository> logger = null)
+        public CourtRepository(ApplicationContext context, IConfiguration configuration, ILogger<CourtRepository> logger = null)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));

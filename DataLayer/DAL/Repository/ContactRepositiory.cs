@@ -10,10 +10,10 @@ namespace DataLayer.DAL.Repository
     public class ContactRepository : IContactRepository, IDisposable
     {
         public IConfiguration Configuration { get; }
-        private HUDBContext _context;
+        private ApplicationContext _context;
        
 
-        public ContactRepository(HUDBContext context)
+        public ContactRepository(ApplicationContext context)
         {
             _context = context;
 
