@@ -152,7 +152,7 @@ namespace WebAPI.ApiClients
             }
         }
 
-        public async Task<bool> UserJoinRunAsync(JoinedRun joinedrun, string accessToken, CancellationToken cancellationToken = default)
+        public async Task<bool> UserJoinRunAsync(CreateJoinedRunDto joinedrun, string accessToken, CancellationToken cancellationToken = default)
         {
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 

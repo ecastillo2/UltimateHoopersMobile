@@ -262,7 +262,7 @@ namespace UltimateHoopers.Services
             }
         }
 
-        public async Task<bool> UserJoinRunAsync(JoinedRun joinedRun)
+        public async Task<bool> UserJoinRunAsync(CreateJoinedRunDto joinedRun)
         {
             try
             {

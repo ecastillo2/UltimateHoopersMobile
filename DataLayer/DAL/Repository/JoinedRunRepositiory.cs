@@ -1,332 +1,429 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.EntityFrameworkCore;
-using Domain;
-using Messages;
-using DataLayer.DAL.Context;
+﻿using DataLayer.Context;
 using DataLayer.DAL.Interface;
-using DataLayer.Context;
+using Domain;
+using Domain.DtoModel;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace DataLayer.DAL.Repository
 {
-    public class JoinedRunRepository : IJoinedRunRepository, IDisposable
+    /// <summary>
+    /// Repository for JoinedRun operations
+    /// </summary>
+    public class JoinedRunRepository : IJoinedRunRepository
     {
-        public IConfiguration Configuration { get; }
-        private ApplicationContext _context;
-        private EmailMessages _emailMessages;
+        private readonly ApplicationContext _context;
+        private readonly ILogger<JoinedRunRepository> _logger;
+        private bool _disposed = false;
 
         /// <summary>
-        /// PrivateRun Repository
+        /// Initializes a new instance of the JoinedRunRepository class
         /// </summary>
-        /// <param name="context"></param>
-        public JoinedRunRepository(ApplicationContext context)
+        /// <param name="context">Database context</param>
+        /// <param name="logger">Logger</param>
+        public JoinedRunRepository(ApplicationContext context, ILogger<JoinedRunRepository> logger = null)
         {
-            _context = context;
-
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _logger = logger;
         }
 
         /// <summary>
-        /// Get PrivateRun Invite By Id
+        /// Get all joined runs
         /// </summary>
-        /// <param name="PrivateRunId"></param>
-        /// <returns></returns>
-        public async Task<JoinedRun> GetJoinedRunById(string JoinedRunId)
-        {
-            using (var context = _context)
-            {
-                try
-                {
-                    // Use LINQ to query for the Post with the matching PostId
-                    var query = await (from model in context.JoinedRun
-                                       where model.JoinedRunId == JoinedRunId
-                                       select model).FirstOrDefaultAsync();
-
-                    return query;
-                }
-                catch (Exception ex)
-                {
-                    // Handle the exception or log it as needed
-                    return null;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Get PrivateRun Invites
-        /// </summary>
-        /// <returns></returns>
         public async Task<List<JoinedRun>> GetJoinedRuns()
         {
-            using (var context = _context)
+            try
             {
-                try
-                {
-                    // Use LINQ to select all posts
-                    var query = await (from model in context.JoinedRun
-                                       select model).ToListAsync();
-
-                    return query;
-                }
-                catch (Exception ex)
-                {
-                    // Log the exception or handle it as needed
-                    return null;
-                }
+                return await _context.JoinedRun
+                    .AsNoTracking()
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error retrieving joined runs");
+                throw;
             }
         }
 
         /// <summary>
-        /// Get PrivateRuns By ProfileId
+        /// Get joined run by ID
         /// </summary>
-        /// <param name="ProfileId"></param>
-        /// <returns></returns>
-        public async Task<List<JoinedRun>> GetJoinedRunsByProfileId(string ProfileId)
+        public async Task<JoinedRun> GetJoinedRunById(string joinedRunId)
         {
-            using (var context = _context)
+            try
             {
-                try
-                {
-                    // Use LINQ to query for the Post with the matching PostId
-                    var query = await (from model in context.JoinedRun
-                                       where model.ProfileId == ProfileId
-                                       select model).ToListAsync();
-
-                 
-
-                    return query;
-                }
-                catch (Exception ex)
-                {
-                    // Log the exception or handle it as needed
-                    return null;
-                }
+                return await _context.JoinedRun
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(jr => jr.JoinedRunId == joinedRunId);
             }
-        }
-
-
-        /// <summary>
-        /// Is Email Available
-        /// </summary>
-        /// <param name="email"></param>
-        /// <returns></returns>
-        public async Task<bool> IsProfileIdIdAlreadyInvitedToRunInJoinedRuns(string profileId, string RunId)
-        {
-            using (var context = _context)
+            catch (Exception ex)
             {
-                try
-                {
-                    bool item = (from u in context.JoinedRun
-                                 where u.ProfileId == profileId && u.RunId == RunId
-                                 select u).Any();
-
-                    return item;
-                }
-                catch (Exception ex)
-                {
-                    // Log the exception or handle it as needed
-                    return false;
-                }
+                _logger?.LogError(ex, "Error retrieving joined run {JoinedRunId}", joinedRunId);
+                throw;
             }
         }
 
         /// <summary>
-        /// Update Player PrivateRun Invite
+        /// Get joined runs by profile ID
         /// </summary>
-        /// <param name="ProfileId"></param>
-        /// <param name="PrivateRunId"></param>
-        /// <param name="AcceptedInvite"></param>
-        /// <returns></returns>
-        public async Task UpdatePlayerJoinedRun(string ProfileId, string JoinedRunId, string AcceptedInvite)
+        public async Task<List<JoinedRun>> GetJoinedRunsByProfileId(string profileId)
         {
-            using (var context = _context)
+            try
             {
-                var existingItem = context.JoinedRun.Where(s => s.ProfileId == ProfileId && s.JoinedRunId == JoinedRunId).FirstOrDefault<JoinedRun>();
+                var joinedRuns = await _context.JoinedRun
+                    .AsNoTracking()
+                    .Where(jr => jr.ProfileId == profileId)
+                    .ToListAsync();
 
-                if (existingItem != null)
+                // Enrich joined runs with run data
+                foreach (var joinedRun in joinedRuns)
                 {
-                    existingItem.AcceptedInvite = AcceptedInvite;
-                    
+                    // Get the associated run
+                    var run = await _context.Run
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(r => r.RunId == joinedRun.RunId);
 
-                    context.JoinedRun.Update(existingItem);
-                    await Save();
-                }
-                else
-                {
-
-                }
-
-                var existingOrder = context.Order.Where(s => s.ProfileId == ProfileId && s.JoinedRunId == existingItem.JoinedRunId).FirstOrDefault<Order>();
-
-                if (existingOrder != null)
-                {
-
-                    if(AcceptedInvite == "Accepted")
+                    // Get associated court if available
+                    if (run != null && !string.IsNullOrEmpty(run.CourtId))
                     {
-                        existingOrder.Status = "Completed";
-                    }
+                        var court = await _context.Court
+                            .AsNoTracking()
+                            .FirstOrDefaultAsync(c => c.CourtId == run.CourtId);
 
-                    if (AcceptedInvite == "Accepted / Pending")
-                    {
-                        existingOrder.Status = "Pending";
+                        run.Court = court;
                     }
-
-                    if (AcceptedInvite == "Refund")
-                    {
-                        existingOrder.Status = "Refund";
-                    }
-
-                    context.Order.Update(existingOrder);
-                    await Save();
                 }
-                else
-                {
 
-                }
+                return joinedRuns;
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error retrieving joined runs for profile {ProfileId}", profileId);
+                throw;
             }
         }
 
         /// <summary>
-        /// Update Player PrivateRun Invite
+        /// Check if profile is already invited to run
         /// </summary>
-        /// <param name="ProfileId"></param>
-        /// <param name="PrivateRunId"></param>
-        /// <param name="AcceptedInvite"></param>
-        /// <returns></returns>
-        public async Task UpdatePlayerPresentJoinedRun(string ProfileId, string JoinedRunId, bool preseent)
+        public async Task<bool> IsProfileIdIdAlreadyInvitedToRunInJoinedRuns(string profileId, string runId)
         {
-            using (var context = _context)
+            try
             {
-                var existingItem = context.JoinedRun.Where(s => s.ProfileId == ProfileId && s.JoinedRunId == JoinedRunId).FirstOrDefault<JoinedRun>();
-
-                if (existingItem != null)
-                {
-                    existingItem.Present = preseent;
-
-
-                    context.JoinedRun.Update(existingItem);
-                    await Save();
-                }
-                else
-                {
-
-                }
+                return await _context.JoinedRun
+                    .AnyAsync(jr => jr.ProfileId == profileId && jr.RunId == runId);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error checking if profile {ProfileId} is already invited to run {RunId}", profileId, runId);
+                throw;
             }
         }
 
-
         /// <summary>
-        /// Insert PrivateRun Invite
+        /// Update player joined run status
         /// </summary>
-        /// <param name="model"></param>
-        /// <returns></returns>
-        public async Task InsertJoinedRun(JoinedRun model)
+        public async Task UpdatePlayerJoinedRun(string profileId, string joinedRunId, string acceptedInvite)
         {
-            using (var context = _context)
+            try
             {
-                try
+                var joinedRun = await _context.JoinedRun
+                    .FirstOrDefaultAsync(jr => jr.ProfileId == profileId && jr.JoinedRunId == joinedRunId);
+
+                if (joinedRun == null)
                 {
-                    
-                    model.InvitedDate = DateTime.Now.ToString();
-                    model.Present = false;
-
-                    await context.JoinedRun.AddAsync(model);
-
+                    _logger?.LogWarning("Joined run not found for profile {ProfileId} and joined run {JoinedRunId}", profileId, joinedRunId);
+                    return;
                 }
-                catch (Exception ex)
-                {
 
-                }
+                joinedRun.AcceptedInvite = acceptedInvite;
+                _context.JoinedRun.Update(joinedRun);
                 await Save();
 
+                // Update associated order if it exists
+                var order = await _context.Order
+                    .FirstOrDefaultAsync(o => o.ProfileId == profileId && o.JoinedRunId == joinedRunId);
+
+                if (order != null)
+                {
+                    // Update order status based on accepted invite status
+                    if (acceptedInvite == "Accepted")
+                    {
+                        order.Status = "Completed";
+                    }
+                    else if (acceptedInvite == "Accepted / Pending")
+                    {
+                        order.Status = "Pending";
+                    }
+                    else if (acceptedInvite == "Refund")
+                    {
+                        order.Status = "Refund";
+                    }
+
+                    _context.Order.Update(order);
+                    await Save();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error updating player joined run for profile {ProfileId} and joined run {JoinedRunId}", profileId, joinedRunId);
+                throw;
             }
         }
 
         /// <summary>
-        /// Delete PrivateRun Invite
+        /// Update player present status in a joined run
         /// </summary>
-        /// <param name="PrivateRunInviteId"></param>
-        /// <returns></returns>
-        public async Task DeleteJoinedRun(string JoinedRunId)
+        public async Task UpdatePlayerPresentJoinedRun(string profileId, string joinedRunId, bool present)
         {
-            using (var context = _context)
+            try
             {
-                JoinedRun obj = (from u in context.JoinedRun
-                                 where u.JoinedRunId == JoinedRunId
-                                 select u).FirstOrDefault();
+                var joinedRun = await _context.JoinedRun
+                    .FirstOrDefaultAsync(jr => jr.ProfileId == profileId && jr.JoinedRunId == joinedRunId);
 
+                if (joinedRun == null)
+                {
+                    _logger?.LogWarning("Joined run not found for profile {ProfileId} and joined run {JoinedRunId}", profileId, joinedRunId);
+                    return;
+                }
 
-
-                _context.JoinedRun.Remove(obj);
+                joinedRun.Present = present;
+                _context.JoinedRun.Update(joinedRun);
                 await Save();
             }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error updating player present status for profile {ProfileId} and joined run {JoinedRunId}", profileId, joinedRunId);
+                throw;
+            }
         }
 
-
         /// <summary>
-        /// Delete PrivateRun Invite
+        /// Insert a new joined run
         /// </summary>
-        /// <param name="PrivateRunInviteId"></param>
-        /// <returns></returns>
-        public async Task ClearRunInviteByRun(string RunId)
+        public async Task InsertJoinedRun(CreateJoinedRunDto dto)
         {
-            using (var context = _context)
+            try
             {
-                // Select all records with PrivateRunId == 7
-                var recordsToDelete = from u in context.JoinedRun
-                                      where u.RunId == RunId
-                                      select u;
+                // Validate input
+                if (dto == null)
+                {
+                    throw new ArgumentNullException(nameof(dto), "CreateJoinedRunDto cannot be null");
+                }
 
-                // Remove all selected records
-                context.JoinedRun.RemoveRange(recordsToDelete);
+                // Validate required fields
+                if (string.IsNullOrEmpty(dto.ProfileId))
+                {
+                    throw new ArgumentException("ProfileId is required", nameof(dto.ProfileId));
+                }
 
-                // Save changes asynchronously
+                if (string.IsNullOrEmpty(dto.RunId))
+                {
+                    throw new ArgumentException("RunId is required", nameof(dto.RunId));
+                }
+
+                // Convert DTO to entity
+                var joinedRun = dto.ToJoinedRun();
+
+                // Generate a new ID if not provided
+                if (string.IsNullOrEmpty(joinedRun.JoinedRunId))
+                {
+                    joinedRun.JoinedRunId = Guid.NewGuid().ToString();
+                }
+
+                // Set default values
+                joinedRun.InvitedDate = DateTime.Now.ToString();
+                joinedRun.Present = false;
+
+                // Add to context and save
+                await _context.JoinedRun.AddAsync(joinedRun);
                 await Save();
+
+                _logger?.LogInformation("Successfully inserted JoinedRun with ID: {JoinedRunId}", joinedRun.JoinedRunId);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error inserting joined run from DTO for ProfileId: {ProfileId}, RunId: {RunId}",
+                    dto?.ProfileId, dto?.RunId);
+                throw;
             }
         }
 
 
         /// <summary>
-        /// Remove Profile From PrivateRun
+        /// Remove a profile from a run
         /// </summary>
-        /// <param name="profileId"></param>
-        /// <param name="privateRunId"></param>
-        /// <returns></returns>
         public async Task<bool> RemoveProfileFromRun(string profileId, string runId)
         {
-            var obj = await _context.JoinedRun
-        .FirstOrDefaultAsync(u => u.ProfileId == profileId && u.RunId == runId);
-
-            if (obj == null)
+            try
             {
-                return false; // No matching record found, return failure
+                var joinedRun = await _context.JoinedRun
+                    .FirstOrDefaultAsync(jr => jr.ProfileId == profileId && jr.RunId == runId);
+
+                if (joinedRun == null)
+                {
+                    _logger?.LogWarning("Joined run not found for profile {ProfileId} and run {RunId}", profileId, runId);
+                    return false;
+                }
+
+                _context.JoinedRun.Remove(joinedRun);
+                await Save();
+                return true;
             }
-
-            _context.JoinedRun.Remove(obj);
-            await Save(); // Ensure the deletion is saved
-
-            return true; // Successfully removed
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error removing profile {ProfileId} from run {RunId}", profileId, runId);
+                throw;
+            }
         }
 
         /// <summary>
-        /// Dispose
+        /// Delete a joined run
         /// </summary>
-        /// <exception cref="NotImplementedException"></exception>
-        public void Dispose()
+        public async Task DeleteJoinedRun(string joinedRunId)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var joinedRun = await _context.JoinedRun
+                    .FirstOrDefaultAsync(jr => jr.JoinedRunId == joinedRunId);
+
+                if (joinedRun == null)
+                {
+                    _logger?.LogWarning("Joined run not found with ID {JoinedRunId}", joinedRunId);
+                    return;
+                }
+
+                _context.JoinedRun.Remove(joinedRun);
+                await Save();
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error deleting joined run {JoinedRunId}", joinedRunId);
+                throw;
+            }
         }
 
         /// <summary>
-        /// Save
+        /// Clear all joined runs for a specific run
         /// </summary>
-        /// <returns></returns>
+        public async Task ClearJoinedRunByRun(string runId)
+        {
+            try
+            {
+                var joinedRuns = await _context.JoinedRun
+                    .Where(jr => jr.RunId == runId)
+                    .ToListAsync();
+
+                if (joinedRuns.Any())
+                {
+                    _context.JoinedRun.RemoveRange(joinedRuns);
+                    await Save();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error clearing joined runs for run {RunId}", runId);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Get joined runs with player counts for a run
+        /// </summary>
+        public async Task<(List<Profile> Profiles, int AcceptedCount, int UndecidedCount, int DeclinedCount)> GetJoinedRunsWithCountsByRunId(string runId)
+        {
+            try
+            {
+                var joinedRuns = await _context.JoinedRun
+                    .AsNoTracking()
+                    .Where(jr => jr.RunId == runId)
+                    .ToListAsync();
+
+                var profileIds = joinedRuns.Select(jr => jr.ProfileId).ToList();
+
+                var profiles = await _context.Profile
+                    .AsNoTracking()
+                    .Where(p => profileIds.Contains(p.ProfileId))
+                    .ToListAsync();
+
+                // Match profiles with their joined run status
+                foreach (var profile in profiles)
+                {
+                    var joinedRun = joinedRuns.FirstOrDefault(jr => jr.ProfileId == profile.ProfileId);
+                    if (joinedRun != null)
+                    {
+                        profile.AcceptedInvite = joinedRun.AcceptedInvite;
+                    }
+                }
+
+                // Count by status
+                int acceptedCount = joinedRuns.Count(jr => jr.AcceptedInvite == "Accepted");
+                int undecidedCount = joinedRuns.Count(jr => jr.AcceptedInvite == "Undecided" || string.IsNullOrEmpty(jr.AcceptedInvite));
+                int declinedCount = joinedRuns.Count(jr => jr.AcceptedInvite == "Declined");
+
+                return (profiles, acceptedCount, undecidedCount, declinedCount);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting joined runs with counts for run {RunId}", runId);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Save changes to the database
+        /// </summary>
         public async Task<int> Save()
         {
-            return await _context.SaveChangesAsync();
+            try
+            {
+                return await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error saving changes to database");
+                throw;
+            }
         }
 
-        public Task ClearJoinedRunByRun(string RunId)
+        /// <summary>
+        /// Dispose of resources
+        /// </summary>
+        protected virtual void Dispose(bool disposing)
         {
-            throw new NotImplementedException();
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    // No need to dispose _context here as it's injected and managed by DI container
+                }
+
+                _disposed = true;
+            }
         }
+
+        /// <summary>
+        /// Dispose of resources
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+    }
+
+    /// <summary>
+    /// Helper class for cursor-based pagination
+    /// </summary>
+    internal class JoinedRunCursorData
+    {
+        public string Id { get; set; }
+        public string ProfileId { get; set; }
+        public string RunId { get; set; }
     }
 }

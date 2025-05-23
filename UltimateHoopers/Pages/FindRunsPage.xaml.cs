@@ -1,4 +1,5 @@
 ﻿using Domain;
+using Domain.DtoModel;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Shapes;
 using System;
@@ -574,26 +575,7 @@ namespace UltimateHoopers.Pages
 
                 try
                 {
-                    var serviceProvider = MauiProgram.CreateMauiApp().Services;
-                    var privateRunService = serviceProvider.GetService<IRunService>();
-
-                    if (privateRunService == null)
-                    {
-                        privateRunService = new RunService();
-                    }
-
-                    Debug.WriteLine("Attempting to load runs from service...");
-
-                    var joinrun = new JoinedRun
-                    {
-                        ProfileId = App.User?.ProfileId,
-                        RunId = run.Id,
-                        InvitedDate = DateTime.UtcNow.ToString(),
-                        Present = false
-                    };
-
-
-                    var privateRuns = await privateRunService.UserJoinRunAsync(joinrun);
+                    
 
                     
                 }
@@ -904,6 +886,30 @@ namespace UltimateHoopers.Pages
                 if (confirmed)
                 {
                     run.CurrentPlayerCount++;
+
+
+                    var serviceProvider = MauiProgram.CreateMauiApp().Services;
+                    var privateRunService = serviceProvider.GetService<IRunService>();
+
+                    if (privateRunService == null)
+                    {
+                        privateRunService = new RunService();
+                    }
+
+                    Debug.WriteLine("Attempting to load runs from service...");
+
+                    var joinrun = new CreateJoinedRunDto
+                    {
+                        ProfileId = App.User?.ProfileId,
+                        RunId = run.Id,
+                        InvitedDate = DateTime.UtcNow.ToString(),
+                        Present = false
+                    };
+
+
+                    var privateRuns = await privateRunService.UserJoinRunAsync(joinrun);
+
+
                     await Application.Current.MainPage.DisplayAlert(
                         "Success",
                         $"You've joined the run at {run.Location}! See you on the court!",

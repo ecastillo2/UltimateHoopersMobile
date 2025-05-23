@@ -43,7 +43,7 @@ namespace WebAPI.ApiClients
         /// <summary>
         /// Create a new Run
         /// </summary>
-        Task<bool> UserJoinRunAsync(JoinedRun joinedRun, string accessToken, CancellationToken cancellationToken = default);
+        Task<bool> UserJoinRunAsync(CreateJoinedRunDto joinedRun, string accessToken, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Update an existing Run

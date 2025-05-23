@@ -46,7 +46,6 @@ namespace WebAPI.Extensions
             services.AddScoped<INotificationRepository, NotificationRepository>();
             services.AddScoped<IProductRepository, ProductRepository>();
             services.AddScoped<IRunRepository, RunRepository>();
-            services.AddScoped<IJoinedRunRepository, JoinedRunRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<IFollowerRepository, FollowerRepository>();
             services.AddScoped<IFollowingRepository, FollowingRepository>();
@@ -55,6 +54,7 @@ namespace WebAPI.Extensions
             services.AddScoped<IPostCommentRepository, PostCommentRepository>();
             services.AddScoped<ISavedPostRepository, SavedPostRepository>();
             services.AddScoped<ISettingRepository, SettingRepository>();
+            services.AddScoped<IJoinedRunRepository, JoinedRunRepository>();
 
             return services;
         }

@@ -1,4 +1,5 @@
 ﻿using Domain;
+using Domain.DtoModel;
 using UltimateHoopers.Models;
 
 namespace UltimateHoopers.Services
@@ -10,6 +11,6 @@ namespace UltimateHoopers.Services
         Task<Run> CreateRunAsync(Run PrivateRun);
         Task<bool> UpdateRunAsync(Run PrivateRun);
         Task<bool> DeleteRunAsync(string RunId);
-        Task<bool> UserJoinRunAsync(JoinedRun PrivateRun);
+        Task<bool> UserJoinRunAsync(CreateJoinedRunDto PrivateRun);
     }
 }
