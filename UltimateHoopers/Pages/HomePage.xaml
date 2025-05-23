@@ -165,9 +165,32 @@
                 Clicked="OnViewAllRunsClicked" />
                         </Grid>
 
+                        <!-- Loading Spinner (displayed when runs are loading) -->
+                        <Frame x:Name="LoadingMessage"
+           IsVisible="true"
+           BorderColor="{StaticResource BorderColor}"
+           BackgroundColor="{StaticResource CardBackgroundColor}"
+           CornerRadius="10"
+           HasShadow="True"
+           Padding="15"
+           Margin="0,5,0,0">
+                            <VerticalStackLayout Spacing="10" HorizontalOptions="Center" Padding="20">
+                                <ActivityIndicator IsRunning="True" 
+                                                  Color="{StaticResource PrimaryColor}"
+                                                  HeightRequest="50"
+                                                  WidthRequest="50"
+                                                  Scale="1.5"/>
+                                <Label Text="Loading your runs..."
+                   FontSize="16"
+                   TextColor="{StaticResource SecondaryTextColor}"
+                   HorizontalOptions="Center"
+                   Margin="0,10,0,0" />
+                            </VerticalStackLayout>
+                        </Frame>
+
                         <!-- No Joined Runs Message (displayed when no runs are joined) -->
                         <Frame x:Name="NoRunsMessage"
-           IsVisible="true"
+           IsVisible="false"
            BorderColor="{StaticResource BorderColor}"
            BackgroundColor="{StaticResource CardBackgroundColor}"
            CornerRadius="10"
@@ -246,11 +269,32 @@
                                                     <FormattedString>
                                                         <Span Text="📍 " />
                                                         <Span Text="{Binding Address}" />
-                                                        <Span Text=", " />
-                                                        <Span Text="{Binding Time}" />
                                                     </FormattedString>
                                                 </Label.FormattedText>
                                             </Label>
+
+                                            <!-- Time and Player Limit -->
+                                            <StackLayout Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="15" Margin="0,30,0,5">
+                                                <!-- Time -->
+                                                <StackLayout Orientation="Horizontal">
+                                                    <Label Text="🕒 "
+                                                           FontSize="14"
+                                                           TextColor="{StaticResource SecondaryTextColor}" />
+                                                    <Label Text="{Binding Time}"
+                                                           FontSize="14"
+                                                           TextColor="{StaticResource SecondaryTextColor}" />
+                                                </StackLayout>
+
+                                                <!-- Player Limit -->
+                                                <StackLayout Orientation="Horizontal">
+                                                    <Label Text="👥 "
+                                                           FontSize="14"
+                                                           TextColor="{StaticResource SecondaryTextColor}" />
+                                                    <Label Text="{Binding PlayerCountDisplay}"
+                                                           FontSize="14"
+                                                           TextColor="{StaticResource SecondaryTextColor}" />
+                                                </StackLayout>
+                                            </StackLayout>
 
                                             <StackLayout Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Spacing="10">
                                                 <Button Text="View Details" 

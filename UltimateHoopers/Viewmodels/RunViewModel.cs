@@ -1,150 +1,115 @@
-﻿using Domain;
-using Domain.DtoModel;
-using Microsoft.Maui.Controls;
+﻿using Domain.DtoModel;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using UltimateHoopers.Models;
 
 namespace UltimateHoopers.ViewModels
 {
-    /// <summary>
-    /// ViewModel for displaying a Run on the UI
-    /// </summary>
-    public class RunViewModel : BindableObject
+    public class RunViewModel
     {
-        // Basic properties
+        // Base properties
         public string RunId { get; set; }
         public string Name { get; set; }
-        public DateTime? RunDate { get; set; }
-        public string RunTime { get; set; }
-        public string EndTime { get; set; }
         public string Address { get; set; }
-        public string City { get; set; }
-        public string State { get; set; }
-        public string Description { get; set; }
-        public decimal? Cost { get; set; }
-        public int? PlayerLimit { get; set; }
+        public string DayOfMonth { get; set; }
+        public string Month { get; set; }
+        public string Time { get; set; }
         public int CurrentPlayerCount { get; set; }
-        public string CourtImageUrl { get; set; }
-        public string HostName { get; set; }
-        public string HostId { get; set; }
-        public string SkillLevel { get; set; }
-        public string GameType { get; set; }
-        public bool IsPublic { get; set; }
-        public double Distance { get; set; }
+        public int PlayerLimit { get; set; }
 
-        // Computed properties for UI display
-        public string FormattedDate => RunDate?.ToString("dddd, MMMM dd, yyyy") ?? "TBD";
-        public string DayOfMonth => RunDate?.Day.ToString() ?? "?";
-        public string Month => RunDate?.ToString("MMM")?.ToUpper() ?? "TBD";
-        public string PlayerCountDisplay => $"{CurrentPlayerCount}/{PlayerLimit ?? 0} players";
-        public string DistanceText => $"{Distance:F1} miles away";
-        public bool IsFull => CurrentPlayerCount >= (PlayerLimit ?? 0);
-        public string CostText => Cost > 0 ? $"${Cost:F2}" : "Free";
-        public string Time => $"{RunTime} - {EndTime}";
-        public string Location => $"{Address}, {City}, {State}";
+        // Display properties
+        public string PlayerCountDisplay => $"{CurrentPlayerCount}/{PlayerLimit}";
 
-        /// <summary>
-        /// Creates a RunViewModel from a Run domain model
-        /// </summary>
-        public static RunViewModel FromRun(Run run, Court court = null)
+        // Static converter method to create RunViewModel from JoinedRunDto
+        public static RunViewModel FromJoinedRunDto(JoinedRunDetailViewModelDto dto)
         {
-            if (run == null) return null;
+            if (dto == null || dto.Run == null)
+                return null;
 
-            return new RunViewModel
+            try
             {
-                RunId = run.RunId,
-                Name = run.Name ?? "Basketball Run",
-                RunDate = run.RunDate,
-                RunTime = run.RunTime ?? "TBD",
-                EndTime = run.EndTime ?? "TBD",
-                Address = court?.Address ?? "Address not available",
-                City = court?.City ?? "City not available",
-                State = court?.State ?? "State not available",
-                Description = run.Description ?? "No description available",
-                Cost = run.Cost ?? 0.00m,
-                PlayerLimit = run.PlayerLimit ?? 10,
-                CurrentPlayerCount = run.PlayerCount ?? 0,
-                CourtImageUrl = court?.ImageURL ?? "https://placehold.co/600x400/png?text=Basketball+Court",
-                HostName = "Host", // Would need to be retrieved from the profile service
-                HostId = run.ProfileId ?? "",
-                SkillLevel = run.SkillLevel ?? "All Levels",
-                GameType = run.TeamType ?? "5-on-5",
-                IsPublic = run.IsPublic ?? true
-            };
+                // Default to current date
+                DateTime runDate = DateTime.Now;
+
+                // Safely extract the date using ToString()
+                try
+                {
+                    // Get a string representation and try to parse it
+                    // This avoids type-checking problems completely
+                    var dateStr = dto.Run.RunDate?.ToString();
+                    if (!string.IsNullOrEmpty(dateStr) && DateTime.TryParse(dateStr, out var parsedDate))
+                    {
+                        runDate = parsedDate;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Just log and continue with default date
+                    System.Diagnostics.Debug.WriteLine($"Date parsing error: {ex.Message}");
+                }
+
+                return new RunViewModel
+                {
+                    RunId = dto.Run.RunId,
+                    Name = dto.Run.Name ?? "Basketball Run",
+                    Address = dto.Run.Court?.Address ?? "Address not available",
+                    DayOfMonth = runDate.Day.ToString(),
+                    Month = runDate.ToString("MMM").ToUpper(),
+                    Time = $"{dto.Run.RunTime ?? "TBD"} - {dto.Run.EndTime ?? "TBD"}",
+                    CurrentPlayerCount = dto.Run.JoinedRunList?.Count ?? 0,
+                    PlayerLimit = dto.Run.PlayerLimit ?? 10
+                };
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error creating RunViewModel from JoinedRunDto: {ex.Message}");
+                return null;
+            }
         }
 
-        /// <summary>
-        /// Creates a RunViewModel from a JoinedRunDetailViewModelDto
-        /// </summary>
-        public static RunViewModel FromJoinedRunDto(JoinedRunDetailViewModelDto joinedRun)
-        {
-            if (joinedRun?.Run == null) return null;
-
-            var run = joinedRun.Run;
-            var court = run.Court;
-
-            return new RunViewModel
-            {
-                RunId = run.RunId,
-                Name = run.Name ?? "Basketball Run",
-                RunDate = run.RunDate,
-                RunTime = run.RunTime ?? "TBD",
-                EndTime = run.EndTime ?? "TBD",
-                Address = court?.Address ?? "Address not available",
-                City = court?.City ?? "City not available",
-                State = court?.State ?? "State not available",
-                Description = run.Description ?? "No description available",
-                Cost = run.Cost ?? 0.00m,
-                PlayerLimit = run.PlayerLimit ?? 10,
-                CurrentPlayerCount = run.PlayerCount ?? 0,
-                CourtImageUrl = court?.ImageURL ?? "https://placehold.co/600x400/png?text=Basketball+Court",
-                HostName = "Host", // Would need to be retrieved from the profile service
-                HostId = run.ProfileId ?? "",
-                SkillLevel = run.SkillLevel ?? "All Levels",
-                GameType = run.TeamType ?? "5-on-5",
-                IsPublic = run.IsPublic ?? true
-            };
-        }
-
-        /// <summary>
-        /// Converts this RunViewModel to a RunDto for navigation
-        /// </summary>
+        // Helper method to convert to RunDto
         public RunDto ToRunModel()
         {
-            var run = new RunDto
+            return new RunDto
             {
-                Id = RunId ?? Guid.NewGuid().ToString(),
-                Name = Name ?? "Basketball Run",
-                Location = Name ?? "Court",
-                Address = Address ?? "Location TBD",
-                Date = RunDate ?? DateTime.Now.AddDays(1),
-                Time = Time,
-                HostName = HostName ?? "Host",
-                HostId = HostId ?? "",
-                SkillLevel = SkillLevel ?? "All Levels",
-                GameType = GameType ?? "5-on-5",
-                IsPublic = IsPublic,
-                Description = Description ?? "",
-                PlayerLimit = PlayerLimit ?? 10,
+                Id = RunId,
+                Name = Name,
+                Address = Address,
+                PlayerLimit = PlayerLimit,
                 CurrentPlayerCount = CurrentPlayerCount,
-                CourtImageUrl = CourtImageUrl ?? "",
-                Cost = Cost ?? 0,
-                Distance = Distance
+                Date = ParseRunDate(),
+                Time = Time
             };
-
-            return run;
         }
-    }
 
-    /// <summary>
-    /// Helper class for cursor-based pagination with runs
-    /// </summary>
-    internal class CourtCursorData
-    {
-        public string Id { get; set; }
-        public string Zip { get; set; }
-        public string Status { get; set; }
+        // Helper to parse run date from DayOfMonth and Month
+        private DateTime ParseRunDate()
+        {
+            try
+            {
+                int day = int.Parse(DayOfMonth);
+                string monthStr = Month.Substring(0, 3); // First 3 chars
+
+                // Find the month number
+                string[] months = { "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC" };
+                int month = Array.IndexOf(months, monthStr) + 1;
+
+                if (month < 1) month = DateTime.Now.Month; // Fallback to current month
+
+                // Use current year, or next year if the date is in the past
+                int year = DateTime.Now.Year;
+                if (month < DateTime.Now.Month || (month == DateTime.Now.Month && day < DateTime.Now.Day))
+                {
+                    year++; // Next year
+                }
+
+                return new DateTime(year, month, day);
+            }
+            catch
+            {
+                // Return tomorrow if parsing fails
+                return DateTime.Now.AddDays(1);
+            }
+        }
     }
 }

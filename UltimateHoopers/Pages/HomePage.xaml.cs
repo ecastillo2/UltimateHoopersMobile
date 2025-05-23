@@ -46,6 +46,23 @@ namespace UltimateHoopers.Pages
         }
 
         // Load joined runs from the API
+        protected override void OnAppearing()
+        {
+            base.OnAppearing();
+
+            // Refresh joined runs when the page appears
+            if (!isLoadingJoinedRuns)
+            {
+                // Make sure the loading spinner is visible initially
+                LoadingMessage.IsVisible = true;
+                NoRunsMessage.IsVisible = false;
+                JoinedRunsCollection.IsVisible = false;
+
+                // Load the joined runs data
+                LoadJoinedRunsAsync();
+            }
+        }
+
         private async Task LoadJoinedRunsAsync()
         {
             try
@@ -56,8 +73,9 @@ namespace UltimateHoopers.Pages
                 isLoadingJoinedRuns = true;
 
                 // Show loading state
-                NoRunsMessage.IsVisible = true;
+                NoRunsMessage.IsVisible = false;
                 JoinedRunsCollection.IsVisible = false;
+                LoadingMessage.IsVisible = true;
 
                 // Try to get joined run service from DI
                 var serviceProvider = MauiProgram.CreateMauiApp().Services;
@@ -74,6 +92,7 @@ namespace UltimateHoopers.Pages
                 if (string.IsNullOrEmpty(profileId))
                 {
                     System.Diagnostics.Debug.WriteLine("No profile ID available - can't load joined runs");
+                    LoadingMessage.IsVisible = false;
                     NoRunsMessage.IsVisible = true;
                     JoinedRunsCollection.IsVisible = false;
                     isLoadingJoinedRuns = false;
@@ -82,12 +101,17 @@ namespace UltimateHoopers.Pages
 
                 // Get user's joined runs from the API
                 System.Diagnostics.Debug.WriteLine($"Fetching joined runs for profile: {profileId}");
+
+                // Add a slight delay to ensure spinner is visible (for demo purposes)
+                await Task.Delay(500);
+
                 var joinedRunsDto = await joinedRunService.GetUserJoinedRunsAsync(profileId);
 
                 // Check if we got any runs back
                 if (joinedRunsDto == null || !joinedRunsDto.Any())
                 {
                     System.Diagnostics.Debug.WriteLine("No joined runs found");
+                    LoadingMessage.IsVisible = false;
                     NoRunsMessage.IsVisible = true;
                     JoinedRunsCollection.IsVisible = false;
                     isLoadingJoinedRuns = false;
@@ -103,6 +127,7 @@ namespace UltimateHoopers.Pages
                 if (!runViewModels.Any())
                 {
                     System.Diagnostics.Debug.WriteLine("Failed to convert any joined runs to view models");
+                    LoadingMessage.IsVisible = false;
                     NoRunsMessage.IsVisible = true;
                     JoinedRunsCollection.IsVisible = false;
                     isLoadingJoinedRuns = false;
@@ -113,6 +138,7 @@ namespace UltimateHoopers.Pages
                 JoinedRunsCollection.ItemsSource = runViewModels;
 
                 // Update UI visibility
+                LoadingMessage.IsVisible = false;
                 NoRunsMessage.IsVisible = false;
                 JoinedRunsCollection.IsVisible = true;
 
@@ -123,6 +149,7 @@ namespace UltimateHoopers.Pages
                 System.Diagnostics.Debug.WriteLine($"Error loading joined runs: {ex.Message}");
 
                 // Show the no runs message on error
+                LoadingMessage.IsVisible = false;
                 NoRunsMessage.IsVisible = true;
                 JoinedRunsCollection.IsVisible = false;
             }
@@ -688,6 +715,7 @@ namespace UltimateHoopers.Pages
             return base.OnBackButtonPressed();
         }
 
+
         // Handle logout
         private async void LogoutUser()
         {
@@ -782,17 +810,7 @@ namespace UltimateHoopers.Pages
             await frame.ScaleTo(1, 100, Easing.CubicIn);
         }
 
-        // Override OnAppearing to refresh joined runs when page appears
-        protected override void OnAppearing()
-        {
-            base.OnAppearing();
-
-            // Refresh joined runs when the page appears
-            if (!isLoadingJoinedRuns)
-            {
-                LoadJoinedRunsAsync();
-            }
-        }
+      
     }
 
     // Placeholder pages for navigation
