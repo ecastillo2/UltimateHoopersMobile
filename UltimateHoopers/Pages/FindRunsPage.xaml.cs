@@ -129,6 +129,7 @@ namespace UltimateHoopers.Pages
 
                         if (_viewModel?.JoinRunCommand?.CanExecute(run) == true)
                         {
+                            await _viewModel.JoinRunAsync(run);
                             _viewModel.JoinRunCommand.Execute(run);
                         }
                         else
@@ -583,7 +584,16 @@ namespace UltimateHoopers.Pages
 
                     Debug.WriteLine("Attempting to load runs from service...");
 
-                    var privateRuns = await privateRunService.UserJoinRunAsync(run);
+                    var joinrun = new JoinedRun
+                    {
+                        ProfileId = Curernt.User.ProfileId,
+                        RunId = run.Id,
+                        InvitedDate = DateTime.UtcNow.ToString(),
+
+                    };
+
+
+                    var privateRuns = await privateRunService.UserJoinRunAsync(joinrun);
 
                     
                 }

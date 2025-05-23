@@ -152,12 +152,12 @@ namespace WebAPI.ApiClients
             }
         }
 
-        public async Task<bool> UserJoinRunAsync(RunDto run, string accessToken, CancellationToken cancellationToken = default)
+        public async Task<bool> UserJoinRunAsync(JoinedRun joinedrun, string accessToken, CancellationToken cancellationToken = default)
         {
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
             var jsonContent = new StringContent(
-                JsonSerializer.Serialize(run, _jsonOptions),
+                JsonSerializer.Serialize(joinedrun, _jsonOptions),
                 Encoding.UTF8,
                 "application/json");
 
