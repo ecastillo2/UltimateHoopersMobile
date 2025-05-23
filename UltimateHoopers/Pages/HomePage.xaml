@@ -143,6 +143,7 @@
                 <VerticalStackLayout Spacing="20">
 
                     <!-- Joined Runs Section - UPDATED SECTION -->
+                    <!-- Joined Runs Section -->
                     <VerticalStackLayout Spacing="10" Margin="0,0,0,20">
                         <!-- Section Header with View All Button -->
                         <Grid ColumnDefinitions="*,Auto">

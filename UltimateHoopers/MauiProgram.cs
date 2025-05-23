@@ -75,15 +75,9 @@ namespace UltimateHoopers
                     return new NotificationService(httpClient, configuration, logger);
                 });
 
-                // Register JoinedRun Service
-                builder.Services.AddSingleton<IJoinedRunService>(sp =>
-                {
-                    var httpClient = sp.GetService<HttpClient>();
-                    var configuration = sp.GetService<IConfiguration>();
-                    var logger = sp.GetService<ILogger<JoinedRunService>>();
-                    return new JoinedRunService(httpClient, configuration, logger);
-                });
-
+               
+                builder.Services.AddSingleton<IJoinedRunService, JoinedRunService>();
+                builder.Services.AddSingleton<IRunService, RunService>();
                 builder.Services.AddSingleton<IAuthenticateUser, AuthenticateUser>();
                 builder.Services.AddSingleton<IAuthService, AuthService>();
                 DiagnosticHelper.Log("Services registered");

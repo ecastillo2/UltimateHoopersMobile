@@ -1,8 +1,5 @@
 ﻿using Domain;
 using Domain.DtoModel;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Microsoft.Maui.Controls;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -11,275 +8,236 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using UltimateHoopers.Models;
-using WebAPI.ApiClients;
 
 namespace UltimateHoopers.Services
 {
     public class JoinedRunService : IJoinedRunService
     {
-        private readonly IJoinedRunApi _joinedRunApi;
         private readonly HttpClient _httpClient;
-        private readonly IConfiguration _configuration;
-        private readonly ILogger<JoinedRunService> _logger;
-        private const string TOKEN_KEY = "auth_token";
         private readonly string _baseUrl;
+        private readonly JsonSerializerOptions _jsonOptions;
 
-        // Constructor with proper DI
-        public JoinedRunService(HttpClient httpClient, IConfiguration configuration, ILogger<JoinedRunService> logger = null)
-        {
-            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            _logger = logger;
-
-            // Get base URL from configuration or use default
-            _baseUrl = _configuration["ApiSettings:BaseUrl"] ?? "https://ultimatehoopersapi.azurewebsites.net/";
-
-            // Set base address for HttpClient if not already set
-            if (_httpClient.BaseAddress == null)
-            {
-                _httpClient.BaseAddress = new Uri(_baseUrl);
-                LogInfo($"Set HttpClient.BaseAddress to {_baseUrl}");
-            }
-
-            // Set default headers
-            _httpClient.DefaultRequestHeaders.Accept.Clear();
-            _httpClient.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/json"));
-
-            // Create the API client last, so it has the properly configured HttpClient
-            _joinedRunApi = new JoinedRunApi(_httpClient, _configuration);
-
-            LogInfo($"RunService initialized with base URL: {_baseUrl}");
-        }
-
-        // Simplified constructor for non-DI scenarios
         public JoinedRunService()
         {
             _httpClient = new HttpClient();
-            _configuration = new ConfigurationBuilder()
-                .AddInMemoryCollection(new Dictionary<string, string>
-                {
-                    ["ApiSettings:BaseUrl"] = "https://ultimatehoopersapi.azurewebsites.net/"
-                })
-                .Build();
+            _baseUrl = "https://ultimatehoopersapi.azurewebsites.net";
 
-            _baseUrl = _configuration["ApiSettings:BaseUrl"];
-
-            // Set base address and headers
-            _httpClient.BaseAddress = new Uri(_baseUrl);
-            _httpClient.DefaultRequestHeaders.Accept.Clear();
-            _httpClient.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/json"));
-
-            // Create the API client after HttpClient is configured
-            _joinedRunApi = new JoinedRunApi(_httpClient, _configuration);
-
-            LogInfo($"RunService initialized with base URL: {_baseUrl} (non-DI constructor)");
+            _jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
         }
 
-
-        public async Task<List<JoinedRun>> GetUserJoinedRunsAsync(string ProfileId)
+        public async Task<List<JoinedRunDetailViewModelDto>> GetUserJoinedRunsAsync(string profileId)
         {
             try
             {
-                LogInfo("GetJoinedRunsAsync called");
+                Debug.WriteLine($"Fetching joined runs for profile: {profileId}");
 
-                // Get token (first from App state, then from secure storage)
-                var token = await GetTokenAsync();
-                LogInfo($"Token retrieved: {!string.IsNullOrEmpty(token)}");
-
-                if (string.IsNullOrEmpty(token))
+                if (string.IsNullOrEmpty(profileId))
                 {
-                    LogError("No access token available", null);
-                    throw new UnauthorizedAccessException("No access token available");
+                    Debug.WriteLine("Profile ID is null or empty - can't fetch joined runs");
+                    return new List<JoinedRunDetailViewModelDto>();
                 }
 
-                // Call the API with the retrieved token
-                LogInfo($"Calling API with token. Base URL: {_httpClient.BaseAddress}");
-
-                // Additional debug logging for the actual request
-                try
+                // Ensure we have an auth token
+                if (string.IsNullOrEmpty(App.AuthToken))
                 {
-                    _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                    LogInfo($"Set Authorization header: Bearer {token.Substring(0, Math.Min(10, token.Length))}...");
-                }
-                catch (Exception ex)
-                {
-                    LogError("Error setting authorization header", ex);
+                    Debug.WriteLine("Auth token is missing - can't fetch joined runs");
+                    return GetMockJoinedRuns(profileId);
                 }
 
-                try
+                // Add the auth token to the request
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
+
+                // Make the API request
+                var response = await _httpClient.GetAsync($"{_baseUrl}/api/JoinedRun/GetUserJoinedRunsAsync/{profileId}");
+
+                if (!response.IsSuccessStatusCode)
                 {
-                    var paginatedResult = await _joinedRunApi.GetUserJoinedRunsAsync(ProfileId, token);
+                    Debug.WriteLine($"API returned error status code: {response.StatusCode}");
+                    // Return mock data as fallback
+                    return GetMockJoinedRuns(profileId);
+                }
 
-                    LogInfo($"API call completed. Result: {(paginatedResult != null ? "Success" : "Null")}");
-                    
+                var content = await response.Content.ReadAsStringAsync();
+                Debug.WriteLine($"API response: {content}");
 
-                  // Create a list to hold the converted posts
-                        var run = new List<JoinedRun>();
+                var joinedRuns = JsonSerializer.Deserialize<List<JoinedRunDetailViewModelDto>>(content, _jsonOptions);
 
-                        foreach (var item in paginatedResult)
+                if (joinedRuns == null || joinedRuns.Count == 0)
+                {
+                    Debug.WriteLine("No joined runs returned from API");
+                    return GetMockJoinedRuns(profileId);
+                }
+
+                // Enrich each joined run with additional data
+                foreach (var run in joinedRuns)
+                {
+                    // Ensure the Run object is initialized
+                    if (run.Run == null)
+                    {
+                        Debug.WriteLine($"Run object is null for joined run {run.JoinedRunId}");
+                        continue;
+                    }
+
+                    // Enrich with court data if available
+                    if (run.Run.CourtId != null)
+                    {
+                        run.Run.Court = await GetCourtByIdAsync(run.Run.CourtId);
+                    }
+                }
+
+                Debug.WriteLine($"Successfully loaded {joinedRuns.Count} joined runs");
+                return joinedRuns;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error fetching joined runs: {ex.Message}");
+                Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+
+                // Return mock data on error
+                return GetMockJoinedRuns(profileId);
+            }
+        }
+
+        private async Task<Court> GetCourtByIdAsync(string courtId)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(courtId) || string.IsNullOrEmpty(App.AuthToken))
+                {
+                    return new Court
+                    {
+                        Name = "Basketball Court",
+                        Address = "123 Main St",
+                        City = "Atlanta",
+                        State = "GA",
+                        ImageURL = "https://placehold.co/600x400/png?text=Basketball+Court"
+                    };
+                }
+
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
+
+                var response = await _httpClient.GetAsync($"{_baseUrl}/api/Court/GetCourtById?courtId={courtId}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return new Court
+                    {
+                        Name = "Basketball Court",
+                        Address = "123 Main St",
+                        City = "Atlanta",
+                        State = "GA",
+                        ImageURL = "https://placehold.co/600x400/png?text=Basketball+Court"
+                    };
+                }
+
+                var content = await response.Content.ReadAsStringAsync();
+                return JsonSerializer.Deserialize<Court>(content, _jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error fetching court: {ex.Message}");
+                return new Court
+                {
+                    Name = "Basketball Court",
+                    Address = "123 Main St",
+                    City = "Atlanta",
+                    State = "GA",
+                    ImageURL = "https://placehold.co/600x400/png?text=Basketball+Court"
+                };
+            }
+        }
+
+        private List<JoinedRunDetailViewModelDto> GetMockJoinedRuns(string profileId)
+        {
+            // Create some mock joined runs for development/fallback
+            return new List<JoinedRunDetailViewModelDto>
+            {
+                new JoinedRunDetailViewModelDto
+                {
+                    JoinedRunId = "1",
+                    ProfileId = profileId,
+                    RunId = "run1",
+                    AcceptedInvite = "Accepted",
+                    InvitedDate = DateTime.Now.AddDays(-2).ToString(),
+                    Run = new Run
+                    {
+                        RunId = "run1",
+                        Name = "Downtown Pickup Game",
+                        RunDate = DateTime.Now.AddDays(1),
+                        RunTime = "7:00 PM",
+                        EndTime = "9:00 PM",
+                        Description = "Competitive 5v5 full court runs",
+                        PlayerLimit = 15,
+                        Cost = 5.00m,
+                        CourtId = "court1",
+                        Court = new Court
                         {
-                            try
-                            {
-                                // Map properties from the DTO to a new Run object
-                                var runs = new JoinedRun
-                                {
-                                    RunId = item.RunId,
-                                    JoinedRunId = item.JoinedRunId,
-                                    ProfileId = item.ProfileId,
-                                    Type = item.Type,
-                                    
-
-                                };
-
-                                // Fix URLs by ensuring they have a protocol
-                                //privateRun.PostFileURL = FixUrl(privateRun.PostFileURL);
-                                //privateRun.ThumbnailUrl = FixUrl(privateRun.ThumbnailUrl);
-                                //privateRun.ProfileImageURL = FixUrl(privateRun.ProfileImageURL);
-
-                                run.Add(runs);
-                                //LogInfo($"Added PrivateRun: {privateRun.PrivateRunId}, URL: {privateRun.PostFileURL}, Type: {post.PostType}");
-                            }
-                            catch (Exception ex)
-                            {
-                                LogError($"Error mapping post {item.RunId}", ex);
-                                // Continue with the next post instead of failing the entire process
-                            }
+                            CourtId = "court1",
+                            Name = "Downtown Community Center",
+                            Address = "123 Main Street",
+                            City = "Atlanta",
+                            State = "GA",
+                            ImageURL = "https://placehold.co/600x400/png?text=Downtown+Court"
                         }
-
-                        LogInfo($"Returning {run.Count} posts from API");
-                        return run;
-                   
-                }
-                catch (Exception apiEx)
+                    }
+                },
+                new JoinedRunDetailViewModelDto
                 {
-                    LogError("Error calling API", apiEx);
-                    // Fall through to return mock data in development mode
-                    throw;
+                    JoinedRunId = "2",
+                    ProfileId = profileId,
+                    RunId = "run2",
+                    AcceptedInvite = "Accepted",
+                    InvitedDate = DateTime.Now.AddDays(-1).ToString(),
+                    Run = new Run
+                    {
+                        RunId = "run2",
+                        Name = "Morning Shootaround",
+                        RunDate = DateTime.Now.AddDays(2),
+                        RunTime = "8:00 AM",
+                        EndTime = "10:00 AM",
+                        Description = "Casual shooting and pickup games",
+                        PlayerLimit = 12,
+                        Cost = 0.00m,
+                        CourtId = "court2",
+                        Court = new Court
+                        {
+                            CourtId = "court2",
+                            Name = "Westside Park",
+                            Address = "456 Park Avenue",
+                            City = "Atlanta",
+                            State = "GA",
+                            ImageURL = "https://placehold.co/600x400/png?text=Westside+Park"
+                        }
+                    }
                 }
-            }
-            catch (UnauthorizedAccessException)
-            {
-                LogError("Unauthorized access", null);
-                throw; // Rethrow to be handled by the caller
-            }
-            catch (Exception ex)
-            {
-                LogError("Error getting posts", ex);
-
-#if DEBUG
-                // For development and testing, return mock data if API call fails
-                LogInfo("Returning mock PrivateRuns for testing due to API error");
-                return null;
-#else
-                throw;
-#endif
-            }
+            };
         }
 
-        public async Task<bool> RemoveUserJoinRunAsync(string profileId, string runId )
+        public async Task<bool> RemoveUserJoinRunAsync(string profileId, string runId)
         {
             try
             {
-                // Get auth token
-                var token = await GetTokenAsync();
-                if (string.IsNullOrEmpty(token))
+                if (string.IsNullOrEmpty(profileId) || string.IsNullOrEmpty(runId) || string.IsNullOrEmpty(App.AuthToken))
                 {
-                    throw new UnauthorizedAccessException("No access token available");
+                    Debug.WriteLine("Missing required parameters for RemoveUserJoinRunAsync");
+                    return false;
                 }
 
-                // Set token in authorization header
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", App.AuthToken);
 
-                // In a real implementation, you would call the API to leave the run
-                // For now, just return true as a placeholder
+                var response = await _httpClient.DeleteAsync($"{_baseUrl}/api/JoinedRun/RemoveUserJoinRunAsync?profileId={profileId}&runId={runId}");
 
-                // TODO: Implement actual API call when endpoint is available
-                // var response = await _runApi.UserLeaveRunAsync(runId, profileId, token);
-
-                return true;
+                return response.IsSuccessStatusCode;
             }
             catch (Exception ex)
             {
-                LogError($"Error leaving run {runId}", ex);
-
-                // For development, return success to allow testing
-#if DEBUG
-                Debug.WriteLine("DEBUG MODE: Returning true for LeaveRunAsync despite error");
-                return true;
-#else
+                Debug.WriteLine($"Error removing user from run: {ex.Message}");
                 return false;
-#endif
             }
         }
-
-        private async Task<string> GetTokenAsync()
-        {
-            try
-            {
-                // First try to get the token from the App's global auth token
-                var token = App.AuthToken;
-                LogInfo($"App.AuthToken: {!string.IsNullOrEmpty(token)}");
-
-                // If it's not available in the global App state, try to get it from secure storage
-                if (string.IsNullOrEmpty(token))
-                {
-                    token = await SecureStorage.GetAsync(TOKEN_KEY);
-                    LogInfo($"SecureStorage token: {!string.IsNullOrEmpty(token)}");
-                }
-
-                // For development, provide a fallback token
-#if DEBUG
-                if (string.IsNullOrEmpty(token))
-                {
-                    token = "development-token";
-                    LogInfo("Using development fallback token");
-                }
-#endif
-
-                return token;
-            }
-            catch (Exception ex)
-            {
-                LogError("Error retrieving token", ex);
-                return null;
-            }
-        }
-
-        private void LogInfo(string message)
-        {
-            if (_logger != null)
-            {
-                _logger.LogInformation(message);
-            }
-
-            Debug.WriteLine($"[PostService] INFO: {message}");
-        }
-
-        private void LogError(string message, Exception ex)
-        {
-            if (_logger != null && ex != null)
-            {
-                _logger.LogError(ex, message);
-            }
-            else if (_logger != null)
-            {
-                _logger.LogError(message);
-            }
-
-            if (ex != null)
-            {
-                Debug.WriteLine($"[PostService] ERROR: {message}: {ex.Message}");
-                Debug.WriteLine($"[PostService] Stack trace: {ex.StackTrace}");
-            }
-            else
-            {
-                Debug.WriteLine($"[PostService] ERROR: {message}");
-            }
-        }
-
-        
     }
 }

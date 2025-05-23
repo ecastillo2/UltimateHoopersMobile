@@ -15,6 +15,7 @@ using MauiAnimation = Microsoft.Maui.Animations.Animation;
 using Domain.DtoModel;
 using Domain;
 using UltimateHoopers.ViewModels.UltimateHoopers.ViewModels;
+using UltimateHoopers.ViewModels;
 
 namespace UltimateHoopers.Pages
 {
@@ -58,34 +59,50 @@ namespace UltimateHoopers.Pages
                 NoRunsMessage.IsVisible = true;
                 JoinedRunsCollection.IsVisible = false;
 
-                // Try to get profile service from DI
+                // Try to get joined run service from DI
                 var serviceProvider = MauiProgram.CreateMauiApp().Services;
-                var profileService = serviceProvider.GetService<IRunService>();
+                var joinedRunService = serviceProvider.GetService<IJoinedRunService>();
 
-                if (profileService == null)
+                if (joinedRunService == null)
                 {
                     // Fallback if service is not available through DI
-                    profileService = new RunService();
+                    joinedRunService = new JoinedRunService();
                 }
 
-                // Check if we have a run service available
-                //if (_runService == null)
-                //{
-                //    Debug.WriteLine("RunService not available - can't load joined runs");
-                //    NoRunsMessage.IsVisible = true;
-                //    JoinedRunsCollection.IsVisible = false;
-                //    isLoadingJoinedRuns = false;
-                //    return;
-                //}
+                // Check if we have a profile ID
+                string profileId = App.User?.Profile?.ProfileId;
+                if (string.IsNullOrEmpty(profileId))
+                {
+                    System.Diagnostics.Debug.WriteLine("No profile ID available - can't load joined runs");
+                    NoRunsMessage.IsVisible = true;
+                    JoinedRunsCollection.IsVisible = false;
+                    isLoadingJoinedRuns = false;
+                    return;
+                }
 
                 // Get user's joined runs from the API
-                Debug.WriteLine("Fetching joined runs from API...");
-                var joinedRuns = await GetUserJoinedRunsAsync();
+                System.Diagnostics.Debug.WriteLine($"Fetching joined runs for profile: {profileId}");
+                var joinedRunsDto = await joinedRunService.GetUserJoinedRunsAsync(profileId);
 
                 // Check if we got any runs back
-                if (joinedRuns == null || !joinedRuns.Any())
+                if (joinedRunsDto == null || !joinedRunsDto.Any())
                 {
-                    Debug.WriteLine("No joined runs found");
+                    System.Diagnostics.Debug.WriteLine("No joined runs found");
+                    NoRunsMessage.IsVisible = true;
+                    JoinedRunsCollection.IsVisible = false;
+                    isLoadingJoinedRuns = false;
+                    return;
+                }
+
+                // Convert the DTO objects to view models
+                var runViewModels = joinedRunsDto
+                    .Select(ViewModels.RunViewModel.FromJoinedRunDto)
+                    .Where(vm => vm != null)
+                    .ToList();
+
+                if (!runViewModels.Any())
+                {
+                    System.Diagnostics.Debug.WriteLine("Failed to convert any joined runs to view models");
                     NoRunsMessage.IsVisible = true;
                     JoinedRunsCollection.IsVisible = false;
                     isLoadingJoinedRuns = false;
@@ -93,17 +110,17 @@ namespace UltimateHoopers.Pages
                 }
 
                 // Bind the runs to the CollectionView
-                JoinedRunsCollection.ItemsSource = joinedRuns;
+                JoinedRunsCollection.ItemsSource = runViewModels;
 
                 // Update UI visibility
                 NoRunsMessage.IsVisible = false;
                 JoinedRunsCollection.IsVisible = true;
 
-                Debug.WriteLine($"Loaded {joinedRuns.Count} joined runs successfully");
+                System.Diagnostics.Debug.WriteLine($"Loaded {runViewModels.Count} joined runs successfully");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error loading joined runs: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error loading joined runs: {ex.Message}");
 
                 // Show the no runs message on error
                 NoRunsMessage.IsVisible = true;
