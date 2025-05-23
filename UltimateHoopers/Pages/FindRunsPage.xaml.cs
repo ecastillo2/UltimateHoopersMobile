@@ -559,6 +559,63 @@ namespace UltimateHoopers.Pages
             }
         }
 
+        public async Task JoinRunAsync(RunDto run)
+        {
+            try
+            {
+                IsLoading = true;
+                await Task.Delay(300);
+
+                Debug.WriteLine("=== LoadRunsAsync Start ===");
+                _allRuns.Clear();
+
+                bool dataLoaded = false;
+
+                try
+                {
+                    var serviceProvider = MauiProgram.CreateMauiApp().Services;
+                    var privateRunService = serviceProvider.GetService<IRunService>();
+
+                    if (privateRunService == null)
+                    {
+                        privateRunService = new RunService();
+                    }
+
+                    Debug.WriteLine("Attempting to load runs from service...");
+
+                    var privateRuns = await privateRunService.UserJoinRunAsync(run);
+
+                    
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error loading runs from service: {ex.Message}");
+                }
+
+                if (!dataLoaded)
+                {
+                    Debug.WriteLine("Loading mock data...");
+                    LoadMockRuns();
+                    dataLoaded = true;
+                }
+
+                FilterRuns();
+                Debug.WriteLine($"=== LoadRunsAsync Complete - Total runs: {_allRuns.Count} ===");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error in LoadRunsAsync: {ex.Message}");
+                Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+
+                LoadMockRuns();
+                FilterRuns();
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
         private RunDto ConvertRunToRun(Domain.Run privateRun)
         {
             var run = new RunDto

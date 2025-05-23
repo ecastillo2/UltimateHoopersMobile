@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using UltimateHoopers.Models;
 
 namespace WebAPI.ApiClients
 {
@@ -149,6 +150,19 @@ namespace WebAPI.ApiClients
                 Console.WriteLine($"JSON parsing error: {ex.Message}");
                 throw;
             }
+        }
+
+        public async Task<bool> UserJoinRunAsync(RunDto run, string accessToken, CancellationToken cancellationToken = default)
+        {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            var jsonContent = new StringContent(
+                JsonSerializer.Serialize(run, _jsonOptions),
+                Encoding.UTF8,
+                "application/json");
+
+            var response = await _httpClient.PostAsync($"{_baseUrl}/api/JoinRun/CreateJoinRun", jsonContent, cancellationToken);
+            return response.IsSuccessStatusCode;
         }
     }
 }

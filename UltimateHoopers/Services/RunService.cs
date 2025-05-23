@@ -11,6 +11,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using UltimateHoopers.Models;
 using WebAPI.ApiClients;
 
 namespace UltimateHoopers.Services
@@ -258,6 +259,26 @@ namespace UltimateHoopers.Services
 #else
                 throw;
 #endif
+            }
+        }
+
+        public async Task<bool> UserJoinRunAsync(RunDto run)
+        {
+            try
+            {
+                var token = await GetTokenAsync();
+                if (string.IsNullOrEmpty(token))
+                {
+                    throw new UnauthorizedAccessException("No access token available");
+                }
+
+                // Implementation logic
+                throw new NotImplementedException("CreateRunAsync not implemented yet");
+            }
+            catch (Exception ex)
+            {
+                LogError("Error creating Run", ex);
+                throw;
             }
         }
 

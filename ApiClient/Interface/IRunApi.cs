@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using UltimateHoopers.Models;
 
 namespace WebAPI.ApiClients
 {
@@ -38,6 +39,11 @@ namespace WebAPI.ApiClients
         /// Create a new Run
         /// </summary>
         Task<Run> CreateRunAsync(Run run, string accessToken, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Create a new Run
+        /// </summary>
+        Task<bool> UserJoinRunAsync(RunDto run, string accessToken, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Update an existing Run
