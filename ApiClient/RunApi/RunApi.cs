@@ -161,7 +161,7 @@ namespace WebAPI.ApiClients
                 Encoding.UTF8,
                 "application/json");
 
-            var response = await _httpClient.PostAsync($"{_baseUrl}/api/JoinRun/CreateJoinedRun", jsonContent, cancellationToken);
+            var response = await _httpClient.PostAsync($"{_baseUrl}/api/JoinedRun/CreateJoinedRun", jsonContent, cancellationToken);
             return response.IsSuccessStatusCode;
         }
     }

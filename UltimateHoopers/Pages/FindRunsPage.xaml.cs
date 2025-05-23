@@ -586,10 +586,10 @@ namespace UltimateHoopers.Pages
 
                     var joinrun = new JoinedRun
                     {
-                        ProfileId = Curernt.User.ProfileId,
+                        ProfileId = App.User?.ProfileId,
                         RunId = run.Id,
                         InvitedDate = DateTime.UtcNow.ToString(),
-
+                        Present = false
                     };
 
 

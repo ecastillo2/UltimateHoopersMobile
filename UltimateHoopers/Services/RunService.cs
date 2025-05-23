@@ -272,8 +272,9 @@ namespace UltimateHoopers.Services
                     throw new UnauthorizedAccessException("No access token available");
                 }
 
-                // Implementation logic
-                throw new NotImplementedException("CreateRunAsync not implemented yet");
+                var paginatedResult = await _runApi.UserJoinRunAsync(joinedRun,token);
+
+                return paginatedResult;
             }
             catch (Exception ex)
             {

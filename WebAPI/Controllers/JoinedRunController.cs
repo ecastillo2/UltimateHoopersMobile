@@ -1,11 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using DataLayer.Context;
 using DataLayer.DAL;
+using DataLayer.DAL.Context;
+using DataLayer.DAL.Interface;
+using DataLayer.DAL.Repository;
 using Domain;
 using Microsoft.AspNetCore.Authorization;
-using DataLayer.DAL.Context;
-using DataLayer.Context;
-using DataLayer.DAL.Repository;
-using DataLayer.DAL.Interface;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace WebAPI.Controllers
 {
@@ -13,7 +14,7 @@ namespace WebAPI.Controllers
     /// PrivateRunInvite Controller
     /// </summary>
     [Route("api/[controller]")]
-    [Authorize]
+    //[Authorize]
     public class JoinedRunController : Controller
     {
         HttpResponseMessage returnMessage = new HttpResponseMessage();
@@ -167,16 +168,22 @@ namespace WebAPI.Controllers
         /// <param name="privateRun"></param>
         /// <returns></returns>
         [HttpPost("CreateJoinedRun")]
-        public async Task CreateJoinedRun([FromBody] JoinedRun joinedRun)
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> CreateJoinedRun([FromBody] JoinedRun joinedRun, CancellationToken cancellationToken)
         {
             
             try
             {
                   await  repository.InsertJoinedRun(joinedRun);
+
+                return NoContent();
             }
             catch (Exception ex)
             {
-                var x = ex;
+                //logger.LogError(ex, "Error updating scouting report for");
+                return StatusCode(500, "An error occurred while updating the scouting report");
             }
 
         }
