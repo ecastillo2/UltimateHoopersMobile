@@ -576,11 +576,12 @@ namespace UltimateHoopers.Pages
                 IsPublic = privateRun.Type?.ToLower() != "private",
                 Description = privateRun.Description ?? "Come play basketball!",
                 PlayerLimit = privateRun.PlayerLimit ?? 10,
-                CurrentPlayerCount = new Random().Next(3, (privateRun.PlayerLimit ?? 10) - 2),
+                CurrentPlayerCount = privateRun.JoinedRunList?.Count ?? 0,
                 CourtImageUrl = privateRun.ImageUrl ?? "",
                 Cost = privateRun.Cost ?? 0,
                 Distance = Math.Round(new Random().NextDouble() * 5 + 0.5, 1),
-                Players = new ObservableCollection<Player>()
+                
+                //Players = new ObservableCollection<Player>()
             };
 
             return run;

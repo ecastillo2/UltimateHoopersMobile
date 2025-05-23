@@ -108,7 +108,7 @@ namespace WebAPI.ApiClients
         }
 
 
-        public async Task<CursorPaginatedResultDto<RunViewModelDto>> GetRunsWithCursorAsync(string cursor = null, int limit = 20, string direction = "next", string sortBy = "Points", string accessToken = null, CancellationToken cancellationToken = default)
+        public async Task<CursorPaginatedResultDto<RunDetailViewModelDto>> GetRunsWithCursorAsync(string cursor = null, int limit = 20, string direction = "next", string sortBy = "Points", string accessToken = null, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -137,7 +137,7 @@ namespace WebAPI.ApiClients
 
                 // Deserialize the response
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
-                return JsonSerializer.Deserialize<CursorPaginatedResultDto<RunViewModelDto>>(content, _jsonOptions);
+                return JsonSerializer.Deserialize<CursorPaginatedResultDto<RunDetailViewModelDto>>(content, _jsonOptions);
             }
             catch (HttpRequestException ex)
             {

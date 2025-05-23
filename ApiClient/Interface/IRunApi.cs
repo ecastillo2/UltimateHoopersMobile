@@ -21,7 +21,7 @@ namespace WebAPI.ApiClients
         Task<List<Run>> GetRunsAsync(string accessToken, CancellationToken cancellationToken = default);
 
        
-        Task<CursorPaginatedResultDto<RunViewModelDto>> GetRunsWithCursorAsync(
+        Task<CursorPaginatedResultDto<RunDetailViewModelDto>> GetRunsWithCursorAsync(
             string cursor = null,
             int limit = 20,
             string direction = "next",

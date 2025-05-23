@@ -48,7 +48,7 @@ namespace Domain
         public string? Token { get; set; }
 
         [NotMapped]
-        public IList<JoinedRun>? JoinedRunList { get; set; }
+        public IList<Profile>? JoinedRunList { get; set; }
 
         [NotMapped]
         public string? UserResponse { get; set; }
