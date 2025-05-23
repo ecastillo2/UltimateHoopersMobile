@@ -142,8 +142,7 @@
             <ScrollView Grid.Row="1" Margin="0,15,0,0">
                 <VerticalStackLayout Spacing="20">
 
-                    <!-- Joined Runs Section - UPDATED SECTION -->
-                    <!-- Joined Runs Section -->
+                    <!-- Joined Runs Section - UPDATED WITH EVENT-STYLE DESIGN -->
                     <VerticalStackLayout Spacing="10" Margin="0,0,0,20">
                         <!-- Section Header with View All Button -->
                         <Grid ColumnDefinitions="*,Auto">
@@ -197,82 +196,85 @@
                             </VerticalStackLayout>
                         </Frame>
 
-                        <!-- Joined Runs Collection -->
+                        <!-- Joined Runs Collection - Now Using Event-Style Cards -->
                         <CollectionView x:Name="JoinedRunsCollection"
                     IsVisible="false"
-                    HeightRequest="170"
-                    ItemsLayout="HorizontalList">
+                    ItemsLayout="VerticalList">
                             <CollectionView.ItemTemplate>
                                 <DataTemplate>
                                     <Frame BorderColor="{StaticResource BorderColor}"
                        BackgroundColor="{StaticResource CardBackgroundColor}"
                        CornerRadius="10"
                        HasShadow="True"
-                       Padding="0"
-                       Margin="0,5,15,5"
-                       WidthRequest="280">
-                                        <Grid RowDefinitions="Auto,*,Auto">
-                                            <!-- Run Image with Overlay -->
-                                            <Grid RowSpacing="0">
-                                                <Image Source="{Binding CourtImageUrl}"
-                                   Aspect="AspectFill"
-                                   HeightRequest="80" />
-                                                <!-- Semi-transparent overlay for better text visibility -->
-                                                <BoxView Color="Black" 
-                                     Opacity="0.3" 
-                                     HeightRequest="80" />
-                                                <!-- Run Name -->
-                                                <Label Text="{Binding Name}"
-                                   TextColor="White"
-                                   FontSize="18"
-                                   FontAttributes="Bold"
-                                   Margin="15,0,15,0"
-                                   VerticalOptions="Center" />
-                                            </Grid>
+                       Padding="15"
+                       Margin="0,5,0,10">
+
+                                        <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="15">
+                                            <!-- Date Box -->
+                                            <Frame Grid.RowSpan="3" Grid.Column="0"
+                               BackgroundColor="{StaticResource PrimaryColor}"
+                               CornerRadius="10"
+                               Padding="10"
+                               WidthRequest="70"
+                               HeightRequest="70"
+                               VerticalOptions="Center">
+                                                <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center">
+                                                    <Label Text="{Binding DayOfMonth}" 
+                                       FontSize="22" 
+                                       FontAttributes="Bold" 
+                                       TextColor="White" 
+                                       HorizontalOptions="Center"/>
+                                                    <Label Text="{Binding Month}" 
+                                       FontSize="14" 
+                                       TextColor="White" 
+                                       HorizontalOptions="Center"/>
+                                                </VerticalStackLayout>
+                                            </Frame>
 
                                             <!-- Run Details -->
-                                            <VerticalStackLayout Grid.Row="1" Padding="15,10">
-                                                <!-- Date and Time -->
-                                                <StackLayout Orientation="Horizontal" Margin="0,0,0,5">
-                                                    <Label Text="📅" FontSize="14" VerticalOptions="Center" />
-                                                    <Label Text="{Binding FormattedDate}"
-                                       FontSize="14"
-                                       TextColor="{StaticResource PrimaryTextColor}"
-                                       Margin="5,0,0,0" />
-                                                </StackLayout>
+                                            <Label Grid.Row="0" Grid.Column="1"
+                               Text="{Binding Name}"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource PrimaryTextColor}"/>
 
-                                                <!-- Time -->
-                                                <StackLayout Orientation="Horizontal" Margin="0,0,0,5">
-                                                    <Label Text="⏰" FontSize="14" VerticalOptions="Center" />
-                                                    <Label Text="{Binding Time}"
-                                       FontSize="14"
-                                       TextColor="{StaticResource PrimaryTextColor}"
-                                       Margin="5,0,0,0" />
-                                                </StackLayout>
+                                            <Label Grid.Row="1" Grid.Column="1"
+                               FontSize="14"
+                               TextColor="{StaticResource SecondaryTextColor}"
+                               Margin="0,5,0,5">
+                                                <Label.FormattedText>
+                                                    <FormattedString>
+                                                        <Span Text="📍 " />
+                                                        <Span Text="{Binding Address}" />
+                                                        <Span Text=", " />
+                                                        <Span Text="{Binding Time}" />
+                                                    </FormattedString>
+                                                </Label.FormattedText>
+                                            </Label>
 
-                                                <!-- Location -->
-                                                <StackLayout Orientation="Horizontal">
-                                                    <Label Text="📍" FontSize="14" VerticalOptions="Center" />
-                                                    <Label Text="{Binding Address}"
-                                       FontSize="14"
-                                       TextColor="{StaticResource PrimaryTextColor}"
-                                       Margin="5,0,0,0"
-                                       MaxLines="1"
-                                       LineBreakMode="TailTruncation" />
-                                                </StackLayout>
-                                            </VerticalStackLayout>
+                                            <StackLayout Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Spacing="10">
+                                                <Button Text="View Details" 
+                                    BackgroundColor="{StaticResource PrimaryColor}"
+                                    TextColor="White"
+                                    CornerRadius="20"
+                                    HeightRequest="36"
+                                    WidthRequest="110"
+                                    Padding="0"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ViewRunDetailsCommand}"
+                                    CommandParameter="{Binding RunId}"/>
 
-                                            <!-- View Details Button -->
-                                            <Button Grid.Row="2"
-                                Text="View Details"
-                                BackgroundColor="{StaticResource PrimaryColor}"
-                                TextColor="White"
-                                CornerRadius="10"
-                                Margin="15,0,15,15"
-                                Padding="15"
-                                HeightRequest="40"
-                                Clicked="OnViewRunDetailsClicked"
-                                CommandParameter="{Binding RunId}" />
+                                                <Button Text="Cancel" 
+                                    BackgroundColor="Transparent"
+                                    TextColor="{StaticResource PrimaryColor}"
+                                    BorderColor="{StaticResource PrimaryColor}"
+                                    BorderWidth="1"
+                                    CornerRadius="20"
+                                    HeightRequest="36"
+                                    WidthRequest="80"
+                                    Padding="0"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CancelRunCommand}"
+                                    CommandParameter="{Binding RunId}"/>
+                                            </StackLayout>
                                         </Grid>
                                     </Frame>
                                 </DataTemplate>

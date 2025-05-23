@@ -13,7 +13,6 @@ using UltimateHoopers.Services;
 
 namespace UltimateHoopers.ViewModels
 {
-
     namespace UltimateHoopers.ViewModels
     {
         /// <summary>
@@ -44,7 +43,6 @@ namespace UltimateHoopers.ViewModels
             public string? TeamType { get; set; }
             public int? PlayerLimit { get; set; }
             public string? Username { get; set; }
-        
 
             // Additional UI properties
             public string? CourtImageUrl { get; set; }
@@ -91,8 +89,6 @@ namespace UltimateHoopers.ViewModels
                     Cost = Cost ?? 0,
                     Distance = Distance
                 };
-
-               
 
                 return run;
             }
@@ -258,7 +254,6 @@ namespace UltimateHoopers.ViewModels
             {
                 var runs = new List<JoinedRunViewModel>();
 
-            
                 // Try to get profile service from DI
                 var serviceProvider = MauiProgram.CreateMauiApp().Services;
                 var profileService = serviceProvider.GetService<IJoinedRunService>();
@@ -270,65 +265,47 @@ namespace UltimateHoopers.ViewModels
                 }
 
                 try
+                {
+                    Debug.WriteLine("Loading runs from API service...");
+
+                    // Load from actual API service
+                    var serviceRuns = await profileService.GetUserJoinedRunsAsync(App.User?.ProfileId);
+
+                    if (serviceRuns != null && serviceRuns.Any())
                     {
-                        Debug.WriteLine("Loading runs from API service...");
-
-                        // Load from actual API service
-                        var serviceRuns = await profileService.GetUserJoinedRunsAsync(App.User?.ProfileId);
-
-                        if (serviceRuns != null && serviceRuns.Any())
-                        {
-                            runs.AddRange(serviceRuns.Select(MapToViewModel));
-                            Debug.WriteLine($"Successfully loaded {runs.Count} runs from API");
-                        }
-                        else
-                        {
-                            Debug.WriteLine("API returned empty result, using mock data as fallback");
-                            runs = GetMockRuns();
-                        }
+                        // FIX: Explicitly specify the type parameters for Select
+                        runs.AddRange(serviceRuns.Select<JoinedRunDetailViewModelDto, JoinedRunViewModel>(MapToViewModel));
+                        Debug.WriteLine($"Successfully loaded {runs.Count} runs from API");
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        Debug.WriteLine($"Error loading from API service: {ex.Message}");
-                        Debug.WriteLine($"Stack trace: {ex.StackTrace}");
-
-                        // Fall back to mock data only if API fails
-                        Debug.WriteLine("Falling back to mock data due to API error");
+                        Debug.WriteLine("API returned empty result, using mock data as fallback");
                         runs = GetMockRuns();
                     }
-               
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error loading from API service: {ex.Message}");
+                    Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+
+                    // Fall back to mock data only if API fails
+                    Debug.WriteLine("Falling back to mock data due to API error");
+                    runs = GetMockRuns();
+                }
 
                 return runs;
             }
 
-            private JoinedRunViewModel MapToViewModel(JoinedRun domainRun)
+            // FIX: Updated parameter type to match what's returned from the service
+            private JoinedRunViewModel MapToViewModel(JoinedRunDetailViewModelDto domainRun)
             {
                 return new JoinedRunViewModel
                 {
-                    RunId = domainRun.RunId,
-                    CourtId = domainRun.Run.Court.CourtId,
-                    //ProfileId = domainRun.ProfileId,
-                    //Status = domainRun.Status,
-                    //RunDate = domainRun.RunDate,
-                    //Cost = domainRun.Cost,
-                    //Name = domainRun.Name,
-                    //Address = domainRun.Court.Address,
-                    //City = domainRun.Court.City,
-                    //State = domainRun.Court.State,
-                    //Zip = domainRun.Court.Zip,
-                    //Description = domainRun.Description,
-                    //RunTime = domainRun.RunTime,
-                    //EndTime = domainRun.EndTime,
-                    //Type = domainRun.Type,
-                    //CreatedDate = domainRun.CreatedDate,
-                    //RunNumber = domainRun.RunNumber,
-                    //SkillLevel = domainRun.SkillLevel,
-                    //PaymentMethod = domainRun.PaymentMethod,
-                    //TeamType = domainRun.TeamType,
-                    //PlayerLimit = domainRun.PlayerLimit,
+                    RunId = domainRun.Run?.RunId,
+                    CourtId = domainRun.Run?.Court?.CourtId,
+                    Name = domainRun.Run?.Name ?? "Basketball Run",
+                    // Map other properties as needed
                     Username = "test",
-
-                 
                 };
             }
 
@@ -343,48 +320,48 @@ namespace UltimateHoopers.ViewModels
             private List<JoinedRunViewModel> GetMockRuns()
             {
                 return new List<JoinedRunViewModel>
-            {
-                new JoinedRunViewModel
                 {
-                    RunId = "1",
-                    Name = "Downtown Basketball",
-                    Address = "123 Main St",
-                    City = "Atlanta",
-                    State = "GA",
-                    RunDate = DateTime.Today.AddDays(1),
-                    RunTime = "6:00 PM",
-                    EndTime = "8:00 PM",
-                    Cost = 15.00m,
-                    PlayerLimit = 10,
-                    CurrentPlayerCount = 6,
-                    SkillLevel = "Intermediate",
-                    TeamType = "5-on-5",
-                    Distance = 2.3,
-                    HostName = "Mike Johnson",
-                    IsPublic = true,
-                    Description = "Competitive pickup game"
-                },
-                new JoinedRunViewModel
-                {
-                    RunId = "2",
-                    Name = "Morning Shootaround",
-                    Address = "456 Oak Ave",
-                    City = "Atlanta",
-                    State = "GA",
-                    RunDate = DateTime.Today.AddDays(2),
-                    RunTime = "8:00 AM",
-                    EndTime = "10:00 AM",
-                    Cost = 0m,
-                    PlayerLimit = 8,
-                    CurrentPlayerCount = 3,
-                    SkillLevel = "All Levels",
-                    TeamType = "3-on-3",
-                    Distance = 1.7,
-                    HostName = "Sarah Davis",
-                    IsPublic = true,
-                    Description = "Casual morning game"
-                }
-            };
+                    new JoinedRunViewModel
+                    {
+                        RunId = "1",
+                        Name = "Downtown Basketball",
+                        Address = "123 Main St",
+                        City = "Atlanta",
+                        State = "GA",
+                        RunDate = DateTime.Today.AddDays(1),
+                        RunTime = "6:00 PM",
+                        EndTime = "8:00 PM",
+                        Cost = 15.00m,
+                        PlayerLimit = 10,
+                        CurrentPlayerCount = 6,
+                        SkillLevel = "Intermediate",
+                        TeamType = "5-on-5",
+                        Distance = 2.3,
+                        HostName = "Mike Johnson",
+                        IsPublic = true,
+                        Description = "Competitive pickup game"
+                    },
+                    new JoinedRunViewModel
+                    {
+                        RunId = "2",
+                        Name = "Morning Shootaround",
+                        Address = "456 Oak Ave",
+                        City = "Atlanta",
+                        State = "GA",
+                        RunDate = DateTime.Today.AddDays(2),
+                        RunTime = "8:00 AM",
+                        EndTime = "10:00 AM",
+                        Cost = 0m,
+                        PlayerLimit = 8,
+                        CurrentPlayerCount = 3,
+                        SkillLevel = "All Levels",
+                        TeamType = "3-on-3",
+                        Distance = 1.7,
+                        HostName = "Sarah Davis",
+                        IsPublic = true,
+                        Description = "Casual morning game"
+                    }
+                };
             }
 
             public void FilterRuns(string searchText)
@@ -461,8 +438,6 @@ namespace UltimateHoopers.ViewModels
                 {
                     if (_runService != null)
                     {
-                       
-
                         // Call the actual API service to join the run
                         //bool result = await _privateRunService.JoinRunAsync(run.Id, App.User?.UserId);
                         bool result = true;
@@ -496,7 +471,7 @@ namespace UltimateHoopers.ViewModels
                     if (run == null) return;
 
                     // Navigate to run details page
-                   // await Application.Current.MainPage.Navigation.PushAsync(new JoinedRunDetailsPage(run));
+                    // await Application.Current.MainPage.Navigation.PushAsync(new JoinedRunDetailsPage(run));
                 }
                 catch (Exception ex)
                 {
@@ -507,4 +482,4 @@ namespace UltimateHoopers.ViewModels
             }
         }
     }
-    }
+}
