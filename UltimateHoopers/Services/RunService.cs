@@ -202,16 +202,12 @@ namespace UltimateHoopers.Services
                                     Name = item.Name,
                                     ImageUrl = item.Court.ImageURL,
                                     Court = item.Court,
-                                    
+                                    JoinedRunList =item.JoinedRunList,
                                     RunDate = item.RunDate,
                                     UserName = "test",
                                     RunTime =   item.RunTime,
                                     EndTime = item.EndTime
-                                    //RelativeTime = FormatRelativeTime(item.RunDate),
-                                    //CurrentPlayerCount = 8,
-                                    //PostCommentCount = 0,
-                                    //LikedPost = false,
-                                    //SavedPost = false
+                                    
                                 };
 
                                 // Fix URLs by ensuring they have a protocol

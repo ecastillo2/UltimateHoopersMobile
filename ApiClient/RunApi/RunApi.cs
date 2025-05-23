@@ -47,10 +47,8 @@ namespace WebAPI.ApiClients
             return JsonSerializer.Deserialize<List<Run>>(content, _jsonOptions);
         }
 
-
-
         /// <summary>
-        /// Get eRun by ID
+        /// Get Run by ID
         /// </summary>
         public async Task<Run> GetRunByIdAsync(string runId, string accessToken, CancellationToken cancellationToken = default)
         {
