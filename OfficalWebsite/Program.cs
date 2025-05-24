@@ -1,4 +1,3 @@
-
 namespace OfficalWebsite
 {
     public class Program

@@ -19,7 +19,11 @@ namespace OfficalWebsite.Middleware
         {
             // Skip authentication check for public pages and static files
             var path = context.Request.Path.ToString().ToLower();
-            if (IsPublicPath(path) || path.StartsWith("/static") || path.StartsWith("/lib") || path.StartsWith("/css") || path.StartsWith("/js"))
+            if (IsPublicPath(path) ||
+                path.StartsWith("/static") ||
+                path.StartsWith("/lib") ||
+                path.StartsWith("/css") ||
+                path.StartsWith("/js"))
             {
                 await _next(context);
                 return;

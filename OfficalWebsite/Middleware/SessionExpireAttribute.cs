@@ -19,13 +19,14 @@ namespace OfficalWebsite.Middleware
                 if (currentAction != "login" && currentAction != "logout")
                 {
                     var currentUrl = filterContext.HttpContext.Request.Path;
-                    // Redirect to login with return URL
+
+                    // Add the current URL as a return URL parameter
                     filterContext.Result = new RedirectToRouteResult(
                         new RouteValueDictionary
                         {
                             { "controller", "Home" },
                             { "action", "Login" },
-                            { "returnUrl", currentUrl }
+                            { "returnUrl", currentUrl.ToString() }
                         });
                 }
                 else

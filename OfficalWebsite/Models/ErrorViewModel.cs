@@ -1,3 +1,4 @@
+
 namespace OfficalWebsite.Models
 {
     public class ErrorViewModel

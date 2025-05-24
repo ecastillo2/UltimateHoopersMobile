@@ -45,6 +45,71 @@ namespace OfficalWebsite.Controllers
         }
 
         [HttpGet]
+        public IActionResult AdminDashboard()
+        {
+            // Check if user is authenticated
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("Token")))
+            {
+                return RedirectToAction("Login", "Home");
+            }
+
+            // Check if user has admin role
+            string userRole = HttpContext.Session.GetString("UserRole") ?? "User";
+            if (userRole != "Admin")
+            {
+                return RedirectToAction("Index", "Dashboard");
+            }
+
+            // Get user info from session
+            ViewBag.UserName = HttpContext.Session.GetString("UserName");
+            ViewBag.UserEmail = HttpContext.Session.GetString("UserEmail");
+            ViewBag.UserRole = HttpContext.Session.GetString("UserRole");
+
+            return View();
+        }
+
+        [HttpGet]
+        public IActionResult ManagerDashboard()
+        {
+            // Check if user is authenticated
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("Token")))
+            {
+                return RedirectToAction("Login", "Home");
+            }
+
+            // Check if user has manager role
+            string userRole = HttpContext.Session.GetString("UserRole") ?? "User";
+            if (userRole != "Manager")
+            {
+                return RedirectToAction("Index", "Dashboard");
+            }
+
+            // Get user info from session
+            ViewBag.UserName = HttpContext.Session.GetString("UserName");
+            ViewBag.UserEmail = HttpContext.Session.GetString("UserEmail");
+            ViewBag.UserRole = HttpContext.Session.GetString("UserRole");
+
+            return View();
+        }
+
+        [HttpGet]
+        public IActionResult UserDashboard()
+        {
+            // Check if user is authenticated
+            if (string.IsNullOrEmpty(HttpContext.Session.GetString("Token")))
+            {
+                return RedirectToAction("Login", "Home");
+            }
+
+            // Get user info from session
+            ViewBag.UserName = HttpContext.Session.GetString("UserName");
+            ViewBag.UserEmail = HttpContext.Session.GetString("UserEmail");
+            ViewBag.UserRole = HttpContext.Session.GetString("UserRole");
+
+            return View();
+        }
+
+        [HttpGet]
         public IActionResult Login(string returnUrl = null, string error = null)
         {
             // Redirect if already authenticated
@@ -85,6 +150,12 @@ namespace OfficalWebsite.Controllers
 
                     _logger.LogInformation("Demo login successful for {Email} as {Role}", model.Email, model.Role);
 
+                    // If there's a return URL, redirect there
+                    if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                    {
+                        return Redirect(returnUrl);
+                    }
+
                     // Redirect to appropriate dashboard
                     return RedirectToDashboard(model.Role);
                 }
@@ -95,12 +166,18 @@ namespace OfficalWebsite.Controllers
                 if (user != null && !string.IsNullOrEmpty(user.Token))
                 {
                     // Store user info in session
-                    StoreUserInSession(user, model.Role);
+                    StoreUserInSession(user, user.AccessLevel ?? model.Role);
 
                     _logger.LogInformation("Login successful for {Email}", model.Email);
 
+                    // If there's a return URL, redirect there
+                    if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                    {
+                        return Redirect(returnUrl);
+                    }
+
                     // Redirect to appropriate dashboard
-                    return RedirectToDashboard(model.Role);
+                    return RedirectToDashboard(user.AccessLevel ?? model.Role);
                 }
                 else
                 {
@@ -124,11 +201,11 @@ namespace OfficalWebsite.Controllers
             return RedirectToAction("Index");
         }
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View();
-        }
+        //[ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        //public IActionResult Error()
+        //{
+        //    return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        //}
 
         // Helper methods
         private IActionResult RedirectToDashboard(string role)

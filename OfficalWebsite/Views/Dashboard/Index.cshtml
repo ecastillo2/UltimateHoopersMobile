@@ -1,0 +1,437 @@
+﻿@{
+    ViewData["Title"] = "User Dashboard";
+    string userName = ViewBag.UserName ?? "User";
+    string userEmail = ViewBag.UserEmail ?? "";
+}
+
+<div class="dashboard-header py-4 bg-light">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="h3 mb-1">
+                    <i class="bi bi-person-fill text-primary me-2"></i>
+                    User Dashboard
+                </h1>
+                <p class="text-muted mb-0">Welcome back, @userName!</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <div class="dropdown">
+                    <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Quick Actions
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-plus-square me-2"></i>Create Task</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-folder-plus me-2"></i>New Project</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-calendar-event me-2"></i>Schedule Meeting</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-upload me-2"></i>Upload File</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rest of the file remains the same -->
+
+<div class="container py-4">
+    <!-- Performance Overview -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="stat-card bg-primary text-white">
+                <div class="stat-icon">
+                    <i class="bi bi-check2-square"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>24</h3>
+                    <p class="mb-0">Tasks Completed</p>
+                    <small class="opacity-75">This month</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stat-card bg-success text-white">
+                <div class="stat-icon">
+                    <i class="bi bi-kanban"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>8</h3>
+                    <p class="mb-0">Active Projects</p>
+                    <small class="opacity-75">2 due this week</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stat-card bg-warning text-white">
+                <div class="stat-icon">
+                    <i class="bi bi-clock"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>32h</h3>
+                    <p class="mb-0">Time Logged</p>
+                    <small class="opacity-75">This week</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stat-card bg-info text-white">
+                <div class="stat-icon">
+                    <i class="bi bi-trophy"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>92%</h3>
+                    <p class="mb-0">Completion Rate</p>
+                    <small class="opacity-75">All time</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- My Tasks -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">My Tasks</h5>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-secondary active" data-filter="all">All</button>
+                        <button class="btn btn-outline-secondary" data-filter="pending">Pending</button>
+                        <button class="btn btn-outline-secondary" data-filter="in-progress">In Progress</button>
+                        <button class="btn btn-outline-secondary" data-filter="completed">Completed</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="task-list">
+                        <div class="task-item" data-status="in-progress">
+                            <div class="task-checkbox">
+                                <input type="checkbox" class="form-check-input" id="task1">
+                            </div>
+                            <div class="task-content">
+                                <h6 class="task-title">Design user interface mockups</h6>
+                                <p class="task-description text-muted mb-2">Create wireframes and mockups for the new dashboard layout</p>
+                                <div class="task-meta">
+                                    <span class="badge bg-warning">In Progress</span>
+                                    <span class="text-muted ms-2"><i class="bi bi-calendar me-1"></i>Due: Tomorrow</span>
+                                    <span class="text-muted ms-2"><i class="bi bi-folder me-1"></i>E-commerce Project</span>
+                                </div>
+                            </div>
+                            <div class="task-actions">
+                                <button class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="task-item" data-status="pending">
+                            <div class="task-checkbox">
+                                <input type="checkbox" class="form-check-input" id="task2">
+                            </div>
+                            <div class="task-content">
+                                <h6 class="task-title">Review security documentation</h6>
+                                <p class="task-description text-muted mb-2">Go through the latest security protocols and update implementation</p>
+                                <div class="task-meta">
+                                    <span class="badge bg-secondary">Pending</span>
+                                    <span class="text-muted ms-2"><i class="bi bi-calendar me-1"></i>Due: Dec 1</span>
+                                    <span class="text-muted ms-2"><i class="bi bi-folder me-1"></i>Security Update</span>
+                                </div>
+                            </div>
+                            <div class="task-actions">
+                                <button class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="task-item" data-status="completed">
+                            <div class="task-checkbox">
+                                <input type="checkbox" class="form-check-input" id="task3" checked>
+                            </div>
+                            <div class="task-content">
+                                <h6 class="task-title completed">Database optimization review</h6>
+                                <p class="task-description text-muted mb-2">Analyze and optimize database queries for better performance</p>
+                                <div class="task-meta">
+                                    <span class="badge bg-success">Completed</span>
+                                    <span class="text-muted ms-2"><i class="bi bi-calendar me-1"></i>Completed: Yesterday</span>
+                                    <span class="text-muted ms-2"><i class="bi bi-folder me-1"></i>Analytics Dashboard</span>
+                                </div>
+                            </div>
+                            <div class="task-actions">
+                                <button class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Projects -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Projects</h5>
+                </div>
+                <div class="card-body">
+                    <div class="project-list">
+                        <div class="project-item">
+                            <div class="project-info">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="project-title">E-commerce Platform</h6>
+                                    <span class="badge bg-success">Active</span>
+                                </div>
+                                <p class="text-muted mb-2">Complete redesign of the shopping experience with modern UI/UX.</p>
+                                <div class="project-meta">
+                                    <span class="text-muted"><i class="bi bi-people me-1"></i>6 members</span>
+                                    <span class="text-muted ms-3"><i class="bi bi-calendar me-1"></i>Due: Dec 15</span>
+                                    <span class="text-muted ms-3"><i class="bi bi-list-task me-1"></i>12 tasks</span>
+                                </div>
+                            </div>
+                            <div class="project-progress">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <small class="text-muted">Progress</small>
+                                    <small class="fw-semibold">68%</small>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-success" style="width: 68%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Account Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Account Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="avatar-container me-3">
+                            <div class="avatar bg-primary text-white">
+                                @(userName.Length > 0 ? userName[0].ToString() : "U")
+                            </div>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">@userName</h6>
+                            <small class="text-muted">@userEmail</small>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Account Type</label>
+                        <div class="fw-semibold">Standard User</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Last Login</label>
+                        <div class="fw-semibold">Today at 10:23 AM</div>
+                    </div>
+                    <div class="d-grid">
+                        <a href="#" class="btn btn-outline-primary">
+                            <i class="bi bi-person-gear me-2"></i>
+                            Edit Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Links</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="#" class="btn btn-outline-secondary">
+                            <i class="bi bi-file-earmark-text me-2"></i>
+                            Documentation
+                        </a>
+                        <a href="#" class="btn btn-outline-secondary">
+                            <i class="bi bi-question-circle me-2"></i>
+                            Help Center
+                        </a>
+                        <a href="#" class="btn btn-outline-secondary">
+                            <i class="bi bi-gear me-2"></i>
+                            Settings
+                        </a>
+                        <a href="/Home/Logout" class="btn btn-outline-danger">
+                            <i class="bi bi-box-arrow-right me-2"></i>
+                            Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .dashboard-header {
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, var(--bs-primary) 0%, var(--bs-primary) 100%);
+        border-radius: 12px;
+        padding: 1.5rem;
+        color: white;
+        display: flex;
+        align-items: center;
+        height: 100%;
+        transition: transform 0.2s ease;
+    }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-card.bg-primary {
+            background: linear-gradient(135deg, #4a6cf7 0%, #5d87ff 100%);
+        }
+
+        .stat-card.bg-success {
+            background: linear-gradient(135deg, #00d4aa 0%, #1dd1a1 100%);
+        }
+
+        .stat-card.bg-warning {
+            background: linear-gradient(135deg, #ffa726 0%, #ff9800 100%);
+        }
+
+        .stat-card.bg-info {
+            background: linear-gradient(135deg, #26c6da 0%, #00bcd4 100%);
+        }
+
+    .stat-icon {
+        font-size: 2.5rem;
+        margin-right: 1rem;
+        opacity: 0.8;
+    }
+
+    .stat-info h3 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .task-list {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+
+    .task-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 1rem;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        background: white;
+        transition: all 0.2s ease;
+    }
+
+        .task-item:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+    .task-checkbox {
+        margin-right: 1rem;
+        margin-top: 0.25rem;
+    }
+
+    .task-content {
+        flex-grow: 1;
+    }
+
+    .task-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        transition: all 0.2s ease;
+    }
+
+        .task-title.completed {
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+
+    .task-description {
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+
+    .task-meta {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .task-actions {
+        margin-left: 1rem;
+    }
+
+    .project-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 1.5rem;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        background: white;
+        transition: all 0.2s ease;
+    }
+
+        .project-item:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+    .project-info {
+        flex-grow: 1;
+        margin-right: 1rem;
+    }
+
+    .project-title {
+        font-weight: 600;
+        color: #333;
+    }
+
+    .project-progress {
+        min-width: 120px;
+    }
+
+    .card {
+        border: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        border-radius: 12px;
+    }
+
+    .card-header {
+        background: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+        border-radius: 12px 12px 0 0 !important;
+        padding: 1rem 1.5rem;
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+
+    .avatar-container {
+        width: 50px;
+        height: 50px;
+    }
+
+    .avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+</style>

@@ -61,20 +61,6 @@ namespace OfficalWebsite
                 client.BaseAddress = new Uri(Configuration["ApiSettings:BaseUrl"] ?? "https://ultimatehoopersapi.azurewebsites.net/");
             });
 
-            services.AddControllersWithViews();
-
-            // Enable CORS with the necessary policy
-            services.AddCors(options =>
-            {
-                options.AddPolicy("AllowAll",
-                    builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
-            });
-
-            services.Configure<FormOptions>(options =>
-            {
-                options.MultipartBodyLengthLimit = 524288000; // 500 MB
-            });
-
             // Session configuration - Important for dashboard access
             services.AddDistributedMemoryCache();
             services.AddSession(options =>
@@ -86,29 +72,38 @@ namespace OfficalWebsite
 
             services.AddHttpContextAccessor();
 
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            // Enable CORS with the necessary policy
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll",
+                    builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+            });
 
+            // Configure authentication with cookie scheme
             services.AddAuthentication(options =>
             {
                 options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-            }).AddCookie("TmiginScheme", options =>
+            }).AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
             {
                 options.LoginPath = "/Home/Login";
-                options.LogoutPath = "/Home/Index";
+                options.LogoutPath = "/Home/Logout";
+                options.AccessDeniedPath = "/Home/AccessDenied";
                 options.ExpireTimeSpan = TimeSpan.FromHours(1);
                 options.SlidingExpiration = true;
+            });
+
+            services.AddControllersWithViews();
+
+            services.Configure<FormOptions>(options =>
+            {
+                options.MultipartBodyLengthLimit = 524288000; // 500 MB
             });
 
             services.Configure<KestrelServerOptions>(options =>
             {
                 options.Limits.MaxRequestBodySize = 524288000; // 500 MB (adjust as needed)
-            });
-
-            services.Configure<FormOptions>(options =>
-            {
-                options.MultipartBodyLengthLimit = 524288000; // 500 MB in bytes
             });
         }
 
@@ -146,6 +141,9 @@ namespace OfficalWebsite
 
             // Important: Session middleware must be before authentication middleware
             app.UseSession();
+
+            // Use custom session middleware to check for expired sessions
+            app.UseCustomSession();
 
             app.UseAuthentication();
             app.UseAuthorization();
