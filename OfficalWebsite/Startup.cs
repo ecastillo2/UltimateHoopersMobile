@@ -1,4 +1,5 @@
 ﻿using ApiClient;
+using ApiClient.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
@@ -20,16 +21,45 @@ namespace OfficalWebsite
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            // Register IHttpClientFactory
+            // Register HttpClient factory
             services.AddHttpClient();
+
             // Register WebApiService with HttpClient
             services.AddHttpClient<WebApiService>()
                     .ConfigureHttpClient(client =>
                     {
-                        // Optionally, you can set headers, default values, etc.
+                        // Set headers, default values, etc.
                         client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                     });
-            services.AddHttpClient<IPostApi, PostApi>();
+
+            // Register API client services
+            services.AddScoped<IAuthenticateUser, AuthenticateUser>(provider =>
+            {
+                var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
+                var httpClient = httpClientFactory.CreateClient();
+                httpClient.BaseAddress = new Uri(Configuration["ApiSettings:BaseUrl"] ?? "https://ultimatehoopersapi.azurewebsites.net/");
+
+                var logger = provider.GetRequiredService<ILogger<AuthenticateUser>>();
+
+                return new AuthenticateUser(httpClient, Configuration, logger);
+            });
+
+            // Register other API clients
+            services.AddHttpClient<IPostApi, PostApi>(client =>
+            {
+                client.BaseAddress = new Uri(Configuration["ApiSettings:BaseUrl"] ?? "https://ultimatehoopersapi.azurewebsites.net/");
+            });
+
+            services.AddHttpClient<IRunApi, RunApi>(client =>
+            {
+                client.BaseAddress = new Uri(Configuration["ApiSettings:BaseUrl"] ?? "https://ultimatehoopersapi.azurewebsites.net/");
+            });
+
+            services.AddHttpClient<IProfileApi, ProfileApi>(client =>
+            {
+                client.BaseAddress = new Uri(Configuration["ApiSettings:BaseUrl"] ?? "https://ultimatehoopersapi.azurewebsites.net/");
+            });
+
             services.AddControllersWithViews();
 
             // Enable CORS with the necessary policy
@@ -38,6 +68,7 @@ namespace OfficalWebsite
                 options.AddPolicy("AllowAll",
                     builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
             });
+
             services.Configure<FormOptions>(options =>
             {
                 options.MultipartBodyLengthLimit = 524288000; // 100 MB
@@ -50,16 +81,10 @@ namespace OfficalWebsite
                 options.Cookie.HttpOnly = true;
                 options.Cookie.IsEssential = true; // Make the session cookie essential
             });
+
             services.AddHttpContextAccessor();
 
-
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
-            services.AddSession(options =>
-            {
-                options.IdleTimeout = TimeSpan.FromMinutes(30); // Session timeout
-                options.Cookie.HttpOnly = true;
-                options.Cookie.IsEssential = true;
-            });
 
             services.AddAuthentication(options =>
             {
@@ -68,7 +93,7 @@ namespace OfficalWebsite
                 options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
             }).AddCookie("TmiginScheme", options =>
             {
-                options.LoginPath = "/Home/Index";
+                options.LoginPath = "/Home/Login";
                 options.LogoutPath = "/Home/Index";
                 options.ExpireTimeSpan = TimeSpan.FromHours(1);
                 options.SlidingExpiration = true;
@@ -104,34 +129,44 @@ namespace OfficalWebsite
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
+
             app.UseHttpsRedirection();
             app.UseStaticFiles();
+
             // Apply the CORS policy
-            // Use CORS policy
             app.UseCors(policy =>
-    policy.AllowAnyOrigin()
-          .AllowAnyMethod()
-          .AllowAnyHeader());
+                policy.AllowAnyOrigin()
+                      .AllowAnyMethod()
+                      .AllowAnyHeader());
+
             app.UseRouting();
             app.UseSession();
-            //app.UseMiddleware<TokenValidationMiddleware>();
-            app.UseAuthentication(); // Ensure authentication middleware is used
+
+            app.UseAuthentication();
             app.UseAuthorization();
+
+            // Session authentication check middleware
             app.Use(async (context, next) =>
             {
-                string CurrentUserIDSession = context.Session.GetString("UserId");
-                if (!context.Request.Path.Value.Contains("/Home/Index"))
+                // Skip authentication check for public pages
+                if (!context.Request.Path.Value.Contains("/Dashboard") ||
+                    context.Request.Path.Value.Contains("/Dashboard/Login"))
                 {
-                    //if (string.IsNullOrEmpty(CurrentUserIDSession))
-                    //{
-                    //    var path = $"/Home/Index?ReturnUrl={context.Request.Path}";
-                    //    context.Response.Redirect(path);
-                    //    return;
-                    //}
-
+                    await next();
+                    return;
                 }
+
+                // Check for authentication token
+                string authToken = context.Session.GetString("Token");
+                if (string.IsNullOrEmpty(authToken))
+                {
+                    context.Response.Redirect("/Home/Login");
+                    return;
+                }
+
                 await next();
             });
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute(
