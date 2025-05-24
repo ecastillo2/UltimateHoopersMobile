@@ -40,7 +40,7 @@ namespace OfficalWebsite.Controllers
             {
                 "Admin" => RedirectToAction("AdminDashboard", "Home"),
                 "Manager" => RedirectToAction("ManagerDashboard", "Home"),
-                _ => View() // Default User dashboard
+                _ => View("Dashboard") // Explicitly use the Dashboard.cshtml view
             };
         }
 

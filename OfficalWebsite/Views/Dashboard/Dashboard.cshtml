@@ -1,42 +1,8 @@
-﻿@
-{
-
-    ViewData
-[
-"Title"
-]
- 
-=
- 
-"User Dashboard"
-;
-
-    
-string
- userName 
-=
- ViewBag
-.
-UserName 
-??
- 
-"User"
-;
-
-    
-string
- userEmail 
-=
- ViewBag
-.
-UserEmail 
-??
- 
-""
-;
-
+﻿@{
+    ViewData["Title"] = "User Dashboard";
+    string userName = ViewBag.UserName ?? "User";
+    string userEmail = ViewBag.UserEmail ?? "";
 }
-
 
 <div class="dashboard-header py-4 bg-light">
     <div class="container">
@@ -66,6 +32,8 @@ UserEmail
         </div>
     </div>
 </div>
+
+<!-- Rest of the file remains the same -->
 
 <div class="container py-4">
     <!-- Performance Overview -->

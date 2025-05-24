@@ -137,7 +137,8 @@ namespace OfficalWebsite.Controllers
             {
                 "Admin" => RedirectToAction("AdminDashboard", "Home"),
                 "Manager" => RedirectToAction("ManagerDashboard", "Home"),
-                _ => RedirectToAction("Dashboard", "Dashboard") // Default to User dashboard
+                // This is the important line - make sure we redirect to the Index action, not Dashboard
+                _ => RedirectToAction("Index", "Dashboard")
             };
         }
 
