@@ -22,8 +22,8 @@ namespace UltimateHoopers.Pages
             PositionHeightText.Text = $"{App.User.Profile.Position} • {App.User.Profile.Height}";
             PlayerNumberText.Text = App.User.Profile.PlayerNumber;
             //GamesText.Text = App.User.Profile.TotalGames;
-            
-            
+
+            PointsLabel.Text = App.User.Profile.Points.ToString();
 
             var serviceProvider = MauiProgram.CreateMauiApp().Services;
             var profileService = serviceProvider.GetService<IProfileService>();

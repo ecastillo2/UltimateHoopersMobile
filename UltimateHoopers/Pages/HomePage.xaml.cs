@@ -503,6 +503,7 @@ namespace UltimateHoopers.Pages
             if (App.User != null && App.User.Profile != null)
             {
                 UsernameLabel.Text = App.User.Profile.UserName;
+                PointsLabel.Text = App.User.Profile.Points.ToString();
 
                 // Load profile image if available
                 if (!string.IsNullOrEmpty(App.User.Profile.ImageURL))

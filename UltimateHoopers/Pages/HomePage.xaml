@@ -51,7 +51,7 @@
                                FontSize="14" 
                                TextColor="{StaticResource PrimaryColor}"
                                VerticalOptions="Center" />
-                        <Label Text="2,450"
+                        <Label x:Name="PointsLabel"
                                FontSize="14"
                                FontAttributes="Bold"
                                TextColor="{StaticResource PrimaryColor}" 
@@ -531,14 +531,14 @@
                         </Frame>
                     </Grid>
 
-                    <!-- Upcoming Events Section -->
+                    <!-- Upcoming Events Section --><!--
                     <Label Text="Upcoming Events"
                            FontSize="20"
                            FontAttributes="Bold"
                            TextColor="{StaticResource PrimaryTextColor}"
                            Margin="0,20,0,5" />
 
-                    <!-- Event cards can be added here -->
+                    --><!-- Event cards can be added here --><!--
                     <Frame BorderColor="{StaticResource BorderColor}"
                            BackgroundColor="{StaticResource CardBackgroundColor}"
                            CornerRadius="10"
@@ -547,7 +547,7 @@
                            Margin="0,5,0,10">
 
                         <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="15">
-                            <!-- Date Box -->
+                            --><!-- Date Box --><!--
                             <Frame Grid.RowSpan="3" Grid.Column="0"
                                    BackgroundColor="{StaticResource PrimaryColor}"
                                    CornerRadius="10"
@@ -568,7 +568,7 @@
                                 </VerticalStackLayout>
                             </Frame>
 
-                            <!-- Event Details -->
+                            --><!-- Event Details --><!--
                             <Label Grid.Row="0" Grid.Column="1"
                                    Text="Weekend Hoops Tournament"
                                    FontSize="18"
@@ -601,17 +601,17 @@
                                         Padding="0"/>
                             </StackLayout>
                         </Grid>
-                    </Frame>
+                    </Frame>-->
 
                     <!-- Recent Posts Section -->
-                    <Label Text="Recent Posts"
+                    <!--<Label Text="Recent Posts"
                            FontSize="20"
                            FontAttributes="Bold"
                            TextColor="{StaticResource PrimaryTextColor}"
-                           Margin="0,20,0,10" />
+                           Margin="0,20,0,10" />-->
 
                     <!-- Post cards can be added here -->
-                    <Frame BorderColor="{StaticResource BorderColor}"
+                    <!--<Frame BorderColor="{StaticResource BorderColor}"
                            BackgroundColor="{StaticResource CardBackgroundColor}"
                            CornerRadius="10"
                            HasShadow="True"
@@ -619,9 +619,9 @@
                            Margin="0,0,0,15">
 
                         <Grid RowDefinitions="Auto,Auto,Auto">
-                            <!-- Header with user info -->
+                            --><!-- Header with user info --><!--
                             <Grid ColumnDefinitions="Auto,*,Auto" Padding="15,10" RowSpacing="0">
-                                <!-- User avatar -->
+                                --><!-- User avatar --><!--
                                 <Frame Grid.Column="0" 
                                        CornerRadius="20" 
                                        HeightRequest="40" 
@@ -635,7 +635,7 @@
                                            VerticalOptions="Center" />
                                 </Frame>
 
-                                <!-- Username and time -->
+                                --><!-- Username and time --><!--
                                 <StackLayout Grid.Column="1" Spacing="0" Margin="10,0,0,0">
                                     <Label Text="Michael Jordan" 
                                            FontAttributes="Bold"
@@ -647,7 +647,7 @@
                                            Opacity="0.7"/>
                                 </StackLayout>
 
-                                <!-- Options menu -->
+                                --><!-- Options menu --><!--
                                 <Label Grid.Column="2" 
                                        Text="⋮" 
                                        FontSize="22" 
@@ -655,20 +655,20 @@
                                        HorizontalOptions="End"/>
                             </Grid>
 
-                            <!-- Content area with placeholder image -->
+                            --><!-- Content area with placeholder image --><!--
                             <Image Grid.Row="1"
                                    Source="logo_uh.png"
                                    Aspect="AspectFill"
                                    HeightRequest="200"/>
 
-                            <!-- Caption and interaction buttons -->
+                            --><!-- Caption and interaction buttons --><!--
                             <StackLayout Grid.Row="2" Padding="15,10">
                                 <Label Text="Great game today! 🏀 #basketball #hoopers"
                                        FontSize="14"
                                        TextColor="{StaticResource PrimaryTextColor}"
                                        Margin="0,0,0,10"/>
 
-                                <!-- Like, Comment, Share buttons -->
+                                --><!-- Like, Comment, Share buttons --><!--
                                 <Grid ColumnDefinitions="*,*,*">
                                     <StackLayout Grid.Column="0" Orientation="Horizontal" HorizontalOptions="Start">
                                         <Label Text="❤️" FontSize="16" VerticalOptions="Center"/>
@@ -699,7 +699,7 @@
                                 </Grid>
                             </StackLayout>
                         </Grid>
-                    </Frame>
+                    </Frame>-->
                 </VerticalStackLayout>
             </ScrollView>
 
