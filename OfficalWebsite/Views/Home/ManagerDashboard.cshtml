@@ -1,0 +1,752 @@
+﻿@{
+    ViewData["Title"] = "Manager Dashboard";
+    string userEmail = ViewBag.UserEmail;
+}
+
+<div class="dashboard-header py-4 bg-light">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="h3 mb-1">
+                    <i class="bi bi-people-fill text-primary me-2"></i>
+                    Manager Dashboard
+                </h1>
+                <p class="text-muted mb-0">Welcome back, @userEmail</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <div class="dropdown">
+                    <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Quick Actions
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-folder-plus me-2"></i>Create Project</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-person-plus me-2"></i>Add Team Member</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-calendar-event me-2"></i>Schedule Meeting</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-file-earmark-text me-2"></i>Generate Report</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-4">
+    <!-- Team Overview -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="stat-card bg-primary text-white">
+                <div class="stat-icon">
+                    <i class="bi bi-people"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>24</h3>
+                    <p class="mb-0">Team Members</p>
+                    <small class="opacity-75">Across 3 teams</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stat-card bg-success text-white">
+                <div class="stat-icon">
+                    <i class="bi bi-kanban"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>12</h3>
+                    <p class="mb-0">Active Projects</p>
+                    <small class="opacity-75">4 due this week</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stat-card bg-warning text-white">
+                <div class="stat-icon">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>89%</h3>
+                    <p class="mb-0">Completion Rate</p>
+                    <small class="opacity-75">This quarter</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stat-card bg-info text-white">
+                <div class="stat-icon">
+                    <i class="bi bi-clock"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>156</h3>
+                    <p class="mb-0">Hours Logged</p>
+                    <small class="opacity-75">This week</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Team Performance -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Team Performance</h5>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-secondary active" data-period="week">Week</button>
+                        <button class="btn btn-outline-secondary" data-period="month">Month</button>
+                        <button class="btn btn-outline-secondary" data-period="quarter">Quarter</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="performance-metric mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-semibold">Development Team</span>
+                                    <span class="badge bg-success">92%</span>
+                                </div>
+                                <div class="progress mb-1" style="height: 8px;">
+                                    <div class="progress-bar bg-success" style="width: 92%"></div>
+                                </div>
+                                <small class="text-muted">8 members • 3 active projects</small>
+                            </div>
+                            <div class="performance-metric mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-semibold">Design Team</span>
+                                    <span class="badge bg-warning">76%</span>
+                                </div>
+                                <div class="progress mb-1" style="height: 8px;">
+                                    <div class="progress-bar bg-warning" style="width: 76%"></div>
+                                </div>
+                                <small class="text-muted">5 members • 2 active projects</small>
+                            </div>
+                            <div class="performance-metric">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-semibold">QA Team</span>
+                                    <span class="badge bg-info">88%</span>
+                                </div>
+                                <div class="progress mb-1" style="height: 8px;">
+                                    <div class="progress-bar bg-info" style="width: 88%"></div>
+                                </div>
+                                <small class="text-muted">4 members • 5 active projects</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <canvas id="performanceChart" width="300" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Projects -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Current Projects</h5>
+                </div>
+                <div class="card-body">
+                    <div class="project-list">
+                        <div class="project-item">
+                            <div class="project-info">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="project-title">E-commerce Platform Redesign</h6>
+                                    <span class="badge bg-warning">In Progress</span>
+                                </div>
+                                <p class="text-muted mb-2">Complete redesign of the shopping experience with modern UI/UX principles.</p>
+                                <div class="project-meta">
+                                    <span class="text-muted"><i class="bi bi-people me-1"></i>6 members</span>
+                                    <span class="text-muted ms-3"><i class="bi bi-calendar me-1"></i>Due: Dec 15, 2024</span>
+                                </div>
+                            </div>
+                            <div class="project-progress">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <small class="text-muted">Progress</small>
+                                    <small class="fw-semibold">68%</small>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-warning" style="width: 68%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="project-item">
+                            <div class="project-info">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="project-title">Mobile App Security Update</h6>
+                                    <span class="badge bg-danger">Urgent</span>
+                                </div>
+                                <p class="text-muted mb-2">Critical security patches and vulnerability fixes for mobile applications.</p>
+                                <div class="project-meta">
+                                    <span class="text-muted"><i class="bi bi-people me-1"></i>4 members</span>
+                                    <span class="text-muted ms-3"><i class="bi bi-calendar me-1"></i>Due: Nov 28, 2024</span>
+                                </div>
+                            </div>
+                            <div class="project-progress">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <small class="text-muted">Progress</small>
+                                    <small class="fw-semibold">45%</small>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-danger" style="width: 45%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="project-item">
+                            <div class="project-info">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="project-title">Analytics Dashboard v2.0</h6>
+                                    <span class="badge bg-success">On Track</span>
+                                </div>
+                                <p class="text-muted mb-2">Enhanced analytics dashboard with real-time data visualization capabilities.</p>
+                                <div class="project-meta">
+                                    <span class="text-muted"><i class="bi bi-people me-1"></i>5 members</span>
+                                    <span class="text-muted ms-3"><i class="bi bi-calendar me-1"></i>Due: Jan 10, 2025</span>
+                                </div>
+                            </div>
+                            <div class="project-progress">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <small class="text-muted">Progress</small>
+                                    <small class="fw-semibold">82%</small>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-success" style="width: 82%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="#" class="btn btn-outline-primary">View All Projects</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team Activity -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Team Activity</h5>
+                </div>
+                <div class="card-body">
+                    <div class="activity-timeline">
+                        <div class="activity-item">
+                            <div class="activity-time">2 hours ago</div>
+                            <div class="activity-icon bg-success">
+                                <i class="bi bi-check-circle text-white"></i>
+                            </div>
+                            <div class="activity-content">
+                                <h6>Task Completed</h6>
+                                <p class="text-muted mb-1">Sarah Johnson completed "User Interface Mockups" in E-commerce Platform Redesign</p>
+                                <small class="text-muted">Development Team</small>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-time">4 hours ago</div>
+                            <div class="activity-icon bg-primary">
+                                <i class="bi bi-plus-circle text-white"></i>
+                            </div>
+                            <div class="activity-content">
+                                <h6>New Task Created</h6>
+                                <p class="text-muted mb-1">Mike Chen created "Security Audit Checklist" in Mobile App Security Update</p>
+                                <small class="text-muted">QA Team</small>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-time">Yesterday</div>
+                            <div class="activity-icon bg-warning">
+                                <i class="bi bi-exclamation-triangle text-white"></i>
+                            </div>
+                            <div class="activity-content">
+                                <h6>Deadline Alert</h6>
+                                <p class="text-muted mb-1">Mobile App Security Update deadline approaching in 3 days</p>
+                                <small class="text-muted">System Notification</small>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-time">Yesterday</div>
+                            <div class="activity-icon bg-info">
+                                <i class="bi bi-people text-white"></i>
+                            </div>
+                            <div class="activity-content">
+                                <h6>Team Meeting</h6>
+                                <p class="text-muted mb-1">Weekly sprint planning meeting completed with Design Team</p>
+                                <small class="text-muted">Design Team</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Team Members -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Team Members</h5>
+                    <button class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-person-plus me-1"></i>
+                        Add
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="team-member mb-3">
+                        <div class="member-avatar">
+                            <img src="https://via.placeholder.com/40" alt="Sarah" class="rounded-circle">
+                            <span class="status-indicator bg-success"></span>
+                        </div>
+                        <div class="member-info">
+                            <h6 class="mb-1">Sarah Johnson</h6>
+                            <small class="text-muted">Senior UI/UX Designer</small>
+                        </div>
+                        <div class="member-actions">
+                            <button class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-chat"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="team-member mb-3">
+                        <div class="member-avatar">
+                            <img src="https://via.placeholder.com/40" alt="Mike" class="rounded-circle">
+                            <span class="status-indicator bg-warning"></span>
+                        </div>
+                        <div class="member-info">
+                            <h6 class="mb-1">Mike Chen</h6>
+                            <small class="text-muted">QA Engineer</small>
+                        </div>
+                        <div class="member-actions">
+                            <button class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-chat"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="team-member mb-3">
+                        <div class="member-avatar">
+                            <img src="https://via.placeholder.com/40" alt="Alex" class="rounded-circle">
+                            <span class="status-indicator bg-success"></span>
+                        </div>
+                        <div class="member-info">
+                            <h6 class="mb-1">Alex Rodriguez</h6>
+                            <small class="text-muted">Full Stack Developer</small>
+                        </div>
+                        <div class="member-actions">
+                            <button class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-chat"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="team-member mb-3">
+                        <div class="member-avatar">
+                            <img src="https://via.placeholder.com/40" alt="Emma" class="rounded-circle">
+                            <span class="status-indicator bg-secondary"></span>
+                        </div>
+                        <div class="member-info">
+                            <h6 class="mb-1">Emma Wilson</h6>
+                            <small class="text-muted">Product Manager</small>
+                        </div>
+                        <div class="member-actions">
+                            <button class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-chat"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <a href="#" class="btn btn-sm btn-link">View All Team Members</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upcoming Deadlines -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Upcoming Deadlines</h5>
+                </div>
+                <div class="card-body">
+                    <div class="deadline-item mb-3">
+                        <div class="deadline-date">
+                            <div class="date-circle bg-danger text-white">
+                                <span class="day">28</span>
+                                <span class="month">Nov</span>
+                            </div>
+                        </div>
+                        <div class="deadline-info">
+                            <h6 class="mb-1">Mobile App Security Update</h6>
+                            <small class="text-danger">Due in 3 days</small>
+                        </div>
+                    </div>
+                    <div class="deadline-item mb-3">
+                        <div class="deadline-date">
+                            <div class="date-circle bg-warning text-white">
+                                <span class="day">15</span>
+                                <span class="month">Dec</span>
+                            </div>
+                        </div>
+                        <div class="deadline-info">
+                            <h6 class="mb-1">E-commerce Platform Redesign</h6>
+                            <small class="text-warning">Due in 20 days</small>
+                        </div>
+                    </div>
+                    <div class="deadline-item">
+                        <div class="deadline-date">
+                            <div class="date-circle bg-success text-white">
+                                <span class="day">10</span>
+                                <span class="month">Jan</span>
+                            </div>
+                        </div>
+                        <div class="deadline-info">
+                            <h6 class="mb-1">Analytics Dashboard v2.0</h6>
+                            <small class="text-success">Due in 47 days</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary">
+                            <i class="bi bi-folder-plus me-2"></i>
+                            Create New Project
+                        </button>
+                        <button class="btn btn-outline-primary">
+                            <i class="bi bi-calendar-event me-2"></i>
+                            Schedule Team Meeting
+                        </button>
+                        <button class="btn btn-outline-secondary">
+                            <i class="bi bi-bar-chart me-2"></i>
+                            Generate Team Report
+                        </button>
+                        <button class="btn btn-outline-info">
+                            <i class="bi bi-person-plus me-2"></i>
+                            Invite Team Member
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .dashboard-header {
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, var(--bs-primary) 0%, var(--bs-primary) 100%);
+        border-radius: 12px;
+        padding: 1.5rem;
+        color: white;
+        display: flex;
+        align-items: center;
+        height: 100%;
+    }
+
+        .stat-card.bg-primary {
+            background: linear-gradient(135deg, #4a6cf7 0%, #5d87ff 100%);
+        }
+
+        .stat-card.bg-success {
+            background: linear-gradient(135deg, #00d4aa 0%, #1dd1a1 100%);
+        }
+
+        .stat-card.bg-warning {
+            background: linear-gradient(135deg, #ffa726 0%, #ff9800 100%);
+        }
+
+        .stat-card.bg-info {
+            background: linear-gradient(135deg, #26c6da 0%, #00bcd4 100%);
+        }
+
+    .stat-icon {
+        font-size: 2.5rem;
+        margin-right: 1rem;
+        opacity: 0.8;
+    }
+
+    .stat-info h3 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .performance-metric {
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .chart-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 200px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .project-list {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .project-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 1.5rem;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        background: white;
+    }
+
+        .project-item:last-child {
+            margin-bottom: 0;
+        }
+
+    .project-info {
+        flex-grow: 1;
+        margin-right: 1rem;
+    }
+
+    .project-title {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.5rem;
+    }
+
+    .project-meta span {
+        font-size: 0.85rem;
+    }
+
+    .project-progress {
+        min-width: 120px;
+    }
+
+    .activity-timeline {
+        position: relative;
+    }
+
+    .activity-item {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 1.5rem;
+        position: relative;
+    }
+
+        .activity-item:last-child {
+            margin-bottom: 0;
+        }
+
+    .activity-time {
+        font-size: 0.8rem;
+        color: #6c757d;
+        font-weight: 500;
+        min-width: 80px;
+        margin-right: 1rem;
+    }
+
+    .activity-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        flex-shrink: 0;
+        font-size: 0.8rem;
+    }
+
+    .activity-content {
+        flex-grow: 1;
+    }
+
+        .activity-content h6 {
+            margin-bottom: 0.25rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .activity-content p {
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+    .team-member {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+        border-radius: 8px;
+        transition: background-color 0.2s ease;
+    }
+
+        .team-member:hover {
+            background: #f8f9fa;
+        }
+
+    .member-avatar {
+        position: relative;
+        margin-right: 0.75rem;
+    }
+
+        .member-avatar img {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+        }
+
+    .status-indicator {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        bottom: 0;
+        right: 0;
+        border: 2px solid white;
+    }
+
+    .member-info {
+        flex-grow: 1;
+    }
+
+        .member-info h6 {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .member-info small {
+            font-size: 0.8rem;
+        }
+
+    .deadline-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+        border-radius: 8px;
+        transition: background-color 0.2s ease;
+    }
+
+        .deadline-item:hover {
+            background: #f8f9fa;
+        }
+
+    .deadline-date {
+        margin-right: 0.75rem;
+    }
+
+    .date-circle {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+
+        .date-circle .day {
+            font-size: 1rem;
+            line-height: 1;
+        }
+
+        .date-circle .month {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            line-height: 1;
+        }
+
+    .deadline-info h6 {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .card {
+        border: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        border-radius: 12px;
+    }
+
+    .card-header {
+        background: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+        border-radius: 12px 12px 0 0 !important;
+        padding: 1rem 1.5rem;
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+
+    @@media (max-width: 768px) {
+        .stat-card
+
+    {
+        margin-bottom: 1rem;
+    }
+
+    .project-item {
+        flex-direction: column;
+    }
+
+    .project-progress {
+        min-width: auto;
+        width: 100%;
+        margin-top: 1rem;
+    }
+
+    .activity-time {
+        min-width: auto;
+        margin-bottom: 0.5rem;
+    }
+
+    .activity-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .team-member {
+        margin-bottom: 0.5rem;
+    }
+
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Simple chart placeholder - in a real app, you'd use Chart.js or similar
+        const canvas = document.getElementById('performanceChart');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+
+            // Simple bar chart representation
+            ctx.fillStyle = '#f8f9fa';
+            ctx.fillRect(0, 0, 300, 200);
+
+            ctx.fillStyle = '#4a6cf7';
+            ctx.fillText('Team Performance Chart', 100, 100);
+            ctx.fillText('(Chart.js integration needed)', 80, 120);
+        }
+
+        // Performance period buttons
+        const periodButtons = document.querySelectorAll('[data-period]');
+        periodButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                periodButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+
+                // Here you would update the chart data based on the selected period
+                console.log('Selected period:', this.dataset.period);
+            });
+        });
+    });
+</script>

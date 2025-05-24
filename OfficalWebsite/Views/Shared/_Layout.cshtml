@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Your App Name</title>
+    <title>@ViewData["Title"] - TaskFlow Pro</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
@@ -11,14 +11,20 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/css/site-css.css" asp-append-version="true" />
-@*     <link rel="stylesheet" href="~/OfficalWebsite.styles.css" asp-append-version="true" />
- *@</head>
+</head>
 <body>
+    @{
+        bool isAuthenticated = Context.Session.GetString("IsAuthenticated") == "true";
+        string userEmail = Context.Session.GetString("UserEmail") ?? "";
+        string userRole = Context.Session.GetString("UserRole") ?? "";
+    }
+
     <header>
         <nav class="navbar navbar-expand-sm navbar-light bg-white fixed-top shadow-sm">
             <div class="container">
                 <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
-                    <span class="fw-bold text-primary">Your App</span>
+                    <i class="bi bi-kanban text-primary me-2"></i>
+                    <span class="fw-bold text-primary">TaskFlow Pro</span>
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
@@ -27,26 +33,104 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">
+                                <i class="bi bi-house me-1"></i>Home
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Features">Features</a>
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Features">
+                                <i class="bi bi-star me-1"></i>Features
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Pricing">Pricing</a>
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Pricing">
+                                <i class="bi bi-tag me-1"></i>Pricing
+                            </a>
                         </li>
+
+                        @if (isAuthenticated)
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle text-dark" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-grid-3x3-gap me-1"></i>Dashboard
+                                </a>
+                                <ul class="dropdown-menu">
+                                    @if (userRole == "Admin")
+                                    {
+                                        <li><a class="dropdown-item" asp-action="AdminDashboard"><i class="bi bi-gear me-2"></i>Admin Dashboard</a></li>
+                                    }
+                                    @if (userRole == "Manager")
+                                    {
+                                        <li><a class="dropdown-item" asp-action="ManagerDashboard"><i class="bi bi-people me-2"></i>Manager Dashboard</a></li>
+                                    }
+                                    @if (userRole == "User")
+                                    {
+                                        <li><a class="dropdown-item" asp-action="UserDashboard"><i class="bi bi-person me-2"></i>My Dashboard</a></li>
+                                    }
+                                </ul>
+                            </li>
+                        }
+
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">
+                                <i class="bi bi-shield-check me-1"></i>Privacy
+                            </a>
                         </li>
                     </ul>
-                    <div class="d-flex">
-                        <a href="#" class="btn btn-outline-primary me-2">Sign In</a>
-                        <a href="#" class="btn btn-primary">Download</a>
+
+                    <div class="d-flex align-items-center">
+                        @if (isAuthenticated)
+                        {
+                            <div class="dropdown me-2">
+                                <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-person-circle me-1"></i>
+                                    @userEmail
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <div class="dropdown-header">
+                                            <small class="text-muted">Signed in as</small><br>
+                                            <strong>@userEmail</strong><br>
+                                            <span class="badge bg-primary">@userRole</span>
+                                        </div>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    @if (userRole == "Admin")
+                                    {
+                                        <li><a class="dropdown-item" asp-action="AdminDashboard"><i class="bi bi-gear me-2"></i>Admin Dashboard</a></li>
+                                    }
+                                    @if (userRole == "Manager")
+                                    {
+                                        <li><a class="dropdown-item" asp-action="ManagerDashboard"><i class="bi bi-people me-2"></i>Manager Dashboard</a></li>
+                                    }
+                                    @if (userRole == "User")
+                                    {
+                                        <li><a class="dropdown-item" asp-action="UserDashboard"><i class="bi bi-person me-2"></i>My Dashboard</a></li>
+                                    }
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Profile Settings</a></li>
+                                    <li><a class="dropdown-item" href="#"><i class="bi bi-bell me-2"></i>Notifications</a></li>
+                                    <li><a class="dropdown-item" href="#"><i class="bi bi-question-circle me-2"></i>Help</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" asp-action="Logout"><i class="bi bi-box-arrow-right me-2"></i>Sign Out</a></li>
+                                </ul>
+                            </div>
+                        }
+                        else
+                        {
+                            <a href="/Home/Login" class="btn btn-outline-primary me-2">
+                                <i class="bi bi-box-arrow-in-right me-1"></i>Sign In
+                            </a>
+                            <a href="/Home/Login" class="btn btn-primary">
+                                <i class="bi bi-rocket-takeoff me-1"></i>Get Started
+                            </a>
+                        }
                     </div>
                 </div>
             </div>
         </nav>
     </header>
+
     <div class="pt-5 mt-5">
         <main role="main">
             @RenderBody()
@@ -57,56 +141,963 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-4 mb-4 mb-md-0">
-                    <h5 class="fw-bold mb-3">Your App</h5>
-                    <p class="text-muted">Experience the next generation of mobile productivity with our innovative app.</p>
+                    <h5 class="fw-bold mb-3">
+                        <i class="bi bi-kanban text-primary me-2"></i>
+                        TaskFlow Pro
+                    </h5>
+                    <p class="text-muted">The ultimate productivity platform for teams and individuals. Streamline workflows, boost collaboration, and achieve more.</p>
                     <div class="social-icons mt-3">
-                        <a href="#" class="me-3"><i class="bi bi-facebook"></i></a>
-                        <a href="#" class="me-3"><i class="bi bi-twitter-x"></i></a>
-                        <a href="#" class="me-3"><i class="bi bi-instagram"></i></a>
-                        <a href="#"><i class="bi bi-linkedin"></i></a>
+                        <a href="#" class="me-3 text-decoration-none">
+                            <i class="bi bi-facebook text-primary"></i>
+                        </a>
+                        <a href="#" class="me-3 text-decoration-none">
+                            <i class="bi bi-twitter text-info"></i>
+                        </a>
+                        <a href="#" class="me-3 text-decoration-none">
+                            <i class="bi bi-instagram text-danger"></i>
+                        </a>
+                        <a href="#" class="text-decoration-none">
+                            <i class="bi bi-linkedin text-primary"></i>
+                        </a>
                     </div>
                 </div>
                 <div class="col-md-2 mb-4 mb-md-0">
                     <h6 class="fw-bold mb-3">Product</h6>
                     <ul class="list-unstyled">
-                        <li class="mb-2"><a href="#" class="text-decoration-none text-muted">Features</a></li>
-                        <li class="mb-2"><a href="#" class="text-decoration-none text-muted">Pricing</a></li>
-                        <li class="mb-2"><a href="#" class="text-decoration-none text-muted">FAQ</a></li>
-                        <li><a href="#" class="text-decoration-none text-muted">Download</a></li>
+                        <li class="mb-2"><a href="/Home/Features" class="text-decoration-none text-muted">Features</a></li>
+                        <li class="mb-2"><a href="/Home/Pricing" class="text-decoration-none text-muted">Pricing</a></li>
+                        <li class="mb-2"><a href="#" class="text-decoration-none text-muted">Integrations</a></li>
+                        <li class="mb-2"><a href="#" class="text-decoration-none text-muted">API</a></li>
+                        <li><a href="#" class="text-decoration-none text-muted">Mobile Apps</a></li>
                     </ul>
                 </div>
                 <div class="col-md-2 mb-4 mb-md-0">
                     <h6 class="fw-bold mb-3">Company</h6>
                     <ul class="list-unstyled">
-                        <li class="mb-2"><a href="#" class="text-decoration-none text-muted">About</a></li>
+                        <li class="mb-2"><a href="#" class="text-decoration-none text-muted">About Us</a></li>
                         <li class="mb-2"><a href="#" class="text-decoration-none text-muted">Blog</a></li>
                         <li class="mb-2"><a href="#" class="text-decoration-none text-muted">Careers</a></li>
+                        <li class="mb-2"><a href="#" class="text-decoration-none text-muted">Press</a></li>
                         <li><a href="#" class="text-decoration-none text-muted">Contact</a></li>
                     </ul>
                 </div>
-                <div class="col-md-4">
-                    <h6 class="fw-bold mb-3">Subscribe to our newsletter</h6>
-                    <p class="text-muted mb-3">Get the latest updates and news right at your inbox.</p>
-                    <div class="input-group">
-                        <input type="email" class="form-control" placeholder="Enter your email">
-                        <button class="btn btn-primary" type="button">Subscribe</button>
-                    </div>
+                <div class="col-md-2 mb-4 mb-md-0">
+                    <h6 class="fw-bold mb-3">Support</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#" class="text-decoration-none text-muted">Help Center</a></li>
+                        <li class="mb-2"><a href="#" class="text-decoration-none text-muted">Documentation</a></li>
+                        <li class="mb-2"><a href="#" class="text-decoration-none text-muted">Community</a></li>
+                        <li class="mb-2"><a href="#" class="text-decoration-none text-muted">Status</a></li>
+                        <li><a href="#" class="text-decoration-none text-muted">Security</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-2">
+                    <h6 class="fw-bold mb-3">Legal</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="/Home/Privacy" class="text-decoration-none text-muted">Privacy Policy</a></li>
+                        <li class="mb-2"><a href="#" class="text-decoration-none text-muted">Terms of Service</a></li>
+                        <li class="mb-2"><a href="#" class="text-decoration-none text-muted">Cookie Policy</a></li>
+                        <li><a href="#" class="text-decoration-none text-muted">GDPR</a></li>
+                    </ul>
                 </div>
             </div>
             <hr class="my-4">
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-center">
-                <p class="mb-3 mb-md-0">&copy; 2025 - Your App Name - All rights reserved</p>
-                <div>
-                    <a asp-area="" asp-controller="Home" asp-action="Privacy" class="text-decoration-none text-muted me-3">Privacy Policy</a>
-                    <a href="#" class="text-decoration-none text-muted me-3">Terms of Service</a>
-                    <a href="#" class="text-decoration-none text-muted">Cookies</a>
+                <p class="mb-3 mb-md-0 text-muted">
+                    &copy; 2024 TaskFlow Pro. All rights reserved.
+                    <span class="d-none d-md-inline">Built with ❤️ for productivity.</span>
+                </p>
+                <div class="d-flex align-items-center">
+                    <span class="text-muted me-2">Made with</span>
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJMMTMuMDkgOC4yNkwyMCA5TDEzLjA5IDE1Ljc0TDEyIDIyTDEwLjkxIDE1Ljc0TDQgOUwxMC45MSA4LjI2TDEyIDJaIiBmaWxsPSIjNTEyQkQ0Ii8+Cjwvc3ZnPgo=" alt="ASP.NET Core" class="me-2" style="height: 20px;">
+                    <span class="text-muted">ASP.NET Core</span>
                 </div>
             </div>
         </div>
     </footer>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
+
+<style>
+    /* Navigation Enhancements */
+    .navbar-brand {
+        font-size: 1.25rem;
+        transition: transform 0.2s ease;
+    }
+
+        .navbar-brand:hover {
+            transform: scale(1.05);
+        }
+
+    .nav-link {
+        font-weight: 500;
+        transition: color 0.2s ease;
+        border-radius: 6px;
+        margin: 0 2px;
+        padding: 0.5rem 0.75rem !important;
+    }
+
+        .nav-link:hover {
+            background-color: rgba(74, 108, 247, 0.1);
+            color: var(--bs-primary) !important;
+        }
+
+        .nav-link.active {
+            background-color: var(--bs-primary);
+            color: white !important;
+        }
+
+    .dropdown-menu {
+        border: none;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        padding: 0.5rem;
+    }
+
+    .dropdown-item {
+        border-radius: 6px;
+        padding: 0.5rem 0.75rem;
+        transition: all 0.2s ease;
+    }
+
+        .dropdown-item:hover {
+            background-color: rgba(74, 108, 247, 0.1);
+            color: var(--bs-primary);
+        }
+
+    .dropdown-header {
+        padding: 0.75rem;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Button Enhancements */
+    .btn {
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #4a6cf7 0%, #5d87ff 100%);
+        border: none;
+    }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #3b5ae0 0%, #4c75ff 100%);
+        }
+
+    .btn-outline-primary:hover {
+        background: linear-gradient(135deg, #4a6cf7 0%, #5d87ff 100%);
+        border-color: transparent;
+        transform: translateY(-1px);
+    }
+
+    /* Footer Enhancements */
+    .footer {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        position: relative;
+        margin-top: 4rem;
+    }
+
+        .footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--bs-primary), transparent);
+        }
+
+        .footer h5, .footer h6 {
+            color: #333;
+        }
+
+        .footer .list-unstyled a:hover {
+            color: var(--bs-primary) !important;
+            padding-left: 5px;
+            transition: all 0.2s ease;
+        }
+
+    .social-icons a {
+        display: inline-block;
+        font-size: 1.25rem;
+        transition: transform 0.2s ease;
+    }
+
+        .social-icons a:hover {
+            transform: translateY(-2px);
+        }
+
+    /* Utility Classes */
+    .text-primary {
+        color: #4a6cf7 !important;
+    }
+
+    /* Responsive Improvements */
+    @@media (max-width: 768px) {
+        .navbar-nav
+
+    {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .nav-link {
+        margin: 2px 0;
+    }
+
+    .footer .col-md-4,
+    .footer .col-md-2 {
+        margin-bottom: 2rem;
+    }
+
+    .d-flex.align-items-center {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+
+    }
+
+    /* Loading Animation */
+    .btn.loading {
+        position: relative;
+        pointer-events: none;
+    }
+
+        .btn.loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            left: 50%;
+            margin-left: -8px;
+            margin-top: -8px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.8s linear infinite;
+        }
+
+    @@keyframes spin {
+        to
+
+    {
+        transform: rotate(360deg);
+    }
+
+    }
+
+    /* Notification Badge */
+    .notification-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        width: 18px;
+        height: 18px;
+        background: #dc3545;
+        color: white;
+        border-radius: 50%;
+        font-size: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid white;
+    }
+
+    /* Accessibility Improvements */
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    /* Focus States */
+    .btn:focus,
+    .nav-link:focus,
+    .dropdown-item:focus {
+        box-shadow: 0 0 0 0.2rem rgba(74, 108, 247, 0.25);
+        outline: none;
+    }
+
+    /* Print Styles */
+    @@media print {
+        .navbar, .footer, .btn
+
+    {
+        display: none !important;
+    }
+
+    .container {
+        max-width: none !important;
+    }
+
+    }
+</style>
+
+
+        <script>
+                document.addEventListener('DOMContentLoaded', function () {
+        // Initialize all components
+        initializeNavigation();
+        initializeAnimations();
+        initializeTooltips();
+        initializeProgressBars();
+        initializeNotifications();
+        initializeTheme();
+        initializePerformance();
+        initializeAccessibility();
+    });
+
+    // Navigation Enhancement
+    function initializeNavigation() {
+        const navbar = document.querySelector('.navbar');
+
+        // Add shadow to navbar when scrolling
+        if (navbar) {
+            let scrollTimer = null;
+
+            window.addEventListener('scroll', function () {
+                if (scrollTimer) {
+                    clearTimeout(scrollTimer);
+                }
+
+                scrollTimer = setTimeout(() => {
+                    if (window.scrollY > 10) {
+                        navbar.classList.add('navbar-scrolled');
+                    } else {
+                        navbar.classList.remove('navbar-scrolled');
+                    }
+                }, 10);
+            });
+        }
+
+        // Active nav link highlighting
+        const navLinks = document.querySelectorAll('.nav-link');
+        const currentPath = window.location.pathname;
+
+        navLinks.forEach(link => {
+            if (link.getAttribute('href') === currentPath) {
+                link.classList.add('active');
+            }
+        });
+
+        // Dropdown hover effect on desktop
+        const dropdowns = document.querySelectorAll('.dropdown');
+
+        dropdowns.forEach(dropdown => {
+            let hoverTimer = null;
+
+            dropdown.addEventListener('mouseenter', function() {
+                if (window.innerWidth > 768) {
+                    clearTimeout(hoverTimer);
+                    const dropdownToggle = this.querySelector('.dropdown-toggle');
+                    const dropdownMenu = this.querySelector('.dropdown-menu');
+
+                    if (dropdownToggle && dropdownMenu) {
+                        dropdownToggle.setAttribute('aria-expanded', 'true');
+                        dropdownMenu.classList.add('show');
+                    }
+                }
+            });
+
+            dropdown.addEventListener('mouseleave', function() {
+                if (window.innerWidth > 768) {
+                    hoverTimer = setTimeout(() => {
+                        const dropdownToggle = this.querySelector('.dropdown-toggle');
+                        const dropdownMenu = this.querySelector('.dropdown-menu');
+
+                        if (dropdownToggle && dropdownMenu) {
+                            dropdownToggle.setAttribute('aria-expanded', 'false');
+                            dropdownMenu.classList.remove('show');
+                        }
+                    }, 300);
+                }
+            });
+        });
+    }
+
+    // Advanced Animation System
+    function initializeAnimations() {
+        // Intersection Observer for scroll animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-in');
+                }
+            });
+        }, observerOptions);
+
+        // Observe elements with animation classes
+        const animatedElements = document.querySelectorAll('.fade-in-up, .slide-in-left, .slide-in-right, .scale-in');
+        animatedElements.forEach(el => observer.observe(el));
+
+        // Parallax effect for hero sections
+        const parallaxElements = document.querySelectorAll('.parallax');
+
+        if (parallaxElements.length > 0) {
+            let ticking = false;
+
+            function updateParallax() {
+                const scrolled = window.pageYOffset;
+
+                parallaxElements.forEach(element => {
+                    const rate = scrolled * -0.5;
+                    element.style.transform = `translateY(${rate}px)`;
+                });
+
+                ticking = false;
+            }
+
+            window.addEventListener('scroll', () => {
+                if (!ticking) {
+                    requestAnimationFrame(updateParallax);
+                    ticking = true;
+                }
+            });
+        }
+
+        // Count-up animation for statistics
+        const countElements = document.querySelectorAll('.count-up');
+
+        const countObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && !entry.target.classList.contains('counted')) {
+                    animateCount(entry.target);
+                    entry.target.classList.add('counted');
+                }
+            });
+        }, { threshold: 0.5 });
+
+        countElements.forEach(el => countObserver.observe(el));
+    }
+
+    // Count-up animation function
+    function animateCount(element) {
+        const target = parseInt(element.textContent);
+        const duration = 2000;
+        const step = target / (duration / 16);
+        let current = 0;
+
+        const timer = setInterval(() => {
+            current += step;
+            if (current >= target) {
+                current = target;
+                clearInterval(timer);
+            }
+            element.textContent = Math.floor(current);
+        }, 16);
+    }
+
+    // Enhanced Tooltips and Popovers
+    function initializeTooltips() {
+        // Initialize Bootstrap tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl, {
+                boundary: 'viewport',
+                customClass: 'custom-tooltip'
+            });
+        });
+
+        // Initialize Bootstrap popovers
+        const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+        const popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+            return new bootstrap.Popover(popoverTriggerEl, {
+                boundary: 'viewport',
+                customClass: 'custom-popover'
+            });
+        });
+
+        // Custom tooltip positioning
+        const customTooltips = document.querySelectorAll('.custom-tooltip-trigger');
+
+        customTooltips.forEach(trigger => {
+            const tooltip = document.createElement('div');
+            tooltip.className = 'custom-tooltip-content';
+            tooltip.textContent = trigger.dataset.tooltip;
+            document.body.appendChild(tooltip);
+
+            trigger.addEventListener('mouseenter', (e) => {
+                const rect = trigger.getBoundingClientRect();
+                tooltip.style.left = rect.left + (rect.width / 2) + 'px';
+                tooltip.style.top = rect.top - tooltip.offsetHeight - 10 + 'px';
+                tooltip.classList.add('show');
+            });
+
+            trigger.addEventListener('mouseleave', () => {
+                tooltip.classList.remove('show');
+            });
+        });
+    }
+
+    // Progress Bar Animations
+    function initializeProgressBars() {
+        const progressBars = document.querySelectorAll('.progress-bar');
+
+        const progressObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const progressBar = entry.target;
+                    const targetWidth = progressBar.dataset.width || progressBar.style.width;
+
+                    progressBar.style.width = '0%';
+
+                    setTimeout(() => {
+                        progressBar.style.transition = 'width 1.5s ease-in-out';
+                        progressBar.style.width = targetWidth;
+                    }, 100);
+                }
+            });
+        }, { threshold: 0.5 });
+
+        progressBars.forEach(bar => progressObserver.observe(bar));
+    }
+
+    // Notification System
+    function initializeNotifications() {
+        window.showNotification = function(message, type = 'info', duration = 5000) {
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type} notification-toast`;
+            notification.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-${getNotificationIcon(type)} me-2"></i>
+                    <span>${message}</span>
+                    <button type="button" class="btn-close ms-auto" aria-label="Close"></button>
+                </div>
+            `;
+
+            const container = getNotificationContainer();
+            container.appendChild(notification);
+
+            // Auto-remove after duration
+            setTimeout(() => {
+                notification.classList.add('fade-out');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, duration);
+
+            // Manual close
+            notification.querySelector('.btn-close').addEventListener('click', () => {
+                notification.classList.add('fade-out');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            });
+        };
+
+        function getNotificationIcon(type) {
+            const icons = {
+                'success': 'check-circle',
+                'danger': 'exclamation-triangle',
+                'warning': 'exclamation-circle',
+                'info': 'info-circle'
+            };
+            return icons[type] || 'info-circle';
+        }
+
+        function getNotificationContainer() {
+            let container = document.querySelector('.notification-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.className = 'notification-container';
+                document.body.appendChild(container);
+            }
+            return container;
+        }
+    }
+
+    // Theme Management
+    function initializeTheme() {
+        const themeToggle = document.querySelector('.theme-toggle');
+        const currentTheme = localStorage.getItem('theme') || 'light';
+
+        // Apply saved theme
+        document.documentElement.setAttribute('data-theme', currentTheme);
+
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => {
+                const current = document.documentElement.getAttribute('data-theme');
+                const newTheme = current === 'dark' ? 'light' : 'dark';
+
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+
+                // Update toggle icon
+                const icon = themeToggle.querySelector('i');
+                if (icon) {
+                    icon.className = newTheme === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
+                }
+            });
+        }
+
+        // Auto theme based on system preference
+        if (!localStorage.getItem('theme')) {
+            const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+            document.documentElement.setAttribute('data-theme', mediaQuery.matches ? 'dark' : 'light');
+
+            mediaQuery.addEventListener('change', (e) => {
+                if (!localStorage.getItem('theme')) {
+                    document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+                }
+            });
+        }
+    }
+
+    // Performance Monitoring
+    function initializePerformance() {
+        // Page load performance
+        window.addEventListener('load', () => {
+            if ('performance' in window) {
+                const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
+                console.log(`Page load time: ${loadTime}ms`);
+
+                // Send to analytics if needed
+                if (window.gtag) {
+                    gtag('event', 'page_load_time', {
+                        event_category: 'Performance',
+                        value: loadTime
+                    });
+                }
+            }
+        });
+
+        // Monitor long tasks
+        if ('PerformanceObserver' in window) {
+            const observer = new PerformanceObserver((list) => {
+                for (const entry of list.getEntries()) {
+                    if (entry.duration > 50) {
+                        console.warn(`Long task detected: ${entry.duration}ms`);
+                    }
+                }
+            });
+
+            observer.observe({ entryTypes: ['longtask'] });
+        }
+    }
+
+    // Accessibility Enhancements
+    function initializeAccessibility() {
+        // Keyboard navigation for custom dropdowns
+        const customDropdowns = document.querySelectorAll('.custom-dropdown');
+
+        customDropdowns.forEach(dropdown => {
+            const trigger = dropdown.querySelector('.dropdown-trigger');
+            const menu = dropdown.querySelector('.dropdown-menu');
+
+            if (trigger && menu) {
+                trigger.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        menu.classList.toggle('show');
+
+                        if (menu.classList.contains('show')) {
+                            const firstItem = menu.querySelector('a, button');
+                            if (firstItem) firstItem.focus();
+                        }
+                    }
+                });
+
+                menu.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        menu.classList.remove('show');
+                        trigger.focus();
+                    }
+                });
+            }
+        });
+
+        // Focus trap for modals
+        const modals = document.querySelectorAll('.modal');
+
+        modals.forEach(modal => {
+            modal.addEventListener('shown.bs.modal', () => {
+                const focusableElements = modal.querySelectorAll(
+                    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+                );
+
+                if (focusableElements.length > 0) {
+                    focusableElements[0].focus();
+                }
+            });
+        });
+
+        // Announce page changes for screen readers
+        const announcer = document.createElement('div');
+        announcer.setAttribute('aria-live', 'polite');
+        announcer.setAttribute('aria-atomic', 'true');
+        announcer.className = 'sr-only';
+        document.body.appendChild(announcer);
+
+        // Skip to main content link
+        const skipLink = document.createElement('a');
+        skipLink.href = '#main-content';
+        skipLink.textContent = 'Skip to main content';
+        skipLink.className = 'skip-link';
+        document.body.insertBefore(skipLink, document.body.firstChild);
+    }
+
+    // Form Enhancement Utilities
+    window.FormUtils = {
+        // Auto-save form data
+        autoSave: function(formSelector, key) {
+            const form = document.querySelector(formSelector);
+            if (!form) return;
+
+            const savedData = localStorage.getItem(key);
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                Object.keys(data).forEach(name => {
+                    const input = form.querySelector(`[name="${name}"]`);
+                    if (input) input.value = data[name];
+                });
+            }
+
+            form.addEventListener('input', debounce(() => {
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData);
+                localStorage.setItem(key, JSON.stringify(data));
+            }, 1000));
+        },
+
+        // Form validation
+        validate: function(formSelector, rules) {
+            const form = document.querySelector(formSelector);
+            if (!form) return false;
+
+            let isValid = true;
+
+            Object.keys(rules).forEach(fieldName => {
+                const field = form.querySelector(`[name="${fieldName}"]`);
+                const rule = rules[fieldName];
+
+                if (field && rule.required && !field.value.trim()) {
+                    this.showFieldError(field, rule.message || 'This field is required');
+                    isValid = false;
+                } else {
+                    this.clearFieldError(field);
+                }
+            });
+
+            return isValid;
+        },
+
+        showFieldError: function(field, message) {
+            this.clearFieldError(field);
+
+            const error = document.createElement('div');
+            error.className = 'field-error text-danger small mt-1';
+            error.textContent = message;
+
+            field.parentNode.appendChild(error);
+            field.classList.add('is-invalid');
+        },
+
+        clearFieldError: function(field) {
+            const existingError = field.parentNode.querySelector('.field-error');
+            if (existingError) {
+                existingError.remove();
+            }
+            field.classList.remove('is-invalid');
+        }
+    };
+
+    // Utility Functions
+    function debounce(func, wait, immediate) {
+        let timeout;
+        return function executedFunction() {
+            const context = this;
+            const args = arguments;
+            const later = function() {
+                timeout = null;
+                if (!immediate) func.apply(context, args);
+            };
+            const callNow = immediate && !timeout;
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+            if (callNow) func.apply(context, args);
+        };
+    }
+
+    function throttle(func, limit) {
+        let inThrottle;
+        return function() {
+            const args = arguments;
+            const context = this;
+            if (!inThrottle) {
+                func.apply(context, args);
+                inThrottle = true;
+                setTimeout(() => inThrottle = false, limit);
+            }
+        };
+    }
+
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            if (targetId === '#') return;
+
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+                const headerOffset = 80;
+                const elementPosition = targetElement.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+
+    // Loading states for buttons
+    document.addEventListener('click', function(e) {
+        if (e.target.matches('.btn[data-loading]')) {
+            e.target.classList.add('loading');
+            e.target.disabled = true;
+
+            // Remove loading state after 3 seconds (adjust as needed)
+            setTimeout(() => {
+                e.target.classList.remove('loading');
+                e.target.disabled = false;
+            }, 3000);
+        }
+    });
+
+    // Add styles for the JavaScript enhancements
+    const style = document.createElement('style');
+    style.textContent = `
+        .navbar-scrolled {
+            background-color: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+        }
+
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            max-width: 400px;
+        }
+
+        .notification-toast {
+            margin-bottom: 10px;
+            border-radius: 8px;
+            animation: slideInRight 0.3s ease;
+        }
+
+        .notification-toast.fade-out {
+            animation: slideOutRight 0.3s ease;
+        }
+
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 6px;
+            background: #000;
+            color: #fff;
+            padding: 8px;
+            text-decoration: none;
+            z-index: 10000;
+            border-radius: 4px;
+        }
+
+        .skip-link:focus {
+            top: 6px;
+        }
+
+        .animate-in {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .field-error {
+            animation: shake 0.3s ease;
+        }
+
+        @@keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @@keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
+        @@keyframes fadeInUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @@keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* Dark theme support */
+        [data-theme="dark"] {
+            --bs-body-bg: #1a1a1a;
+            --bs-body-color: #e0e0e0;
+            --bs-primary: #6c7bff;
+        }
+
+        [data-theme="dark"] .navbar {
+            background-color: rgba(26, 26, 26, 0.95) !important;
+        }
+
+        [data-theme="dark"] .card {
+            background-color: #2d2d2d;
+            border-color: #404040;
+        }
+
+        [data-theme="dark"] .bg-light {
+            background-color: #2d2d2d !important;
+            color: #e0e0e0;
+        }
+
+        /* Print optimizations */
+        @@media print {
+            .notification-container,
+            .skip-link {
+                display: none !important;
+            }
+        }
+    `;
+
+    document.head.appendChild(style);
+        </script>

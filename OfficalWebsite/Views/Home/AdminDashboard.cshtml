@@ -1,0 +1,535 @@
+﻿@{
+    ViewData["Title"] = "Admin Dashboard";
+    string userEmail = ViewBag.UserEmail;
+}
+
+<div class="dashboard-header py-4 bg-light">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="h3 mb-1">
+                    <i class="bi bi-gear-fill text-primary me-2"></i>
+                    Administrator Dashboard
+                </h1>
+                <p class="text-muted mb-0">Welcome back, @userEmail</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <div class="dropdown">
+                    <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Quick Actions
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-building me-2"></i>Manage Organizations</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-people me-2"></i>User Management</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-shield-check me-2"></i>Security Settings</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-download me-2"></i>Export Data</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-4">
+    <!-- System Overview -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="stat-card bg-primary text-white">
+                <div class="stat-icon">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>2,847</h3>
+                    <p class="mb-0">Total Users</p>
+                    <small class="opacity-75">+12% this month</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stat-card bg-success text-white">
+                <div class="stat-icon">
+                    <i class="bi bi-building"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>156</h3>
+                    <p class="mb-0">Organizations</p>
+                    <small class="opacity-75">+8 new this week</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stat-card bg-warning text-white">
+                <div class="stat-icon">
+                    <i class="bi bi-kanban"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>1,234</h3>
+                    <p class="mb-0">Active Projects</p>
+                    <small class="opacity-75">Across all orgs</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stat-card bg-info text-white">
+                <div class="stat-icon">
+                    <i class="bi bi-server"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>99.9%</h3>
+                    <p class="mb-0">Uptime</p>
+                    <small class="opacity-75">Last 30 days</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- System Management -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">System Management</h5>
+                    <button class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-gear me-1"></i>
+                        Settings
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="management-item">
+                                <div class="management-icon bg-primary">
+                                    <i class="bi bi-people text-white"></i>
+                                </div>
+                                <div class="management-content">
+                                    <h6>User Management</h6>
+                                    <p class="text-muted mb-2">Manage user accounts, roles, and permissions</p>
+                                    <a href="#" class="btn btn-sm btn-primary">Manage Users</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="management-item">
+                                <div class="management-icon bg-success">
+                                    <i class="bi bi-building text-white"></i>
+                                </div>
+                                <div class="management-content">
+                                    <h6>Organization Settings</h6>
+                                    <p class="text-muted mb-2">Configure organization-wide settings and policies</p>
+                                    <a href="#" class="btn btn-sm btn-success">Configure</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="management-item">
+                                <div class="management-icon bg-warning">
+                                    <i class="bi bi-shield-check text-white"></i>
+                                </div>
+                                <div class="management-content">
+                                    <h6>Security & Compliance</h6>
+                                    <p class="text-muted mb-2">Monitor security events and compliance status</p>
+                                    <a href="#" class="btn btn-sm btn-warning">View Security</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="management-item">
+                                <div class="management-icon bg-info">
+                                    <i class="bi bi-bar-chart text-white"></i>
+                                </div>
+                                <div class="management-content">
+                                    <h6>Analytics & Reports</h6>
+                                    <p class="text-muted mb-2">Generate system-wide reports and analytics</p>
+                                    <a href="#" class="btn btn-sm btn-info">View Reports</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activities -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">System Activity Log</h5>
+                </div>
+                <div class="card-body">
+                    <div class="activity-timeline">
+                        <div class="activity-item">
+                            <div class="activity-time">10:30 AM</div>
+                            <div class="activity-icon bg-success">
+                                <i class="bi bi-person-plus text-white"></i>
+                            </div>
+                            <div class="activity-content">
+                                <h6>New Organization Created</h6>
+                                <p class="text-muted mb-0">"TechStartup Inc." organization was created by john.doe@example.com</p>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-time">09:15 AM</div>
+                            <div class="activity-icon bg-warning">
+                                <i class="bi bi-exclamation-triangle text-white"></i>
+                            </div>
+                            <div class="activity-content">
+                                <h6>Security Alert</h6>
+                                <p class="text-muted mb-0">Multiple failed login attempts detected for admin@company.com</p>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-time">08:45 AM</div>
+                            <div class="activity-icon bg-info">
+                                <i class="bi bi-upload text-white"></i>
+                            </div>
+                            <div class="activity-content">
+                                <h6>System Backup Completed</h6>
+                                <p class="text-muted mb-0">Daily backup completed successfully (2.3GB)</p>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-time">07:30 AM</div>
+                            <div class="activity-icon bg-primary">
+                                <i class="bi bi-gear text-white"></i>
+                            </div>
+                            <div class="activity-content">
+                                <h6>System Maintenance</h6>
+                                <p class="text-muted mb-0">Scheduled maintenance window completed</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- System Health -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">System Health</h5>
+                </div>
+                <div class="card-body">
+                    <div class="health-metric mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span>CPU Usage</span>
+                            <span class="text-success">23%</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-success" style="width: 23%"></div>
+                        </div>
+                    </div>
+                    <div class="health-metric mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span>Memory Usage</span>
+                            <span class="text-warning">67%</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-warning" style="width: 67%"></div>
+                        </div>
+                    </div>
+                    <div class="health-metric mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span>Disk Space</span>
+                            <span class="text-success">45%</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-success" style="width: 45%"></div>
+                        </div>
+                    </div>
+                    <div class="health-metric">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span>Network I/O</span>
+                            <span class="text-info">12%</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-info" style="width: 12%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Alerts -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Alerts</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert-item mb-3">
+                        <div class="alert-icon bg-warning">
+                            <i class="bi bi-exclamation-triangle text-white"></i>
+                        </div>
+                        <div class="alert-content">
+                            <h6 class="mb-1">High Memory Usage</h6>
+                            <small class="text-muted">Server load approaching threshold</small>
+                        </div>
+                    </div>
+                    <div class="alert-item mb-3">
+                        <div class="alert-icon bg-danger">
+                            <i class="bi bi-shield-exclamation text-white"></i>
+                        </div>
+                        <div class="alert-content">
+                            <h6 class="mb-1">Security Breach Attempt</h6>
+                            <small class="text-muted">Blocked unauthorized access attempt</small>
+                        </div>
+                    </div>
+                    <div class="alert-item">
+                        <div class="alert-icon bg-info">
+                            <i class="bi bi-info-circle text-white"></i>
+                        </div>
+                        <div class="alert-content">
+                            <h6 class="mb-1">Backup Reminder</h6>
+                            <small class="text-muted">Weekly backup scheduled for tonight</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Stats</h5>
+                </div>
+                <div class="card-body">
+                    <div class="stat-row mb-3">
+                        <span class="stat-label">Active Sessions</span>
+                        <span class="stat-value text-success">1,247</span>
+                    </div>
+                    <div class="stat-row mb-3">
+                        <span class="stat-label">API Calls Today</span>
+                        <span class="stat-value text-info">45,673</span>
+                    </div>
+                    <div class="stat-row mb-3">
+                        <span class="stat-label">Error Rate</span>
+                        <span class="stat-value text-success">0.02%</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">License Usage</span>
+                        <span class="stat-value text-warning">87%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .dashboard-header {
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, var(--bs-primary) 0%, var(--bs-primary) 100%);
+        border-radius: 12px;
+        padding: 1.5rem;
+        color: white;
+        display: flex;
+        align-items: center;
+        height: 100%;
+    }
+
+        .stat-card.bg-primary {
+            background: linear-gradient(135deg, #4a6cf7 0%, #5d87ff 100%);
+        }
+
+        .stat-card.bg-success {
+            background: linear-gradient(135deg, #00d4aa 0%, #1dd1a1 100%);
+        }
+
+        .stat-card.bg-warning {
+            background: linear-gradient(135deg, #ffa726 0%, #ff9800 100%);
+        }
+
+        .stat-card.bg-info {
+            background: linear-gradient(135deg, #26c6da 0%, #00bcd4 100%);
+        }
+
+    .stat-icon {
+        font-size: 2.5rem;
+        margin-right: 1rem;
+        opacity: 0.8;
+    }
+
+    .stat-info h3 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-info p {
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .management-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 1rem;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        height: 100%;
+    }
+
+    .management-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+
+    .management-content {
+        flex-grow: 1;
+    }
+
+        .management-content h6 {
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .management-content p {
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+    .activity-timeline {
+        position: relative;
+    }
+
+    .activity-item {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 1.5rem;
+        position: relative;
+    }
+
+        .activity-item:last-child {
+            margin-bottom: 0;
+        }
+
+    .activity-time {
+        font-size: 0.8rem;
+        color: #6c757d;
+        font-weight: 500;
+        min-width: 70px;
+        margin-right: 1rem;
+    }
+
+    .activity-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        flex-shrink: 0;
+        font-size: 0.8rem;
+    }
+
+    .activity-content {
+        flex-grow: 1;
+    }
+
+        .activity-content h6 {
+            margin-bottom: 0.25rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .activity-content p {
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+    .health-metric .progress {
+        border-radius: 3px;
+        background-color: rgba(0, 0, 0, 0.1);
+    }
+
+    .alert-item {
+        display: flex;
+        align-items: center;
+    }
+
+    .alert-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 0.75rem;
+        flex-shrink: 0;
+        font-size: 0.8rem;
+    }
+
+    .alert-content h6 {
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    .stat-row {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .stat-value {
+        font-weight: 600;
+        margin-left: auto;
+    }
+
+    .card {
+        border: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        border-radius: 12px;
+    }
+
+    .card-header {
+        background: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+        border-radius: 12px 12px 0 0 !important;
+        padding: 1rem 1.5rem;
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+
+    @@media (max-width: 768px) {
+        .stat-card
+
+    {
+        margin-bottom: 1rem;
+    }
+
+    .management-item {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .management-icon {
+        margin: 0 auto 1rem;
+    }
+
+    .activity-time {
+        min-width: auto;
+        margin-bottom: 0.5rem;
+    }
+
+    .activity-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    }
+</style>

@@ -1,0 +1,454 @@
+﻿@model LoginViewModel
+@{
+    ViewData["Title"] = "Login";
+}
+
+<div class="login-page">
+    <div class="container">
+        <div class="row justify-content-center align-items-center min-vh-100">
+            <div class="col-md-6 col-lg-5">
+                <div class="login-card">
+                    <div class="login-header text-center mb-4">
+                        <div class="login-logo mb-3">
+                            <i class="bi bi-shield-lock-fill"></i>
+                        </div>
+                        <h2 class="fw-bold mb-2">Welcome Back</h2>
+                        <p class="text-muted">Sign in to access your TaskFlow Pro dashboard</p>
+                    </div>
+
+                    <form asp-action="Login" method="post" class="login-form">
+                        <div asp-validation-summary="All" class="alert alert-danger d-none"></div>
+
+                        <!-- Role Selection -->
+                        <div class="form-group mb-4">
+                            <label asp-for="Role" class="form-label">Login As</label>
+                            <div class="role-selection">
+                                <div class="role-option">
+                                    <input asp-for="Role" type="radio" value="Admin" id="roleAdmin" class="role-radio">
+                                    <label for="roleAdmin" class="role-label">
+                                        <div class="role-icon">
+                                            <i class="bi bi-gear-fill"></i>
+                                        </div>
+                                        <div class="role-info">
+                                            <h6>Administrator</h6>
+                                            <small>Full system access and management</small>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="role-option">
+                                    <input asp-for="Role" type="radio" value="Manager" id="roleManager" class="role-radio">
+                                    <label for="roleManager" class="role-label">
+                                        <div class="role-icon">
+                                            <i class="bi bi-people-fill"></i>
+                                        </div>
+                                        <div class="role-info">
+                                            <h6>Manager</h6>
+                                            <small>Team and project management</small>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="role-option">
+                                    <input asp-for="Role" type="radio" value="User" id="roleUser" class="role-radio">
+                                    <label for="roleUser" class="role-label">
+                                        <div class="role-icon">
+                                            <i class="bi bi-person-fill"></i>
+                                        </div>
+                                        <div class="role-info">
+                                            <h6>Team Member</h6>
+                                            <small>Access to assigned projects</small>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            <span asp-validation-for="Role" class="text-danger"></span>
+                        </div>
+
+                        <!-- Email Input -->
+                        <div class="form-group mb-3">
+                            <label asp-for="Email" class="form-label">Email Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="bi bi-envelope"></i>
+                                </span>
+                                <input asp-for="Email" class="form-control" placeholder="Enter your email">
+                            </div>
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+
+                        <!-- Password Input -->
+                        <div class="form-group mb-3">
+                            <label asp-for="Password" class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="bi bi-lock"></i>
+                                </span>
+                                <input asp-for="Password" class="form-control" type="password" placeholder="Enter your password">
+                                <button type="button" class="btn btn-outline-secondary toggle-password">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                        </div>
+
+                        <!-- Remember Me -->
+                        <div class="form-group mb-4">
+                            <div class="form-check">
+                                <input asp-for="RememberMe" class="form-check-input" type="checkbox">
+                                <label asp-for="RememberMe" class="form-check-label">
+                                    Keep me signed in
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="form-group mb-4">
+                            <button type="submit" class="btn btn-primary w-100 btn-lg">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>
+                                Sign In
+                            </button>
+                        </div>
+
+                        <!-- Demo Credentials -->
+                        <div class="demo-credentials">
+                            <h6 class="text-center mb-3">Demo Credentials</h6>
+                            <div class="demo-accounts">
+                                <div class="demo-account" data-email="admin@app.com" data-password="admin123" data-role="Admin">
+                                    <strong>Admin:</strong> admin@app.com / admin123
+                                </div>
+                                <div class="demo-account" data-email="manager@app.com" data-password="manager123" data-role="Manager">
+                                    <strong>Manager:</strong> manager@app.com / manager123
+                                </div>
+                                <div class="demo-account" data-email="user@app.com" data-password="user123" data-role="User">
+                                    <strong>User:</strong> user@app.com / user123
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div class="login-footer text-center mt-4">
+                        <a href="/" class="btn btn-link">
+                            <i class="bi bi-arrow-left me-2"></i>
+                            Back to Home
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .login-page {
+        background: linear-gradient(135deg, #4a6cf7 0%, #5d87ff 100%);
+        min-height: 100vh;
+        padding: 2rem 0;
+    }
+
+    .login-card {
+        background: white;
+        border-radius: 20px;
+        padding: 3rem;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .login-logo {
+        font-size: 3rem;
+        color: var(--primary-color);
+    }
+
+        .login-logo i {
+            background: linear-gradient(135deg, #4a6cf7 0%, #5d87ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+    .role-selection {
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1rem;
+        background: #f8f9fa;
+    }
+
+    .role-option {
+        margin-bottom: 1rem;
+    }
+
+        .role-option:last-child {
+            margin-bottom: 0;
+        }
+
+    .role-radio {
+        display: none;
+    }
+
+    .role-label {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+        .role-label:hover {
+            border-color: var(--primary-color);
+            background: rgba(74, 108, 247, 0.05);
+        }
+
+    .role-radio:checked + .role-label {
+        border-color: var(--primary-color);
+        background: rgba(74, 108, 247, 0.1);
+        box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.1);
+    }
+
+    .role-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #4a6cf7 0%, #5d87ff 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        color: white;
+        font-size: 1.25rem;
+    }
+
+    .role-info h6 {
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .role-info small {
+        color: #6c757d;
+    }
+
+    .input-group {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .input-group-text {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        color: #6c757d;
+    }
+
+    .form-control {
+        border: 1px solid #e9ecef;
+        padding: 0.75rem 1rem;
+    }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(74, 108, 247, 0.25);
+        }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #4a6cf7 0%, #5d87ff 100%);
+        border: none;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+    }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(74, 108, 247, 0.3);
+        }
+
+    .toggle-password {
+        border-left: none;
+    }
+
+    .demo-credentials {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+    }
+
+        .demo-credentials h6 {
+            color: #495057;
+            font-weight: 600;
+        }
+
+    .demo-account {
+        padding: 0.5rem;
+        margin: 0.5rem 0;
+        background: white;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 0.9rem;
+    }
+
+        .demo-account:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .demo-account strong {
+            color: var(--primary-color);
+        }
+
+    .login-footer .btn-link {
+        color: #6c757d;
+        text-decoration: none;
+    }
+
+        .login-footer .btn-link:hover {
+            color: var(--primary-color);
+        }
+
+    @@media (max-width: 768px) {
+        .login-card
+
+    {
+        padding: 2rem 1.5rem;
+        margin: 1rem;
+    }
+
+    .role-label {
+        padding: 0.75rem;
+    }
+
+    .role-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+
+    }
+
+    /* Validation error styles */
+    .field-validation-error {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    .validation-summary-errors {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+
+        .validation-summary-errors ul {
+            margin-bottom: 0;
+            padding-left: 1.5rem;
+        }
+
+    /* Animation for form submission */
+    .login-form.submitting .btn-primary {
+        pointer-events: none;
+        opacity: 0.6;
+    }
+
+        .login-form.submitting .btn-primary::after {
+            content: '';
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+    @@keyframes spin {
+        0%
+
+    {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Password toggle functionality
+        const togglePassword = document.querySelector('.toggle-password');
+        const passwordInput = document.querySelector('input[type="password"]');
+
+        if (togglePassword && passwordInput) {
+            togglePassword.addEventListener('click', function() {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+
+                const icon = this.querySelector('i');
+                if (type === 'password') {
+                    icon.classList.remove('bi-eye-slash');
+                    icon.classList.add('bi-eye');
+                } else {
+                    icon.classList.remove('bi-eye');
+                    icon.classList.add('bi-eye-slash');
+                }
+            });
+        }
+
+        // Demo credentials click functionality
+        const demoAccounts = document.querySelectorAll('.demo-account');
+        const emailInput = document.querySelector('input[name="Email"]');
+        const passwordInput = document.querySelector('input[name="Password"]');
+
+        demoAccounts.forEach(account => {
+            account.addEventListener('click', function() {
+                const email = this.dataset.email;
+                const password = this.dataset.password;
+                const role = this.dataset.role;
+
+                emailInput.value = email;
+                passwordInput.value = password;
+
+                // Select the correct role
+                const roleRadio = document.querySelector(`input[value="${role}"]`);
+                if (roleRadio) {
+                    roleRadio.checked = true;
+                }
+
+                // Add visual feedback
+                this.style.background = '#d4edda';
+                setTimeout(() => {
+                    this.style.background = '';
+                }, 1000);
+            });
+        });
+
+        // Form submission animation
+        const loginForm = document.querySelector('.login-form');
+        if (loginForm) {
+            loginForm.addEventListener('submit', function() {
+                this.classList.add('submitting');
+            });
+        }
+
+        // Show validation errors if any
+        const validationSummary = document.querySelector('.validation-summary-errors');
+        if (validationSummary && validationSummary.querySelector('ul li')) {
+            validationSummary.classList.remove('d-none');
+        }
+    });
+</script>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

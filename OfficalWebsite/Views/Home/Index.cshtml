@@ -1,138 +1,384 @@
-﻿
-@{
+﻿@{
     ViewData["Title"] = "Home";
+    bool isAuthenticated = Context.Session.GetString("IsAuthenticated") == "true";
+    string userEmail = Context.Session.GetString("UserEmail") ?? "";
+    string userRole = Context.Session.GetString("UserRole") ?? "";
+}
+
+@if (isAuthenticated)
+{
+    <!-- Welcome back section for authenticated users -->
+    <div class="welcome-back-section py-4 bg-light">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h4 class="mb-1">Welcome back, @userEmail!</h4>
+                    <p class="text-muted mb-0">You're logged in as <span class="badge bg-primary">@userRole</span></p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <a href="/@(userRole)Dashboard" class="btn btn-primary me-2">Go to Dashboard</a>
+                    <a href="/Home/Logout" class="btn btn-outline-secondary">Logout</a>
+                </div>
+            </div>
+        </div>
+    </div>
 }
 
 <div class="app-promo">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-6 promo-content">
-                <h1 class="display-4 fw-bold">Your App Name</h1>
-                <p class="lead mb-4">Experience the next generation of mobile productivity. Available now on iOS and Android.</p>
-                <div class="app-features mb-5">
-                    <div class="feature">
-                        <i class="bi bi-lightning-charge"></i>
-                        <span>Lightning Fast</span>
+                <h1 class="display-4 fw-bold">TaskFlow Pro</h1>
+                <p class="lead mb-4">The ultimate productivity platform for teams and individuals. Streamline your workflow, boost collaboration, and achieve more with our comprehensive task management solution.</p>
+                
+                @if (!isAuthenticated)
+                {
+                    <div class="app-features mb-5">
+                        <div class="feature">
+                            <i class="bi bi-lightning-charge"></i>
+                            <span>Lightning Fast</span>
+                        </div>
+                        <div class="feature">
+                            <i class="bi bi-shield-check"></i>
+                            <span>Enterprise Secure</span>
+                        </div>
+                        <div class="feature">
+                            <i class="bi bi-people-fill"></i>
+                            <span>Team Collaboration</span>
+                        </div>
                     </div>
-                    <div class="feature">
-                        <i class="bi bi-shield-check"></i>
-                        <span>Secure</span>
+                    
+                    <div class="cta-buttons">
+                        <a href="/Home/Login" class="btn btn-primary btn-lg me-3">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>
+                            Get Started
+                        </a>
+                        <a href="/Home/Features" class="btn btn-outline-primary btn-lg">
+                            Learn More
+                        </a>
                     </div>
-                    <div class="feature">
-                        <i class="bi bi-eye"></i>
-                        <span>Beautiful Design</span>
+                }
+                else
+                {
+                    <div class="quick-stats mb-4">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="stat-card">
+                                    <h3 class="text-primary">12</h3>
+                                    <p class="text-muted mb-0">Active Projects</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stat-card">
+                                    <h3 class="text-success">48</h3>
+                                    <p class="text-muted mb-0">Completed Tasks</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stat-card">
+                                    <h3 class="text-warning">6</h3>
+                                    <p class="text-muted mb-0">Team Members</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="app-cta">
-                    <a href="#" class="app-store-link">
-                        <img src="~/images/app-store-badge.png" alt="Download on the App Store">
-                    </a>
-                    <a href="#" class="play-store-link">
-                        <img src="~/images/play-store-badge.png" alt="Get it on Google Play">
-                    </a>
-                </div>
+                }
             </div>
             <div class="col-lg-6 promo-image">
-                <img src="~/images/app-mockup.png" alt="App mockup on smartphone" class="img-fluid">
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="app-features-section py-5">
-    <div class="container">
-        <h2 class="text-center mb-5">Key Features</h2>
-        <div class="row">
-            <div class="col-md-4 mb-4">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="bi bi-speedometer2"></i>
-                    </div>
-                    <h3>Intuitive Interface</h3>
-                    <p>Designed for simplicity and ease of use, our app puts everything you need at your fingertips.</p>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="bi bi-cloud-arrow-up"></i>
-                    </div>
-                    <h3>Cloud Sync</h3>
-                    <p>Your data stays synchronized across all your devices, so you're always up to date.</p>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="bi bi-bell"></i>
-                    </div>
-                    <h3>Smart Notifications</h3>
-                    <p>Get timely alerts and reminders exactly when you need them.</p>
+                <div class="dashboard-preview">
+                    <img src="~/images/app-mockup.png" alt="TaskFlow Pro Dashboard" class="img-fluid">
+                    @if (!isAuthenticated)
+                    {
+                        <div class="preview-overlay">
+                            <div class="preview-content">
+                                <h5>Experience the Full Platform</h5>
+                                <p>Join thousands of teams already using TaskFlow Pro</p>
+                                <a href="/Home/Login" class="btn btn-light">Start Free Trial</a>
+                            </div>
+                        </div>
+                    }
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="testimonials-section py-5 bg-light">
-    <div class="container">
-        <h2 class="text-center mb-5">What Our Users Say</h2>
-        <div class="row">
-            <div class="col-md-4 mb-4">
-                <div class="testimonial-card">
-                    <div class="testimonial-stars">
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
+@if (!isAuthenticated)
+{
+    <!-- Features overview for non-authenticated users -->
+    <div class="app-features-section py-5">
+        <div class="container">
+            <h2 class="text-center mb-5">Why Choose TaskFlow Pro?</h2>
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-kanban"></i>
+                        </div>
+                        <h3>Smart Project Management</h3>
+                        <p>Organize projects with intelligent boards, automated workflows, and real-time collaboration tools.</p>
                     </div>
-                    <p class="testimonial-text">"This app has completely transformed how I manage my daily tasks. Couldn't be happier!"</p>
-                    <div class="testimonial-author">Sarah K.</div>
                 </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="testimonial-card">
-                    <div class="testimonial-stars">
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
+                <div class="col-md-4 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-graph-up-arrow"></i>
+                        </div>
+                        <h3>Advanced Analytics</h3>
+                        <p>Track performance, identify bottlenecks, and optimize your team's productivity with detailed insights.</p>
                     </div>
-                    <p class="testimonial-text">"Sleek, fast, and incredibly user-friendly. Everything I need in a mobile app."</p>
-                    <div class="testimonial-author">Michael T.</div>
                 </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="testimonial-card">
-                    <div class="testimonial-stars">
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-half"></i>
+                <div class="col-md-4 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-shield-lock"></i>
+                        </div>
+                        <h3>Enterprise Security</h3>
+                        <p>Bank-level security with SSO integration, role-based permissions, and compliance certifications.</p>
                     </div>
-                    <p class="testimonial-text">"The customer support is outstanding, and the app itself exceeds all expectations!"</p>
-                    <div class="testimonial-author">Jessica R.</div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+
+    <!-- Social proof section -->
+    <div class="testimonials-section py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center mb-5">Trusted by Industry Leaders</h2>
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="testimonial-card">
+                        <div class="testimonial-stars">
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                        </div>
+                        <p class="testimonial-text">"TaskFlow Pro transformed our team's productivity. We delivered projects 40% faster and with better quality."</p>
+                        <div class="testimonial-author">Sarah Chen, Project Manager at TechCorp</div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="testimonial-card">
+                        <div class="testimonial-stars">
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                        </div>
+                        <p class="testimonial-text">"The analytics dashboard gives us unprecedented visibility into our operations. Game changer for our business."</p>
+                        <div class="testimonial-author">Michael Rodriguez, CEO at StartupX</div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="testimonial-card">
+                        <div class="testimonial-stars">
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-half"></i>
+                        </div>
+                        <p class="testimonial-text">"Seamless integration with our existing tools. The security features meet all our enterprise requirements."</p>
+                        <div class="testimonial-author">Jennifer Park, IT Director at FinanceFlow</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <!-- Recent activity section for authenticated users -->
+    <div class="recent-activity-section py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <h3 class="mb-4">Recent Activity</h3>
+                    <div class="activity-list">
+                        <div class="activity-item">
+                            <div class="activity-icon bg-success">
+                                <i class="bi bi-check-circle text-white"></i>
+                            </div>
+                            <div class="activity-content">
+                                <h6>Task Completed</h6>
+                                <p class="text-muted mb-0">Review Q4 budget proposal</p>
+                                <small class="text-muted">2 hours ago</small>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon bg-primary">
+                                <i class="bi bi-plus-circle text-white"></i>
+                            </div>
+                            <div class="activity-content">
+                                <h6>New Project Created</h6>
+                                <p class="text-muted mb-0">Website Redesign Initiative</p>
+                                <small class="text-muted">1 day ago</small>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon bg-info">
+                                <i class="bi bi-people text-white"></i>
+                            </div>
+                            <div class="activity-content">
+                                <h6>Team Update</h6>
+                                <p class="text-muted mb-0">3 new members joined Marketing team</p>
+                                <small class="text-muted">3 days ago</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <h3 class="mb-4">Quick Actions</h3>
+                    <div class="quick-actions">
+                        <a href="#" class="btn btn-outline-primary w-100 mb-3">
+                            <i class="bi bi-plus-circle me-2"></i>
+                            Create New Project
+                        </a>
+                        <a href="#" class="btn btn-outline-secondary w-100 mb-3">
+                            <i class="bi bi-people me-2"></i>
+                            Invite Team Members
+                        </a>
+                        <a href="#" class="btn btn-outline-info w-100">
+                            <i class="bi bi-bar-chart me-2"></i>
+                            View Reports
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 <div class="cta-section py-5">
     <div class="container text-center">
-        <h2 class="mb-4">Ready to get started?</h2>
-        <p class="lead mb-4">Download our app today and experience the difference.</p>
-        <div class="app-cta justify-content-center">
-            <a href="#" class="app-store-link">
-                <img src="~/images/app-store-badge.png" alt="Download on the App Store">
-            </a>
-            <a href="#" class="play-store-link">
-                <img src="~/images/play-store-badge.png" alt="Get it on Google Play">
-            </a>
-        </div>
+        @if (!isAuthenticated)
+        {
+            <h2 class="mb-4">Ready to Transform Your Workflow?</h2>
+            <p class="lead mb-4">Join over 50,000 teams using TaskFlow Pro to achieve their goals faster.</p>
+            <div class="cta-buttons">
+                <a href="/Home/Login" class="btn btn-light btn-lg me-3">
+                    Start Free Trial
+                </a>
+                <a href="/Home/Pricing" class="btn btn-outline-light btn-lg">
+                    View Pricing
+                </a>
+            </div>
+        }
+        else
+        {
+            <h2 class="mb-4">Need Help Getting Started?</h2>
+            <p class="lead mb-4">Explore our resources to maximize your TaskFlow Pro experience.</p>
+            <div class="cta-buttons">
+                <a href="#" class="btn btn-light btn-lg me-3">
+                    View Documentation
+                </a>
+                <a href="#" class="btn btn-outline-light btn-lg">
+                    Contact Support
+                </a>
+            </div>
+        }
     </div>
 </div>
-```
+
+<style>
+.welcome-back-section {
+    border-bottom: 1px solid #dee2e6;
+}
+
+.stat-card {
+    text-align: center;
+    padding: 1rem;
+}
+
+.stat-card h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-preview {
+    position: relative;
+}
+
+.preview-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: 12px;
+}
+
+.dashboard-preview:hover .preview-overlay {
+    opacity: 1;
+}
+
+.preview-content {
+    text-align: center;
+    color: white;
+}
+
+.activity-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    background: white;
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.activity-content {
+    flex-grow: 1;
+}
+
+.activity-content h6 {
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+}
+
+.quick-actions .btn {
+    justify-content: flex-start;
+}
+
+.cta-buttons .btn {
+    min-width: 160px;
+}
+
+@@media (max-width: 768px) {
+    .cta-buttons .btn {
+        display: block;
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+    
+    .cta-buttons .btn:last-child {
+        margin-bottom: 0;
+    }
+}
+</style>
