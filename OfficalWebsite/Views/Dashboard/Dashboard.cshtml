@@ -1,1133 +1,469 @@
-﻿<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ultimate Hoopers Dashboard</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #4a6cf7;
-            --secondary-color: #5d87ff;
-            --success-color: #1dd1a1;
-            --warning-color: #ff9800;
-            --danger-color: #ff6b6b;
-            --light-gray: #f8f9fa;
-            --border-color: #e9ecef;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #f8f9fa;
-            color: #343a40;
-            line-height: 1.5;
-        }
-
-        .dashboard-wrapper {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        .sidebar {
-            width: 260px;
-            background: linear-gradient(180deg, #1e2a78 0%, #2a3a9c 100%);
-            color: white;
-            position: fixed;
-            height: 100vh;
-            overflow-y: auto;
-            transition: all 0.3s ease;
-            z-index: 1000;
-        }
-
-        .sidebar-collapsed {
-            width: 70px;
-        }
-
-        .sidebar-header {
-            padding: 1.5rem;
-            display: flex;
-            align-items: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .logo-icon {
-            font-size: 1.5rem;
-            margin-right: 1rem;
-        }
-
-        .logo-text {
-            font-weight: 700;
-            font-size: 1.25rem;
-            white-space: nowrap;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .main-content {
-            flex: 1;
-            margin-left: 260px;
-            transition: all 0.3s ease;
-            width: calc(100% - 260px);
-        }
-
-        .main-content-expanded {
-            margin-left: 70px;
-            width: calc(100% - 70px);
-        }
-
-        .sidebar-menu {
-            padding: 1rem 0;
-        }
-
-        .menu-item {
-            padding: 0.75rem 1.5rem;
-            display: flex;
-            align-items: center;
-            color: rgba(255, 255, 255, 0.8);
-            text-decoration: none;
-            transition: all 0.2s ease;
-            border-left: 3px solid transparent;
-        }
-
-            .menu-item:hover, .menu-item.active {
-                background: rgba(255, 255, 255, 0.1);
-                color: white;
-                border-left: 3px solid var(--primary-color);
-            }
-
-        .menu-icon {
-            font-size: 1.25rem;
-            margin-right: 1rem;
-            width: 20px;
-            text-align: center;
-        }
-
-        .menu-text {
-            white-space: nowrap;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .navbar {
-            background: white;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-
-        .navbar-nav .nav-link {
-            color: #495057;
-        }
-
-            .navbar-nav .nav-link:hover {
-                color: var(--primary-color);
-            }
-
-        .user-dropdown .dropdown-toggle {
-            display: flex;
-            align-items: center;
-        }
-
-        .user-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: var(--light-gray);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            margin-right: 0.5rem;
-        }
-
-        .stat-card {
-            background: white;
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-            transition: transform 0.3s ease;
-        }
-
-            .stat-card:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            }
-
-            .stat-card .stat-icon {
-                width: 48px;
-                height: 48px;
-                border-radius: 12px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 1.5rem;
-                margin-bottom: 1rem;
-                color: white;
-            }
-
-            .stat-card .stat-title {
-                font-size: 0.875rem;
-                color: #6c757d;
-                margin-bottom: 0.25rem;
-            }
-
-            .stat-card .stat-value {
-                font-size: 1.5rem;
-                font-weight: 700;
-                margin-bottom: 0;
-            }
-
-        .stat-trend {
-            display: flex;
-            align-items: center;
-            font-size: 0.875rem;
-            margin-top: 0.5rem;
-        }
-
-            .stat-trend.up {
-                color: var(--success-color);
-            }
-
-            .stat-trend.down {
-                color: var(--danger-color);
-            }
-
-            .stat-trend i {
-                margin-right: 0.25rem;
-            }
-
-        .stat-icon.bg-primary {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-        }
-
-        .stat-icon.bg-success {
-            background: linear-gradient(135deg, #00d4aa 0%, #1dd1a1 100%);
-        }
-
-        .stat-icon.bg-warning {
-            background: linear-gradient(135deg, #ffa726 0%, #ff9800 100%);
-        }
-
-        .stat-icon.bg-danger {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
-        }
-
-        .content-card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-            margin-bottom: 1.5rem;
-        }
-
-            .content-card .card-header {
-                padding: 1.25rem 1.5rem;
-                background: white;
-                border-bottom: 1px solid var(--border-color);
-                border-radius: 12px 12px 0 0;
-                font-weight: 600;
-            }
-
-            .content-card .card-body {
-                padding: 1.5rem;
-            }
-
-        .recent-activity-item {
-            display: flex;
-            align-items: flex-start;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-            .recent-activity-item:last-child {
-                border-bottom: none;
-            }
-
-        .activity-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            margin-right: 1rem;
-            font-size: 0.875rem;
-            flex-shrink: 0;
-        }
-
-        .activity-content {
-            flex-grow: 1;
-        }
-
-        .activity-title {
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-        }
-
-        .activity-info {
-            font-size: 0.875rem;
-            color: #6c757d;
-            margin-bottom: 0;
-        }
-
-        .activity-time {
-            font-size: 0.75rem;
-            color: #adb5bd;
-            margin-left: auto;
-            padding-left: 1rem;
-            white-space: nowrap;
-        }
-
-        .upcoming-event {
-            display: flex;
-            align-items: center;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-            .upcoming-event:last-child {
-                border-bottom: none;
-            }
-
-        .event-date {
-            width: 48px;
-            height: 48px;
-            background: var(--light-gray);
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            margin-right: 1rem;
-            flex-shrink: 0;
-        }
-
-            .event-date .day {
-                font-weight: 700;
-                font-size: 1.25rem;
-                line-height: 1;
-            }
-
-            .event-date .month {
-                font-size: 0.75rem;
-                text-transform: uppercase;
-                color: #6c757d;
-            }
-
-        .event-details {
-            flex-grow: 1;
-        }
-
-        .event-title {
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-        }
-
-        .event-info {
-            font-size: 0.875rem;
-            color: #6c757d;
-            margin-bottom: 0;
-            display: flex;
-            align-items: center;
-        }
-
-            .event-info i {
-                margin-right: 0.25rem;
-            }
-
-            .event-info span {
-                margin-right: 0.75rem;
-            }
-
-        .leaderboard-item {
-            display: flex;
-            align-items: center;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-            .leaderboard-item:last-child {
-                border-bottom: none;
-            }
-
-        .leaderboard-rank {
-            width: 24px;
-            height: 24px;
-            background: var(--light-gray);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 0.75rem;
-            margin-right: 0.75rem;
-            flex-shrink: 0;
-        }
-
-        .leaderboard-item:nth-child(1) .leaderboard-rank {
-            background: gold;
-            color: white;
-        }
-
-        .leaderboard-item:nth-child(2) .leaderboard-rank {
-            background: silver;
-            color: white;
-        }
-
-        .leaderboard-item:nth-child(3) .leaderboard-rank {
-            background: #cd7f32;
-            color: white;
-        }
-
-        .leaderboard-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: var(--light-gray);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            margin-right: 0.75rem;
-            flex-shrink: 0;
-        }
-
-        .leaderboard-info {
-            flex-grow: 1;
-        }
-
-        .leaderboard-name {
-            font-weight: 600;
-            margin-bottom: 0;
-        }
-
-        .leaderboard-points {
-            font-size: 0.875rem;
-            color: #6c757d;
-            margin-bottom: 0;
-        }
-
-        .leaderboard-score {
-            font-weight: 600;
-            color: var(--primary-color);
-            margin-left: auto;
-        }
-
-        .toggle-sidebar {
-            background: none;
-            border: none;
-            color: #495057;
-            font-size: 1.25rem;
-            cursor: pointer;
-            padding: 0.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-        }
-
-            .toggle-sidebar:hover {
-                color: var(--primary-color);
-            }
-
-        .search-form {
-            position: relative;
-        }
-
-            .search-form .form-control {
-                padding-left: 2.5rem;
-                border-radius: 50px;
-                background: var(--light-gray);
-                border: none;
-            }
-
-                .search-form .form-control:focus {
-                    background: white;
-                    box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.1);
-                }
-
-        .search-icon {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #adb5bd;
-            pointer-events: none;
-        }
-
-        @@media (max-width: 991.98px) {
-            .sidebar
-
-        {
-            transform: translateX(-100%);
-            width: 260px;
-        }
-
-        .sidebar-visible {
-            transform: translateX(0);
-        }
-
-        .main-content {
-            margin-left: 0;
-            width: 100%;
-        }
-
-        .main-content-expanded {
-            margin-left: 0;
-            width: 100%;
-        }
-
-        .sidebar-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-            display: none;
-        }
-
-            .sidebar-overlay.active {
-                display: block;
-            }
-
-        }
-
-        @@media (max-width: 767.98px) {
-            .search-form
-
-        {
-            display: none;
-        }
-
-        }
-
-        /* Animations */
-        @@keyframes slideInLeft {
-            from
-
-        {
-            transform: translateX(-20px);
-            opacity: 0;
-        }
-
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-
-        }
-
-        .animate-slide-in {
-            animation: slideInLeft 0.3s ease forwards;
-        }
-    </style>
-</head>
-<body>
-    <!-- Sidebar Overlay -->
-    <div class="sidebar-overlay"></div>
-
-    <!-- Dashboard Wrapper -->
-    <div class="dashboard-wrapper">
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <!-- Sidebar Header -->
-            <div class="sidebar-header">
-                <div class="logo-icon">
-                    <i class="bi bi-dribbble"></i>
-                </div>
-                <div class="logo-text">Ultimate Hoopers</div>
+﻿@
+{
+
+    ViewData
+[
+"Title"
+]
+ 
+=
+ 
+"User Dashboard"
+;
+
+    
+string
+ userName 
+=
+ ViewBag
+.
+UserName 
+??
+ 
+"User"
+;
+
+    
+string
+ userEmail 
+=
+ ViewBag
+.
+UserEmail 
+??
+ 
+""
+;
+
+}
+
+
+<div class="dashboard-header py-4 bg-light">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="h3 mb-1">
+                    <i class="bi bi-person-fill text-primary me-2"></i>
+                    User Dashboard
+                </h1>
+                <p class="text-muted mb-0">Welcome back, @userName!</p>
             </div>
-
-            <!-- Sidebar Menu -->
-            <div class="sidebar-menu">
-                <a href="#" class="menu-item active">
-                    <div class="menu-icon">
-                        <i class="bi bi-grid-1x2"></i>
-                    </div>
-                    <div class="menu-text">Dashboard</div>
-                </a>
-                <a href="#" class="menu-item">
-                    <div class="menu-icon">
-                        <i class="bi bi-people"></i>
-                    </div>
-                    <div class="menu-text">Players</div>
-                </a>
-                <a href="#" class="menu-item">
-                    <div class="menu-icon">
-                        <i class="bi bi-calendar-event"></i>
-                    </div>
-                    <div class="menu-text">Runs</div>
-                </a>
-                <a href="#" class="menu-item">
-                    <div class="menu-icon">
-                        <i class="bi bi-trophy"></i>
-                    </div>
-                    <div class="menu-text">Games</div>
-                </a>
-                <a href="#" class="menu-item">
-                    <div class="menu-icon">
-                        <i class="bi bi-map"></i>
-                    </div>
-                    <div class="menu-text">Courts</div>
-                </a>
-                <a href="#" class="menu-item">
-                    <div class="menu-icon">
-                        <i class="bi bi-chat-left-text"></i>
-                    </div>
-                    <div class="menu-text">Messages</div>
-                </a>
-                <a href="#" class="menu-item">
-                    <div class="menu-icon">
-                        <i class="bi bi-bell"></i>
-                    </div>
-                    <div class="menu-text">Notifications</div>
-                </a>
-                <a href="#" class="menu-item">
-                    <div class="menu-icon">
-                        <i class="bi bi-card-list"></i>
-                    </div>
-                    <div class="menu-text">Posts</div>
-                </a>
-                <a href="#" class="menu-item">
-                    <div class="menu-icon">
-                        <i class="bi bi-bar-chart"></i>
-                    </div>
-                    <div class="menu-text">Analytics</div>
-                </a>
-                <a href="#" class="menu-item">
-                    <div class="menu-icon">
-                        <i class="bi bi-gear"></i>
-                    </div>
-                    <div class="menu-text">Settings</div>
-                </a>
-            </div>
-        </div>
-
-        <!-- Main Content -->
-        <div class="main-content">
-            <!-- Navbar -->
-            <nav class="navbar navbar-expand-lg navbar-light">
-                <div class="container-fluid">
-                    <button class="toggle-sidebar me-3">
-                        <i class="bi bi-list"></i>
+            <div class="col-md-4 text-md-end">
+                <div class="dropdown">
+                    <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Quick Actions
                     </button>
-
-                    <form class="search-form me-auto">
-                        <i class="bi bi-search search-icon"></i>
-                        <input type="search" class="form-control" placeholder="Search...">
-                    </form>
-
-                    <ul class="navbar-nav ms-auto">
-                        <li class="nav-item dropdown">
-                            <a class="nav-link" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-bell position-relative">
-                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                        3
-                                    </span>
-                                </i>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-end">
-                                <h6 class="dropdown-header">Notifications</h6>
-                                <a class="dropdown-item" href="#">
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0">
-                                            <div class="activity-icon bg-primary">
-                                                <i class="bi bi-person-plus text-white"></i>
-                                            </div>
-                                        </div>
-                                        <div class="flex-grow-1 ms-3">
-                                            <p class="mb-0">New player joined your run</p>
-                                            <small class="text-muted">15 minutes ago</small>
-                                        </div>
-                                    </div>
-                                </a>
-                                <a class="dropdown-item" href="#">
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0">
-                                            <div class="activity-icon bg-success">
-                                                <i class="bi bi-check-circle text-white"></i>
-                                            </div>
-                                        </div>
-                                        <div class="flex-grow-1 ms-3">
-                                            <p class="mb-0">Run confirmed for tomorrow</p>
-                                            <small class="text-muted">2 hours ago</small>
-                                        </div>
-                                    </div>
-                                </a>
-                                <a class="dropdown-item" href="#">
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0">
-                                            <div class="activity-icon bg-warning">
-                                                <i class="bi bi-calendar-event text-white"></i>
-                                            </div>
-                                        </div>
-                                        <div class="flex-grow-1 ms-3">
-                                            <p class="mb-0">New court available in your area</p>
-                                            <small class="text-muted">Yesterday</small>
-                                        </div>
-                                    </div>
-                                </a>
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item text-center" href="#">View all notifications</a>
-                            </div>
-                        </li>
-                        <li class="nav-item dropdown ms-3 user-dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                <div class="user-avatar">MJ</div>
-                                <span class="d-none d-md-inline-block">Michael Jordan</span>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-end">
-                                <a class="dropdown-item" href="#">
-                                    <i class="bi bi-person me-2"></i>Profile
-                                </a>
-                                <a class="dropdown-item" href="#">
-                                    <i class="bi bi-gear me-2"></i>Settings
-                                </a>
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="#">
-                                    <i class="bi bi-box-arrow-right me-2"></i>Sign Out
-                                </a>
-                            </div>
-                        </li>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-plus-square me-2"></i>Create Task</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-folder-plus me-2"></i>New Project</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-calendar-event me-2"></i>Schedule Meeting</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-upload me-2"></i>Upload File</a></li>
                     </ul>
                 </div>
-            </nav>
+            </div>
+        </div>
+    </div>
+</div>
 
-            <!-- Content -->
-            <div class="container-fluid py-4">
-                <!-- Welcome Header -->
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <h4 class="mb-1">Welcome back, Michael!</h4>
-                        <p class="text-muted mb-0">Here's what's happening with your basketball activity.</p>
-                    </div>
-                    <div>
-                        <button class="btn btn-primary">
-                            <i class="bi bi-plus-circle me-2"></i>Create Run
-                        </button>
-                    </div>
+<div class="container py-4">
+    <!-- Performance Overview -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="stat-card bg-primary text-white">
+                <div class="stat-icon">
+                    <i class="bi bi-check2-square"></i>
                 </div>
-
-                <!-- Stats Row -->
-                <div class="row">
-                    <div class="col-xl-3 col-md-6">
-                        <div class="stat-card">
-                            <div class="stat-icon bg-primary">
-                                <i class="bi bi-calendar-check"></i>
-                            </div>
-                            <h6 class="stat-title">Total Runs</h6>
-                            <h3 class="stat-value">24</h3>
-                            <div class="stat-trend up">
-                                <i class="bi bi-arrow-up"></i>
-                                <span>12% from last month</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-md-6">
-                        <div class="stat-card">
-                            <div class="stat-icon bg-success">
-                                <i class="bi bi-trophy"></i>
-                            </div>
-                            <h6 class="stat-title">Games Won</h6>
-                            <h3 class="stat-value">18</h3>
-                            <div class="stat-trend up">
-                                <i class="bi bi-arrow-up"></i>
-                                <span>8% from last month</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-md-6">
-                        <div class="stat-card">
-                            <div class="stat-icon bg-warning">
-                                <i class="bi bi-star"></i>
-                            </div>
-                            <h6 class="stat-title">Player Rating</h6>
-                            <h3 class="stat-value">4.8/5</h3>
-                            <div class="stat-trend up">
-                                <i class="bi bi-arrow-up"></i>
-                                <span>0.2 from last month</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-md-6">
-                        <div class="stat-card">
-                            <div class="stat-icon bg-danger">
-                                <i class="bi bi-people"></i>
-                            </div>
-                            <h6 class="stat-title">Squad Members</h6>
-                            <h3 class="stat-value">5</h3>
-                            <div class="stat-trend down">
-                                <i class="bi bi-arrow-down"></i>
-                                <span>1 from last month</span>
-                            </div>
-                        </div>
-                    </div>
+                <div class="stat-info">
+                    <h3>24</h3>
+                    <p class="mb-0">Tasks Completed</p>
+                    <small class="opacity-75">This month</small>
                 </div>
-
-                <!-- Content Row -->
-                <div class="row mt-4">
-                    <!-- Recent Activity -->
-                    <div class="col-lg-8">
-                        <!-- Upcoming Runs -->
-                        <div class="content-card mb-4">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0">Upcoming Runs</h5>
-                                <a href="#" class="btn btn-sm btn-outline-primary">View All</a>
-                            </div>
-                            <div class="card-body">
-                                <div class="upcoming-event">
-                                    <div class="event-date">
-                                        <span class="day">25</span>
-                                        <span class="month">May</span>
-                                    </div>
-                                    <div class="event-details">
-                                        <h6 class="event-title">Downtown 3v3 Tournament</h6>
-                                        <p class="event-info">
-                                            <i class="bi bi-geo-alt"></i>
-                                            <span>Central Court</span>
-                                            <i class="bi bi-clock"></i>
-                                            <span>6:00 PM - 9:00 PM</span>
-                                        </p>
-                                    </div>
-                                    <div class="ms-auto">
-                                        <span class="badge bg-success">Confirmed</span>
-                                    </div>
-                                </div>
-                                <div class="upcoming-event">
-                                    <div class="event-date">
-                                        <span class="day">27</span>
-                                        <span class="month">May</span>
-                                    </div>
-                                    <div class="event-details">
-                                        <h6 class="event-title">Evening Pickup Games</h6>
-                                        <p class="event-info">
-                                            <i class="bi bi-geo-alt"></i>
-                                            <span>Riverside Park</span>
-                                            <i class="bi bi-clock"></i>
-                                            <span>7:30 PM - 10:00 PM</span>
-                                        </p>
-                                    </div>
-                                    <div class="ms-auto">
-                                        <span class="badge bg-warning">Pending</span>
-                                    </div>
-                                </div>
-                                <div class="upcoming-event">
-                                    <div class="event-date">
-                                        <span class="day">1</span>
-                                        <span class="month">Jun</span>
-                                    </div>
-                                    <div class="event-details">
-                                        <h6 class="event-title">Weekend Showdown</h6>
-                                        <p class="event-info">
-                                            <i class="bi bi-geo-alt"></i>
-                                            <span>Community Center</span>
-                                            <i class="bi bi-clock"></i>
-                                            <span>1:00 PM - 4:00 PM</span>
-                                        </p>
-                                    </div>
-                                    <div class="ms-auto">
-                                        <span class="badge bg-primary">Registered</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Recent Activity -->
-                        <div class="content-card">
-                            <div class="card-header">
-                                <h5 class="mb-0">Recent Activity</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="recent-activity-item">
-                                    <div class="activity-icon bg-success">
-                                        <i class="bi bi-check-circle"></i>
-                                    </div>
-                                    <div class="activity-content">
-                                        <h6 class="activity-title">Game Won</h6>
-                                        <p class="activity-info">You won a game at Downtown Courts with a score of 21-15</p>
-                                    </div>
-                                    <div class="activity-time">
-                                        2 hours ago
-                                    </div>
-                                </div>
-                                <div class="recent-activity-item">
-                                    <div class="activity-icon bg-primary">
-                                        <i class="bi bi-person-plus"></i>
-                                    </div>
-                                    <div class="activity-content">
-                                        <h6 class="activity-title">New Squad Member</h6>
-                                        <p class="activity-info">LeBron James joined your squad</p>
-                                    </div>
-                                    <div class="activity-time">
-                                        Yesterday
-                                    </div>
-                                </div>
-                                <div class="recent-activity-item">
-                                    <div class="activity-icon bg-warning">
-                                        <i class="bi bi-star"></i>
-                                    </div>
-                                    <div class="activity-content">
-                                        <h6 class="activity-title">Rating Received</h6>
-                                        <p class="activity-info">Kevin Durant rated you 5 stars for your performance</p>
-                                    </div>
-                                    <div class="activity-time">
-                                        2 days ago
-                                    </div>
-                                </div>
-                                <div class="recent-activity-item">
-                                    <div class="activity-icon" style="background: linear-gradient(135deg, #4a6cf7 0%, #5d87ff 100%);">
-                                        <i class="bi bi-calendar-check"></i>
-                                    </div>
-                                    <div class="activity-content">
-                                        <h6 class="activity-title">Run Created</h6>
-                                        <p class="activity-info">You created a new run at Riverside Park</p>
-                                    </div>
-                                    <div class="activity-time">
-                                        3 days ago
-                                    </div>
-                                </div>
-                                <div class="recent-activity-item">
-                                    <div class="activity-icon bg-danger">
-                                        <i class="bi bi-x-circle"></i>
-                                    </div>
-                                    <div class="activity-content">
-                                        <h6 class="activity-title">Game Lost</h6>
-                                        <p class="activity-info">You lost a game at Central Court with a score of 18-21</p>
-                                    </div>
-                                    <div class="activity-time">
-                                        5 days ago
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Sidebar Content -->
-                    <div class="col-lg-4">
-                        <!-- Player Stats -->
-                        <div class="content-card mb-4">
-                            <div class="card-header">
-                                <h5 class="mb-0">Your Stats</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-6 mb-3">
-                                        <div class="text-center">
-                                            <h2 class="mb-1">76%</h2>
-                                            <p class="text-muted mb-0">Win Rate</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-6 mb-3">
-                                        <div class="text-center">
-                                            <h2 class="mb-1">4.8</h2>
-                                            <p class="text-muted mb-0">Rating</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="text-center">
-                                            <h2 class="mb-1">24</h2>
-                                            <p class="text-muted mb-0">Runs</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="text-center">
-                                            <h2 class="mb-1">850</h2>
-                                            <p class="text-muted mb-0">Points</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <hr>
-                                <div class="d-grid">
-                                    <a href="#" class="btn btn-outline-primary">View Detailed Stats</a>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Leaderboard -->
-                        <div class="content-card mb-4">
-                            <div class="card-header">
-                                <h5 class="mb-0">Player Leaderboard</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="leaderboard-item">
-                                    <div class="leaderboard-rank">1</div>
-                                    <div class="leaderboard-avatar">LJ</div>
-                                    <div class="leaderboard-info">
-                                        <h6 class="leaderboard-name">LeBron James</h6>
-                                        <p class="leaderboard-points">1,200 pts</p>
-                                    </div>
-                                    <div class="leaderboard-score">5.0</div>
-                                </div>
-                                <div class="leaderboard-item">
-                                    <div class="leaderboard-rank">2</div>
-                                    <div class="leaderboard-avatar">KD</div>
-                                    <div class="leaderboard-info">
-                                        <h6 class="leaderboard-name">Kevin Durant</h6>
-                                        <p class="leaderboard-points">1,150 pts</p>
-                                    </div>
-                                    <div class="leaderboard-score">4.9</div>
-                                </div>
-                                <div class="leaderboard-item">
-                                    <div class="leaderboard-rank">3</div>
-                                    <div class="leaderboard-avatar">SC</div>
-                                    <div class="leaderboard-info">
-                                        <h6 class="leaderboard-name">Stephen Curry</h6>
-                                        <p class="leaderboard-points">1,050 pts</p>
-                                    </div>
-                                    <div class="leaderboard-score">4.9</div>
-                                </div>
-                                <div class="leaderboard-item">
-                                    <div class="leaderboard-rank">4</div>
-                                    <div class="leaderboard-avatar">MJ</div>
-                                    <div class="leaderboard-info">
-                                        <h6 class="leaderboard-name">Michael Jordan</h6>
-                                        <p class="leaderboard-points">850 pts</p>
-                                    </div>
-                                    <div class="leaderboard-score">4.8</div>
-                                </div>
-                                <div class="leaderboard-item">
-                                    <div class="leaderboard-rank">5</div>
-                                    <div class="leaderboard-avatar">KI</div>
-                                    <div class="leaderboard-info">
-                                        <h6 class="leaderboard-name">Kyrie Irving</h6>
-                                        <p class="leaderboard-points">820 pts</p>
-                                    </div>
-                                    <div class="leaderboard-score">4.7</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Nearby Courts -->
-                        <div class="content-card">
-                            <div class="card-header">
-                                <h5 class="mb-0">Nearby Courts</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="nearby-court mb-3">
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-geo-alt text-primary me-2"></i>
-                                        <div>
-                                            <h6 class="mb-0">Riverside Park</h6>
-                                            <p class="text-muted mb-0">1.2 miles away</p>
-                                        </div>
-                                        <div class="ms-auto">
-                                            <span class="badge bg-success">Open</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="nearby-court mb-3">
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-geo-alt text-primary me-2"></i>
-                                        <div>
-                                            <h6 class="mb-0">Central Court</h6>
-                                            <p class="text-muted mb-0">2.5 miles away</p>
-                                        </div>
-                                        <div class="ms-auto">
-                                            <span class="badge bg-success">Open</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="nearby-court">
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-geo-alt text-primary me-2"></i>
-                                        <div>
-                                            <h6 class="mb-0">Community Center</h6>
-                                            <p class="text-muted mb-0">3.7 miles away</p>
-                                        </div>
-                                        <div class="ms-auto">
-                                            <span class="badge bg-secondary">Closed</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <hr>
-                                <div class="d-grid">
-                                    <a href="#" class="btn btn-outline-primary">Find Courts</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stat-card bg-success text-white">
+                <div class="stat-icon">
+                    <i class="bi bi-kanban"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>8</h3>
+                    <p class="mb-0">Active Projects</p>
+                    <small class="opacity-75">2 due this week</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stat-card bg-warning text-white">
+                <div class="stat-icon">
+                    <i class="bi bi-clock"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>32h</h3>
+                    <p class="mb-0">Time Logged</p>
+                    <small class="opacity-75">This week</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stat-card bg-info text-white">
+                <div class="stat-icon">
+                    <i class="bi bi-trophy"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>92%</h3>
+                    <p class="mb-0">Completion Rate</p>
+                    <small class="opacity-75">All time</small>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const sidebar = document.querySelector('.sidebar');
-            const mainContent = document.querySelector('.main-content');
-            const toggleSidebar = document.querySelector('.toggle-sidebar');
-            const sidebarOverlay = document.querySelector('.sidebar-overlay');
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- My Tasks -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">My Tasks</h5>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-secondary active" data-filter="all">All</button>
+                        <button class="btn btn-outline-secondary" data-filter="pending">Pending</button>
+                        <button class="btn btn-outline-secondary" data-filter="in-progress">In Progress</button>
+                        <button class="btn btn-outline-secondary" data-filter="completed">Completed</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="task-list">
+                        <div class="task-item" data-status="in-progress">
+                            <div class="task-checkbox">
+                                <input type="checkbox" class="form-check-input" id="task1">
+                            </div>
+                            <div class="task-content">
+                                <h6 class="task-title">Design user interface mockups</h6>
+                                <p class="task-description text-muted mb-2">Create wireframes and mockups for the new dashboard layout</p>
+                                <div class="task-meta">
+                                    <span class="badge bg-warning">In Progress</span>
+                                    <span class="text-muted ms-2"><i class="bi bi-calendar me-1"></i>Due: Tomorrow</span>
+                                    <span class="text-muted ms-2"><i class="bi bi-folder me-1"></i>E-commerce Project</span>
+                                </div>
+                            </div>
+                            <div class="task-actions">
+                                <button class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                            </div>
+                        </div>
 
-            // Toggle sidebar on button click
-            toggleSidebar.addEventListener('click', function() {
-                if (window.innerWidth < 992) {
-                    sidebar.classList.toggle('sidebar-visible');
-                    sidebarOverlay.classList.toggle('active');
-                } else {
-                    sidebar.classList.toggle('sidebar-collapsed');
-                    mainContent.classList.toggle('main-content-expanded');
+                        <div class="task-item" data-status="pending">
+                            <div class="task-checkbox">
+                                <input type="checkbox" class="form-check-input" id="task2">
+                            </div>
+                            <div class="task-content">
+                                <h6 class="task-title">Review security documentation</h6>
+                                <p class="task-description text-muted mb-2">Go through the latest security protocols and update implementation</p>
+                                <div class="task-meta">
+                                    <span class="badge bg-secondary">Pending</span>
+                                    <span class="text-muted ms-2"><i class="bi bi-calendar me-1"></i>Due: Dec 1</span>
+                                    <span class="text-muted ms-2"><i class="bi bi-folder me-1"></i>Security Update</span>
+                                </div>
+                            </div>
+                            <div class="task-actions">
+                                <button class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                            </div>
+                        </div>
 
-                    // Hide or show text in sidebar
-                    const logoText = document.querySelector('.logo-text');
-                    const menuTexts = document.querySelectorAll('.menu-text');
+                        <div class="task-item" data-status="completed">
+                            <div class="task-checkbox">
+                                <input type="checkbox" class="form-check-input" id="task3" checked>
+                            </div>
+                            <div class="task-content">
+                                <h6 class="task-title completed">Database optimization review</h6>
+                                <p class="task-description text-muted mb-2">Analyze and optimize database queries for better performance</p>
+                                <div class="task-meta">
+                                    <span class="badge bg-success">Completed</span>
+                                    <span class="text-muted ms-2"><i class="bi bi-calendar me-1"></i>Completed: Yesterday</span>
+                                    <span class="text-muted ms-2"><i class="bi bi-folder me-1"></i>Analytics Dashboard</span>
+                                </div>
+                            </div>
+                            <div class="task-actions">
+                                <button class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                    if (sidebar.classList.contains('sidebar-collapsed')) {
-                        logoText.style.opacity = '0';
-                        menuTexts.forEach(text => {
-                            text.style.opacity = '0';
-                        });
-                    } else {
-                        logoText.style.opacity = '1';
-                        menuTexts.forEach(text => {
-                            text.style.opacity = '1';
-                        });
-                    }
-                }
-            });
+            <!-- Recent Projects -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Projects</h5>
+                </div>
+                <div class="card-body">
+                    <div class="project-list">
+                        <div class="project-item">
+                            <div class="project-info">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="project-title">E-commerce Platform</h6>
+                                    <span class="badge bg-success">Active</span>
+                                </div>
+                                <p class="text-muted mb-2">Complete redesign of the shopping experience with modern UI/UX.</p>
+                                <div class="project-meta">
+                                    <span class="text-muted"><i class="bi bi-people me-1"></i>6 members</span>
+                                    <span class="text-muted ms-3"><i class="bi bi-calendar me-1"></i>Due: Dec 15</span>
+                                    <span class="text-muted ms-3"><i class="bi bi-list-task me-1"></i>12 tasks</span>
+                                </div>
+                            </div>
+                            <div class="project-progress">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <small class="text-muted">Progress</small>
+                                    <small class="fw-semibold">68%</small>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-success" style="width: 68%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-            // Close sidebar when clicking overlay
-            sidebarOverlay.addEventListener('click', function() {
-                sidebar.classList.remove('sidebar-visible');
-                sidebarOverlay.classList.remove('active');
-            });
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Account Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Account Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="avatar-container me-3">
+                            <div class="avatar bg-primary text-white">
+                                @(userName.Length > 0 ? userName[0].ToString() : "U")
+                            </div>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">@userName</h6>
+                            <small class="text-muted">@userEmail</small>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Account Type</label>
+                        <div class="fw-semibold">Standard User</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Last Login</label>
+                        <div class="fw-semibold">Today at 10:23 AM</div>
+                    </div>
+                    <div class="d-grid">
+                        <a href="#" class="btn btn-outline-primary">
+                            <i class="bi bi-person-gear me-2"></i>
+                            Edit Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Links -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Links</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="#" class="btn btn-outline-secondary">
+                            <i class="bi bi-file-earmark-text me-2"></i>
+                            Documentation
+                        </a>
+                        <a href="#" class="btn btn-outline-secondary">
+                            <i class="bi bi-question-circle me-2"></i>
+                            Help Center
+                        </a>
+                        <a href="#" class="btn btn-outline-secondary">
+                            <i class="bi bi-gear me-2"></i>
+                            Settings
+                        </a>
+                        <a href="/Home/Logout" class="btn btn-outline-danger">
+                            <i class="bi bi-box-arrow-right me-2"></i>
+                            Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-            // Handle resize events
-            window.addEventListener('resize', function() {
-                if (window.innerWidth >= 992) {
-                    sidebar.classList.remove('sidebar-visible');
-                    sidebarOverlay.classList.remove('active');
-                } else {
-                    sidebar.classList.remove('sidebar-collapsed');
-                    mainContent.classList.remove('main-content-expanded');
+<style>
+    .dashboard-header {
+        border-bottom: 1px solid #dee2e6;
+    }
 
-                    const logoText = document.querySelector('.logo-text');
-                    const menuTexts = document.querySelectorAll('.menu-text');
+    .stat-card {
+        background: linear-gradient(135deg, var(--bs-primary) 0%, var(--bs-primary) 100%);
+        border-radius: 12px;
+        padding: 1.5rem;
+        color: white;
+        display: flex;
+        align-items: center;
+        height: 100%;
+        transition: transform 0.2s ease;
+    }
 
-                    logoText.style.opacity = '1';
-                    menuTexts.forEach(text => {
-                        text.style.opacity = '1';
-                    });
-                }
-            });
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
 
-            // Initialize Bootstrap tooltips
-            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
+    .stat-card.bg-primary {
+        background: linear-gradient(135deg, #4a6cf7 0%, #5d87ff 100%);
+    }
 
-            // Initialize Bootstrap popovers
-            const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
-            popoverTriggerList.map(function (popoverTriggerEl) {
-                return new bootstrap.Popover(popoverTriggerEl);
-            });
-        });
-    </script>
-</body>
-</html>
+    .stat-card.bg-success {
+        background: linear-gradient(135deg, #00d4aa 0%, #1dd1a1 100%);
+    }
+
+    .stat-card.bg-warning {
+        background: linear-gradient(135deg, #ffa726 0%, #ff9800 100%);
+    }
+
+    .stat-card.bg-info {
+        background: linear-gradient(135deg, #26c6da 0%, #00bcd4 100%);
+    }
+
+    .stat-icon {
+        font-size: 2.5rem;
+        margin-right: 1rem;
+        opacity: 0.8;
+    }
+
+    .stat-info h3 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .task-list {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+
+    .task-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 1rem;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        background: white;
+        transition: all 0.2s ease;
+    }
+
+    .task-item:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .task-checkbox {
+        margin-right: 1rem;
+        margin-top: 0.25rem;
+    }
+
+    .task-content {
+        flex-grow: 1;
+    }
+
+    .task-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        transition: all 0.2s ease;
+    }
+
+    .task-title.completed {
+        text-decoration: line-through;
+        opacity: 0.7;
+    }
+
+    .task-description {
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+
+    .task-meta {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .task-actions {
+        margin-left: 1rem;
+    }
+
+    .project-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 1.5rem;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        background: white;
+        transition: all 0.2s ease;
+    }
+
+    .project-item:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .project-info {
+        flex-grow: 1;
+        margin-right: 1rem;
+    }
+
+    .project-title {
+        font-weight: 600;
+        color: #333;
+    }
+
+    .project-progress {
+        min-width: 120px;
+    }
+
+    .card {
+        border: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        border-radius: 12px;
+    }
+
+    .card-header {
+        background: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+        border-radius: 12px 12px 0 0 !important;
+        padding: 1rem 1.5rem;
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+
+    .avatar-container {
+        width: 50px;
+        height: 50px;
+    }
+
+    .avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+</style>

@@ -9,15 +9,35 @@ namespace OfficalWebsite.Middleware
         {
             var token = filterContext.HttpContext.Session.GetString("Token");
 
-            // Check if the session has expired
+            // Check if the session has expired or is missing authentication token
             if (string.IsNullOrEmpty(token))
             {
-                filterContext.Result = new RedirectToRouteResult(
-                    new RouteValueDictionary
-                    {
-                    { "controller", "Home" },
-                    { "action", "Index" }
-                    });
+                // Store current URL as return URL if it's not a login or logout action
+                var currentAction = filterContext.RouteData.Values["action"]?.ToString()?.ToLower();
+                var currentController = filterContext.RouteData.Values["controller"]?.ToString()?.ToLower();
+
+                if (currentAction != "login" && currentAction != "logout")
+                {
+                    var currentUrl = filterContext.HttpContext.Request.Path;
+                    // Redirect to login with return URL
+                    filterContext.Result = new RedirectToRouteResult(
+                        new RouteValueDictionary
+                        {
+                            { "controller", "Home" },
+                            { "action", "Login" },
+                            { "returnUrl", currentUrl }
+                        });
+                }
+                else
+                {
+                    // Just redirect to login
+                    filterContext.Result = new RedirectToRouteResult(
+                        new RouteValueDictionary
+                        {
+                            { "controller", "Home" },
+                            { "action", "Login" }
+                        });
+                }
             }
 
             base.OnActionExecuting(filterContext);

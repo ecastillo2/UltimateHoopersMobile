@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using OfficalWebsite.Middleware;
 using System.Net.Http.Headers;
 using WebAPI.ApiClients;
 
@@ -145,27 +146,8 @@ namespace OfficalWebsite
             app.UseAuthentication();
             app.UseAuthorization();
 
-            // Session authentication check middleware
-            app.Use(async (context, next) =>
-            {
-                // Skip authentication check for public pages
-                if (!context.Request.Path.Value.Contains("/Dashboard") ||
-                    context.Request.Path.Value.Contains("/Dashboard/Login"))
-                {
-                    await next();
-                    return;
-                }
-
-                // Check for authentication token
-                string authToken = context.Session.GetString("Token");
-                if (string.IsNullOrEmpty(authToken))
-                {
-                    context.Response.Redirect("/Home/Login");
-                    return;
-                }
-
-                await next();
-            });
+            // Add the token validation middleware
+            app.UseMiddleware<TokenValidationMiddleware>();
 
             app.UseEndpoints(endpoints =>
             {
