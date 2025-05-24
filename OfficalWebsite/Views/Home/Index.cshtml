@@ -24,27 +24,28 @@
     </div>
 }
 
-<div class="app-promo">
+<!-- Hero Section -->
+<div class="hero-section">
     <div class="container">
         <div class="row align-items-center">
-            <div class="col-lg-6 promo-content">
-                <h1 class="display-4 fw-bold">TaskFlow Pro</h1>
-                <p class="lead mb-4">The ultimate productivity platform for teams and individuals. Streamline your workflow, boost collaboration, and achieve more with our comprehensive task management solution.</p>
+            <div class="col-lg-6 hero-content">
+                <h1 class="display-4 fw-bold">HoopFinder</h1>
+                <p class="lead mb-4">Find pickup games, connect with ballers, and elevate your game. The ultimate basketball community app.</p>
                 
                 @if (!isAuthenticated)
                 {
                     <div class="app-features mb-5">
                         <div class="feature">
-                            <i class="bi bi-lightning-charge"></i>
-                            <span>Lightning Fast</span>
+                            <i class="bi bi-geo-alt"></i>
+                            <span>Find Nearby Courts</span>
                         </div>
                         <div class="feature">
-                            <i class="bi bi-shield-check"></i>
-                            <span>Enterprise Secure</span>
+                            <i class="bi bi-people"></i>
+                            <span>Join Pickup Games</span>
                         </div>
                         <div class="feature">
-                            <i class="bi bi-people-fill"></i>
-                            <span>Team Collaboration</span>
+                            <i class="bi bi-trophy"></i>
+                            <span>Track Your Stats</span>
                         </div>
                     </div>
                     
@@ -53,9 +54,14 @@
                             <i class="bi bi-box-arrow-in-right me-2"></i>
                             Get Started
                         </a>
-                        <a href="/Home/Features" class="btn btn-outline-primary btn-lg">
-                            Learn More
-                        </a>
+                        <div class="app-store-buttons mt-4">
+                            <a href="#" class="app-store-button me-2">
+                                <img src="~/images/app-store-badge.png" alt="Download on the App Store">
+                            </a>
+                            <a href="#" class="app-store-button">
+                                <img src="~/images/google-play-badge.png" alt="Get it on Google Play">
+                            </a>
+                        </div>
                     </div>
                 }
                 else
@@ -64,36 +70,36 @@
                         <div class="row">
                             <div class="col-md-4">
                                 <div class="stat-card">
-                                    <h3 class="text-primary">12</h3>
-                                    <p class="text-muted mb-0">Active Projects</p>
+                                    <h3 class="text-primary">8</h3>
+                                    <p class="text-muted mb-0">Nearby Games</p>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="stat-card">
-                                    <h3 class="text-success">48</h3>
-                                    <p class="text-muted mb-0">Completed Tasks</p>
+                                    <h3 class="text-success">12</h3>
+                                    <p class="text-muted mb-0">Games Played</p>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="stat-card">
-                                    <h3 class="text-warning">6</h3>
-                                    <p class="text-muted mb-0">Team Members</p>
+                                    <h3 class="text-warning">24</h3>
+                                    <p class="text-muted mb-0">Local Players</p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 }
             </div>
-            <div class="col-lg-6 promo-image">
-                <div class="dashboard-preview">
-                    <img src="~/images/app-mockup.png" alt="TaskFlow Pro Dashboard" class="img-fluid">
+            <div class="col-lg-6 hero-image">
+                <div class="phone-mockup">
+                    <img src="~/images/basketball-app-mockup.png" alt="HoopFinder App" class="img-fluid">
                     @if (!isAuthenticated)
                     {
                         <div class="preview-overlay">
                             <div class="preview-content">
-                                <h5>Experience the Full Platform</h5>
-                                <p>Join thousands of teams already using TaskFlow Pro</p>
-                                <a href="/Home/Login" class="btn btn-light">Start Free Trial</a>
+                                <h5>Join the Community</h5>
+                                <p>Connect with thousands of ballers in your area</p>
+                                <a href="/Home/Login" class="btn btn-light">Start Now</a>
                             </div>
                         </div>
                     }
@@ -101,50 +107,76 @@
             </div>
         </div>
     </div>
+    <div class="hero-shape"></div>
 </div>
 
 @if (!isAuthenticated)
 {
-    <!-- Features overview for non-authenticated users -->
-    <div class="app-features-section py-5">
+    <!-- Features Section -->
+    <div class="features-section py-5">
         <div class="container">
-            <h2 class="text-center mb-5">Why Choose TaskFlow Pro?</h2>
-            <div class="row">
-                <div class="col-md-4 mb-4">
+            <h2 class="text-center mb-5">How It Works</h2>
+            <div class="row g-4">
+                <div class="col-md-4">
                     <div class="feature-card">
                         <div class="feature-icon">
-                            <i class="bi bi-kanban"></i>
+                            <i class="bi bi-map"></i>
                         </div>
-                        <h3>Smart Project Management</h3>
-                        <p>Organize projects with intelligent boards, automated workflows, and real-time collaboration tools.</p>
+                        <h3>Discover Courts</h3>
+                        <p>Find basketball courts near you with ratings, photos, and amenities. Filter by distance, court type, and availability.</p>
                     </div>
                 </div>
-                <div class="col-md-4 mb-4">
+                <div class="col-md-4">
                     <div class="feature-card">
                         <div class="feature-icon">
-                            <i class="bi bi-graph-up-arrow"></i>
+                            <i class="bi bi-calendar-event"></i>
                         </div>
-                        <h3>Advanced Analytics</h3>
-                        <p>Track performance, identify bottlenecks, and optimize your team's productivity with detailed insights.</p>
+                        <h3>Join Games</h3>
+                        <p>Browse upcoming pickup games, see who's playing, and join with a tap. Or create your own game and invite others.</p>
                     </div>
                 </div>
-                <div class="col-md-4 mb-4">
+                <div class="col-md-4">
                     <div class="feature-card">
                         <div class="feature-icon">
-                            <i class="bi bi-shield-lock"></i>
+                            <i class="bi bi-graph-up"></i>
                         </div>
-                        <h3>Enterprise Security</h3>
-                        <p>Bank-level security with SSO integration, role-based permissions, and compliance certifications.</p>
+                        <h3>Track Performance</h3>
+                        <p>Record your stats, track your progress, and see how you rank against other players in your area.</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Social proof section -->
-    <div class="testimonials-section py-5 bg-light">
+    <!-- App Screenshots -->
+    <div class="screenshots-section py-5 bg-light">
         <div class="container">
-            <h2 class="text-center mb-5">Trusted by Industry Leaders</h2>
+            <h2 class="text-center mb-5">App Screenshots</h2>
+            <div class="row">
+                <div class="col-12">
+                    <div class="screenshots-slider text-center">
+                        <div class="screenshot-item">
+                            <img src="~/images/screenshot-1.png" alt="Court Finder Screen" class="img-fluid rounded shadow-sm">
+                            <h5 class="mt-3">Find Courts</h5>
+                        </div>
+                        <div class="screenshot-item">
+                            <img src="~/images/screenshot-2.png" alt="Game Scheduler Screen" class="img-fluid rounded shadow-sm">
+                            <h5 class="mt-3">Schedule Games</h5>
+                        </div>
+                        <div class="screenshot-item">
+                            <img src="~/images/screenshot-3.png" alt="Player Profile Screen" class="img-fluid rounded shadow-sm">
+                            <h5 class="mt-3">Player Profiles</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Testimonials -->
+    <div class="testimonials-section py-5">
+        <div class="container">
+            <h2 class="text-center mb-5">What Players Say</h2>
             <div class="row">
                 <div class="col-md-4 mb-4">
                     <div class="testimonial-card">
@@ -155,8 +187,8 @@
                             <i class="bi bi-star-fill"></i>
                             <i class="bi bi-star-fill"></i>
                         </div>
-                        <p class="testimonial-text">"TaskFlow Pro transformed our team's productivity. We delivered projects 40% faster and with better quality."</p>
-                        <div class="testimonial-author">Sarah Chen, Project Manager at TechCorp</div>
+                        <p class="testimonial-text">"This app changed my basketball life. I've found amazing courts I never knew existed and met some great players who've become friends off the court too."</p>
+                        <div class="testimonial-author">Marcus J., Chicago</div>
                     </div>
                 </div>
                 <div class="col-md-4 mb-4">
@@ -168,8 +200,8 @@
                             <i class="bi bi-star-fill"></i>
                             <i class="bi bi-star-fill"></i>
                         </div>
-                        <p class="testimonial-text">"The analytics dashboard gives us unprecedented visibility into our operations. Game changer for our business."</p>
-                        <div class="testimonial-author">Michael Rodriguez, CEO at StartupX</div>
+                        <p class="testimonial-text">"No more showing up to empty courts! I can see exactly when games are happening and join ones that match my skill level. The stat tracking keeps me motivated too."</p>
+                        <div class="testimonial-author">Alisha K., New York</div>
                     </div>
                 </div>
                 <div class="col-md-4 mb-4">
@@ -181,8 +213,30 @@
                             <i class="bi bi-star-fill"></i>
                             <i class="bi bi-star-half"></i>
                         </div>
-                        <p class="testimonial-text">"Seamless integration with our existing tools. The security features meet all our enterprise requirements."</p>
-                        <div class="testimonial-author">Jennifer Park, IT Director at FinanceFlow</div>
+                        <p class="testimonial-text">"I organize games every weekend and this app has made it so much easier. No more group texts and confusion about who's coming. Great community of ballers!"</p>
+                        <div class="testimonial-author">Tyrone M., Los Angeles</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Download CTA -->
+    <div class="download-section py-5">
+        <div class="container text-center">
+            <h2 class="mb-4">Ready to Hit the Court?</h2>
+            <p class="lead mb-4">Download HoopFinder today and join thousands of basketball players in your area.</p>
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="app-download-buttons">
+                        <a href="#" class="btn btn-dark btn-lg me-3 mb-3 mb-md-0">
+                            <i class="bi bi-apple me-2"></i>
+                            App Store
+                        </a>
+                        <a href="#" class="btn btn-primary btn-lg">
+                            <i class="bi bi-google-play me-2"></i>
+                            Google Play
+                        </a>
                     </div>
                 </div>
             </div>
@@ -196,36 +250,47 @@ else
         <div class="container">
             <div class="row">
                 <div class="col-md-8">
-                    <h3 class="mb-4">Recent Activity</h3>
-                    <div class="activity-list">
-                        <div class="activity-item">
-                            <div class="activity-icon bg-success">
-                                <i class="bi bi-check-circle text-white"></i>
+                    <h3 class="mb-4">Nearby Games</h3>
+                    <div class="game-list">
+                        <div class="game-item">
+                            <div class="game-icon bg-success">
+                                <i class="bi bi-calendar-check text-white"></i>
                             </div>
-                            <div class="activity-content">
-                                <h6>Task Completed</h6>
-                                <p class="text-muted mb-0">Review Q4 budget proposal</p>
-                                <small class="text-muted">2 hours ago</small>
+                            <div class="game-content">
+                                <h6>Saturday Morning Run</h6>
+                                <p class="text-muted mb-0">Central Park Courts, 5v5, 8 players joined</p>
+                                <small class="text-muted">Tomorrow, 9:00 AM</small>
                             </div>
-                        </div>
-                        <div class="activity-item">
-                            <div class="activity-icon bg-primary">
-                                <i class="bi bi-plus-circle text-white"></i>
-                            </div>
-                            <div class="activity-content">
-                                <h6>New Project Created</h6>
-                                <p class="text-muted mb-0">Website Redesign Initiative</p>
-                                <small class="text-muted">1 day ago</small>
+                            <div class="game-action">
+                                <button class="btn btn-sm btn-outline-primary">Join Game</button>
                             </div>
                         </div>
-                        <div class="activity-item">
-                            <div class="activity-icon bg-info">
-                                <i class="bi bi-people text-white"></i>
+                        
+                        <div class="game-item">
+                            <div class="game-icon bg-primary">
+                                <i class="bi bi-calendar-plus text-white"></i>
                             </div>
-                            <div class="activity-content">
-                                <h6>Team Update</h6>
-                                <p class="text-muted mb-0">3 new members joined Marketing team</p>
-                                <small class="text-muted">3 days ago</small>
+                            <div class="game-content">
+                                <h6>Afternoon Pickup</h6>
+                                <p class="text-muted mb-0">Riverside Courts, 3v3, 4 players joined</p>
+                                <small class="text-muted">Today, 4:30 PM</small>
+                            </div>
+                            <div class="game-action">
+                                <button class="btn btn-sm btn-outline-primary">Join Game</button>
+                            </div>
+                        </div>
+                        
+                        <div class="game-item">
+                            <div class="game-icon bg-warning">
+                                <i class="bi bi-calendar-week text-white"></i>
+                            </div>
+                            <div class="game-content">
+                                <h6>Evening Basketball</h6>
+                                <p class="text-muted mb-0">Brooklyn Heights Court, 4v4, 6 players joined</p>
+                                <small class="text-muted">Tuesday, 7:00 PM</small>
+                            </div>
+                            <div class="game-action">
+                                <button class="btn btn-sm btn-outline-primary">Join Game</button>
                             </div>
                         </div>
                     </div>
@@ -233,17 +298,17 @@ else
                 <div class="col-md-4">
                     <h3 class="mb-4">Quick Actions</h3>
                     <div class="quick-actions">
-                        <a href="#" class="btn btn-outline-primary w-100 mb-3">
+                        <a href="#" class="btn btn-primary w-100 mb-3">
                             <i class="bi bi-plus-circle me-2"></i>
-                            Create New Project
+                            Create New Game
                         </a>
-                        <a href="#" class="btn btn-outline-secondary w-100 mb-3">
+                        <a href="#" class="btn btn-outline-primary w-100 mb-3">
+                            <i class="bi bi-geo-alt me-2"></i>
+                            Find Courts Near Me
+                        </a>
+                        <a href="#" class="btn btn-outline-secondary w-100">
                             <i class="bi bi-people me-2"></i>
-                            Invite Team Members
-                        </a>
-                        <a href="#" class="btn btn-outline-info w-100">
-                            <i class="bi bi-bar-chart me-2"></i>
-                            View Reports
+                            Find Players
                         </a>
                     </div>
                 </div>
@@ -252,55 +317,86 @@ else
     </div>
 }
 
-<div class="cta-section py-5">
-    <div class="container text-center">
-        @if (!isAuthenticated)
-        {
-            <h2 class="mb-4">Ready to Transform Your Workflow?</h2>
-            <p class="lead mb-4">Join over 50,000 teams using TaskFlow Pro to achieve their goals faster.</p>
-            <div class="cta-buttons">
-                <a href="/Home/Login" class="btn btn-light btn-lg me-3">
-                    Start Free Trial
-                </a>
-                <a href="/Home/Pricing" class="btn btn-outline-light btn-lg">
-                    View Pricing
-                </a>
-            </div>
-        }
-        else
-        {
-            <h2 class="mb-4">Need Help Getting Started?</h2>
-            <p class="lead mb-4">Explore our resources to maximize your TaskFlow Pro experience.</p>
-            <div class="cta-buttons">
-                <a href="#" class="btn btn-light btn-lg me-3">
-                    View Documentation
-                </a>
-                <a href="#" class="btn btn-outline-light btn-lg">
-                    Contact Support
-                </a>
-            </div>
-        }
-    </div>
-</div>
-
 <style>
-.welcome-back-section {
-    border-bottom: 1px solid #dee2e6;
-}
-
-.stat-card {
-    text-align: center;
-    padding: 1rem;
-}
-
-.stat-card h3 {
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-}
-
-.dashboard-preview {
+/* Hero Section */
+.hero-section {
+    background: linear-gradient(135deg, #FF6B35 0%, #F7A100 100%);
+    color: white;
+    padding: 6rem 0 8rem;
     position: relative;
+    overflow: hidden;
+}
+
+.hero-shape {
+    position: absolute;
+    bottom: -10px;
+    left: 0;
+    width: 100%;
+    height: 150px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23ffffff' fill-opacity='1' d='M0,96L48,112C96,128,192,160,288,186.7C384,213,480,235,576,224C672,213,768,171,864,149.3C960,128,1056,128,1152,149.3C1248,171,1344,213,1392,234.7L1440,256L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
+    background-size: cover;
+}
+
+.hero-content h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    color: white;
+}
+
+.hero-content .lead {
+    font-size: 1.25rem;
+    margin-bottom: 2rem;
+    opacity: 0.9;
+    max-width: 90%;
+}
+
+.app-features {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2.5rem;
+}
+
+.feature {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.feature i {
+    color: white;
+    font-size: 1.25rem;
+}
+
+.app-store-buttons {
+    display: flex;
+    gap: 1rem;
+}
+
+.app-store-button img {
+    height: 48px;
+    transition: transform 0.3s ease;
+}
+
+.app-store-button:hover img {
+    transform: translateY(-5px);
+}
+
+.phone-mockup {
+    position: relative;
+    text-align: center;
+}
+
+.phone-mockup img {
+    max-width: 80%;
+    filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.2));
+    animation: float 6s ease-in-out infinite;
+    transform: perspective(1000px) rotateY(-15deg);
+    transition: transform 0.5s ease;
+}
+
+.phone-mockup:hover img {
+    transform: perspective(1000px) rotateY(0deg);
 }
 
 .preview-overlay {
@@ -318,7 +414,7 @@ else
     border-radius: 12px;
 }
 
-.dashboard-preview:hover .preview-overlay {
+.phone-mockup:hover .preview-overlay {
     opacity: 1;
 }
 
@@ -327,12 +423,143 @@ else
     color: white;
 }
 
-.activity-list {
+@@keyframes float {
+    0% {
+        transform: perspective(1000px) rotateY(-15deg) translateY(0px);
+    }
+    50% {
+        transform: perspective(1000px) rotateY(-15deg) translateY(-20px);
+    }
+    100% {
+        transform: perspective(1000px) rotateY(-15deg) translateY(0px);
+    }
+}
+
+/* Features Section */
+.features-section {
+    padding: 5rem 0;
+    background: white;
+}
+
+.feature-card {
+    padding: 2.5rem;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 100%;
+    text-align: center;
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+.feature-icon {
+    font-size: 3rem;
+    color: #FF6B35;
+    margin-bottom: 1.5rem;
+}
+
+.feature-card h3 {
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.feature-card p {
+    color: #6c757d;
+    line-height: 1.6;
+}
+
+/* Screenshots Section */
+.screenshots-section {
+    background-color: #f8f9fa;
+}
+
+.screenshots-slider {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+}
+
+.screenshot-item {
+    flex: 0 0 auto;
+    width: 30%;
+    text-align: center;
+}
+
+.screenshot-item img {
+    max-width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.screenshot-item:hover img {
+    transform: translateY(-10px);
+}
+
+/* Testimonial Section */
+.testimonials-section {
+    background-color: white;
+}
+
+.testimonial-card {
+    background-color: #fff;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    height: 100%;
+    transition: transform 0.3s ease;
+}
+
+.testimonial-card:hover {
+    transform: translateY(-5px);
+}
+
+.testimonial-stars {
+    color: #ffc107;
+    margin-bottom: 1rem;
+}
+
+.testimonial-text {
+    font-style: italic;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+.testimonial-author {
+    font-weight: 600;
+    color: #FF6B35;
+}
+
+/* Download Section */
+.download-section {
+    background: linear-gradient(135deg, #FF6B35 0%, #F7A100 100%);
+    color: white;
+}
+
+.download-section h2 {
+    font-weight: 700;
+}
+
+.download-section .lead {
+    opacity: 0.9;
+}
+
+.app-download-buttons {
+    margin-top: 2rem;
+}
+
+/* Game List for Authenticated Users */
+.game-list {
     max-height: 400px;
     overflow-y: auto;
 }
 
-.activity-item {
+.game-item {
     display: flex;
     align-items: center;
     padding: 1rem;
@@ -340,9 +567,15 @@ else
     border-radius: 8px;
     margin-bottom: 1rem;
     background: white;
+    transition: transform 0.2s ease;
 }
 
-.activity-icon {
+.game-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.game-icon {
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -353,32 +586,97 @@ else
     flex-shrink: 0;
 }
 
-.activity-content {
+.game-content {
     flex-grow: 1;
 }
 
-.activity-content h6 {
+.game-content h6 {
     margin-bottom: 0.25rem;
     font-weight: 600;
 }
 
-.quick-actions .btn {
-    justify-content: flex-start;
+.game-action {
+    margin-left: 1rem;
 }
 
-.cta-buttons .btn {
-    min-width: 160px;
+.quick-actions .btn {
+    text-align: left;
+}
+
+.welcome-back-section {
+    border-bottom: 1px solid #dee2e6;
+}
+
+.stat-card {
+    text-align: center;
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+}
+
+.stat-card h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+/* Media Queries */
+@@media (max-width: 992px) {
+    .hero-section {
+        padding: 4rem 0 6rem;
+    }
+    
+    .hero-content {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+    
+    .hero-content .lead {
+        max-width: 100%;
+    }
+    
+    .app-features {
+        justify-content: center;
+    }
+    
+    .cta-buttons {
+        justify-content: center;
+    }
+    
+    .app-store-buttons {
+        justify-content: center;
+    }
+    
+    .screenshots-slider {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .screenshot-item {
+        width: 80%;
+        margin-bottom: 2rem;
+    }
 }
 
 @@media (max-width: 768px) {
-    .cta-buttons .btn {
-        display: block;
-        width: 100%;
-        margin-bottom: 1rem;
+    .hero-content h1 {
+        font-size: 2.5rem;
     }
     
-    .cta-buttons .btn:last-child {
-        margin-bottom: 0;
+    .app-features {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: center;
+    }
+    
+    .feature-card, .testimonial-card {
+        margin-bottom: 1.5rem;
+    }
+    
+    .app-download-buttons {
+        flex-direction: column;
+        gap: 1rem;
     }
 }
 </style>
