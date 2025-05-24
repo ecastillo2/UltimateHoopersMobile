@@ -37,7 +37,8 @@
                 <Label Text="←"
                        FontSize="24"
                        HorizontalOptions="Center"
-                       VerticalOptions="Center" />
+                       VerticalOptions="Center"
+                       TextColor="black"/>
 
                 <Frame.GestureRecognizers>
                     <TapGestureRecognizer Tapped="OnBackClicked" />
