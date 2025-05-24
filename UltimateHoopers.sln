@@ -19,7 +19,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiClient", "ApiClient\ApiC
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebAdmin", "WebAdmin\WebAdmin.csproj", "{571ECC72-0E90-4A56-9385-3EA8377E4F0F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OfficalWebsite", "OfficalWebsite\OfficalWebsite.csproj", "{EDF2A5E3-008F-45EA-9419-EE7EE320210B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OfficialWebsite", "OfficalWebsite\OfficialWebsite.csproj", "{EDF2A5E3-008F-45EA-9419-EE7EE320210B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
