@@ -16,8 +16,39 @@
                         <p class="text-muted">Sign in to access your TaskFlow Pro dashboard</p>
                     </div>
 
-                    <form asp-action="Login" method="post" class="login-form">
-                        <div asp-validation-summary="All" class="alert alert-danger d-none"></div>
+                    <!-- Success/Error Messages -->
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="bi bi-check-circle me-2"></i>
+                            @TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            @TempData["ErrorMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    @if (TempData["InfoMessage"] != null)
+                    {
+                        <div class="alert alert-info alert-dismissible fade show" role="alert">
+                            <i class="bi bi-info-circle me-2"></i>
+                            @TempData["InfoMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <form asp-action="Login" method="post" class="login-form" id="loginForm">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
+                        
+                        <div asp-validation-summary="All" class="alert alert-danger validation-summary-errors d-none"></div>
 
                         <!-- Role Selection -->
                         <div class="form-group mb-4">
@@ -70,7 +101,7 @@
                                 <span class="input-group-text">
                                     <i class="bi bi-envelope"></i>
                                 </span>
-                                <input asp-for="Email" class="form-control" placeholder="Enter your email">
+                                <input asp-for="Email" class="form-control" placeholder="Enter your email" autocomplete="email">
                             </div>
                             <span asp-validation-for="Email" class="text-danger"></span>
                         </div>
@@ -82,7 +113,7 @@
                                 <span class="input-group-text">
                                     <i class="bi bi-lock"></i>
                                 </span>
-                                <input asp-for="Password" class="form-control" type="password" placeholder="Enter your password">
+                                <input asp-for="Password" class="form-control" type="password" placeholder="Enter your password" autocomplete="current-password">
                                 <button type="button" class="btn btn-outline-secondary toggle-password">
                                     <i class="bi bi-eye"></i>
                                 </button>
@@ -102,9 +133,15 @@
 
                         <!-- Submit Button -->
                         <div class="form-group mb-4">
-                            <button type="submit" class="btn btn-primary w-100 btn-lg">
-                                <i class="bi bi-box-arrow-in-right me-2"></i>
-                                Sign In
+                            <button type="submit" class="btn btn-primary w-100 btn-lg" id="loginBtn">
+                                <span class="btn-text">
+                                    <i class="bi bi-box-arrow-in-right me-2"></i>
+                                    Sign In
+                                </span>
+                                <span class="btn-spinner d-none">
+                                    <span class="spinner-border spinner-border-sm me-2"></span>
+                                    Signing In...
+                                </span>
                             </button>
                         </div>
 
@@ -113,13 +150,25 @@
                             <h6 class="text-center mb-3">Demo Credentials</h6>
                             <div class="demo-accounts">
                                 <div class="demo-account" data-email="admin@app.com" data-password="admin123" data-role="Admin">
-                                    <strong>Admin:</strong> admin@app.com / admin123
+                                    <div class="demo-info">
+                                        <strong>Admin:</strong> admin@("@")app.com / admin123
+                                        <span class="demo-access">Full system access</span>
+                                    </div>
+                                    <i class="bi bi-arrow-right-circle demo-icon"></i>
                                 </div>
                                 <div class="demo-account" data-email="manager@app.com" data-password="manager123" data-role="Manager">
-                                    <strong>Manager:</strong> manager@app.com / manager123
+                                    <div class="demo-info">
+                                        <strong>Manager:</strong> manager@("@")app.com / manager123
+                                        <span class="demo-access">Team management</span>
+                                    </div>
+                                    <i class="bi bi-arrow-right-circle demo-icon"></i>
                                 </div>
                                 <div class="demo-account" data-email="user@app.com" data-password="user123" data-role="User">
-                                    <strong>User:</strong> user@app.com / user123
+                                    <div class="demo-info">
+                                        <strong>User:</strong> user@("@")app.com / user123
+                                        <span class="demo-access">Personal workspace</span>
+                                    </div>
+                                    <i class="bi bi-arrow-right-circle demo-icon"></i>
                                 </div>
                             </div>
                         </div>
@@ -138,317 +187,579 @@
 </div>
 
 <style>
-    .login-page {
-        background: linear-gradient(135deg, #4a6cf7 0%, #5d87ff 100%);
-        min-height: 100vh;
-        padding: 2rem 0;
-    }
+/* App Promo Styles */
+:root {
+    --primary-color: #4a6cf7;
+    --secondary-color: #5d87ff;
+    --accent-color: #ff6b6b;
+    --light-gray: #f8f9fa;
+    --dark-text: #343a40;
+    --light-text: #6c757d;
+}
 
+.login-page {
+    background: linear-gradient(135deg, #4a6cf7 0%, #5d87ff 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.login-card {
+    background: white;
+    border-radius: 20px;
+    padding: 3rem;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.login-logo {
+    font-size: 3rem;
+    color: var(--primary-color);
+}
+
+.login-logo i {
+    background: linear-gradient(135deg, #4a6cf7 0%, #5d87ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.role-selection {
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1rem;
+    background: #f8f9fa;
+}
+
+.role-option {
+    margin-bottom: 1rem;
+}
+
+.role-option:last-child {
+    margin-bottom: 0;
+}
+
+.role-radio {
+    display: none;
+}
+
+.role-label {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.role-label:hover {
+    border-color: var(--primary-color);
+    background: rgba(74, 108, 247, 0.05);
+}
+
+.role-radio:checked + .role-label {
+    border-color: var(--primary-color);
+    background: rgba(74, 108, 247, 0.1);
+    box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.1);
+}
+
+.role-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4a6cf7 0%, #5d87ff 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    color: white;
+    font-size: 1.25rem;
+}
+
+.role-info h6 {
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.role-info small {
+    color: #6c757d;
+}
+
+.input-group {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.input-group-text {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    color: #6c757d;
+}
+
+.form-control {
+    border: 1px solid #e9ecef;
+    padding: 0.75rem 1rem;
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(74, 108, 247, 0.25);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #4a6cf7 0%, #5d87ff 100%);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(74, 108, 247, 0.3);
+}
+
+.toggle-password {
+    border-left: none;
+}
+
+.demo-credentials {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+}
+
+.demo-credentials h6 {
+    color: #495057;
+    font-weight: 600;
+}
+
+.demo-account {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    margin: 0.5rem 0;
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.demo-account::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(74, 108, 247, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.demo-account:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(74, 108, 247, 0.2);
+}
+
+.demo-account:hover::before {
+    left: 100%;
+}
+
+.demo-account:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(74, 108, 247, 0.3);
+}
+
+.demo-info {
+    flex-grow: 1;
+}
+
+.demo-access {
+    display: block;
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+.demo-icon {
+    color: var(--primary-color);
+    font-size: 1.2rem;
+    opacity: 0.7;
+    transition: all 0.3s ease;
+}
+
+.demo-account:hover .demo-icon {
+    opacity: 1;
+    transform: translateX(5px);
+}
+
+.demo-account.selected {
+    background: linear-gradient(135deg, rgba(74, 108, 247, 0.1) 0%, rgba(93, 135, 255, 0.1) 100%);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.1);
+}
+
+.demo-account strong {
+    color: var(--primary-color);
+}
+
+.btn-spinner {
+    display: none;
+}
+
+.btn.loading .btn-text {
+    display: none;
+}
+
+.btn.loading .btn-spinner {
+    display: inline-block;
+}
+
+.login-footer .btn-link {
+    color: #6c757d;
+    text-decoration: none;
+}
+
+.login-footer .btn-link:hover {
+    color: var(--primary-color);
+}
+
+.alert {
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+@@media (max-width: 768px) {
     .login-card {
-        background: white;
-        border-radius: 20px;
-        padding: 3rem;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .login-logo {
-        font-size: 3rem;
-        color: var(--primary-color);
-    }
-
-        .login-logo i {
-            background: linear-gradient(135deg, #4a6cf7 0%, #5d87ff 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-    .role-selection {
-        border: 2px solid #e9ecef;
-        border-radius: 12px;
-        padding: 1rem;
-        background: #f8f9fa;
-    }
-
-    .role-option {
-        margin-bottom: 1rem;
-    }
-
-        .role-option:last-child {
-            margin-bottom: 0;
-        }
-
-    .role-radio {
-        display: none;
-    }
-
-    .role-label {
-        display: flex;
-        align-items: center;
-        padding: 1rem;
-        border: 2px solid #e9ecef;
-        border-radius: 8px;
-        background: white;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-        .role-label:hover {
-            border-color: var(--primary-color);
-            background: rgba(74, 108, 247, 0.05);
-        }
-
-    .role-radio:checked + .role-label {
-        border-color: var(--primary-color);
-        background: rgba(74, 108, 247, 0.1);
-        box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.1);
-    }
-
-    .role-icon {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #4a6cf7 0%, #5d87ff 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-right: 1rem;
-        color: white;
-        font-size: 1.25rem;
-    }
-
-    .role-info h6 {
-        margin-bottom: 0.25rem;
-        font-weight: 600;
-        color: #333;
-    }
-
-    .role-info small {
-        color: #6c757d;
-    }
-
-    .input-group {
-        border-radius: 8px;
-        overflow: hidden;
-    }
-
-    .input-group-text {
-        background: #f8f9fa;
-        border: 1px solid #e9ecef;
-        color: #6c757d;
-    }
-
-    .form-control {
-        border: 1px solid #e9ecef;
-        padding: 0.75rem 1rem;
-    }
-
-        .form-control:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(74, 108, 247, 0.25);
-        }
-
-    .btn-primary {
-        background: linear-gradient(135deg, #4a6cf7 0%, #5d87ff 100%);
-        border: none;
-        padding: 0.75rem 1.5rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        transition: all 0.3s ease;
-    }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(74, 108, 247, 0.3);
-        }
-
-    .toggle-password {
-        border-left: none;
-    }
-
-    .demo-credentials {
-        background: #f8f9fa;
-        border-radius: 8px;
-        padding: 1.5rem;
-        margin-top: 2rem;
-    }
-
-        .demo-credentials h6 {
-            color: #495057;
-            font-weight: 600;
-        }
-
-    .demo-account {
-        padding: 0.5rem;
-        margin: 0.5rem 0;
-        background: white;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        font-size: 0.9rem;
-    }
-
-        .demo-account:hover {
-            background: #e9ecef;
-            transform: translateX(5px);
-        }
-
-        .demo-account strong {
-            color: var(--primary-color);
-        }
-
-    .login-footer .btn-link {
-        color: #6c757d;
-        text-decoration: none;
-    }
-
-        .login-footer .btn-link:hover {
-            color: var(--primary-color);
-        }
-
-    @@media (max-width: 768px) {
-        .login-card
-
-    {
         padding: 2rem 1.5rem;
         margin: 1rem;
     }
-
+    
     .role-label {
         padding: 0.75rem;
     }
-
+    
     .role-icon {
         width: 40px;
         height: 40px;
         font-size: 1rem;
     }
+}
 
-    }
+/* Validation error styles */
+.field-validation-error {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
 
-    /* Validation error styles */
-    .field-validation-error {
-        color: #dc3545;
-        font-size: 0.875rem;
-        margin-top: 0.25rem;
-    }
+.validation-summary-errors {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
 
-    .validation-summary-errors {
-        background: #f8d7da;
-        border: 1px solid #f5c6cb;
-        color: #721c24;
-        padding: 1rem;
-        border-radius: 8px;
-        margin-bottom: 1rem;
-    }
+.validation-summary-errors ul {
+    margin-bottom: 0;
+    padding-left: 1.5rem;
+}
 
-        .validation-summary-errors ul {
-            margin-bottom: 0;
-            padding-left: 1.5rem;
-        }
+/* Animation for form submission */
+.login-form.submitting .btn-primary {
+    pointer-events: none;
+    opacity: 0.6;
+}
 
-    /* Animation for form submission */
-    .login-form.submitting .btn-primary {
-        pointer-events: none;
-        opacity: 0.6;
-    }
+.login-form.submitting .btn-primary::after {
+    content: '';
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ffffff;
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    margin-left: 10px;
+}
 
-        .login-form.submitting .btn-primary::after {
-            content: '';
-            width: 20px;
-            height: 20px;
-            border: 2px solid #ffffff;
-            border-top: 2px solid transparent;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            margin-left: 10px;
-        }
-
-    @@keyframes spin {
-        0%
-
-    {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
-    }
-
-    }
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
 </style>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Password toggle functionality
-        const togglePassword = document.querySelector('.toggle-password');
-        const passwordInput = document.querySelector('input[type="password"]');
-
-        if (togglePassword && passwordInput) {
-            togglePassword.addEventListener('click', function() {
-                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-                passwordInput.setAttribute('type', type);
-
-                const icon = this.querySelector('i');
-                if (type === 'password') {
-                    icon.classList.remove('bi-eye-slash');
-                    icon.classList.add('bi-eye');
-                } else {
-                    icon.classList.remove('bi-eye');
-                    icon.classList.add('bi-eye-slash');
-                }
-            });
-        }
-
-        // Demo credentials click functionality
-        const demoAccounts = document.querySelectorAll('.demo-account');
-        const emailInput = document.querySelector('input[name="Email"]');
-        const passwordInput = document.querySelector('input[name="Password"]');
-
-        demoAccounts.forEach(account => {
-            account.addEventListener('click', function() {
-                const email = this.dataset.email;
-                const password = this.dataset.password;
-                const role = this.dataset.role;
-
-                emailInput.value = email;
-                passwordInput.value = password;
-
-                // Select the correct role
-                const roleRadio = document.querySelector(`input[value="${role}"]`);
-                if (roleRadio) {
-                    roleRadio.checked = true;
-                }
-
-                // Add visual feedback
-                this.style.background = '#d4edda';
-                setTimeout(() => {
-                    this.style.background = '';
-                }, 1000);
-            });
+document.addEventListener('DOMContentLoaded', function() {
+    // Password toggle functionality
+    const togglePassword = document.querySelector('.toggle-password');
+    const passwordInput = document.querySelector('input[type="password"]');
+    
+    if (togglePassword && passwordInput) {
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            const icon = this.querySelector('i');
+            if (type === 'password') {
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            } else {
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            }
         });
-
-        // Form submission animation
-        const loginForm = document.querySelector('.login-form');
-        if (loginForm) {
-            loginForm.addEventListener('submit', function() {
-                this.classList.add('submitting');
-            });
+    }
+    
+    // Demo credentials click functionality
+    const demoAccounts = document.querySelectorAll('.demo-account');
+    const emailInput = document.querySelector('input[name="Email"]');
+    const passwordInput = document.querySelector('input[name="Password"]');
+    
+    demoAccounts.forEach(account => {
+        account.addEventListener('click', function() {
+            // Remove selected class from all accounts
+            demoAccounts.forEach(acc => acc.classList.remove('selected'));
+            
+            // Add selected class to clicked account
+            this.classList.add('selected');
+            
+            const email = this.dataset.email;
+            const password = this.dataset.password;
+            const role = this.dataset.role;
+            
+            // Fill form fields
+            emailInput.value = email;
+            passwordInput.value = password;
+            
+            // Select the correct role
+            const roleRadio = document.querySelector('input[value="' + role + '"]');
+            if (roleRadio) {
+                roleRadio.checked = true;
+                
+                // Trigger visual update for role selection
+                const roleLabels = document.querySelectorAll('.role-label');
+                roleLabels.forEach(label => label.classList.remove('selected'));
+                roleRadio.closest('.role-option').querySelector('.role-label').classList.add('selected');
+            }
+            
+            // Clear any existing validation errors
+            clearValidationErrors();
+            
+            // Show success feedback
+            showNotification('Credentials filled for ' + role, 'success');
+        });
+    });
+    
+    // Form submission with loading state
+    const loginForm = document.getElementById('loginForm');
+    const loginBtn = document.getElementById('loginBtn');
+    
+    if (loginForm) {
+        loginForm.addEventListener('submit', function(e) {
+            // Validate form before submission
+            if (!validateForm()) {
+                e.preventDefault();
+                return false;
+            }
+            
+            // Add loading state
+            loginBtn.classList.add('loading');
+            loginBtn.disabled = true;
+            
+            // Show progress notification
+            showNotification('Signing you in...', 'info');
+        });
+    }
+    
+    // Role selection visual feedback
+    const roleRadios = document.querySelectorAll('.role-radio');
+    roleRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            const roleLabels = document.querySelectorAll('.role-label');
+            roleLabels.forEach(label => label.classList.remove('selected'));
+            
+            if (this.checked) {
+                this.closest('.role-option').querySelector('.role-label').classList.add('selected');
+            }
+        });
+    });
+    
+    // Auto-dismiss alerts after 5 seconds
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+        setTimeout(() => {
+            if (alert && alert.parentNode) {
+                alert.classList.add('fade');
+                setTimeout(() => {
+                    if (alert.parentNode) {
+                        alert.remove();
+                    }
+                }, 150);
+            }
+        }, 5000);
+    });
+    
+    // Show validation errors if any
+    const validationSummary = document.querySelector('.validation-summary-errors');
+    if (validationSummary && validationSummary.querySelector('ul li')) {
+        validationSummary.classList.remove('d-none');
+        loginBtn.classList.remove('loading');
+        loginBtn.disabled = false;
+    }
+    
+    // Form validation function
+    function validateForm() {
+        let isValid = true;
+        clearValidationErrors();
+        
+        // Validate role selection
+        const roleSelected = document.querySelector('input[name="Role"]:checked');
+        if (!roleSelected) {
+            showFieldError('Role', 'Please select a role');
+            isValid = false;
         }
-
-        // Show validation errors if any
-        const validationSummary = document.querySelector('.validation-summary-errors');
-        if (validationSummary && validationSummary.querySelector('ul li')) {
-            validationSummary.classList.remove('d-none');
+        
+        // Validate email
+        const email = emailInput.value.trim();
+        if (!email) {
+            showFieldError('Email', 'Email is required');
+            isValid = false;
+        } else if (!isValidEmail(email)) {
+            showFieldError('Email', 'Please enter a valid email address');
+            isValid = false;
+        }
+        
+        // Validate password
+        const password = passwordInput.value;
+        if (!password) {
+            showFieldError('Password', 'Password is required');
+            isValid = false;
+        } else if (password.length < 6) {
+            showFieldError('Password', 'Password must be at least 6 characters');
+            isValid = false;
+        }
+        
+        return isValid;
+    }
+    
+    // Helper functions
+    function isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+    
+    function showFieldError(fieldName, message) {
+        const field = document.querySelector('input[name="' + fieldName + '"], input[name="' + fieldName + '"]:checked');
+        if (field) {
+            const errorSpan = field.closest('.form-group').querySelector('.text-danger') ||
+                           field.closest('.role-selection').parentNode.querySelector('.text-danger');
+            if (errorSpan) {
+                errorSpan.textContent = message;
+                errorSpan.style.display = 'block';
+            }
+        }
+    }
+    
+    function clearValidationErrors() {
+        const errorSpans = document.querySelectorAll('.text-danger');
+        errorSpans.forEach(span => {
+            span.textContent = '';
+            span.style.display = 'none';
+        });
+    }
+    
+    function showNotification(message, type) {
+        type = type || 'info';
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = 'alert alert-' + type + ' notification-toast position-fixed';
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        notification.innerHTML = 
+            '<div class="d-flex align-items-center">' +
+                '<i class="bi bi-' + getNotificationIcon(type) + ' me-2"></i>' +
+                '<span>' + message + '</span>' +
+                '<button type="button" class="btn-close ms-auto" onclick="this.parentElement.parentElement.remove()"></button>' +
+            '</div>';
+        
+        document.body.appendChild(notification);
+        
+        // Auto-remove after 3 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 3000);
+    }
+    
+    function getNotificationIcon(type) {
+        const icons = {
+            'success': 'check-circle',
+            'danger': 'exclamation-triangle',
+            'warning': 'exclamation-circle',
+            'info': 'info-circle'
+        };
+        return icons[type] || 'info-circle';
+    }
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Alt + 1, 2, 3 for quick role selection
+        if (e.altKey && !e.ctrlKey && !e.shiftKey) {
+            switch(e.key) {
+                case '1':
+                    e.preventDefault();
+                    demoAccounts[0].click();
+                    break;
+                case '2':
+                    e.preventDefault();
+                    demoAccounts[1].click();
+                    break;
+                case '3':
+                    e.preventDefault();
+                    demoAccounts[2].click();
+                    break;
+            }
+        }
+        
+        // Enter to submit form when focused on demo account
+        if (e.key === 'Enter' && e.target.classList.contains('demo-account')) {
+            e.preventDefault();
+            e.target.click();
+            setTimeout(() => {
+                loginForm.submit();
+            }, 500);
         }
     });
+    
+    // Add keyboard focus support for demo accounts
+    demoAccounts.forEach((account, index) => {
+        account.setAttribute('tabindex', '0');
+        account.setAttribute('role', 'button');
+        account.setAttribute('aria-label', 'Use demo credentials for ' + account.dataset.role);
+        
+        account.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.click();
+            }
+        });
+    });
+});
 </script>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }
