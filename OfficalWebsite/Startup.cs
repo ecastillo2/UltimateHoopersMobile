@@ -72,9 +72,10 @@ namespace OfficalWebsite
 
             services.Configure<FormOptions>(options =>
             {
-                options.MultipartBodyLengthLimit = 524288000; // 100 MB
+                options.MultipartBodyLengthLimit = 524288000; // 500 MB
             });
 
+            // Session configuration - Important for dashboard access
             services.AddDistributedMemoryCache();
             services.AddSession(options =>
             {
@@ -102,24 +103,19 @@ namespace OfficalWebsite
 
             services.Configure<KestrelServerOptions>(options =>
             {
-                options.Limits.MaxRequestBodySize = 524288000; // 100 MB (adjust as needed)
+                options.Limits.MaxRequestBodySize = 524288000; // 500 MB (adjust as needed)
             });
 
             services.Configure<FormOptions>(options =>
             {
-                options.MultipartBodyLengthLimit = 524288000; // 100 MB in bytes
+                options.MultipartBodyLengthLimit = 524288000; // 500 MB in bytes
             });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            app.Use(async (context, next) =>
-            {
-                context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
-                await next();
-            });
-
+            // Enable detailed error pages in development
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -131,6 +127,12 @@ namespace OfficalWebsite
                 app.UseHsts();
             }
 
+            app.Use(async (context, next) =>
+            {
+                context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
+                await next();
+            });
+
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
@@ -141,6 +143,8 @@ namespace OfficalWebsite
                       .AllowAnyHeader());
 
             app.UseRouting();
+
+            // Important: Session middleware must be before authentication middleware
             app.UseSession();
 
             app.UseAuthentication();
