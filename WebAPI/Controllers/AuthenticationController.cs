@@ -90,8 +90,25 @@ namespace WebAPI.Controllers
                             if (client != null)
                             {
                                 userResult.Client = client;
+
+
+                                //Get Client info if part of a client
+                                var courts = await repository.GetCourtsByClientIdAsync(userResult.ClientId);
+
+                                if (courts != null)
+                                {
+                                    userResult.Client.CourtList = courts;
+                                }
+
+                                //Get Client info if part of a client
+                                var clientUsers = await repository.GetUsersByClientIdAsync(userResult.ClientId);
+
+                                if (courts != null)
+                                {
+                                    userResult.Client.UserList = clientUsers;
+                                }
+
                             }
-                            
 
                             // You may want to log successful profile retrieval
                             //_logger.LogInformation($"Retrieved profile for user {userResult.UserId}, ProfileId: {userResult.ProfileId}");

@@ -76,6 +76,20 @@ namespace DataLayer.DAL.Interface
             CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Get profile by ID
+        /// </summary>
+        Task<List<Court>> GetCourtsByClientIdAsync(
+            string clientId,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Get profile by ID
+        /// </summary>
+        Task<List<User>> GetUsersByClientIdAsync(
+            string clientId,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Get profile by user ID
         /// </summary>
         Task<Profile> GetProfileByUserIdAsync(

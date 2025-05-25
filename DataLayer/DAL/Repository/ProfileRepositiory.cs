@@ -386,6 +386,60 @@ namespace DataLayer.DAL.Repository
             }
         }
 
+
+        public async Task<List<Court>> GetCourtsByClientIdAsync(
+    string clientId,
+    CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                // Using join to verify the client exists before returning courts
+                // This will only return courts if the client exists
+                return await _context.Client
+                    .AsNoTracking()
+                    .Where(c => c.ClientId == clientId)
+                    .Join(
+                        _context.Court,
+                        client => client.ClientId,
+                        court => court.ClientId,
+                        (client, court) => court
+                    )
+                    .ToListAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting courts for client {ClientId}", clientId);
+                throw;
+            }
+        }
+
+
+        public async Task<List<User>> GetUsersByClientIdAsync(
+  string clientId,
+  CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                // Using join to verify the client exists before returning courts
+                // This will only return courts if the client exists
+                return await _context.Client
+                    .AsNoTracking()
+                    .Where(c => c.ClientId == clientId)
+                    .Join(
+                        _context.User,
+                        client => client.ClientId,
+                        court => court.ClientId,
+                        (client, court) => court
+                    )
+                    .ToListAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting courts for client {ClientId}", clientId);
+                throw;
+            }
+        }
+
         public async Task<Profile> GetProfileByUserIdAsync(
             string userId,
             CancellationToken cancellationToken = default)

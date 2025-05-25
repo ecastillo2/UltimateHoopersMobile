@@ -14,6 +14,7 @@ namespace Domain
         public Court(Court court)
         {
             CourtId = court.CourtId;
+            ClientId = court.ClientId;
             ProfileId = court.ProfileId;
             ImageURL = court.ImageURL;
             Name = court.Name;
@@ -33,6 +34,7 @@ namespace Domain
 
         [Key]
         public string? CourtId { get; set; }
+        public string? ClientId { get; set; }
         public string? ProfileId { get; set; }
         public string? ImageURL { get; set; }
         public string? Name { get; set; }
