@@ -1,0 +1,994 @@
+﻿@{
+    ViewData["Title"] = "Ultimate Hoopers";
+}
+
+@section Styles {
+    <style>
+        :root {
+            --primary-color: #FF6B00;
+            --secondary-color: #1C2C5B;
+            --accent-color: #3BACB6;
+            --light-color: #F8F9FA;
+            --dark-color: #212529;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            color: var(--dark-color);
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #0b1733 100%);
+            color: white;
+            padding: 6rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-image {
+            position: relative;
+            z-index: 1;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+            .hero-image:hover {
+                transform: translateY(-10px);
+            }
+
+        .bg-orange {
+            background-color: var(--primary-color) !important;
+        }
+
+        .text-orange {
+            color: var(--primary-color) !important;
+        }
+
+        .bg-navy {
+            background-color: var(--secondary-color) !important;
+        }
+
+        .text-navy {
+            color: var(--secondary-color) !important;
+        }
+
+        .btn-orange {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+            .btn-orange:hover {
+                background-color: #e25c00;
+                border-color: #e25c00;
+                color: white;
+            }
+
+        .btn-navy {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            color: white;
+        }
+
+            .btn-navy:hover {
+                background-color: #151f3e;
+                border-color: #151f3e;
+                color: white;
+            }
+
+        .feature-card {
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            border: none;
+            height: 100%;
+        }
+
+            .feature-card:hover {
+                transform: translateY(-10px);
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            }
+
+        .feature-icon {
+            width: 70px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 20px;
+            margin-bottom: 1.5rem;
+            background-color: rgba(255, 107, 0, 0.1);
+            color: var(--primary-color);
+            font-size: 2rem;
+        }
+
+        .testimonial-card {
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+            .testimonial-card:hover {
+                transform: translateY(-10px);
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            }
+
+        .coach-card {
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+            .coach-card:hover {
+                transform: translateY(-10px);
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            }
+
+        .coach-img {
+            height: 250px;
+            object-fit: cover;
+        }
+
+        .coach-social a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: var(--light-color);
+            color: var(--primary-color);
+            margin: 0 5px;
+            transition: all 0.3s ease;
+        }
+
+            .coach-social a:hover {
+                background-color: var(--primary-color);
+                color: white;
+            }
+
+        .app-badge {
+            transition: all 0.3s ease;
+        }
+
+            .app-badge:hover {
+                transform: translateY(-5px);
+            }
+
+        .footer-link {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+            .footer-link:hover {
+                color: white;
+                text-decoration: none;
+            }
+
+        .login-btn {
+            background-color: transparent;
+            border: 2px solid white;
+            color: white;
+            border-radius: 50px;
+            padding: 0.5rem 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+            .login-btn:hover {
+                background-color: white;
+                color: var(--secondary-color);
+            }
+
+        .circle-decoration {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 107, 0, 0.1);
+            z-index: 0;
+        }
+
+        .basketball-icon {
+            animation: bounce 2s infinite alternate;
+            display: inline-block;
+        }
+
+        @@keyframes bounce {
+            from
+
+        {
+            transform: translateY(0px);
+        }
+
+        to {
+            transform: translateY(-15px);
+        }
+
+        }
+
+        #login-modal .modal-content {
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        #login-modal .modal-header {
+            background-color: var(--secondary-color);
+            color: white;
+            border-bottom: none;
+        }
+
+        #login-modal .modal-footer {
+            border-top: none;
+        }
+
+        .tab-pane {
+            padding: 20px 0;
+        }
+
+        .nav-tabs {
+            border-bottom: none;
+        }
+
+            .nav-tabs .nav-link {
+                border: none;
+                color: var(--dark-color);
+                font-weight: 500;
+                padding: 10px 20px;
+                border-radius: 0;
+                position: relative;
+            }
+
+                .nav-tabs .nav-link.active {
+                    color: var(--primary-color);
+                    background-color: transparent;
+                }
+
+                    .nav-tabs .nav-link.active::after {
+                        content: '';
+                        position: absolute;
+                        bottom: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 3px;
+                        background-color: var(--primary-color);
+                    }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+}
+
+<div class="app-landing-wrapper">
+    <!-- Hero Section -->
+    <section class="hero-section py-8 position-relative">
+        <div class="circle-decoration" style="width: 300px; height: 300px; top: -150px; right: -150px;"></div>
+        <div class="circle-decoration" style="width: 200px; height: 200px; bottom: -100px; left: -100px;"></div>
+
+        <div class="container position-relative">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <div class="d-flex align-items-center mb-4">
+                        <i class="ti ti-ball-basketball fs-1 me-3 text-orange basketball-icon"></i>
+                        <h1 class="display-4 fw-bold mb-0">Ultimate Hoopers</h1>
+                    </div>
+                    <p class="fs-4 mb-5">Elevate your basketball game with personalized training programs, skill tracking, and connect with top coaches - all from your smartphone.</p>
+                    <div class="d-flex flex-wrap gap-3">
+                        <a href="#features" class="btn btn-orange btn-lg px-5 py-3">
+                            <i class="ti ti-info-circle me-2"></i> Learn More
+                        </a>
+                        <a href="#download" class="btn btn-outline-light btn-lg px-5 py-3">
+                            <i class="ti ti-download me-2"></i> Download App
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-6 mt-5 mt-lg-0 text-center">
+                    <div class="position-relative">
+                        <img src="https://placehold.co/600x400/FF6B00/FFFFFF?text=Ultimate+Hoopers+App" alt="Ultimate Hoopers App" class="img-fluid rounded-4 shadow-lg hero-image">
+                        <div class="position-absolute top-0 start-0 translate-middle bg-orange rounded-circle p-4 shadow-lg">
+                            <i class="ti ti-device-mobile text-white fs-1"></i>
+                        </div>
+                        <div class="position-absolute bottom-0 end-0 translate-middle bg-navy rounded-circle p-4 shadow-lg">
+                            <i class="ti ti-ball-basketball text-white fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-8 bg-light">
+        <div class="container">
+            <div class="text-center mb-7">
+                <h2 class="fs-9 fw-bold mb-3 text-navy">Become a Better Player</h2>
+                <p class="fs-4 text-muted mx-auto" style="max-width: 700px;">Our all-in-one basketball training app helps players of all levels improve their skills with personalized programs and expert guidance</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card feature-card shadow-sm h-100">
+                        <div class="card-body p-5">
+                            <div class="feature-icon">
+                                <i class="ti ti-chart-line"></i>
+                            </div>
+                            <h3 class="fs-5 fw-bold mb-3">Skill Tracking</h3>
+                            <p class="text-muted mb-0">Track your progress with detailed statistics and visual charts that help you identify strengths and weaknesses in your game.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card feature-card shadow-sm h-100">
+                        <div class="card-body p-5">
+                            <div class="feature-icon">
+                                <i class="ti ti-users"></i>
+                            </div>
+                            <h3 class="fs-5 fw-bold mb-3">Expert Coaching</h3>
+                            <p class="text-muted mb-0">Connect with professional coaches who can provide personalized feedback on your technique and performance.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card feature-card shadow-sm h-100">
+                        <div class="card-body p-5">
+                            <div class="feature-icon">
+                                <i class="ti ti-video"></i>
+                            </div>
+                            <h3 class="fs-5 fw-bold mb-3">Training Videos</h3>
+                            <p class="text-muted mb-0">Access a library of high-quality training videos with drills and exercises for all skill levels and positions.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mt-3">
+                <div class="col-md-4">
+                    <div class="card feature-card shadow-sm h-100">
+                        <div class="card-body p-5">
+                            <div class="feature-icon">
+                                <i class="ti ti-calendar"></i>
+                            </div>
+                            <h3 class="fs-5 fw-bold mb-3">Workout Scheduler</h3>
+                            <p class="text-muted mb-0">Plan your training sessions with our easy-to-use calendar that syncs with your device's calendar app.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card feature-card shadow-sm h-100">
+                        <div class="card-body p-5">
+                            <div class="feature-icon">
+                                <i class="ti ti-target"></i>
+                            </div>
+                            <h3 class="fs-5 fw-bold mb-3">Goal Setting</h3>
+                            <p class="text-muted mb-0">Set achievable short and long-term goals, and track your progress toward reaching them.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card feature-card shadow-sm h-100">
+                        <div class="card-body p-5">
+                            <div class="feature-icon">
+                                <i class="ti ti-medal"></i>
+                            </div>
+                            <h3 class="fs-5 fw-bold mb-3">Achievements</h3>
+                            <p class="text-muted mb-0">Earn badges and rewards as you complete challenges and improve your skills on the court.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- App Screenshots Section -->
+    <section class="py-8">
+        <div class="container">
+            <div class="text-center mb-7">
+                <h2 class="fs-9 fw-bold mb-3 text-navy">App Screenshots</h2>
+                <p class="fs-4 text-muted mx-auto" style="max-width: 700px;">Take a look at our intuitive and user-friendly interface designed to enhance your basketball training experience</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-3">
+                    <img src="https://placehold.co/300x600/1C2C5B/FFFFFF?text=Dashboard" alt="App Screenshot" class="img-fluid rounded-4 shadow-sm">
+                </div>
+                <div class="col-md-3">
+                    <img src="https://placehold.co/300x600/FF6B00/FFFFFF?text=Training" alt="App Screenshot" class="img-fluid rounded-4 shadow-sm">
+                </div>
+                <div class="col-md-3">
+                    <img src="https://placehold.co/300x600/1C2C5B/FFFFFF?text=Stats" alt="App Screenshot" class="img-fluid rounded-4 shadow-sm">
+                </div>
+                <div class="col-md-3">
+                    <img src="https://placehold.co/300x600/FF6B00/FFFFFF?text=Profile" alt="App Screenshot" class="img-fluid rounded-4 shadow-sm">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Meet Our Coaches Section -->
+    <section class="py-8 bg-light">
+        <div class="container">
+            <div class="text-center mb-7">
+                <h2 class="fs-9 fw-bold mb-3 text-navy">Meet Our Coaches</h2>
+                <p class="fs-4 text-muted mx-auto" style="max-width: 700px;">Learn from experienced basketball coaches who are dedicated to helping you improve your game</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-lg-3 col-md-6">
+                    <div class="card coach-card shadow-sm">
+                        <img src="https://placehold.co/400x400/1C2C5B/FFFFFF?text=Coach+Mike" class="coach-img" alt="Coach">
+                        <div class="card-body text-center p-4">
+                            <h4 class="mb-1">Mike Johnson</h4>
+                            <p class="text-orange mb-3">Former NBA Player</p>
+                            <p class="text-muted mb-3">Specializes in shooting technique and offensive strategies.</p>
+                            <div class="coach-social">
+                                <a href="#"><i class="ti ti-brand-instagram"></i></a>
+                                <a href="#"><i class="ti ti-brand-twitter"></i></a>
+                                <a href="#"><i class="ti ti-brand-youtube"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="card coach-card shadow-sm">
+                        <img src="https://placehold.co/400x400/FF6B00/FFFFFF?text=Coach+Sarah" class="coach-img" alt="Coach">
+                        <div class="card-body text-center p-4">
+                            <h4 class="mb-1">Sarah Williams</h4>
+                            <p class="text-orange mb-3">WNBA Champion</p>
+                            <p class="text-muted mb-3">Expert in defensive techniques and team coordination.</p>
+                            <div class="coach-social">
+                                <a href="#"><i class="ti ti-brand-instagram"></i></a>
+                                <a href="#"><i class="ti ti-brand-twitter"></i></a>
+                                <a href="#"><i class="ti ti-brand-youtube"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="card coach-card shadow-sm">
+                        <img src="https://placehold.co/400x400/1C2C5B/FFFFFF?text=Coach+David" class="coach-img" alt="Coach">
+                        <div class="card-body text-center p-4">
+                            <h4 class="mb-1">David Chen</h4>
+                            <p class="text-orange mb-3">College Coach</p>
+                            <p class="text-muted mb-3">Focuses on athletic development and conditioning.</p>
+                            <div class="coach-social">
+                                <a href="#"><i class="ti ti-brand-instagram"></i></a>
+                                <a href="#"><i class="ti ti-brand-twitter"></i></a>
+                                <a href="#"><i class="ti ti-brand-youtube"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="card coach-card shadow-sm">
+                        <img src="https://placehold.co/400x400/FF6B00/FFFFFF?text=Coach+Lisa" class="coach-img" alt="Coach">
+                        <div class="card-body text-center p-4">
+                            <h4 class="mb-1">Lisa Rodriguez</h4>
+                            <p class="text-orange mb-3">Youth Development</p>
+                            <p class="text-muted mb-3">Specializes in fundamentals and youth player development.</p>
+                            <div class="coach-social">
+                                <a href="#"><i class="ti ti-brand-instagram"></i></a>
+                                <a href="#"><i class="ti ti-brand-twitter"></i></a>
+                                <a href="#"><i class="ti ti-brand-youtube"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="py-8">
+        <div class="container">
+            <div class="text-center mb-7">
+                <h2 class="fs-9 fw-bold mb-3 text-navy">What Our Users Say</h2>
+                <p class="fs-4 text-muted mx-auto" style="max-width: 700px;">Hear from players who have improved their game with Ultimate Hoopers</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card testimonial-card shadow-sm h-100">
+                        <div class="card-body p-5">
+                            <div class="d-flex align-items-center mb-4">
+                                <i class="ti ti-quote fs-1 text-orange me-3"></i>
+                                <div class="text-warning">
+                                    <i class="ti ti-star-filled"></i>
+                                    <i class="ti ti-star-filled"></i>
+                                    <i class="ti ti-star-filled"></i>
+                                    <i class="ti ti-star-filled"></i>
+                                    <i class="ti ti-star-filled"></i>
+                                </div>
+                            </div>
+                            <p class="mb-4">"Ultimate Hoopers helped me improve my shooting percentage by 15% in just two months. The personalized training programs and coach feedback made all the difference."</p>
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-orange text-white d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                                    <span class="fw-bold">JT</span>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1 fs-4">Jason Thompson</h5>
+                                    <p class="mb-0 text-muted small">High School Player</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card testimonial-card shadow-sm h-100">
+                        <div class="card-body p-5">
+                            <div class="d-flex align-items-center mb-4">
+                                <i class="ti ti-quote fs-1 text-orange me-3"></i>
+                                <div class="text-warning">
+                                    <i class="ti ti-star-filled"></i>
+                                    <i class="ti ti-star-filled"></i>
+                                    <i class="ti ti-star-filled"></i>
+                                    <i class="ti ti-star-filled"></i>
+                                    <i class="ti ti-star-filled"></i>
+                                </div>
+                            </div>
+                            <p class="mb-4">"As a coach, I recommend Ultimate Hoopers to all my players. The detailed statistics and progress tracking allow me to provide more targeted advice during practice sessions."</p>
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-navy text-white d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                                    <span class="fw-bold">KW</span>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1 fs-4">Karen Wilson</h5>
+                                    <p class="mb-0 text-muted small">AAU Coach</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card testimonial-card shadow-sm h-100">
+                        <div class="card-body p-5">
+                            <div class="d-flex align-items-center mb-4">
+                                <i class="ti ti-quote fs-1 text-orange me-3"></i>
+                                <div class="text-warning">
+                                    <i class="ti ti-star-filled"></i>
+                                    <i class="ti ti-star-filled"></i>
+                                    <i class="ti ti-star-filled"></i>
+                                    <i class="ti ti-star-filled"></i>
+                                    <i class="ti ti-star-half-filled"></i>
+                                </div>
+                            </div>
+                            <p class="mb-4">"The video analysis feature has been a game-changer for me. Being able to record my shooting form and get immediate feedback from professional coaches has improved my technique significantly."</p>
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-orange text-white d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                                    <span class="fw-bold">MJ</span>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1 fs-4">Marcus Johnson</h5>
+                                    <p class="mb-0 text-muted small">College Player</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Download Section -->
+    <section id="download" class="py-8 bg-navy position-relative overflow-hidden">
+        <div class="container position-relative">
+            <div class="row align-items-center">
+                <div class="col-lg-6 text-white">
+                    <h2 class="fs-9 fw-bold mb-4">Download Ultimate Hoopers Today</h2>
+                    <p class="fs-4 mb-5 opacity-75">Available on iOS and Android platforms. Start your 14-day free trial now!</p>
+                    <div class="d-flex flex-wrap gap-3">
+                        <a href="#" class="btn btn-light btn-lg px-4 py-3 d-flex align-items-center app-badge">
+                            <i class="ti ti-brand-apple fs-1 me-3"></i>
+                            <div class="text-start">
+                                <div class="small">Download on the</div>
+                                <div class="fw-bold">App Store</div>
+                            </div>
+                        </a>
+                        <a href="#" class="btn btn-light btn-lg px-4 py-3 d-flex align-items-center app-badge">
+                            <i class="ti ti-brand-google-play fs-1 me-3"></i>
+                            <div class="text-start">
+                                <div class="small">Get it on</div>
+                                <div class="fw-bold">Google Play</div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-6 mt-5 mt-lg-0 d-flex justify-content-center">
+                    <img src="https://placehold.co/400x600/FFFFFF/FF6B00?text=Ultimate+Hoopers" alt="App Screenshots" class="img-fluid hero-image" style="max-height: 500px;">
+                </div>
+            </div>
+        </div>
+        <div class="position-absolute top-0 end-0">
+            <svg width="400" height="400" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="text-white opacity-10">
+                <path fill="currentColor" d="M41.3,-49.1C54.4,-36.2,66.6,-24.7,72.4,-9.8C78.2,5.1,77.8,23.4,69.8,38.8C61.9,54.2,46.4,66.6,28.3,73.2C10.2,79.9,-10.5,80.8,-28.2,74.2C-45.9,67.6,-60.6,53.5,-70.4,36.5C-80.3,19.5,-85.3,-0.3,-79.9,-16.5C-74.4,-32.7,-58.4,-45.2,-42.6,-57.4C-26.9,-69.6,-11.2,-81.4,1.8,-83.4C14.7,-85.5,28.3,-77.9,41.3,-68.1Z" transform="translate(100 100)" />
+            </svg>
+        </div>
+    </section>
+
+    <!-- Login Section -->
+    <section id="login" class="py-8">
+        <div class="container">
+            <div class="text-center mb-7">
+                <h2 class="fs-9 fw-bold mb-3 text-navy">Access Your Account</h2>
+                <p class="fs-4 text-muted mx-auto" style="max-width: 700px;">Log in to view your training plans, progress, and connect with coaches</p>
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger mt-4 mx-auto" style="max-width: 600px;" role="alert">
+                        @TempData["Error"]
+                    </div>
+                }
+            </div>
+            <div class="row g-4 justify-content-center">
+                <div class="col-md-5">
+                    <div class="card border-0 shadow-sm hover-shadow-lg transition-all login-card">
+                        <div class="card-body p-5">
+                            <div class="text-center mb-4">
+                                <div class="d-inline-flex align-items-center justify-content-center bg-orange-subtle rounded-circle mb-3 login-icon" style="width: 80px; height: 80px; background-color: rgba(255, 107, 0, 0.1);">
+                                    <i class="ti ti-user fs-1 text-orange"></i>
+                                </div>
+                                <h3 class="fs-5 fw-bold">Player Login</h3>
+                                <p class="text-muted">For basketball players and trainees</p>
+                            </div>
+                            <form asp-controller="Account" asp-action="ClientLogin" method="post">
+                                <div class="mb-3">
+                                    <label for="clientEmail" class="form-label">Email Address</label>
+                                    <input type="email" class="form-control" id="clientEmail" name="email" required placeholder="your@client.com">
+                                    <div class="form-text">Demo: any @@client.com email, password: client123</div>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="clientPassword" class="form-label">Password</label>
+                                    <input type="password" class="form-control" id="clientPassword" name="password" required>
+                                    <div class="mt-2 text-end">
+                                        <a href="#" class="text-orange text-decoration-none small">Forgot password?</a>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-orange w-100 py-2">Login as Player</button>
+                                <div class="text-center mt-3">
+                                    <span class="text-muted small">Don't have an account?</span>
+                                    <a href="#" class="text-orange text-decoration-none small">Sign up</a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <div class="card border-0 shadow-sm hover-shadow-lg transition-all login-card">
+                        <div class="card-body p-5">
+                            <div class="text-center mb-4">
+                                <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3 login-icon" style="width: 80px; height: 80px; background-color: rgba(28, 44, 91, 0.1);">
+                                    <i class="ti ti-users fs-1 text-navy"></i>
+                                </div>
+                                <h3 class="fs-5 fw-bold">Coach Login</h3>
+                                <p class="text-muted">For coaches and trainers</p>
+                            </div>
+                            <form asp-controller="Account" asp-action="StaffLogin" method="post">
+                                <div class="mb-3">
+                                    <label for="staffEmail" class="form-label">Email Address</label>
+                                    <input type="email" class="form-control" id="staffEmail" name="email" required placeholder="your@company.com">
+                                    <div class="form-text">Demo: any @@company.com email, password: staff123</div>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="staffPassword" class="form-label">Password</label>
+                                    <input type="password" class="form-control" id="staffPassword" name="password" required>
+                                    <div class="mt-2 text-end">
+                                        <a href="#" class="text-navy text-decoration-none small">Forgot password?</a>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-navy w-100 py-2">Login as Coach</button>
+                                <div class="text-center mt-3">
+                                    <span class="text-muted small">Need help?</span>
+                                    <a href="#" class="text-navy text-decoration-none small">Contact admin</a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="py-8 bg-light">
+        <div class="container">
+            <div class="text-center mb-7">
+                <h2 class="fs-9 fw-bold mb-3 text-navy">Simple Pricing</h2>
+                <p class="fs-4 text-muted mx-auto" style="max-width: 700px;">Choose the plan that fits your needs</p>
+            </div>
+            <div class="row g-4 justify-content-center">
+                <div class="col-lg-4 col-md-6">
+                    <div class="card border-0 shadow-sm hover-shadow-lg transition-all h-100">
+                        <div class="card-body p-5">
+                            <div class="text-center mb-4">
+                                <div class="d-inline-flex align-items-center justify-content-center bg-light rounded-circle mb-3" style="width: 80px; height: 80px;">
+                                    <i class="ti ti-player-play fs-1 text-orange"></i>
+                                </div>
+                                <h3 class="fs-4 fw-bold">Starter</h3>
+                                <div class="d-flex align-items-center justify-content-center gap-2 my-3">
+                                    <span class="fs-1 fw-bold">$9.99</span>
+                                    <span class="text-muted">/month</span>
+                                </div>
+                                <p class="text-muted">Perfect for beginners who want to improve their skills</p>
+                            </div>
+                            <ul class="list-unstyled mb-4">
+                                <li class="d-flex align-items-center mb-3">
+                                    <i class="ti ti-check text-success me-2"></i>
+                                    <span>Basic skill tracking</span>
+                                </li>
+                                <li class="d-flex align-items-center mb-3">
+                                    <i class="ti ti-check text-success me-2"></i>
+                                    <span>50+ training videos</span>
+                                </li>
+                                <li class="d-flex align-items-center mb-3">
+                                    <i class="ti ti-check text-success me-2"></i>
+                                    <span>Workout scheduler</span>
+                                </li>
+                                <li class="d-flex align-items-center mb-3">
+                                    <i class="ti ti-x text-danger me-2"></i>
+                                    <span class="text-muted">Coach feedback</span>
+                                </li>
+                                <li class="d-flex align-items-center mb-3">
+                                    <i class="ti ti-x text-danger me-2"></i>
+                                    <span class="text-muted">Advanced analytics</span>
+                                </li>
+                            </ul>
+                            <a href="#" class="btn btn-outline-orange w-100 py-2">Start Free Trial</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="card border-0 shadow-lg hover-shadow-lg transition-all h-100" style="transform: translateY(-20px);">
+                        <div class="card-header bg-orange text-white text-center py-3 border-0">
+                            <span class="badge bg-white text-orange">Most Popular</span>
+                        </div>
+                        <div class="card-body p-5">
+                            <div class="text-center mb-4">
+                                <div class="d-inline-flex align-items-center justify-content-center bg-light rounded-circle mb-3" style="width: 80px; height: 80px;">
+                                    <i class="ti ti-trophy fs-1 text-orange"></i>
+                                </div>
+                                <h3 class="fs-4 fw-bold">Pro</h3>
+                                <div class="d-flex align-items-center justify-content-center gap-2 my-3">
+                                    <span class="fs-1 fw-bold">$19.99</span>
+                                    <span class="text-muted">/month</span>
+                                </div>
+                                <p class="text-muted">For serious players looking to take their game to the next level</p>
+                            </div>
+                            <ul class="list-unstyled mb-4">
+                                <li class="d-flex align-items-center mb-3">
+                                    <i class="ti ti-check text-success me-2"></i>
+                                    <span>Advanced skill tracking</span>
+                                </li>
+                                <li class="d-flex align-items-center mb-3">
+                                    <i class="ti ti-check text-success me-2"></i>
+                                    <span>200+ training videos</span>
+                                </li>
+                                <li class="d-flex align-items-center mb-3">
+                                    <i class="ti ti-check text-success me-2"></i>
+                                    <span>Workout scheduler</span>
+                                </li>
+                                <li class="d-flex align-items-center mb-3">
+                                    <i class="ti ti-check text-success me-2"></i>
+                                    <span>Monthly coach feedback</span>
+                                </li>
+                                <li class="d-flex align-items-center mb-3">
+                                    <i class="ti ti-check text-success me-2"></i>
+                                    <span>Basic analytics</span>
+                                </li>
+                            </ul>
+                            <a href="#" class="btn btn-orange w-100 py-2">Start Free Trial</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="card border-0 shadow-sm hover-shadow-lg transition-all h-100">
+                        <div class="card-body p-5">
+                            <div class="text-center mb-4">
+                                <div class="d-inline-flex align-items-center justify-content-center bg-light rounded-circle mb-3" style="width: 80px; height: 80px;">
+                                    <i class="ti ti-crown fs-1 text-navy"></i>
+                                </div>
+                                <h3 class="fs-4 fw-bold">Elite</h3>
+                                <div class="d-flex align-items-center justify-content-center gap-2 my-3">
+                                    <span class="fs-1 fw-bold">$39.99</span>
+                                    <span class="text-muted">/month</span>
+                                </div>
+                                <p class="text-muted">The ultimate package for players aiming for excellence</p>
+                            </div>
+                            <ul class="list-unstyled mb-4">
+                                <li class="d-flex align-items-center mb-3">
+                                    <i class="ti ti-check text-success me-2"></i>
+                                    <span>Comprehensive skill tracking</span>
+                                </li>
+                                <li class="d-flex align-items-center mb-3">
+                                    <i class="ti ti-check text-success me-2"></i>
+                                    <span>Unlimited training videos</span>
+                                </li>
+                                <li class="d-flex align-items-center mb-3">
+                                    <i class="ti ti-check text-success me-2"></i>
+                                    <span>Advanced workout scheduler</span>
+                                </li>
+                                <li class="d-flex align-items-center mb-3">
+                                    <i class="ti ti-check text-success me-2"></i>
+                                    <span>Weekly coach feedback</span>
+                                </li>
+                                <li class="d-flex align-items-center mb-3">
+                                    <i class="ti ti-check text-success me-2"></i>
+                                    <span>Advanced analytics & reports</span>
+                                </li>
+                            </ul>
+                            <a href="#" class="btn btn-outline-navy w-100 py-2">Start Free Trial</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-6 bg-navy text-white">
+        <div class="container">
+            <div class="row g-5">
+                <div class="col-lg-4">
+                    <div class="d-flex align-items-center mb-4">
+                        <i class="ti ti-ball-basketball fs-1 me-3 text-orange"></i>
+                        <h4 class="fs-4 fw-bold mb-0">Ultimate Hoopers</h4>
+                    </div>
+                    <p class="mb-4">The ultimate basketball training app designed to help players of all levels improve their skills, track progress, and connect with professional coaches.</p>
+                    <div class="d-flex gap-3">
+                        <a href="#" class="text-white bg-orange p-2 rounded-circle">
+                            <i class="ti ti-brand-facebook"></i>
+                        </a>
+                        <a href="#" class="text-white bg-orange p-2 rounded-circle">
+                            <i class="ti ti-brand-twitter"></i>
+                        </a>
+                        <a href="#" class="text-white bg-orange p-2 rounded-circle">
+                            <i class="ti ti-brand-instagram"></i>
+                        </a>
+                        <a href="#" class="text-white bg-orange p-2 rounded-circle">
+                            <i class="ti ti-brand-youtube"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4 col-6">
+                    <h4 class="fs-5 fw-bold mb-4">Quick Links</h4>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#" class="footer-link">Home</a></li>
+                        <li class="mb-2"><a href="#features" class="footer-link">Features</a></li>
+                        <li class="mb-2"><a href="#download" class="footer-link">Download</a></li>
+                        <li class="mb-2"><a href="#login" class="footer-link">Login</a></li>
+                        <li class="mb-2"><a href="#" class="footer-link">FAQ</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-4 col-6">
+                    <h4 class="fs-5 fw-bold mb-4">Support</h4>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#" class="footer-link">Help Center</a></li>
+                        <li class="mb-2"><a href="#" class="footer-link">Community</a></li>
+                        <li class="mb-2"><a href="#" class="footer-link">Feedback</a></li>
+                        <li class="mb-2"><a href="#" class="footer-link">Contact Us</a></li>
+                        <li class="mb-2"><a href="#" class="footer-link">Privacy Policy</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-4 col-md-4">
+                    <h4 class="fs-5 fw-bold mb-4">Stay Updated</h4>
+                    <p class="mb-4">Subscribe to our newsletter for the latest training tips, app updates, and basketball news.</p>
+                    <form>
+                        <div class="input-group mb-3">
+                            <input type="email" class="form-control" placeholder="Your email address" aria-label="Email" aria-describedby="subscribe-btn">
+                            <button class="btn btn-orange" type="submit" id="subscribe-btn">Subscribe</button>
+                        </div>
+                    </form>
+                    <p class="small text-muted">By subscribing, you agree to our Terms of Service and Privacy Policy.</p>
+                </div>
+            </div>
+            <hr class="my-5 bg-light opacity-25">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center text-md-start">
+                    <p class="mb-0">&copy; 2025 Ultimate Hoopers. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-center text-md-end mt-3 mt-md-0">
+                    <ul class="list-inline mb-0">
+                        <li class="list-inline-item"><a href="#" class="footer-link small">Terms of Service</a></li>
+                        <li class="list-inline-item mx-3"><a href="#" class="footer-link small">Privacy Policy</a></li>
+                        <li class="list-inline-item"><a href="#" class="footer-link small">Cookies</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<!-- Login Modal (Optional) -->
+<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-navy text-white">
+                <h5 class="modal-title" id="loginModalLabel">Log in to Ultimate Hoopers</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="nav nav-tabs" id="loginTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="player-tab" data-bs-toggle="tab" data-bs-target="#player-login" type="button" role="tab" aria-controls="player-login" aria-selected="true">Player</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="coach-tab" data-bs-toggle="tab" data-bs-target="#coach-login" type="button" role="tab" aria-controls="coach-login" aria-selected="false">Coach</button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="loginTabsContent">
+                    <div class="tab-pane fade show active" id="player-login" role="tabpanel" aria-labelledby="player-tab">
+                        <form asp-controller="Account" asp-action="ClientLogin" method="post">
+                            <div class="mb-3">
+                                <label for="playerEmail" class="form-label">Email Address</label>
+                                <input type="email" class="form-control" id="playerEmail" name="email" required>
+                                <div class="form-text">Demo: any @@client.com email, password: client123</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="playerPassword" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="playerPassword" name="password" required>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="" id="rememberPlayerCheck">
+                                    <label class="form-check-label" for="rememberPlayerCheck">
+                                        Remember me
+                                    </label>
+                                </div>
+                                <a href="#" class="text-orange">Forgot password?</a>
+                            </div>
+                            <button type="submit" class="btn btn-orange w-100">Login as Player</button>
+                        </form>
+                    </div>
+                    <div class="tab-pane fade" id="coach-login" role="tabpanel" aria-labelledby="coach-tab">
+                        <form asp-controller="Account" asp-action="StaffLogin" method="post">
+                            <div class="mb-3">
+                                <label for="coachEmail" class="form-label">Email Address</label>
+                                <input type="email" class="form-control" id="coachEmail" name="email" required>
+                                <div class="form-text">Demo: any @@company.com email, password: staff123</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="coachPassword" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="coachPassword" name="password" required>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="" id="rememberCoachCheck">
+                                    <label class="form-check-label" for="rememberCoachCheck">
+                                        Remember me
+                                    </label>
+                                </div>
+                                <a href="#" class="text-navy">Forgot password?</a>
+                            </div>
+                            <button type="submit" class="btn btn-navy w-100">Login as Coach</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <p class="w-100 text-center mb-0">Don't have an account? <a href="#" class="text-orange">Sign up</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 100,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // Add basketball animation
+        const basketballIcons = document.querySelectorAll('.basketball-icon');
+        basketballIcons.forEach(icon => {
+            let rotation = 0;
+            setInterval(() => {
+                rotation += 30;
+                icon.style.transform = `rotate(${rotation}deg)`;
+            }, 1000);
+        });
+    </script>
+}
