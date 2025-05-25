@@ -1,361 +1,870 @@
-﻿<!doctype html>
-<html lang="en">
+﻿@{
+    ViewData["Title"] = "Dashboard";
+}
 
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@ViewData["Title"] - Business Management Dashboard</title>
-    <link rel="shortcut icon" type="image/png" href="~/images/logos/favicon.png" />
-    <link rel="stylesheet" href="~/css/styles.min.css" />
-    @await RenderSectionAsync("Styles", required: false)
-</head>
+<style>
+    :root {
+        --primary-color: #342580;
+        --secondary-color: #ff6238;
+        --primary-light: #4a3a9a;
+        --secondary-light: #ff8260;
+        --primary-dark: #221a54;
+        --secondary-dark: #e54e20;
+        --primary-bg-subtle: rgba(52, 37, 128, 0.1);
+        --secondary-bg-subtle: rgba(255, 98, 56, 0.1);
+        --light-bg: #f8f9fa;
+        --dark-text: #343a40;
+        --medium-text: #6c757d;
+        --light-text: #f8f9fa;
+    }
 
-<body>
-    <!--  Body Wrapper -->
-    <div class="page-wrapper" id="main-wrapper" data-layout="vertical" data-navbarbg="skin6" data-sidebartype="full"
-         data-sidebar-position="fixed" data-header-position="fixed">
+    .bg-primary {
+        background-color: var(--primary-color) !important;
+    }
 
-        <!--  App Topstrip -->
-        <div class="app-topstrip bg-dark py-6 px-3 w-100 d-lg-flex align-items-center justify-content-between">
-            <div class="d-flex align-items-center justify-content-center gap-5 mb-2 mb-lg-0">
-                <a class="d-flex justify-content-center" href="/">
-                    <img src="~/images/logos/logo-wrappixel.svg" alt="Your Company Logo" width="150">
-                </a>
+    .bg-secondary {
+        background-color: var(--secondary-color) !important;
+    }
+
+    .text-primary {
+        color: var(--primary-color) !important;
+    }
+
+    .text-secondary {
+        color: var(--secondary-color) !important;
+    }
+
+    .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+
+    .btn-secondary {
+        background-color: var(--secondary-color);
+        border-color: var(--secondary-color);
+    }
+
+        .btn-secondary:hover {
+            background-color: var(--secondary-dark);
+            border-color: var(--secondary-dark);
+        }
+
+    .card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: none;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+    .stat-card {
+        border-left: 4px solid;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            opacity: 0.1;
+            z-index: 0;
+        }
+
+        .stat-card.primary-card {
+            border-left-color: var(--primary-color);
+        }
+
+            .stat-card.primary-card::after {
+                background-color: var(--primary-color);
+            }
+
+        .stat-card.secondary-card {
+            border-left-color: var(--secondary-color);
+        }
+
+            .stat-card.secondary-card::after {
+                background-color: var(--secondary-color);
+            }
+
+        .stat-card.success-card {
+            border-left-color: #28a745;
+        }
+
+            .stat-card.success-card::after {
+                background-color: #28a745;
+            }
+
+        .stat-card.info-card {
+            border-left-color: #17a2b8;
+        }
+
+            .stat-card.info-card::after {
+                background-color: #17a2b8;
+            }
+
+    .stat-icon {
+        font-size: 2.5rem;
+        opacity: 0.8;
+    }
+
+    .quick-stats {
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+
+    .recent-activity-item {
+        padding: 15px;
+        border-left: 3px solid transparent;
+        transition: all 0.3s ease;
+    }
+
+        .recent-activity-item:hover {
+            background-color: var(--light-bg);
+            border-left-color: var(--primary-color);
+        }
+
+    .activity-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .welcome-banner {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 25px;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .welcome-banner::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .welcome-banner::after {
+            content: '';
+            position: absolute;
+            bottom: -80px;
+            left: -80px;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+    .upcoming-task {
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        border-left: 3px solid var(--primary-color);
+        background-color: #fff;
+        transition: all 0.3s ease;
+    }
+
+        .upcoming-task:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+        }
+
+    /* Responsive fixes */
+    @@media (max-width: 768px) {
+        .welcome-banner
+
+    {
+        text-align: center;
+    }
+
+    .stat-card {
+        margin-bottom: 15px;
+    }
+
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Welcome Banner -->
+    <div class="welcome-banner text-white shadow-lg">
+        <div class="row align-items-center">
+            <div class="col-md-8 position-relative">
+                <h1 class="display-6 fw-bold mb-3">Welcome back, @User.Identity?.Name!</h1>
+                <p class="fs-5 opacity-75 mb-0">
+                    @if (User.IsInRole("Client"))
+                    {
+                        <span>You have 3 updates on your projects and 2 new messages.</span>
+                    }
+                    else if (User.IsInRole("Staff"))
+                    {
+                        <span>You have 5 pending tasks and 3 new customer inquiries.</span>
+                    }
+                </p>
             </div>
-
-            <div class="d-lg-flex align-items-center gap-2">
-                <div class="text-white me-3">Welcome, @User.Identity?.Name!</div>
-                <a asp-controller="Account" asp-action="Logout" class="btn btn-light d-flex align-items-center gap-1">
-                    <i class="ti ti-logout fs-5"></i>
-                    Logout
-                </a>
+            <div class="col-md-4 text-md-end mt-4 mt-md-0">
+                <button class="btn btn-light text-primary me-2">
+                    <i class="ti ti-calendar-event me-1"></i> View Schedule
+                </button>
+                <button class="btn btn-light" style="background-color: var(--secondary-color); color: white; border-color: var(--secondary-color);">
+                    <i class="ti ti-plus me-1"></i> New Task
+                </button>
             </div>
-        </div>
-
-        <!-- Sidebar Start -->
-        <aside class="left-sidebar">
-            <!-- Sidebar scroll-->
-            <div>
-                <div class="brand-logo d-flex align-items-center justify-content-between">
-                    <a href="/" class="text-nowrap logo-img">
-                        <img src="~/images/logos/logo.svg" alt="" />
-                    </a>
-                    <div class="close-btn d-xl-none d-block sidebartoggler cursor-pointer" id="sidebarCollapse">
-                        <i class="ti ti-x fs-6"></i>
-                    </div>
-                </div>
-                <!-- Sidebar navigation-->
-                <nav class="sidebar-nav scroll-sidebar" data-simplebar="">
-                    <ul id="sidebarnav">
-                        <li class="nav-small-cap">
-                            <iconify-icon icon="solar:menu-dots-linear" class="nav-small-cap-icon fs-4"></iconify-icon>
-                            <span class="hide-menu">Home</span>
-                        </li>
-                        <li class="sidebar-item">
-                            <a class="sidebar-link" href="/Home/Dashboard" aria-expanded="false">
-                                <i class="ti ti-dashboard"></i>
-                                <span class="hide-menu">Dashboard</span>
-                            </a>
-                        </li>
-                        <!-- ---------------------------------- -->
-                        <!-- Dashboard -->
-                        <!-- ---------------------------------- -->
-                        <li class="sidebar-item">
-                            <a class="sidebar-link justify-content-between"
-                               href="#" aria-expanded="false">
-                                <div class="d-flex align-items-center gap-3">
-                                    <span class="d-flex">
-                                        <i class="ti ti-aperture"></i>
-                                    </span>
-                                    <span class="hide-menu">Analytics</span>
-                                </div>
-                            </a>
-                        </li>
-                        <li class="sidebar-item">
-                            <a class="sidebar-link justify-content-between"
-                               href="#" aria-expanded="false">
-                                <div class="d-flex align-items-center gap-3">
-                                    <span class="d-flex">
-                                        <i class="ti ti-shopping-cart"></i>
-                                    </span>
-                                    <span class="hide-menu">Products</span>
-                                </div>
-                            </a>
-                        </li>
-                        <li class="sidebar-item">
-                            <a class="sidebar-link justify-content-between has-arrow" href="javascript:void(0)" aria-expanded="false">
-                                <div class="d-flex align-items-center gap-3">
-                                    <span class="d-flex">
-                                        <i class="ti ti-users"></i>
-                                    </span>
-                                    <span class="hide-menu">Customers</span>
-                                </div>
-                            </a>
-                            <ul aria-expanded="false" class="collapse first-level">
-                                <li class="sidebar-item">
-                                    <a class="sidebar-link justify-content-between" href="#">
-                                        <div class="d-flex align-items-center gap-3">
-                                            <div class="round-16 d-flex align-items-center justify-content-center">
-                                                <i class="ti ti-circle"></i>
-                                            </div>
-                                            <span class="hide-menu">All Customers</span>
-                                        </div>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a class="sidebar-link justify-content-between" href="#">
-                                        <div class="d-flex align-items-center gap-3">
-                                            <div class="round-16 d-flex align-items-center justify-content-center">
-                                                <i class="ti ti-circle"></i>
-                                            </div>
-                                            <span class="hide-menu">Add Customer</span>
-                                        </div>
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-
-                        <li>
-                            <span class="sidebar-divider lg"></span>
-                        </li>
-                        <li class="nav-small-cap">
-                            <iconify-icon icon="solar:menu-dots-linear" class="nav-small-cap-icon fs-4"></iconify-icon>
-                            <span class="hide-menu">Management</span>
-                        </li>
-                        <li class="sidebar-item">
-                            <a class="sidebar-link justify-content-between has-arrow" href="javascript:void(0)" aria-expanded="false">
-                                <div class="d-flex align-items-center gap-3">
-                                    <span class="d-flex">
-                                        <i class="ti ti-basket"></i>
-                                    </span>
-                                    <span class="hide-menu">Orders</span>
-                                </div>
-                            </a>
-                            <ul aria-expanded="false" class="collapse first-level">
-                                <li class="sidebar-item">
-                                    <a class="sidebar-link justify-content-between" href="#">
-                                        <div class="d-flex align-items-center gap-3">
-                                            <div class="round-16 d-flex align-items-center justify-content-center">
-                                                <i class="ti ti-circle"></i>
-                                            </div>
-                                            <span class="hide-menu">All Orders</span>
-                                        </div>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a class="sidebar-link justify-content-between" href="#">
-                                        <div class="d-flex align-items-center gap-3">
-                                            <div class="round-16 d-flex align-items-center justify-content-center">
-                                                <i class="ti ti-circle"></i>
-                                            </div>
-                                            <span class="hide-menu">Pending Orders</span>
-                                        </div>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a class="sidebar-link justify-content-between" href="#">
-                                        <div class="d-flex align-items-center gap-3">
-                                            <div class="round-16 d-flex align-items-center justify-content-center">
-                                                <i class="ti ti-circle"></i>
-                                            </div>
-                                            <span class="hide-menu">Completed Orders</span>
-                                        </div>
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-                        <li class="sidebar-item">
-                            <a class="sidebar-link justify-content-between has-arrow" href="javascript:void(0)" aria-expanded="false">
-                                <div class="d-flex align-items-center gap-3">
-                                    <span class="d-flex">
-                                        <i class="ti ti-report-analytics"></i>
-                                    </span>
-                                    <span class="hide-menu">Reports</span>
-                                </div>
-                            </a>
-                            <ul aria-expanded="false" class="collapse first-level">
-                                <li class="sidebar-item">
-                                    <a class="sidebar-link justify-content-between" href="#">
-                                        <div class="d-flex align-items-center gap-3">
-                                            <div class="round-16 d-flex align-items-center justify-content-center">
-                                                <i class="ti ti-circle"></i>
-                                            </div>
-                                            <span class="hide-menu">Sales Reports</span>
-                                        </div>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a class="sidebar-link justify-content-between" href="#">
-                                        <div class="d-flex align-items-center gap-3">
-                                            <div class="round-16 d-flex align-items-center justify-content-center">
-                                                <i class="ti ti-circle"></i>
-                                            </div>
-                                            <span class="hide-menu">Customer Reports</span>
-                                        </div>
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-                        <li class="sidebar-item">
-                            <a class="sidebar-link justify-content-between" href="#" aria-expanded="false">
-                                <div class="d-flex align-items-center gap-3">
-                                    <span class="d-flex">
-                                        <i class="ti ti-user-circle"></i>
-                                    </span>
-                                    <span class="hide-menu">User Profile</span>
-                                </div>
-                            </a>
-                        </li>
-                        <li class="sidebar-item">
-                            <a class="sidebar-link justify-content-between" href="#" aria-expanded="false">
-                                <div class="d-flex align-items-center gap-3">
-                                    <span class="d-flex">
-                                        <i class="ti ti-mail"></i>
-                                    </span>
-                                    <span class="hide-menu">Messages</span>
-                                </div>
-                            </a>
-                        </li>
-                        <li class="sidebar-item">
-                            <a class="sidebar-link justify-content-between" href="#" aria-expanded="false">
-                                <div class="d-flex align-items-center gap-3">
-                                    <span class="d-flex">
-                                        <i class="ti ti-calendar"></i>
-                                    </span>
-                                    <span class="hide-menu">Calendar</span>
-                                </div>
-                            </a>
-                        </li>
-
-                        <li>
-                            <span class="sidebar-divider lg"></span>
-                        </li>
-                        <li class="nav-small-cap">
-                            <iconify-icon icon="solar:menu-dots-linear" class="nav-small-cap-icon fs-4"></iconify-icon>
-                            <span class="hide-menu">Settings</span>
-                        </li>
-                        <li class="sidebar-item">
-                            <a class="sidebar-link justify-content-between" href="#" aria-expanded="false">
-                                <div class="d-flex align-items-center gap-3">
-                                    <span class="d-flex">
-                                        <i class="ti ti-settings"></i>
-                                    </span>
-                                    <span class="hide-menu">Account Settings</span>
-                                </div>
-                            </a>
-                        </li>
-                        <li class="sidebar-item">
-                            <a class="sidebar-link justify-content-between" href="#" aria-expanded="false">
-                                <div class="d-flex align-items-center gap-3">
-                                    <span class="d-flex">
-                                        <i class="ti ti-shield-lock"></i>
-                                    </span>
-                                    <span class="hide-menu">Security</span>
-                                </div>
-                            </a>
-                        </li>
-                        <li class="sidebar-item">
-                            <a class="sidebar-link" href="#" aria-expanded="false">
-                                <i class="ti ti-help-circle"></i>
-                                <span class="hide-menu">Help & Support</span>
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
-                <!-- End Sidebar navigation -->
-            </div>
-            <!-- End Sidebar scroll-->
-        </aside>
-        <!--  Sidebar End -->
-        <!--  Main wrapper -->
-        <div class="body-wrapper">
-            <!--  Header Start -->
-            <header class="app-header">
-                <nav class="navbar navbar-expand-lg navbar-light">
-                    <ul class="navbar-nav">
-                        <li class="nav-item d-block d-xl-none">
-                            <a class="nav-link sidebartoggler " id="headerCollapse" href="javascript:void(0)">
-                                <i class="ti ti-menu-2"></i>
-                            </a>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link " href="javascript:void(0)" id="drop1" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="ti ti-bell"></i>
-                                <div class="notification bg-primary rounded-circle"></div>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-animate-up" aria-labelledby="drop1">
-                                <div class="message-body">
-                                    <a href="javascript:void(0)" class="dropdown-item">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <i class="ti ti-circle-check text-success fs-5"></i>
-                                            <p class="mb-0 fs-3">New order received</p>
-                                        </div>
-                                        <p class="mb-0 fs-3 text-muted">15 minutes ago</p>
-                                    </a>
-                                    <a href="javascript:void(0)" class="dropdown-item">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <i class="ti ti-message-dots text-primary fs-5"></i>
-                                            <p class="mb-0 fs-3">New comment on product</p>
-                                        </div>
-                                        <p class="mb-0 fs-3 text-muted">25 minutes ago</p>
-                                    </a>
-                                </div>
-                            </div>
-                        </li>
-                    </ul>
-                    <div class="navbar-collapse justify-content-end px-0" id="navbarNav">
-                        <ul class="navbar-nav flex-row ms-auto align-items-center justify-content-end">
-                            <li class="nav-item dropdown">
-                                <a class="nav-link " href="javascript:void(0)" id="drop2" data-bs-toggle="dropdown"
-                                   aria-expanded="false">
-                                    <img src="~/images/profile/user-1.jpg" alt="" width="35" height="35" class="rounded-circle" onerror="this.src='https://placehold.co/35x35/1e4db7/FFFFFF?text=@(User.Identity?.Name?.Substring(0, 1).ToUpper())'">
-                                </a>
-                                <div class="dropdown-menu dropdown-menu-end dropdown-menu-animate-up" aria-labelledby="drop2">
-                                    <div class="message-body">
-                                        <a href="javascript:void(0)" class="d-flex align-items-center gap-2 dropdown-item">
-                                            <i class="ti ti-user fs-6"></i>
-                                            <p class="mb-0 fs-3">My Profile</p>
-                                        </a>
-                                        <a href="javascript:void(0)" class="d-flex align-items-center gap-2 dropdown-item">
-                                            <i class="ti ti-mail fs-6"></i>
-                                            <p class="mb-0 fs-3">My Account</p>
-                                        </a>
-                                        <a href="javascript:void(0)" class="d-flex align-items-center gap-2 dropdown-item">
-                                            <i class="ti ti-list-check fs-6"></i>
-                                            <p class="mb-0 fs-3">My Tasks</p>
-                                        </a>
-                                        <a href="/Account/Logout" class="btn btn-outline-primary mx-3 mt-2 d-block">Logout</a>
-                                    </div>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-                </nav>
-            </header>
-
-
-            <div>
-                <main role="main" class="pb-3">
-                    @RenderBody()
-                </main>
-            </div>
-
-
         </div>
     </div>
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2025 - WebAdmin - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-sm-6 mb-4 mb-md-0">
+            <div class="card stat-card primary-card h-100 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1 text-uppercase fw-semibold">Revenue</h6>
+                            <h4 class="mb-0 fw-bold">$58,235</h4>
+                            <p class="mb-0 mt-2">
+                                <span class="badge bg-soft-success text-success">
+                                    <i class="ti ti-trending-up fs-5 align-middle"></i> +16.24%
+                                </span>
+                                <span class="text-muted ms-1">vs last month</span>
+                            </p>
+                        </div>
+                        <div class="stat-icon text-primary">
+                            <i class="ti ti-currency-dollar"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </footer>
-    <script src="~/libs/jquery/dist/jquery.min.js"></script>
-    <script src="~/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/sidebarmenu.js"></script>
-    <script src="~/js/app.min.js"></script>
-    <script src="~/libs/apexcharts/dist/apexcharts.min.js"></script>
-    <script src="~/libs/simplebar/dist/simplebar.js"></script>
-    <!-- solar icons -->
-    <script src="https://cdn.jsdelivr.net/npm/iconify-icon@1.0.8/dist/iconify-icon.min.js"></script>
-    @await RenderSectionAsync("Scripts", required: false)
-</body>
-</html>
+        <div class="col-md-3 col-sm-6 mb-4 mb-md-0">
+            <div class="card stat-card secondary-card h-100 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1 text-uppercase fw-semibold">New Orders</h6>
+                            <h4 class="mb-0 fw-bold">247</h4>
+                            <p class="mb-0 mt-2">
+                                <span class="badge bg-soft-success text-success">
+                                    <i class="ti ti-trending-up fs-5 align-middle"></i> +8.14%
+                                </span>
+                                <span class="text-muted ms-1">vs last month</span>
+                            </p>
+                        </div>
+                        <div class="stat-icon text-secondary">
+                            <i class="ti ti-shopping-cart"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-4 mb-md-0">
+            <div class="card stat-card success-card h-100 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1 text-uppercase fw-semibold">Active Users</h6>
+                            <h4 class="mb-0 fw-bold">1,285</h4>
+                            <p class="mb-0 mt-2">
+                                <span class="badge bg-soft-success text-success">
+                                    <i class="ti ti-trending-up fs-5 align-middle"></i> +12.9%
+                                </span>
+                                <span class="text-muted ms-1">vs last month</span>
+                            </p>
+                        </div>
+                        <div class="stat-icon text-success">
+                            <i class="ti ti-users"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="card stat-card info-card h-100 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1 text-uppercase fw-semibold">Support Tickets</h6>
+                            <h4 class="mb-0 fw-bold">38</h4>
+                            <p class="mb-0 mt-2">
+                                <span class="badge bg-soft-danger text-danger">
+                                    <i class="ti ti-trending-down fs-5 align-middle"></i> -4.75%
+                                </span>
+                                <span class="text-muted ms-1">vs last month</span>
+                            </p>
+                        </div>
+                        <div class="stat-icon text-info">
+                            <i class="ti ti-ticket"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row">
+        <!-- Left Column -->
+        <div class="col-lg-8 mb-4">
+            <!-- Sales Overview Chart -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                    <h5 class="card-title mb-0 fw-semibold">Sales Overview</h5>
+                    <div class="dropdown">
+                        <button class="btn btn-sm dropdown-toggle p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="ti ti-dots-vertical fs-5"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#">This Week</a></li>
+                            <li><a class="dropdown-item" href="#">This Month</a></li>
+                            <li><a class="dropdown-item" href="#">This Year</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-4">
+                        <div>
+                            <h4 class="fw-semibold mb-1">$58,235</h4>
+                            <p class="text-muted mb-0">Total Sales This Month</p>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="d-flex align-items-center">
+                                <span class="bg-primary rounded-circle d-block me-2" style="width: 10px; height: 10px;"></span>
+                                <span class="fs-6">Revenue</span>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="bg-secondary rounded-circle d-block me-2" style="width: 10px; height: 10px;"></span>
+                                <span class="fs-6">Expenses</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Orders -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                    <h5 class="card-title mb-0 fw-semibold">Recent Orders</h5>
+                    <a href="#" class="btn btn-sm" style="background-color: var(--primary-color); color: white;">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col">Order ID</th>
+                                    <th scope="col">Customer</th>
+                                    <th scope="col">Product</th>
+                                    <th scope="col">Amount</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col">Date</th>
+                                    <th scope="col">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>#ORD-2305</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0 me-2">
+                                                <div class="avatar-sm bg-primary-bg-subtle rounded-circle text-center">
+                                                    <span class="fw-semibold text-primary">JD</span>
+                                                </div>
+                                            </div>
+                                            <div>John Doe</div>
+                                        </div>
+                                    </td>
+                                    <td>Premium Plan</td>
+                                    <td>$59.99</td>
+                                    <td><span class="badge bg-success-subtle text-success">Completed</span></td>
+                                    <td>May 22, 2025</td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="ti ti-dots-vertical"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#">View Details</a></li>
+                                                <li><a class="dropdown-item" href="#">Process Order</a></li>
+                                                <li><a class="dropdown-item" href="#">Cancel Order</a></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>#ORD-2304</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0 me-2">
+                                                <div class="avatar-sm bg-secondary-bg-subtle rounded-circle text-center">
+                                                    <span class="fw-semibold text-secondary">AS</span>
+                                                </div>
+                                            </div>
+                                            <div>Alice Smith</div>
+                                        </div>
+                                    </td>
+                                    <td>Basic Plan</td>
+                                    <td>$29.99</td>
+                                    <td><span class="badge bg-warning-subtle text-warning">Pending</span></td>
+                                    <td>May 21, 2025</td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="ti ti-dots-vertical"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#">View Details</a></li>
+                                                <li><a class="dropdown-item" href="#">Process Order</a></li>
+                                                <li><a class="dropdown-item" href="#">Cancel Order</a></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>#ORD-2303</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0 me-2">
+                                                <div class="avatar-sm bg-success-subtle rounded-circle text-center">
+                                                    <span class="fw-semibold text-success">RJ</span>
+                                                </div>
+                                            </div>
+                                            <div>Robert Johnson</div>
+                                        </div>
+                                    </td>
+                                    <td>Enterprise Plan</td>
+                                    <td>$199.99</td>
+                                    <td><span class="badge bg-success-subtle text-success">Completed</span></td>
+                                    <td>May 20, 2025</td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="ti ti-dots-vertical"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#">View Details</a></li>
+                                                <li><a class="dropdown-item" href="#">Process Order</a></li>
+                                                <li><a class="dropdown-item" href="#">Cancel Order</a></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>#ORD-2302</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0 me-2">
+                                                <div class="avatar-sm bg-info-subtle rounded-circle text-center">
+                                                    <span class="fw-semibold text-info">EB</span>
+                                                </div>
+                                            </div>
+                                            <div>Emma Brown</div>
+                                        </div>
+                                    </td>
+                                    <td>Premium Plan</td>
+                                    <td>$59.99</td>
+                                    <td><span class="badge bg-danger-subtle text-danger">Cancelled</span></td>
+                                    <td>May 19, 2025</td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="ti ti-dots-vertical"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#">View Details</a></li>
+                                                <li><a class="dropdown-item" href="#">Process Order</a></li>
+                                                <li><a class="dropdown-item" href="#">Cancel Order</a></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>#ORD-2301</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0 me-2">
+                                                <div class="avatar-sm bg-primary-bg-subtle rounded-circle text-center">
+                                                    <span class="fw-semibold text-primary">MW</span>
+                                                </div>
+                                            </div>
+                                            <div>Michael Wilson</div>
+                                        </div>
+                                    </td>
+                                    <td>Basic Plan</td>
+                                    <td>$29.99</td>
+                                    <td><span class="badge bg-success-subtle text-success">Completed</span></td>
+                                    <td>May 18, 2025</td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="ti ti-dots-vertical"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#">View Details</a></li>
+                                                <li><a class="dropdown-item" href="#">Process Order</a></li>
+                                                <li><a class="dropdown-item" href="#">Cancel Order</a></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-lg-4">
+            <!-- User Role Based Widget -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="card-title mb-0 fw-semibold">
+                        @if (User.IsInRole("Client"))
+                        {
+                            <span>Project Status</span>
+                        }
+                        else if (User.IsInRole("Staff"))
+                        {
+                            <span>Tasks Overview</span>
+                        }
+                        else
+                        {
+                            <span>Account Overview</span>
+                        }
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (User.IsInRole("Client"))
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h6 class="fw-semibold mb-0">Website Redesign</h6>
+                            <span class="badge bg-success">On Track</span>
+                        </div>
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Progress</span>
+                                <span>75%</span>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar" role="progressbar" style="width: 75%; background-color: var(--primary-color);" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h6 class="fw-semibold mb-0">Mobile App Development</h6>
+                            <span class="badge bg-warning">Delayed</span>
+                        </div>
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Progress</span>
+                                <span>45%</span>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar" role="progressbar" style="width: 45%; background-color: var(--secondary-color);" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h6 class="fw-semibold mb-0">Marketing Campaign</h6>
+                            <span class="badge bg-success">On Track</span>
+                        </div>
+                        <div class="mb-0">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Progress</span>
+                                <span>90%</span>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar" role="progressbar" style="width: 90%; background-color: var(--primary-color);" aria-valuenow="90" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                    }
+                    else if (User.IsInRole("Staff"))
+                    {
+                        <div>
+                            <div class="d-flex justify-content-between mb-3">
+                                <div class="d-flex align-items-center">
+                                    <span class="me-2 rounded-circle bg-primary" style="width: 10px; height: 10px;"></span>
+                                    <span>Completed</span>
+                                </div>
+                                <span class="fw-semibold">12</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-3">
+                                <div class="d-flex align-items-center">
+                                    <span class="me-2 rounded-circle bg-warning" style="width: 10px; height: 10px;"></span>
+                                    <span>In Progress</span>
+                                </div>
+                                <span class="fw-semibold">8</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-3">
+                                <div class="d-flex align-items-center">
+                                    <span class="me-2 rounded-circle bg-secondary" style="width: 10px; height: 10px;"></span>
+                                    <span>Pending</span>
+                                </div>
+                                <span class="fw-semibold">5</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <div class="d-flex align-items-center">
+                                    <span class="me-2 rounded-circle bg-danger" style="width: 10px; height: 10px;"></span>
+                                    <span>Overdue</span>
+                                </div>
+                                <span class="fw-semibold">2</span>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <canvas id="taskChart" height="200"></canvas>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center">
+                            <div class="mb-4">
+                                <img src="~/images/profile/user-1.jpg" alt="User Profile" class="rounded-circle" width="80" height="80" onerror="this.src='https://placehold.co/80x80/342580/FFFFFF?text=@(User.Identity?.Name?.Substring(0, 1).ToUpper())'">
+                            </div>
+                            <h5 class="fw-semibold mb-1">@User.Identity?.Name</h5>
+                            <p class="text-muted mb-3">@User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value</p>
+                            <div class="d-flex justify-content-center gap-2 mb-4">
+                                <button class="btn btn-sm btn-primary">Edit Profile</button>
+                                <button class="btn btn-sm btn-light">Settings</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="card-title mb-0 fw-semibold">Recent Activity</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="recent-activity-item border-bottom">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="activity-dot bg-primary"></div>
+                            </div>
+                            <div>
+                                <h6 class="mb-1 fw-semibold">New order received</h6>
+                                <p class="text-muted mb-0">Order #2305 from John Doe</p>
+                                <small class="text-muted">30 mins ago</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="recent-activity-item border-bottom">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="activity-dot bg-success"></div>
+                            </div>
+                            <div>
+                                <h6 class="mb-1 fw-semibold">Payment confirmed</h6>
+                                <p class="text-muted mb-0">Transaction #95478 completed</p>
+                                <small class="text-muted">2 hours ago</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="recent-activity-item border-bottom">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="activity-dot bg-warning"></div>
+                            </div>
+                            <div>
+                                <h6 class="mb-1 fw-semibold">Product shipment delayed</h6>
+                                <p class="text-muted mb-0">Order #2301 needs attention</p>
+                                <small class="text-muted">5 hours ago</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="recent-activity-item border-bottom">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="activity-dot bg-secondary"></div>
+                            </div>
+                            <div>
+                                <h6 class="mb-1 fw-semibold">New user registered</h6>
+                                <p class="text-muted mb-0">Emma Brown joined as a client</p>
+                                <small class="text-muted">Yesterday</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="recent-activity-item">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0 me-3">
+                                <div class="activity-dot bg-info"></div>
+                            </div>
+                            <div>
+                                <h6 class="mb-1 fw-semibold">System update completed</h6>
+                                <p class="text-muted mb-0">Website maintenance successful</p>
+                                <small class="text-muted">2 days ago</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-white text-center py-3">
+                    <a href="#" class="text-decoration-none fw-semibold" style="color: var(--primary-color);">View All Activity</a>
+                </div>
+            </div>
+
+            <!-- Upcoming Tasks -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                    <h5 class="card-title mb-0 fw-semibold">Upcoming Tasks</h5>
+                    <button class="btn btn-sm" style="background-color: var(--secondary-color); color: white;">
+                        <i class="ti ti-plus me-1"></i> Add
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="upcoming-task shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0 fw-semibold">Client Meeting</h6>
+                            <span class="badge" style="background-color: var(--primary-color);">High</span>
+                        </div>
+                        <p class="text-muted mb-2">Review project progress with ABC Corp</p>
+                        <div class="d-flex align-items-center">
+                            <i class="ti ti-calendar text-muted me-1"></i>
+                            <small class="text-muted">Tomorrow, 10:00 AM</small>
+                        </div>
+                    </div>
+                    <div class="upcoming-task shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0 fw-semibold">Product Launch</h6>
+                            <span class="badge" style="background-color: var(--secondary-color);">Medium</span>
+                        </div>
+                        <p class="text-muted mb-2">Finalize marketing materials for release</p>
+                        <div class="d-flex align-items-center">
+                            <i class="ti ti-calendar text-muted me-1"></i>
+                            <small class="text-muted">May 28, 2025</small>
+                        </div>
+                    </div>
+                    <div class="upcoming-task shadow-sm mb-0">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0 fw-semibold">Quarterly Report</h6>
+                            <span class="badge bg-success">Low</span>
+                        </div>
+                        <p class="text-muted mb-2">Prepare Q2 financial analysis</p>
+                        <div class="d-flex align-items-center">
+                            <i class="ti ti-calendar text-muted me-1"></i>
+                            <small class="text-muted">May 30, 2025</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-white text-center py-3">
+                    <a href="#" class="text-decoration-none fw-semibold" style="color: var(--primary-color);">View All Tasks</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Sales Chart
+        const salesCtx = document.getElementById('salesChart').getContext('2d');
+        const salesChart = new Chart(salesCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: [
+                    {
+                        label: 'Revenue',
+                        data: [32000, 36000, 28000, 40000, 42000, 45000, 50000, 58000, 52000, 55000, 60000, 65000],
+                        borderColor: '#342580',
+                        backgroundColor: 'rgba(52, 37, 128, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Expenses',
+                        data: [20000, 25000, 18000, 22000, 24000, 27000, 29000, 33000, 30000, 32000, 34000, 38000],
+                        borderColor: '#ff6238',
+                        backgroundColor: 'rgba(255, 98, 56, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            borderDash: [2, 2]
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Task Chart (for Staff users)
+        if (document.getElementById('taskChart')) {
+            const taskCtx = document.getElementById('taskChart').getContext('2d');
+            const taskChart = new Chart(taskCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Completed', 'In Progress', 'Pending', 'Overdue'],
+                    datasets: [{
+                        data: [12, 8, 5, 2],
+                        backgroundColor: [
+                            '#342580',
+                            '#ffc107',
+                            '#6c757d',
+                            '#dc3545'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+}
