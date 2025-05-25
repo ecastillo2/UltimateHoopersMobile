@@ -51,25 +51,57 @@
 
                         @if (isAuthenticated)
                         {
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle text-dark" href="#" role="button" data-bs-toggle="dropdown">
-                                    <i class="bi bi-grid-3x3-gap me-1"></i>Dashboard
-                                </a>
-                                <ul class="dropdown-menu">
-                                    @if (userRole == "Admin")
-                                    {
+                            @if (userRole == "Admin")
+                            {
+
+
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle text-dark" href="#" role="button" data-bs-toggle="dropdown">
+                                        <i class="bi bi-grid-3x3-gap me-1"></i>Dashboard
+                                    </a>
+                                    <ul class="dropdown-menu">
                                         <li><a class="dropdown-item" asp-controller="Home" asp-action="AdminDashboard"><i class="bi bi-gear me-2"></i>Admin Dashboard</a></li>
-                                    }
-                                    @if (userRole == "Manager")
-                                    {
+                                    </ul>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-area="" asp-controller="Admin" asp-action="Users">
+                                        <i class="bi bi-people me-1"></i>Users
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-area="" asp-controller="Admin" asp-action="Clients">
+                                        <i class="bi bi-building me-1"></i>Clients
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-area="" asp-controller="Admin" asp-action="Runs">
+                                        <i class="bi bi-play-circle me-1"></i>Runs
+                                    </a>
+                                </li>
+                            }
+                            @if (userRole == "Manager")
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle text-dark" href="#" role="button" data-bs-toggle="dropdown">
+                                        <i class="bi bi-grid-3x3-gap me-1"></i>Dashboard
+                                    </a>
+                                    <ul class="dropdown-menu">
                                         <li><a class="dropdown-item" asp-controller="Home" asp-action="ManagerDashboard"><i class="bi bi-people me-2"></i>Manager Dashboard</a></li>
-                                    }
-                                    @if (userRole == "User")
-                                    {
+                                    </ul>
+                                </li>
+                            }
+                            @if (userRole == "User")
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle text-dark" href="#" role="button" data-bs-toggle="dropdown">
+                                        <i class="bi bi-grid-3x3-gap me-1"></i>Dashboard
+                                    </a>
+                                    <ul class="dropdown-menu">
                                         <li><a class="dropdown-item" asp-controller="Dashboard" asp-action="Index"><i class="bi bi-person me-2"></i>My Dashboard</a></li>
-                                    }
-                                </ul>
-                            </li>
+                                    </ul>
+                                </li>
+                            }
+                            
                         }
 
                         <!-- User profile dropdown menu section -->
