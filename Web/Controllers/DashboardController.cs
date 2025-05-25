@@ -31,5 +31,11 @@ namespace Web.Controllers
             // In a real app, we would load user-specific data here
             return View();
         }
+
+        public IActionResult Client()
+        {
+            
+            return View();
+        }
     }
 }
