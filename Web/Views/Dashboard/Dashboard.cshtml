@@ -1,0 +1,477 @@
+﻿@{
+    ViewData["Title"] = ViewData["UserType"] + " Dashboard";
+    var userType = ViewData["UserType"]?.ToString() ?? "User";
+    var isPlayer = userType == "Player";
+}
+
+@section Styles {
+    <style>
+        :root {
+            --primary-color: #FF6B00;
+            --secondary-color: #1C2C5B;
+            --accent-color: #3BACB6;
+            --light-color: #F8F9FA;
+            --dark-color: #212529;
+        }
+
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #0b1733 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .stats-card {
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            border: none;
+            height: 100%;
+        }
+
+            .stats-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            }
+
+        .stats-icon {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 15px;
+            margin-bottom: 1.5rem;
+            font-size: 1.75rem;
+        }
+
+        .sidebar {
+            background-color: white;
+            border-right: 1px solid #eee;
+            height: calc(100vh - 56px);
+            position: sticky;
+            top: 56px;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1.25rem;
+            color: var(--dark-color);
+            text-decoration: none;
+            border-radius: 0.5rem;
+            margin: 0.25rem 0;
+        }
+
+            .sidebar-link:hover,
+            .sidebar-link.active {
+                background-color: rgba(255, 107, 0, 0.1);
+                color: var(--primary-color);
+            }
+
+            .sidebar-link i {
+                margin-right: 0.75rem;
+                font-size: 1.25rem;
+            }
+
+        .upcoming-event {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            background-color: var(--light-color);
+            transition: all 0.3s ease;
+        }
+
+            .upcoming-event:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            }
+
+        .progress-stats {
+            height: 8px;
+            border-radius: 4px;
+        }
+
+        .training-item {
+            border-left: 3px solid var(--primary-color);
+            padding-left: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .coach-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background-color: var(--light-color);
+        }
+
+        .coach-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 1rem;
+            background-color: var(--secondary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+    </style>
+}
+
+<div class="dashboard-header">
+    <div class="container">
+        <h1>Welcome to Your @userType Dashboard</h1>
+        <p class="lead">Track your progress, manage workouts, and connect with @(isPlayer ? "coaches" : "players")</p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row g-4">
+        <!-- Sidebar -->
+        <div class="col-lg-3">
+            <div class="sidebar p-3">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="rounded-circle bg-@(isPlayer ? "orange" : "navy") text-white d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                        <span class="fw-bold">@(userType.Substring(0, 1))</span>
+                    </div>
+                    <div>
+                        <h5 class="mb-0">@(isPlayer ? "John Player" : "Sarah Coach")</h5>
+                        <small class="text-muted">@(isPlayer ? "Basketball Player" : "Basketball Coach")</small>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <a href="#" class="sidebar-link active">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                   
+                   
+                        @if (isPlayer)
+                        {
+                        <a href="#" class="sidebar-link">
+                            <i class="bi bi-calendar3"></i> Schedule Run
+                        </a>
+                            <><i class="bi bi-graph-up"></i> Account</>
+                        }
+                        else
+                        {
+                        <a href="#" class="sidebar-link">
+                            <i class="bi bi-calendar3"></i>  Run
+                        </a>
+                            <a href="#" class="sidebar-link">
+                       
+                                    <><i class="bi bi-person-badge"></i> My Coaches</>
+                              
+                           
+                             
+                            </a>
+                        }
+                   
+                   
+                    
+                    <a href="#" class="sidebar-link">
+                        <i class="bi bi-gear"></i> Settings
+                    </a>
+                </div>
+
+                <div class="mt-auto">
+                    <a asp-controller="Account" asp-action="Logout" class="btn btn-outline-danger w-100">
+                        <i class="bi bi-box-arrow-right me-2"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-lg-9">
+            <!-- Stats Row -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-4">
+                    <div class="card stats-card">
+                        <div class="card-body p-4">
+                            <div class="stats-icon bg-orange-subtle text-orange">
+                                <i class="bi bi-calendar-check"></i>
+                            </div>
+                            <h3 class="fs-5 fw-bold mb-1">@(isPlayer ? "3" : "12")</h3>
+                            <p class="text-muted mb-0">@(isPlayer ? "Runs" : "Runs")</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card stats-card">
+                        <div class="card-body p-4">
+                            <div class="stats-icon bg-navy-subtle text-navy">
+                                <i class="bi bi-@(isPlayer ? "trophy" : "people")"></i>
+                            </div>
+                            <h3 class="fs-5 fw-bold mb-1">@(isPlayer ? "72%" : "5")</h3>
+                            <p class="text-muted mb-0">@(isPlayer ? "Goal Completion" : "Active Users")</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card stats-card">
+                        <div class="card-body p-4">
+                            <div class="stats-icon bg-success-subtle text-success">
+                                <i class="bi bi-@(isPlayer ? "graph-up-arrow" : "people")"></i>
+                            </div>
+                            <h3 class="fs-5 fw-bold mb-1">@(isPlayer ? "+15%" : "8")</h3>
+                            <p class="text-muted mb-0">@(isPlayer ? "Shooting Improvement" : "Clients")</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Cards -->
+            <div class="row g-4">
+                @if (isPlayer)
+                {
+                    <!-- Player-specific content -->
+                    <div class="col-md-8">
+                        <div class="card mb-4">
+                            <div class="card-header bg-white">
+                                <h5 class="card-title mb-0">Recent Progress</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>Shooting Accuracy</span>
+                                        <span class="text-orange">72%</span>
+                                    </div>
+                                    <div class="progress progress-stats">
+                                        <div class="progress-bar bg-orange" role="progressbar" style="width: 72%" aria-valuenow="72" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>Dribbling Skills</span>
+                                        <span class="text-orange">65%</span>
+                                    </div>
+                                    <div class="progress progress-stats">
+                                        <div class="progress-bar bg-orange" role="progressbar" style="width: 65%" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>Defensive Stance</span>
+                                        <span class="text-orange">58%</span>
+                                    </div>
+                                    <div class="progress progress-stats">
+                                        <div class="progress-bar bg-orange" role="progressbar" style="width: 58%" aria-valuenow="58" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>Fitness Level</span>
+                                        <span class="text-orange">80%</span>
+                                    </div>
+                                    <div class="progress progress-stats">
+                                        <div class="progress-bar bg-orange" role="progressbar" style="width: 80%" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">Training Schedule</h5>
+                                <a href="#" class="text-orange text-decoration-none">View All</a>
+                            </div>
+                            <div class="card-body">
+                                <div class="training-item">
+                                    <h6 class="mb-1">Shooting Drills</h6>
+                                    <p class="text-muted small mb-0">Monday, May 26 • 4:00 PM</p>
+                                </div>
+                                <div class="training-item">
+                                    <h6 class="mb-1">Team Practice</h6>
+                                    <p class="text-muted small mb-0">Wednesday, May 28 • 6:00 PM</p>
+                                </div>
+                                <div class="training-item">
+                                    <h6 class="mb-1">Conditioning Workout</h6>
+                                    <p class="text-muted small mb-0">Friday, May 30 • 5:30 PM</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card mb-4">
+                            <div class="card-header bg-white">
+                                <h5 class="card-title mb-0">My Coaches</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="coach-item">
+                                    <div class="coach-avatar">MC</div>
+                                    <div>
+                                        <h6 class="mb-0">Mike Chen</h6>
+                                        <p class="text-muted small mb-0">Shooting Coach</p>
+                                    </div>
+                                </div>
+                                <div class="coach-item">
+                                    <div class="coach-avatar">LR</div>
+                                    <div>
+                                        <h6 class="mb-0">Lisa Rodriguez</h6>
+                                        <p class="text-muted small mb-0">Youth Development</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header bg-white">
+                                <h5 class="card-title mb-0">Achievements</h5>
+                            </div>
+                            <div class="card-body text-center">
+                                <div class="mb-3">
+                                    <div class="d-inline-flex align-items-center justify-content-center bg-orange-subtle rounded-circle mb-2" style="width: 80px; height: 80px;">
+                                        <i class="bi bi-trophy text-orange" style="font-size: 2.5rem;"></i>
+                                    </div>
+                                    <h6>Sharpshooter</h6>
+                                    <p class="text-muted small">Achieved 80% shooting accuracy in practice</p>
+                                </div>
+                                <div>
+                                    <div class="d-inline-flex align-items-center justify-content-center bg-navy-subtle rounded-circle mb-2" style="width: 80px; height: 80px;">
+                                        <i class="bi bi-lightning-charge text-navy" style="font-size: 2.5rem;"></i>
+                                    </div>
+                                    <h6>Speed Demon</h6>
+                                    <p class="text-muted small">Completed sprint drill under target time</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <!-- Coach-specific content -->
+                    <div class="col-md-8">
+                        <div class="card mb-4">
+                            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">My Players</h5>
+                                <a href="#" class="text-navy text-decoration-none">View All</a>
+                            </div>
+                            <div class="card-body">
+                                <div class="coach-item">
+                                    <div class="coach-avatar">JP</div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">John Player</h6>
+                                        <p class="text-muted small mb-0">Shooting Guard • Age 16</p>
+                                    </div>
+                                    <a href="#" class="btn btn-sm btn-outline-navy">View Profile</a>
+                                </div>
+                                <div class="coach-item">
+                                    <div class="coach-avatar">AW</div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">Alex Williams</h6>
+                                        <p class="text-muted small mb-0">Point Guard • Age 15</p>
+                                    </div>
+                                    <a href="#" class="btn btn-sm btn-outline-navy">View Profile</a>
+                                </div>
+                                <div class="coach-item">
+                                    <div class="coach-avatar">TS</div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">Taylor Smith</h6>
+                                        <p class="text-muted small mb-0">Forward • Age 17</p>
+                                    </div>
+                                    <a href="#" class="btn btn-sm btn-outline-navy">View Profile</a>
+                                </div>
+                                <div class="coach-item">
+                                    <div class="coach-avatar">RJ</div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">Riley Johnson</h6>
+                                        <p class="text-muted small mb-0">Center • Age 16</p>
+                                    </div>
+                                    <a href="#" class="btn btn-sm btn-outline-navy">View Profile</a>
+                                </div>
+                                <div class="coach-item">
+                                    <div class="coach-avatar">MB</div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">Morgan Brown</h6>
+                                        <p class="text-muted small mb-0">Forward • Age 15</p>
+                                    </div>
+                                    <a href="#" class="btn btn-sm btn-outline-navy">View Profile</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card mb-4">
+                            <div class="card-header bg-white">
+                                <h5 class="card-title mb-0">Upcoming Sessions</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="upcoming-event">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="mb-0">Team Practice</h6>
+                                        <span class="badge bg-navy">Today</span>
+                                    </div>
+                                    <p class="text-muted small mb-0">5:30 PM • Main Court</p>
+                                    <p class="text-muted small mb-0">5 players confirmed</p>
+                                </div>
+                                <div class="upcoming-event">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="mb-0">1-on-1 with John</h6>
+                                        <span class="badge bg-orange">Tomorrow</span>
+                                    </div>
+                                    <p class="text-muted small mb-0">4:00 PM • Practice Court B</p>
+                                    <p class="text-muted small mb-0">Shooting technique review</p>
+                                </div>
+                                <div class="upcoming-event">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="mb-0">Team Scrimmage</h6>
+                                        <span class="badge bg-secondary">May 28</span>
+                                    </div>
+                                    <p class="text-muted small mb-0">6:00 PM • Main Court</p>
+                                    <p class="text-muted small mb-0">All players required</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header bg-white">
+                                <h5 class="card-title mb-0">Quick Actions</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-grid gap-2">
+                                    <a href="#" class="btn btn-outline-navy">
+                                        <i class="bi bi-calendar-plus me-2"></i> Schedule Session
+                                    </a>
+                                    <a href="#" class="btn btn-outline-navy">
+                                        <i class="bi bi-clipboard-plus me-2"></i> New Assessment
+                                    </a>
+                                    <a href="#" class="btn btn-outline-navy">
+                                        <i class="bi bi-people-fill me-2"></i> Add Player
+                                    </a>
+                                    <a href="#" class="btn btn-outline-navy">
+                                        <i class="bi bi-file-earmark-text me-2"></i> Generate Report
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Simple script to handle sidebar active state
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarLinks = document.querySelectorAll('.sidebar-link');
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    // If not a real navigation link (just a demo)
+                    if (this.getAttribute('href') === '#') {
+                        e.preventDefault();
+                        // Remove active class from all links
+                        sidebarLinks.forEach(l => l.classList.remove('active'));
+                        // Add active class to clicked link
+                        this.classList.add('active');
+                    }
+                });
+            });
+        });
+    </script>
+}

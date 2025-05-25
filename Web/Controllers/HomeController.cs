@@ -15,6 +15,15 @@ namespace Web.Controllers
 
         public IActionResult Index()
         {
+            // If user is logged in and trying to access the home page,
+            // redirect them to the dashboard instead
+            if (TempData["Success"]?.ToString()?.Contains("logged in") == true)
+            {
+                // Preserve the success message for one more redirect
+                TempData.Keep("Success");
+                return RedirectToAction("Dashboard", "Dashboard");
+            }
+
             return View();
         }
 

@@ -18,9 +18,8 @@ namespace Web.Controllers
             if (email?.EndsWith("@client.com", StringComparison.OrdinalIgnoreCase) == true && password == "client123")
             {
                 // Success - in a real app, this would set authentication cookies
-                // For demo, just redirect to home with success message
                 TempData["Success"] = "Successfully logged in as a player!";
-                return RedirectToAction("Index", "Home");
+                return RedirectToAction("Dashboard", "Dashboard");
             }
 
             // Failed login
@@ -35,9 +34,8 @@ namespace Web.Controllers
             if (email?.EndsWith("@company.com", StringComparison.OrdinalIgnoreCase) == true && password == "staff123")
             {
                 // Success - in a real app, this would set authentication cookies
-                // For demo, just redirect to home with success message
                 TempData["Success"] = "Successfully logged in as a coach!";
-                return RedirectToAction("Index", "Home");
+                return RedirectToAction("Dashboard", "Dashboard");
             }
 
             // Failed login
