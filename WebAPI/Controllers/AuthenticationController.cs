@@ -77,10 +77,21 @@ namespace WebAPI.Controllers
                     {
                         // Get the user's profile
                         var profile = await repository.GetProfileByIdAsync(userResult.ProfileId);
+
+                        //Get Client info if part of a client
+                        var client = await repository.GetClientByUserIdAsync(userResult.UserId);
+
+
                         if (profile != null)
                         {
                             // Assign the profile to the user object
                             userResult.Profile = profile;
+
+                            if (client != null)
+                            {
+                                userResult.Client = client;
+                            }
+                            
 
                             // You may want to log successful profile retrieval
                             //_logger.LogInformation($"Retrieved profile for user {userResult.UserId}, ProfileId: {userResult.ProfileId}");

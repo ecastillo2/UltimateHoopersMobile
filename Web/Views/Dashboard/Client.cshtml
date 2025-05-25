@@ -1,0 +1,715 @@
+﻿@{
+    ViewData["Title"] = "Client Management";
+    var userType = ViewData["UserType"]?.ToString() ?? "Coach";
+}
+
+@section Styles {
+    <style>
+        :root {
+            --primary-color: #FF6B00;
+            --secondary-color: #1C2C5B;
+            --accent-color: #3BACB6;
+            --light-color: #F8F9FA;
+            --dark-color: #212529;
+        }
+
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #0b1733 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .client-card {
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            border: none;
+            height: 100%;
+        }
+
+            .client-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            }
+
+        .client-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 1rem;
+            background-color: var(--secondary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .status-badge {
+            border-radius: 20px;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .search-box {
+            border-radius: 50px;
+            padding-left: 1rem;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+            .search-box:focus {
+                box-shadow: 0 0 0 0.25rem rgba(255, 107, 0, 0.25);
+                border-color: #FF6B00;
+            }
+
+        .search-btn {
+            border-radius: 0 50px 50px 0;
+            background-color: #FF6B00;
+            color: white;
+            border: none;
+        }
+
+        .filter-dropdown {
+            border-radius: 50px;
+            padding: 0.375rem 1rem;
+        }
+
+        .modal-content {
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            background-color: var(--secondary-color);
+            color: white;
+            border-bottom: none;
+        }
+
+        .modal-footer {
+            border-top: none;
+        }
+    </style>
+}
+
+<div class="dashboard-header">
+    <div class="container">
+        <h1>Client Management</h1>
+        <p class="lead">Manage your client roster and training schedules</p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="input-group mb-3">
+                <input type="text" class="form-control search-box" placeholder="Search clients..." aria-label="Search clients">
+                <button class="btn search-btn" type="button">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <select class="form-select filter-dropdown">
+                <option selected>All Clients</option>
+                <option>Active Clients</option>
+                <option>Inactive Clients</option>
+                <option>New Clients (30 days)</option>
+            </select>
+        </div>
+        <div class="col-md-2 text-end">
+            <button type="button" class="btn btn-orange w-100" data-bs-toggle="modal" data-bs-target="#addClientModal">
+                <i class="bi bi-plus-circle me-2"></i>Add Client
+            </button>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Client 1 -->
+        <div class="col-md-6">
+            <div class="card client-card">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="client-avatar">JP</div>
+                            <div>
+                                <h5 class="mb-0">John Player</h5>
+                                <span class="text-muted small">Shooting Guard • Age 16</span>
+                            </div>
+                        </div>
+                        <span class="status-badge bg-success-subtle text-success">Active</span>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-calendar3 text-navy me-2"></i>
+                                <div>
+                                    <small class="text-muted d-block">Joined</small>
+                                    <span>April 15, 2025</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-trophy text-orange me-2"></i>
+                                <div>
+                                    <small class="text-muted d-block">Progress</small>
+                                    <span>72% Complete</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="small">Program Completion</span>
+                            <span class="small text-orange">72%</span>
+                        </div>
+                        <div class="progress" style="height: 6px; border-radius: 3px;">
+                            <div class="progress-bar bg-orange" role="progressbar" style="width: 72%" aria-valuenow="72" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted small">Next Session: May 26, 2025</span>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-navy me-2" data-bs-toggle="modal" data-bs-target="#editClientModal">
+                                <i class="bi bi-pencil me-1"></i>Edit
+                            </button>
+                            <button type="button" class="btn btn-sm btn-navy">
+                                <i class="bi bi-eye me-1"></i>View
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Client 2 -->
+        <div class="col-md-6">
+            <div class="card client-card">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="client-avatar">AW</div>
+                            <div>
+                                <h5 class="mb-0">Alex Williams</h5>
+                                <span class="text-muted small">Point Guard • Age 15</span>
+                            </div>
+                        </div>
+                        <span class="status-badge bg-success-subtle text-success">Active</span>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-calendar3 text-navy me-2"></i>
+                                <div>
+                                    <small class="text-muted d-block">Joined</small>
+                                    <span>March 3, 2025</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-trophy text-orange me-2"></i>
+                                <div>
+                                    <small class="text-muted d-block">Progress</small>
+                                    <span>45% Complete</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="small">Program Completion</span>
+                            <span class="small text-orange">45%</span>
+                        </div>
+                        <div class="progress" style="height: 6px; border-radius: 3px;">
+                            <div class="progress-bar bg-orange" role="progressbar" style="width: 45%" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted small">Next Session: May 28, 2025</span>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-navy me-2" data-bs-toggle="modal" data-bs-target="#editClientModal">
+                                <i class="bi bi-pencil me-1"></i>Edit
+                            </button>
+                            <button type="button" class="btn btn-sm btn-navy">
+                                <i class="bi bi-eye me-1"></i>View
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Client 3 -->
+        <div class="col-md-6">
+            <div class="card client-card">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="client-avatar">TS</div>
+                            <div>
+                                <h5 class="mb-0">Taylor Smith</h5>
+                                <span class="text-muted small">Forward • Age 17</span>
+                            </div>
+                        </div>
+                        <span class="status-badge bg-warning-subtle text-warning">On Hold</span>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-calendar3 text-navy me-2"></i>
+                                <div>
+                                    <small class="text-muted d-block">Joined</small>
+                                    <span>January 12, 2025</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-trophy text-orange me-2"></i>
+                                <div>
+                                    <small class="text-muted d-block">Progress</small>
+                                    <span>60% Complete</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="small">Program Completion</span>
+                            <span class="small text-orange">60%</span>
+                        </div>
+                        <div class="progress" style="height: 6px; border-radius: 3px;">
+                            <div class="progress-bar bg-orange" role="progressbar" style="width: 60%" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted small">Next Session: Not Scheduled</span>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-navy me-2" data-bs-toggle="modal" data-bs-target="#editClientModal">
+                                <i class="bi bi-pencil me-1"></i>Edit
+                            </button>
+                            <button type="button" class="btn btn-sm btn-navy">
+                                <i class="bi bi-eye me-1"></i>View
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Client 4 -->
+        <div class="col-md-6">
+            <div class="card client-card">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="client-avatar">RJ</div>
+                            <div>
+                                <h5 class="mb-0">Riley Johnson</h5>
+                                <span class="text-muted small">Center • Age 16</span>
+                            </div>
+                        </div>
+                        <span class="status-badge bg-success-subtle text-success">Active</span>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-calendar3 text-navy me-2"></i>
+                                <div>
+                                    <small class="text-muted d-block">Joined</small>
+                                    <span>February 22, 2025</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-trophy text-orange me-2"></i>
+                                <div>
+                                    <small class="text-muted d-block">Progress</small>
+                                    <span>30% Complete</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="small">Program Completion</span>
+                            <span class="small text-orange">30%</span>
+                        </div>
+                        <div class="progress" style="height: 6px; border-radius: 3px;">
+                            <div class="progress-bar bg-orange" role="progressbar" style="width: 30%" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted small">Next Session: May 27, 2025</span>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-navy me-2" data-bs-toggle="modal" data-bs-target="#editClientModal">
+                                <i class="bi bi-pencil me-1"></i>Edit
+                            </button>
+                            <button type="button" class="btn btn-sm btn-navy">
+                                <i class="bi bi-eye me-1"></i>View
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Client 5 -->
+        <div class="col-md-6">
+            <div class="card client-card">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="client-avatar">MB</div>
+                            <div>
+                                <h5 class="mb-0">Morgan Brown</h5>
+                                <span class="text-muted small">Forward • Age 15</span>
+                            </div>
+                        </div>
+                        <span class="status-badge bg-success-subtle text-success">Active</span>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-calendar3 text-navy me-2"></i>
+                                <div>
+                                    <small class="text-muted d-block">Joined</small>
+                                    <span>April 2, 2025</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-trophy text-orange me-2"></i>
+                                <div>
+                                    <small class="text-muted d-block">Progress</small>
+                                    <span>25% Complete</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="small">Program Completion</span>
+                            <span class="small text-orange">25%</span>
+                        </div>
+                        <div class="progress" style="height: 6px; border-radius: 3px;">
+                            <div class="progress-bar bg-orange" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted small">Next Session: May 30, 2025</span>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-navy me-2" data-bs-toggle="modal" data-bs-target="#editClientModal">
+                                <i class="bi bi-pencil me-1"></i>Edit
+                            </button>
+                            <button type="button" class="btn btn-sm btn-navy">
+                                <i class="bi bi-eye me-1"></i>View
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Client 6 -->
+        <div class="col-md-6">
+            <div class="card client-card">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="client-avatar">JD</div>
+                            <div>
+                                <h5 class="mb-0">Jamie Davis</h5>
+                                <span class="text-muted small">Guard • Age 17</span>
+                            </div>
+                        </div>
+                        <span class="status-badge bg-danger-subtle text-danger">Inactive</span>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-calendar3 text-navy me-2"></i>
+                                <div>
+                                    <small class="text-muted d-block">Joined</small>
+                                    <span>November 10, 2024</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-trophy text-orange me-2"></i>
+                                <div>
+                                    <small class="text-muted d-block">Progress</small>
+                                    <span>85% Complete</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="small">Program Completion</span>
+                            <span class="small text-orange">85%</span>
+                        </div>
+                        <div class="progress" style="height: 6px; border-radius: 3px;">
+                            <div class="progress-bar bg-orange" role="progressbar" style="width: 85%" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted small">Last Session: March 15, 2025</span>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-navy me-2" data-bs-toggle="modal" data-bs-target="#editClientModal">
+                                <i class="bi bi-pencil me-1"></i>Edit
+                            </button>
+                            <button type="button" class="btn btn-sm btn-navy">
+                                <i class="bi bi-eye me-1"></i>View
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="d-flex justify-content-center mt-5">
+        <nav aria-label="Client pagination">
+            <ul class="pagination">
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item">
+                    <a class="page-link" href="#" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- Add Client Modal -->
+<div class="modal fade" id="addClientModal" tabindex="-1" aria-labelledby="addClientModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addClientModalLabel">Add New Client</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addClientForm">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="firstName" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="firstName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="lastName" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="lastName" required>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="phone">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="age" class="form-label">Age</label>
+                            <input type="number" class="form-control" id="age" min="5" max="50">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="position" class="form-label">Position</label>
+                            <select class="form-select" id="position">
+                                <option selected>Choose position...</option>
+                                <option>Point Guard</option>
+                                <option>Shooting Guard</option>
+                                <option>Small Forward</option>
+                                <option>Power Forward</option>
+                                <option>Center</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status">
+                            <option value="active" selected>Active</option>
+                            <option value="onhold">On Hold</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-orange">Add Client</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Client Modal -->
+<div class="modal fade" id="editClientModal" tabindex="-1" aria-labelledby="editClientModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editClientModalLabel">Edit Client</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editClientForm">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="editFirstName" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="editFirstName" value="John" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editLastName" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="editLastName" value="Player" required>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="editEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="editEmail" value="john.player@example.com" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editPhone" class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="editPhone" value="(555) 123-4567">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="editAge" class="form-label">Age</label>
+                            <input type="number" class="form-control" id="editAge" value="16" min="5" max="50">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editPosition" class="form-label">Position</label>
+                            <select class="form-select" id="editPosition">
+                                <option>Point Guard</option>
+                                <option selected>Shooting Guard</option>
+                                <option>Small Forward</option>
+                                <option>Power Forward</option>
+                                <option>Center</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editStatus" class="form-label">Status</label>
+                        <select class="form-select" id="editStatus">
+                            <option value="active" selected>Active</option>
+                            <option value="onhold">On Hold</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editNotes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="editNotes" rows="3">Shows great potential in shooting drills. Need to work on defensive positioning.</textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger me-auto">Delete Client</button>
+                <button type="button" class="btn btn-orange">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle search functionality
+            const searchInput = document.querySelector('.search-box');
+            searchInput.addEventListener('keyup', function() {
+                const searchTerm = this.value.toLowerCase();
+                const clientCards = document.querySelectorAll('.client-card');
+
+                clientCards.forEach(card => {
+                    const clientName = card.querySelector('h5').textContent.toLowerCase();
+                    const clientPosition = card.querySelector('.text-muted.small').textContent.toLowerCase();
+
+                    if (clientName.includes(searchTerm) || clientPosition.includes(searchTerm)) {
+                        card.closest('.col-md-6').style.display = '';
+                    } else {
+                        card.closest('.col-md-6').style.display = 'none';
+                    }
+                });
+            });
+
+            // Handle filter dropdown
+            const filterDropdown = document.querySelector('.filter-dropdown');
+            filterDropdown.addEventListener('change', function() {
+                const filterValue = this.value.toLowerCase();
+                const clientCards = document.querySelectorAll('.client-card');
+
+                clientCards.forEach(card => {
+                    const statusBadge = card.querySelector('.status-badge').textContent.toLowerCase();
+                    const joinedDate = card.querySelector('.col-6:first-child span').textContent;
+                    const isNewClient = isDateWithinDays(joinedDate, 30);
+
+                    let shouldShow = true;
+
+                    if (filterValue === 'active clients' && statusBadge !== 'active') {
+                        shouldShow = false;
+                    } else if (filterValue === 'inactive clients' && statusBadge !== 'inactive') {
+                        shouldShow = false;
+                    } else if (filterValue === 'new clients (30 days)' && !isNewClient) {
+                        shouldShow = false;
+                    }
+
+                    card.closest('.col-md-6').style.display = shouldShow ? '' : 'none';
+                });
+            });
+
+            // Helper function to check if a date is within X days from now
+            function isDateWithinDays(dateString, days) {
+                const today = new Date();
+                const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+                const parts = dateString.split(' ');
+                const month = months.indexOf(parts[0]);
+                const day = parseInt(parts[1].replace(',', ''));
+                const year = parseInt(parts[2]);
+
+                const date = new Date(year, month, day);
+                const timeDiff = today.getTime() - date.getTime();
+                const dayDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+                return dayDiff <= days;
+            }
+
+            // Form submission handlers (could be expanded with AJAX calls to backend)
+            document.getElementById('addClientForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                // Add form submission logic here
+                $('#addClientModal').modal('hide');
+            });
+
+            document.getElementById('editClientForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                // Edit form submission logic here
+                $('#editClientModal').modal('hide');
+            });
+        });
+    </script>
+}

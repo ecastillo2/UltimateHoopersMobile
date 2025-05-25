@@ -361,6 +361,31 @@ namespace DataLayer.DAL.Repository
             }
         }
 
+        public async Task<Client> GetClientByUserIdAsync(
+        string userId,
+        CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                // This approach uses a join operation to get the client in a single query
+                return await _context.User
+                    .AsNoTracking()
+                    .Where(u => u.UserId == userId)
+                    .Join(
+                        _context.Client,
+                        user => user.ClientId,
+                        client => client.ClientId,
+                        (user, client) => client
+                    )
+                    .FirstOrDefaultAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting client for user {UserId}", userId);
+                throw;
+            }
+        }
+
         public async Task<Profile> GetProfileByUserIdAsync(
             string userId,
             CancellationToken cancellationToken = default)

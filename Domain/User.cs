@@ -72,6 +72,9 @@ namespace Domain
         public Profile? Profile { get; set; }
 
         [NotMapped]
+        public Client? Client { get; set; }
+
+        [NotMapped]
         [JsonIgnore]
         public List<Run>? Run { get; set; }
 

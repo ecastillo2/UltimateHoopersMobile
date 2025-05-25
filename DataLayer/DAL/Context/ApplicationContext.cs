@@ -53,6 +53,7 @@ namespace DataLayer.Context
         public virtual DbSet<Squad> Squad { get; set; }
         public virtual DbSet<SquadTeam> SquadTeam { get; set; }
         public virtual DbSet<SquadRequest> SquadRequest { get; set; }
+        public virtual DbSet<Client> Client { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
 
