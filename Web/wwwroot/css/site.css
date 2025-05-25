@@ -29,3 +29,202 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+
+/* Transition utilities */
+.transition-all {
+    transition: all 0.3s ease;
+}
+
+.hover-shadow-lg:hover {
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175) !important;
+}
+
+/* Additional padding and margin utilities */
+.py-6 {
+    padding-top: 4rem !important;
+    padding-bottom: 4rem !important;
+}
+
+.py-7 {
+    padding-top: 5rem !important;
+    padding-bottom: 5rem !important;
+}
+
+.py-8 {
+    padding-top: 6rem !important;
+    padding-bottom: 6rem !important;
+}
+
+.mb-6 {
+    margin-bottom: 4rem !important;
+}
+
+.mb-7 {
+    margin-bottom: 5rem !important;
+}
+
+.mt-6 {
+    margin-top: 4rem !important;
+}
+
+.mt-7 {
+    margin-top: 5rem !important;
+}
+
+/* Font size utilities */
+.fs-7 {
+    font-size: 1.75rem !important;
+}
+
+.fs-8 {
+    font-size: 2.25rem !important;
+}
+
+.fs-9 {
+    font-size: 2.75rem !important;
+}
+
+/* Custom color utilities */
+.text-orange {
+    color: var(--primary-color) !important;
+}
+
+.text-navy {
+    color: var(--secondary-color) !important;
+}
+
+.bg-orange {
+    background-color: var(--primary-color) !important;
+}
+
+.bg-navy {
+    background-color: var(--secondary-color) !important;
+}
+
+.bg-orange-subtle {
+    background-color: rgba(255, 107, 0, 0.1) !important;
+}
+
+.bg-navy-subtle {
+    background-color: rgba(28, 44, 91, 0.1) !important;
+}
+
+/* Button styles */
+.btn-orange {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+    .btn-orange:hover {
+        background-color: #e25c00;
+        border-color: #e25c00;
+        color: white;
+    }
+
+.btn-navy {
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+    color: white;
+}
+
+    .btn-navy:hover {
+        background-color: #151f3e;
+        border-color: #151f3e;
+        color: white;
+    }
+
+.btn-outline-orange {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+    .btn-outline-orange:hover {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+.btn-outline-navy {
+    border-color: var(--secondary-color);
+    color: var(--secondary-color);
+}
+
+    .btn-outline-navy:hover {
+        background-color: var(--secondary-color);
+        color: white;
+    }
+
+/* Override Bootstrap classes for responsive behavior */
+@media (max-width: 767px) {
+    .display-4 {
+        font-size: 2.5rem;
+    }
+
+    .fs-9 {
+        font-size: 2rem !important;
+    }
+
+    .fs-4 {
+        font-size: 1.2rem !important;
+    }
+
+    .py-8 {
+        padding-top: 3rem !important;
+        padding-bottom: 3rem !important;
+    }
+
+    .mb-7 {
+        margin-bottom: 3rem !important;
+    }
+}
+
+/* Navbar transition */
+.navbar {
+    transition: all 0.3s ease;
+}
+
+/* Z-index utilities */
+.z-1 {
+    z-index: 1;
+}
+
+.z-2 {
+    z-index: 2;
+}
+
+.z-3 {
+    z-index: 3;
+}
+
+/* Custom animations */
+@keyframes float {
+    0% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+.float-animation {
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes bounce {
+    from {
+        transform: translateY(0px);
+    }
+
+    to {
+        transform: translateY(-15px);
+    }
+}
+
+.bounce-animation {
+    animation: bounce 2s infinite alternate;
+}
