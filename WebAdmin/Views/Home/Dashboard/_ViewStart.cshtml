@@ -1,0 +1,10 @@
+﻿@{
+    // Use the regular layout for Dashboard view
+    Layout = "_Layout";
+
+    // Explicitly ignore the Styles section if it's not used in the Dashboard view
+    if (!IsSectionDefined("Styles"))
+    {
+        IgnoreSection("Styles");
+    }
+}
