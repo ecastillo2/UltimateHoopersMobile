@@ -505,21 +505,66 @@ namespace DataLayer.DAL.Repository
         }
 
         public async Task<List<Game>> GetProfileGameHistoryAsync(
-            string profileId,
-            CancellationToken cancellationToken = default)
+     string profileId,
+     CancellationToken cancellationToken = default)
         {
             try
             {
-                // Find all games where this profile participated
-                // This is more complex as we need to check both winner and loser strings
-                var query = _context.Game
+                // First, find all games where the profile is either a winner or loser
+                var winningGames = await _context.GameWinningPlayer
                     .AsNoTracking()
-                    .Where(g =>
-                        g.WinProfileIdsStatusString.Contains(profileId) ||
-                        g.LoseProfileIdsStatusString.Contains(profileId))
-                    .OrderByDescending(g => g.CreatedDate);
+                    .Where(wp => wp.ProfileId == profileId)
+                    .Select(wp => wp.GameId)
+                    .ToListAsync(cancellationToken);
 
-                return await query.ToListAsync(cancellationToken);
+                var losingGames = await _context.GameLosingPlayer
+                    .AsNoTracking()
+                    .Where(lp => lp.ProfileId == profileId)
+                    .Select(lp => lp.GameId)
+                    .ToListAsync(cancellationToken);
+
+                // Combine the IDs and get unique game IDs
+                var gameIds = winningGames.Concat(losingGames).Distinct().ToList();
+
+                if (!gameIds.Any())
+                    return new List<Game>();
+
+                // Fetch all the games
+                var games = await _context.Game
+                    .AsNoTracking()
+                    .Where(g => gameIds.Contains(g.GameId))
+                    .OrderByDescending(g => g.CreatedDate)
+                    .ToListAsync(cancellationToken);
+
+                // Now populate winners and losers for each game
+                foreach (var game in games)
+                {
+                    // Get winning players
+                    var winningPlayerIds = await _context.GameWinningPlayer
+                        .AsNoTracking()
+                        .Where(wp => wp.GameId == game.GameId)
+                        .Select(wp => wp.ProfileId)
+                        .ToListAsync(cancellationToken);
+
+                    // Get losing players
+                    var losingPlayerIds = await _context.GameLosingPlayer
+                        .AsNoTracking()
+                        .Where(lp => lp.GameId == game.GameId)
+                        .Select(lp => lp.ProfileId)
+                        .ToListAsync(cancellationToken);
+
+
+
+                    // Fetch associated Run if available
+                    if (!string.IsNullOrEmpty(game.RunId))
+                    {
+                        game.Run = await _context.Run
+                            .AsNoTracking()
+                            .FirstOrDefaultAsync(r => r.RunId == game.RunId, cancellationToken);
+                    }
+                }
+
+                return games;
             }
             catch (Exception ex)
             {
@@ -534,19 +579,24 @@ namespace DataLayer.DAL.Repository
         {
             try
             {
-                var games = await GetProfileGameHistoryAsync(profileId, cancellationToken);
+                // Count wins
+                int wins = await _context.GameWinningPlayer
+                    .AsNoTracking()
+                    .CountAsync(wp => wp.ProfileId == profileId, cancellationToken);
 
-                // Add null checks for WinProfileIdsStatusString and LoseProfileIdsStatusString
-                int wins = games.Count(g => g.WinProfileIdsStatusString != null &&
-                                            g.WinProfileIdsStatusString.Contains(profileId));
+                // Count losses
+                int losses = await _context.GameLosingPlayer
+                    .AsNoTracking()
+                    .CountAsync(lp => lp.ProfileId == profileId, cancellationToken);
 
-                int losses = games.Count(g => g.LoseProfileIdsStatusString != null &&
-                                              g.LoseProfileIdsStatusString.Contains(profileId));
+                // Calculate total games and win percentage
+                int totalGames = wins + losses;
+                double winPercentage = totalGames > 0 ? (double)wins / totalGames * 100 : 0;
 
                 return new GameStatistics
                 {
-                    TotalGames = games.Count,
-                    WinPercentage = games.Count > 0 ? (double)wins / games.Count * 100 : 0,
+                    TotalGames = totalGames,
+                    WinPercentage = winPercentage,
                     TotalWins = wins.ToString(),
                     TotalLosses = losses.ToString()
                 };
@@ -557,7 +607,6 @@ namespace DataLayer.DAL.Repository
                 throw;
             }
         }
-
         public async Task<ScoutingReport> GetScoutingReportAsync(
             string profileId,
             CancellationToken cancellationToken = default)
