@@ -23,6 +23,7 @@ builder.Services.AddHttpClient();
 
 // Register API client services
 builder.Services.AddApiClientServices(builder.Configuration);
+builder.Services.IRunApi(builder.Configuration);
 
 var app = builder.Build();
 
