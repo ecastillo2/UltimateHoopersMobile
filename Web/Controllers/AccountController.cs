@@ -1,52 +1,95 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using ApiClient.Authentication;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Threading.Tasks;
 
 namespace Web.Controllers
 {
     public class AccountController : Controller
     {
+        private readonly IAuthenticateUser _authService;
         private readonly ILogger<AccountController> _logger;
 
-        public AccountController(ILogger<AccountController> logger)
+        public AccountController(
+            IAuthenticateUser authService,
+            ILogger<AccountController> logger)
         {
-            _logger = logger;
+            _authService = authService ?? throw new ArgumentNullException(nameof(authService));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         [HttpPost]
-        public IActionResult ClientLogin(string email, string password)
+        public async Task<IActionResult> ClientLogin(string email, string password)
         {
-            // Simple demo validation - in a real app, this would check a database
-            if (email?.EndsWith("@client.com", StringComparison.OrdinalIgnoreCase) == true && password == "client123")
+            try
             {
-                // Success - in a real app, this would set authentication cookies
+                var user = await _authService.AuthenticateAsync(email, password);
+
+                if (user == null || string.IsNullOrEmpty(user.Token))
+                {
+                    TempData["Error"] = "Invalid email or password. Please try again.";
+                    return RedirectToAction("Index", "Home", new { scrollTo = "login" });
+                }
+
+                // Store user information in session
+                HttpContext.Session.SetString("UserToken", user.Token);
+                HttpContext.Session.SetString("UserName", $"{user.FirstName} {user.LastName}");
+                HttpContext.Session.SetString("UserRole", user.AccessLevel);
+                HttpContext.Session.SetString("UserId", user.UserId);
+                HttpContext.Session.SetString("ProfileId", user.ProfileId);
+                HttpContext.Session.SetString("ClientId", user.ClientId);
+
                 TempData["Success"] = "Successfully logged in as a player!";
                 return RedirectToAction("Dashboard", "Dashboard");
             }
-
-            // Failed login
-            TempData["Error"] = "Invalid email or password. Please try again.";
-            return RedirectToAction("Index", "Home", new { scrollTo = "login" });
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during client login for email: {Email}", email);
+                TempData["Error"] = "Invalid email or password. Please try again.";
+                return RedirectToAction("Index", "Home", new { scrollTo = "login" });
+            }
         }
 
         [HttpPost]
-        public IActionResult StaffLogin(string email, string password)
+        public async Task<IActionResult> StaffLogin(string email, string password)
         {
-            // Simple demo validation - in a real app, this would check a database
-            if (email?.EndsWith("@company.com", StringComparison.OrdinalIgnoreCase) == true && password == "staff123")
+            try
             {
-                // Success - in a real app, this would set authentication cookies
+                var user = await _authService.AuthenticateAsync(email, password);
+
+                if (user == null || string.IsNullOrEmpty(user.Token))
+                {
+                    TempData["Error"] = "Invalid email or password. Please try again.";
+                    return RedirectToAction("Index", "Home", new { scrollTo = "login" });
+                }
+
+                // Store user information in session
+                HttpContext.Session.SetString("UserToken", user.Token);
+                HttpContext.Session.SetString("UserName", $"{user.FirstName} {user.LastName}");
+                HttpContext.Session.SetString("UserRole", user.AccessLevel);
+                HttpContext.Session.SetString("UserId", user.UserId);
+                HttpContext.Session.SetString("ProfileId", user.ProfileId);
+                HttpContext.Session.SetString("Subscription", user.Subscription);
+                
+
                 TempData["Success"] = "Successfully logged in as a coach!";
                 return RedirectToAction("Dashboard", "Dashboard");
             }
-
-            // Failed login
-            TempData["Error"] = "Invalid email or password. Please try again.";
-            return RedirectToAction("Index", "Home", new { scrollTo = "login" });
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during staff login for email: {Email}", email);
+                TempData["Error"] = "Invalid email or password. Please try again.";
+                return RedirectToAction("Index", "Home", new { scrollTo = "login" });
+            }
         }
 
         [HttpGet]
         public IActionResult Logout()
         {
-            // In a real app, this would clear authentication cookies
+            // Clear session
+            HttpContext.Session.Clear();
+
             TempData["Success"] = "Successfully logged out.";
             return RedirectToAction("Index", "Home");
         }

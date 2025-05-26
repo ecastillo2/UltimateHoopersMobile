@@ -81,5 +81,30 @@ namespace Web.Controllers
             // For demo, we'll use hard-coded data in the view
             return View();
         }
+
+        public IActionResult Run()
+        {
+            // Check login status similar to other actions
+            if (TempData["Success"]?.ToString()?.Contains("logged in") != true)
+            {
+                // Not logged in, redirect to home
+                TempData["Error"] = "You must be logged in to access the user management.";
+                return RedirectToAction("Index", "Home", new { scrollTo = "login" });
+            }
+
+            // Check if user is a coach (only coaches should access user management)
+            bool isPlayer = TempData["Success"]?.ToString()?.Contains("player") == true;
+            if (isPlayer)
+            {
+                TempData["Error"] = "Players cannot access the user management section.";
+                return RedirectToAction("Dashboard");
+            }
+
+            ViewData["UserType"] = "Coach";
+
+            // In a real app, we would fetch user data here
+            // For demo, we'll use hard-coded data in the view
+            return View();
+        }
     }
 }
