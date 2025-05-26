@@ -20,69 +20,62 @@ namespace DataLayer.DAL.Repository
         }
 
         /// <summary>
-        /// Get Tag By Id
+        /// Get Game By Id
         /// </summary>
-        /// <param name="TagId"></param>
-        /// <returns></returns>
+        /// <param name="GameId">The ID of the game to retrieve</param>
+        /// <returns>The game with the specified ID, including winners and losers</returns>
         public async Task<Game> GetGameById(string GameId)
         {
             using (var context = _context)
             {
                 try
                 {
-                    // Fetch all games
-                    var game = await (from model in context.Game
-                                                   where model.GameId == GameId
-                                                   select model).FirstOrDefaultAsync();
+                    // Fetch the game
+                    var game = await context.Game
+                        .Where(model => model.GameId == GameId)
+                        .FirstOrDefaultAsync();
 
-                    // Filter games by checking if the ProfileId exists in win or lose JSON strings
-                    var filteredGames = new List<Game>();
+                    if (game == null)
+                        return null;
 
-                        // Deserialize the JSON strings
-                        var profileStatuses = DeserializeProfileStatuses(game.WinProfileIdsStatusString);
+                    // Get winning player IDs
+                    var winningPlayerIds = await context.GameWinningPlayer
+                        .Where(wp => wp.GameId == GameId)
+                        .Select(wp => wp.ProfileId)
+                        .ToListAsync();
 
-                        // Check if ProfileId exists in the winner or loser lists
-                        bool isProfileInWinList = profileStatuses.Any(p => p.Status == "W");
-                        bool isProfileInLoseList = profileStatuses.Any(p => p.Status == "L");
+                    // Get losing player IDs
+                    var losingPlayerIds = await context.GameLosingPlayer
+                        .Where(lp => lp.GameId == GameId)
+                        .Select(lp => lp.ProfileId)
+                        .ToListAsync();
 
-                        // Fetch profiles for winners and losers
-                        var winProfileIds = profileStatuses
-                            .Where(p => p.Status == "W")
-                            .Select(p => p.ProfileId)
-                            .ToList();
+                    //// Fetch winner profiles
+                    //game.WinnersList = await context.Profile
+                    //    .Where(profile => winningPlayerIds.Contains(profile.ProfileId))
+                    //    .ToListAsync();
 
-                        var loseProfileIds = profileStatuses
-                            .Where(p => p.Status == "L")
-                            .Select(p => p.ProfileId)
-                            .ToList();
+                    //// Fetch loser profiles
+                    //game.LossersList = await context.Profile
+                    //    .Where(profile => losingPlayerIds.Contains(profile.ProfileId))
+                    //    .ToListAsync();
 
-                        game.WinnersList = await context.Profile
-                            .Where(profile => winProfileIds.Contains(profile.ProfileId))
-                            .ToListAsync();
+                    //// Populate the main ProfileList
+                    //game.ProfileList = game.WinnersList.Concat(game.LossersList).ToList();
 
-                        game.LossersList = await context.Profile
-                            .Where(profile => loseProfileIds.Contains(profile.ProfileId))
-                            .ToListAsync();
-
-                        // Populate the main ProfileList
-                        game.ProfileList = game.WinnersList.Concat(game.LossersList).ToList();
-
-                        // Fetch the associated PrivateRun using PrivateRunId
-                        if (!string.IsNullOrEmpty(game.RunId))
-                        {
-                            game.Run = await context.Run
-                                .FirstOrDefaultAsync(run => run.RunId == game.RunId);
-                        }
-
-                     
-                    
+                    // Fetch the associated Run using RunId
+                    if (!string.IsNullOrEmpty(game.RunId))
+                    {
+                        game.Run = await context.Run
+                            .FirstOrDefaultAsync(run => run.RunId == game.RunId);
+                    }
 
                     return game;
                 }
                 catch (Exception ex)
                 {
                     // Log the exception or handle it as needed
-                    Console.WriteLine($"Error fetching games: {ex.Message}");
+                    Console.WriteLine($"Error fetching game: {ex.Message}");
                     return null;
                 }
             }
@@ -91,178 +84,137 @@ namespace DataLayer.DAL.Repository
         /// <summary>
         /// Get Game History
         /// </summary>
-        /// <returns></returns>
+        /// <returns>List of games with player information</returns>
         public async Task<List<Game>> GetGameHistory()
         {
             using (var context = _context)
             {
-                // Get all games from the database
-                var games = await context.Game.ToListAsync();
-                var profileGames = new List<Game>();
-
-
-
-                // Loop through each game
-                foreach (var game in games)
+                try
                 {
-                    // Parse the WinProfileIdsStatusString and LoseProfileIdsStatusString into lists of Profile objects
-                    List<Profile> winProfiles = string.IsNullOrEmpty(game.WinProfileIdsStatusString)
-                        ? new List<Profile>()
-                        : JsonConvert.DeserializeObject<List<Profile>>(game.WinProfileIdsStatusString);
+                    // Get all games from the database
+                    var games = await context.Game.ToListAsync();
+                    var profileGames = new List<Game>();
 
-                    List<Profile> loseProfiles = string.IsNullOrEmpty(game.LoseProfileIdsStatusString)
-                        ? new List<Profile>()
-                        : JsonConvert.DeserializeObject<List<Profile>>(game.LoseProfileIdsStatusString);
-
-                    // Check if the ProfileId is present in the winners or losers
-                    bool isInWinningTeam = winProfiles.Any();
-                    bool isInLosingTeam = loseProfiles.Any();
-
-                    // If the profile is in either the winning or losing list, add the game to the profile's game history
-                    if (isInWinningTeam || isInLosingTeam)
+                    // Loop through each game to populate winners and losers
+                    foreach (var game in games)
                     {
-                        // Populate WinnersList
-                        game.WinnersList = winProfiles
-                            .Select(profile => _context.Profile.FirstOrDefault(p => p.ProfileId == profile.ProfileId))
-                            .Where(profile => profile != null)
-                            .Select(profile => new Profile
-                            {
-                                ProfileId = profile.ProfileId,
-                                UserId = profile.UserId,
-                                UserName = profile.UserName,
-                                Height = profile.Height,
-                                Weight = profile.Weight,
-                                Position = profile.Position,
-                                Ranking = profile.Ranking,
-                                StarRating = profile.StarRating,
-                                QRCode = profile.QRCode,
-                                Bio = profile.Bio,
-                                ImageURL = profile.ImageURL,
-                                PlayerArchetype = profile.PlayerArchetype,
-                                City = profile.City,
-                                PlayerNumber = profile.PlayerNumber,
-                                Points = profile.Points,
-                                WinOrLose = "W"
-                            }).ToList();
+                        // Get winning player IDs for this game
+                        var winningPlayerIds = await context.GameWinningPlayer
+                            .Where(wp => wp.GameId == game.GameId)
+                            .Select(wp => wp.ProfileId)
+                            .ToListAsync();
 
-                        // Populate LossersList
-                        game.LossersList = loseProfiles
-                            .Select(profile => _context.Profile.FirstOrDefault(p => p.ProfileId == profile.ProfileId))
-                            .Where(profile => profile != null)
-                            .Select(profile => new Profile
-                            {
-                                ProfileId = profile.ProfileId,
-                                UserId = profile.UserId,
-                                UserName = profile.UserName,
-                                Height = profile.Height,
-                                Weight = profile.Weight,
-                                Position = profile.Position,
-                                Ranking = profile.Ranking,
-                                StarRating = profile.StarRating,
-                                QRCode = profile.QRCode,
-                                Bio = profile.Bio,
-                                ImageURL = profile.ImageURL,
-                                PlayerArchetype = profile.PlayerArchetype,
-                                City = profile.City,
-                                PlayerNumber = profile.PlayerNumber,
-                                Points = profile.Points,
-                                WinOrLose = "L"
-                            }).ToList();
+                        // Get losing player IDs for this game
+                        var losingPlayerIds = await context.GameLosingPlayer
+                            .Where(lp => lp.GameId == game.GameId)
+                            .Select(lp => lp.ProfileId)
+                            .ToListAsync();
 
-                        // Add the game to the result list if it has winners or losers for the profile
-                        if (game.WinnersList.Any() || game.LossersList.Any())
+                        // Skip games with no players
+                        if (!winningPlayerIds.Any() && !losingPlayerIds.Any())
+                            continue;
+
+                        // Fetch profiles for winners and mark them with "W"
+                        var winnerProfiles = await context.Profile
+                            .Where(p => winningPlayerIds.Contains(p.ProfileId))
+                            .ToListAsync();
+
+                        // Set WinOrLose property for each winner
+                        foreach (var profile in winnerProfiles)
                         {
-                            profileGames.Add(game);
+                            profile.WinOrLose = "W";
                         }
-                    }
-                }
-                // Return an empty list if no games found; otherwise, return the list
-                return profileGames.Any() ? profileGames : new List<Game>();
-            }
-            
 
-           
+                        // Fetch profiles for losers and mark them with "L"
+                        var loserProfiles = await context.Profile
+                            .Where(p => losingPlayerIds.Contains(p.ProfileId))
+                            .ToListAsync();
+
+                        // Set WinOrLose property for each loser
+                        foreach (var profile in loserProfiles)
+                        {
+                            profile.WinOrLose = "L";
+                        }
+
+                        // Assign winners and losers to the game
+                        //game.WinnersList = winnerProfiles;
+                        //game.LossersList = loserProfiles;
+
+                        // Populate the combined ProfileList
+                        game.ProfileList = winnerProfiles.Concat(loserProfiles).ToList();
+
+                        // Fetch the associated Run if available
+                        if (!string.IsNullOrEmpty(game.RunId))
+                        {
+                            game.Run = await context.Run
+                                .FirstOrDefaultAsync(r => r.RunId == game.RunId);
+                        }
+
+                        // Add the game to our result list
+                        profileGames.Add(game);
+                    }
+
+                    return profileGames;
+                }
+                catch (Exception ex)
+                {
+                    // Log the exception
+                    Console.WriteLine($"Error fetching game history: {ex.Message}");
+                    return new List<Game>();
+                }
+            }
         }
+
+
+
+
 
         /// <summary>
         /// Get Games By ProfileId
         /// </summary>
-        /// <param name="profileId"></param>
-        /// <returns></returns>
+        /// <param name="profileId">The profile ID to get games for</param>
+        /// <returns>List of games the profile participated in</returns>
         public async Task<List<Game>> GetGamesByProfileId(string profileId)
         {
             using (var context = _context)
             {
                 try
                 {
-                    // Fetch all games
-                    var games = await context.Game.ToListAsync();
+                    // Find all games where the profile is a winner
+                    var winningGameIds = await context.GameWinningPlayer
+                        .Where(wp => wp.ProfileId == profileId)
+                        .Select(wp => wp.GameId)
+                        .ToListAsync();
 
-                    // Filter games by checking if the ProfileId exists in win or lose JSON strings
-                    var filteredGames = new List<Game>();
+                    // Find all games where the profile is a loser
+                    var losingGameIds = await context.GameLosingPlayer
+                        .Where(lp => lp.ProfileId == profileId)
+                        .Select(lp => lp.GameId)
+                        .ToListAsync();
 
-                    foreach (var game in games)
-                    {
-                        // Deserialize the JSON strings
-                        var profileStatuses = DeserializeProfileStatuses(game.WinProfileIdsStatusString);
+                    // Combine IDs to get all games the profile participated in
+                    var allGameIds = winningGameIds.Concat(losingGameIds).Distinct().ToList();
 
-                        // Check if ProfileId exists in the winner or loser lists
-                        bool isProfileInWinList = profileStatuses.Any(p => p.ProfileId == profileId && p.Status == "W");
-                        bool isProfileInLoseList = profileStatuses.Any(p => p.ProfileId == profileId && p.Status == "L");
+                    if (!allGameIds.Any())
+                        return new List<Game>();
 
-                        // If ProfileId is not in either list, skip this game
-                        if (!isProfileInWinList && !isProfileInLoseList)
-                        {
-                            continue;
-                        }
+                    // Fetch the games
+                    var games = await context.Game
+                        .Where(g => allGameIds.Contains(g.GameId))
+                        .ToListAsync();
 
-                        // Determine UserWinOrLose
-                        game.UserWinOrLose = isProfileInWinList ? "W" : "L";
+                  
 
-                        // Fetch profiles for winners and losers
-                        var winProfileIds = profileStatuses
-                            .Where(p => p.Status == "W")
-                            .Select(p => p.ProfileId)
-                            .ToList();
-
-                        var loseProfileIds = profileStatuses
-                            .Where(p => p.Status == "L")
-                            .Select(p => p.ProfileId)
-                            .ToList();
-
-                        game.WinnersList = await context.Profile
-                            .Where(profile => winProfileIds.Contains(profile.ProfileId))
-                            .ToListAsync();
-
-                        game.LossersList = await context.Profile
-                            .Where(profile => loseProfileIds.Contains(profile.ProfileId))
-                            .ToListAsync();
-
-                        // Populate the main ProfileList
-                        game.ProfileList = game.WinnersList.Concat(game.LossersList).ToList();
-
-                        // Fetch the associated PrivateRun using PrivateRunId
-                        if (!string.IsNullOrEmpty(game.RunId))
-                        {
-                            game.Run = await context.Run
-                                .FirstOrDefaultAsync(run => run.RunId == game.RunId);
-                        }
-
-                        // Add game to the filtered list
-                        filteredGames.Add(game);
-                    }
-
-                    return filteredGames;
+                    return processedGames;
                 }
                 catch (Exception ex)
                 {
-                    // Log the exception or handle it as needed
-                    Console.WriteLine($"Error fetching games: {ex.Message}");
-                    return null;
+                    // Log the exception
+                    Console.WriteLine($"Error fetching games for profile {profileId}: {ex.Message}");
+                    return new List<Game>();
                 }
             }
         }
-
         /// <summary>
         /// Get Games
         /// </summary>

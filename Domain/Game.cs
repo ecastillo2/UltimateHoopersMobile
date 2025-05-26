@@ -25,6 +25,12 @@ namespace Domain
         public List<GameWinningPlayer>? GameWinningPlayerList { get; set; }
 
         [NotMapped]
+        public List<Profile>? WinnersList { get; set; }
+
+        [NotMapped]
+        public List<Profile>? LossersList { get; set; }
+
+        [NotMapped]
         public Run? Run { get; set; }
         [NotMapped]
         public Court? Court { get; set; }
