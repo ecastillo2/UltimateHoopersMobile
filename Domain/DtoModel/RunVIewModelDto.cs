@@ -27,7 +27,7 @@ namespace Domain.DtoModel
             RunDate = privateRun.RunDate;
             Cost = privateRun.Cost;
             Description = privateRun.Description;
-            RunTime = privateRun.RunTime;
+            StartTime = privateRun.StartTime;
             EndTime = privateRun.EndTime;
             Type = privateRun.Type;
             CreatedDate = privateRun.CreatedDate;
@@ -53,8 +53,8 @@ namespace Domain.DtoModel
         public string? State { get; set; }
         public string? Zip { get; set; }
         public string? Description { get; set; }
-        public string? RunTime { get; set; }
-        public string? EndTime { get; set; }
+        public TimeSpan? StartTime { get; set; }
+        public TimeSpan? EndTime { get; set; }
         public string? Type { get; set; }
         public string? CreatedDate { get; set; }
         public string? RunNumber { get; set; }

@@ -20,8 +20,8 @@ namespace Domain.DtoModel
         public string? Title { get; set; }
         public string? Location { get; set; }
         public string? Description { get; set; }
-        public string? RunTime { get; set; }
-        public string? EndTime { get; set; }
+        public TimeSpan? StartTime { get; set; }
+        public TimeSpan? EndTime { get; set; }
         public string? Type { get; set; }
         public string? CreatedDate { get; set; }
         public string? RunNumber { get; set; }
@@ -37,7 +37,7 @@ namespace Domain.DtoModel
             run.Status = Status;
 
             run.Description = Description;
-            run.RunTime = RunTime;
+            run.StartTime = StartTime;
             run.EndTime = EndTime;
             run.Type = Type;
             run.SkillLevel = SkillLevel;

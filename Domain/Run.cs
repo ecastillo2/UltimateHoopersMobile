@@ -15,8 +15,8 @@ namespace Domain
         public decimal? Cost { get; set; }
         public string? Name { get; set; }
         public string? Description { get; set; }
-        public string? RunTime { get; set; }
-        public string? EndTime { get; set; }
+        public TimeSpan? StartTime { get; set; }
+        public TimeSpan? EndTime { get; set; }
         public string? Type { get; set; }
         public string? CreatedDate { get; set; }
         public string? RunNumber { get; set; }
