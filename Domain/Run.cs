@@ -45,6 +45,8 @@ namespace Domain
 
         [NotMapped]
         public IList<Profile>? JoinedRunList { get; set; }
+        [NotMapped]
+        public IList<Game>? GameList { get; set; }
 
         [NotMapped]
         public string? UserResponse { get; set; }
