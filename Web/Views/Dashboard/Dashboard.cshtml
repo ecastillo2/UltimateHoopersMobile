@@ -1,7 +1,7 @@
 ﻿@{
     ViewData["Title"] = ViewData["UserType"] + " Dashboard";
     var userType = ViewData["UserType"]?.ToString() ?? "User";
-    var isPlayer = userType == "Player";
+    var isClient = userType == "Client";
 }
 
 @section Styles {
@@ -124,7 +124,7 @@
 <div class="dashboard-header">
     <div class="container">
         <h1>Welcome to Your @userType Dashboard</h1>
-        <p class="lead">Track your progress, manage workouts, and connect with @(isPlayer ? "coaches" : "players")</p>
+        <p class="lead">Track your progress, manage workouts, and connect with @(isClient ? "admins" : "clients")</p>
     </div>
 </div>
 
@@ -134,12 +134,12 @@
         <div class="col-lg-3">
             <div class="sidebar p-3">
                 <div class="d-flex align-items-center mb-4">
-                    <div class="rounded-circle bg-@(isPlayer ? "orange" : "navy") text-white d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                    <div class="rounded-circle bg-@(isClient ? "orange" : "navy") text-white d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
                         <span class="fw-bold">@(userType.Substring(0, 1))</span>
                     </div>
                     <div>
-                        <h5 class="mb-0">@(isPlayer ? "John Player" : "Sarah Coach")</h5>
-                        <small class="text-muted">@(isPlayer ? "Basketball Player" : "Basketball Coach")</small>
+                        <h5 class="mb-0">@(isClient ? "John Client" : "Sarah Admin")</h5>
+                        <small class="text-muted">@(isClient ? "Basketball Player" : "Platform Administrator")</small>
                     </div>
                 </div>
 
@@ -149,42 +149,34 @@
                     </a>
                    
                    
-                        @if (isPlayer)
-                        {
+                    @if (isClient)
+                    {
                         <a href="/Run/Run/" class="sidebar-link">
                             <i class="bi bi-calendar3"></i> Schedule Run
                         </a>
-                            <><i class="bi bi-graph-up"></i> Account</>
-                        }
-                        else
-                        {
-                        <a href="/Run/Run/" class="sidebar-link">
-                            <i class="bi bi-calendar3"></i>  Runs
+                        <a href="#" class="sidebar-link">
+                            <i class="bi bi-graph-up"></i> Account
                         </a>
-                            <a href="/User/User/" class="sidebar-link">
-                            <i class="bi bi-calendar3"></i>  Users
-                            
-                            </a>
-
-                            <a href="/Client/Client/" class="sidebar-link">
-                            <i class="bi bi-calendar3"></i>  Clients
-
-                            </a>
-
-                             <a href="/Games/Games/" class="sidebar-link">
-                            <i class="bi bi-calendar3"></i>  Games
-
-                            </a>
-
-                              <a href="/Post/Post/" class="sidebar-link">
-                            <i class="bi bi-calendar3"></i>  Posts
-
-                            </a>
-
-                        }
+                    }
+                    else
+                    {
+                        <a href="/Run/Run/" class="sidebar-link">
+                            <i class="bi bi-calendar3"></i> Runs
+                        </a>
+                        <a href="/User/User/" class="sidebar-link">
+                            <i class="bi bi-people"></i> Users
+                        </a>
+                        <a href="/Client/Client/" class="sidebar-link">
+                            <i class="bi bi-person-vcard"></i> Clients
+                        </a>
+                        <a href="/Games/Games/" class="sidebar-link">
+                            <i class="bi bi-controller"></i> Games
+                        </a>
+                        <a href="/Post/Post/" class="sidebar-link">
+                            <i class="bi bi-file-post"></i> Posts
+                        </a>
+                    }
                    
-                   
-                    
                     <a href="#" class="sidebar-link">
                         <i class="bi bi-gear"></i> Settings
                     </a>
@@ -208,8 +200,8 @@
                             <div class="stats-icon bg-orange-subtle text-orange">
                                 <i class="bi bi-calendar-check"></i>
                             </div>
-                            <h3 class="fs-5 fw-bold mb-1">@(isPlayer ? "3" : "12")</h3>
-                            <p class="text-muted mb-0">@(isPlayer ? "Runs" : "Runs")</p>
+                            <h3 class="fs-5 fw-bold mb-1">@(isClient ? "3" : "12")</h3>
+                            <p class="text-muted mb-0">@(isClient ? "Runs" : "Runs")</p>
                         </div>
                     </div>
                 </div>
@@ -217,10 +209,10 @@
                     <div class="card stats-card">
                         <div class="card-body p-4">
                             <div class="stats-icon bg-navy-subtle text-navy">
-                                <i class="bi bi-@(isPlayer ? "trophy" : "people")"></i>
+                                <i class="bi bi-@(isClient ? "trophy" : "people")"></i>
                             </div>
-                            <h3 class="fs-5 fw-bold mb-1">@(isPlayer ? "72%" : "5")</h3>
-                            <p class="text-muted mb-0">@(isPlayer ? "Goal Completion" : "Active Users")</p>
+                            <h3 class="fs-5 fw-bold mb-1">@(isClient ? "72%" : "5")</h3>
+                            <p class="text-muted mb-0">@(isClient ? "Goal Completion" : "Active Users")</p>
                         </div>
                     </div>
                 </div>
@@ -228,10 +220,10 @@
                     <div class="card stats-card">
                         <div class="card-body p-4">
                             <div class="stats-icon bg-success-subtle text-success">
-                                <i class="bi bi-@(isPlayer ? "graph-up-arrow" : "people")"></i>
+                                <i class="bi bi-@(isClient ? "graph-up-arrow" : "people")"></i>
                             </div>
-                            <h3 class="fs-5 fw-bold mb-1">@(isPlayer ? "+15%" : "8")</h3>
-                            <p class="text-muted mb-0">@(isPlayer ? "Shooting Improvement" : "Clients")</p>
+                            <h3 class="fs-5 fw-bold mb-1">@(isClient ? "+15%" : "8")</h3>
+                            <p class="text-muted mb-0">@(isClient ? "Shooting Improvement" : "Clients")</p>
                         </div>
                     </div>
                 </div>
@@ -239,9 +231,9 @@
 
             <!-- Content Cards -->
             <div class="row g-4">
-                @if (isPlayer)
+                @if (isClient)
                 {
-                    <!-- Player-specific content -->
+                    <!-- Client-specific content -->
                     <div class="col-md-8">
                         <div class="card mb-4">
                             <div class="card-header bg-white">
@@ -356,11 +348,11 @@
                 }
                 else
                 {
-                    <!-- Coach-specific content -->
+                    <!-- Admin-specific content -->
                     <div class="col-md-8">
                         <div class="card mb-4">
                             <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                                <h5 class="card-title mb-0">My Players</h5>
+                                <h5 class="card-title mb-0">My Clients</h5>
                                 <a href="#" class="text-navy text-decoration-none">View All</a>
                             </div>
                             <div class="card-body">
@@ -453,7 +445,7 @@
                                         <i class="bi bi-clipboard-plus me-2"></i> New Assessment
                                     </a>
                                     <a href="#" class="btn btn-outline-navy">
-                                        <i class="bi bi-people-fill me-2"></i> Add Player
+                                        <i class="bi bi-people-fill me-2"></i> Add Client
                                     </a>
                                     <a href="#" class="btn btn-outline-navy">
                                         <i class="bi bi-file-earmark-text me-2"></i> Generate Report

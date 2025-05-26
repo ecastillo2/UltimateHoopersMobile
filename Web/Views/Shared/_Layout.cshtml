@@ -39,7 +39,7 @@
                                 <a class="nav-link text-dark" asp-controller="Dashboard" asp-action="Dashboard">Dashboard</a>
                             </li>
 
-                            @if (AuthService.IsCoach)
+                            @if (AuthService.IsAdmin)
                             {
                                 <li class="nav-item">
                                     <a class="nav-link text-dark" asp-controller="Dashboard" asp-action="Client">Clients</a>
@@ -104,59 +104,59 @@
                 <div class="modal-body">
                     <ul class="nav nav-tabs" id="loginTabs" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="player-tab" data-bs-toggle="tab" data-bs-target="#player-login" type="button" role="tab" aria-controls="player-login" aria-selected="true">Player</button>
+                            <button class="nav-link active" id="client-tab" data-bs-toggle="tab" data-bs-target="#client-login" type="button" role="tab" aria-controls="client-login" aria-selected="true">Client</button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="coach-tab" data-bs-toggle="tab" data-bs-target="#coach-login" type="button" role="tab" aria-controls="coach-login" aria-selected="false">Coach</button>
+                            <button class="nav-link" id="admin-tab" data-bs-toggle="tab" data-bs-target="#admin-login" type="button" role="tab" aria-controls="admin-login" aria-selected="false">Admin</button>
                         </li>
                     </ul>
                     <div class="tab-content" id="loginTabsContent">
-                        <div class="tab-pane fade show active" id="player-login" role="tabpanel" aria-labelledby="player-tab">
+                        <div class="tab-pane fade show active" id="client-login" role="tabpanel" aria-labelledby="client-tab">
                             <form asp-controller="Account" asp-action="ClientLogin" method="post">
-                                <input type="hidden" name="returnUrl" id="playerReturnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                                <input type="hidden" name="returnUrl" id="clientReturnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
                                 <div class="mb-3 mt-3">
-                                    <label for="playerEmail" class="form-label">Email Address</label>
-                                    <input type="email" class="form-control" id="playerEmail" name="email" required>
+                                    <label for="clientEmail" class="form-label">Email Address</label>
+                                    <input type="email" class="form-control" id="clientEmail" name="email" required>
                                     <div class="form-text">Demo: any @@@("client.com") email, password: client123</div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="playerPassword" class="form-label">Password</label>
-                                    <input type="password" class="form-control" id="playerPassword" name="password" required>
+                                    <label for="clientPassword" class="form-label">Password</label>
+                                    <input type="password" class="form-control" id="clientPassword" name="password" required>
                                 </div>
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" value="" id="rememberPlayerCheck">
-                                        <label class="form-check-label" for="rememberPlayerCheck">
+                                        <input class="form-check-input" type="checkbox" value="" id="rememberClientCheck">
+                                        <label class="form-check-label" for="rememberClientCheck">
                                             Remember me
                                         </label>
                                     </div>
                                     <a href="#" class="text-orange">Forgot password?</a>
                                 </div>
-                                <button type="submit" class="btn btn-orange w-100">Login as Player</button>
+                                <button type="submit" class="btn btn-orange w-100">Login as Client</button>
                             </form>
                         </div>
-                        <div class="tab-pane fade" id="coach-login" role="tabpanel" aria-labelledby="coach-tab">
-                            <form asp-controller="Account" asp-action="StaffLogin" method="post">
-                                <input type="hidden" name="returnUrl" id="coachReturnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                        <div class="tab-pane fade" id="admin-login" role="tabpanel" aria-labelledby="admin-tab">
+                            <form asp-controller="Account" asp-action="AdminLogin" method="post">
+                                <input type="hidden" name="returnUrl" id="adminReturnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
                                 <div class="mb-3 mt-3">
-                                    <label for="coachEmail" class="form-label">Email Address</label>
-                                    <input type="email" class="form-control" id="coachEmail" name="email" required>
-                                    <div class="form-text">Demo: any @@@("company.com") email, password: staff123</div>
+                                    <label for="adminEmail" class="form-label">Email Address</label>
+                                    <input type="email" class="form-control" id="adminEmail" name="email" required>
+                                    <div class="form-text">Demo: any @@@("company.com") email, password: admin123</div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="coachPassword" class="form-label">Password</label>
-                                    <input type="password" class="form-control" id="coachPassword" name="password" required>
+                                    <label for="adminPassword" class="form-label">Password</label>
+                                    <input type="password" class="form-control" id="adminPassword" name="password" required>
                                 </div>
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" value="" id="rememberCoachCheck">
-                                        <label class="form-check-label" for="rememberCoachCheck">
+                                        <input class="form-check-input" type="checkbox" value="" id="rememberAdminCheck">
+                                        <label class="form-check-label" for="rememberAdminCheck">
                                             Remember me
                                         </label>
                                     </div>
                                     <a href="#" class="text-navy">Forgot password?</a>
                                 </div>
-                                <button type="submit" class="btn btn-navy w-100">Login as Coach</button>
+                                <button type="submit" class="btn btn-navy w-100">Login as Admin</button>
                             </form>
                         </div>
                     </div>

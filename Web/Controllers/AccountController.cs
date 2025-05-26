@@ -36,10 +36,13 @@ namespace Web.Controllers
                     return RedirectToAction("Index", "Home", new { scrollTo = "login" });
                 }
 
+                // Force the user role to be Client for client login
+                user.AccessLevel = "Client";
+
                 // Store user information in session using our service
                 _authenticationService.StoreUserSession(user);
 
-                TempData["Success"] = "Successfully logged in as a player!";
+                TempData["Success"] = "Successfully logged in as a client!";
 
                 // Redirect to returnUrl if provided, otherwise to dashboard
                 if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
@@ -56,7 +59,7 @@ namespace Web.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> StaffLogin(string email, string password, string returnUrl = null)
+        public async Task<IActionResult> AdminLogin(string email, string password, string returnUrl = null)
         {
             try
             {
@@ -68,10 +71,13 @@ namespace Web.Controllers
                     return RedirectToAction("Index", "Home", new { scrollTo = "login" });
                 }
 
+                // Force the user role to be Admin for admin login
+                user.AccessLevel = "Admin";
+
                 // Store user information in session using our service
                 _authenticationService.StoreUserSession(user);
 
-                TempData["Success"] = "Successfully logged in as a coach!";
+                TempData["Success"] = "Successfully logged in as an administrator!";
 
                 // Redirect to returnUrl if provided, otherwise to dashboard
                 if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))

@@ -21,28 +21,28 @@ namespace Web.Controllers
         public IActionResult Dashboard()
         {
             // Pass user type to the view
-            ViewData["UserType"] = _authenticationService.IsPlayer ? "Player" : "Coach";
+            ViewData["UserType"] = _authenticationService.IsClient ? "Client" : "Admin";
             return View();
         }
 
-        [Authentication("Coach", "Administrator")] // Only allow coaches and administrators
+        [Authentication("Admin")] // Only allow administrators
         public IActionResult Client()
         {
-            ViewData["UserType"] = "Coach";
+            ViewData["UserType"] = "Admin";
             return View();
         }
 
-        [Authentication("Coach", "Administrator")] // Only allow coaches and administrators
+        [Authentication("Admin")] // Only allow administrators
         public IActionResult User()
         {
-            ViewData["UserType"] = "Coach";
+            ViewData["UserType"] = "Admin";
             return View();
         }
 
-        [Authentication("Coach", "Administrator")] // Only allow coaches and administrators
+        [Authentication("Admin")] // Only allow administrators
         public IActionResult Run()
         {
-            ViewData["UserType"] = "Coach";
+            ViewData["UserType"] = "Admin";
             return View();
         }
     }

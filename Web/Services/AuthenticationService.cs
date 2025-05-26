@@ -1,5 +1,4 @@
-﻿// File: Services/AuthenticationService.cs
-using Domain;
+﻿using Domain;
 using Microsoft.AspNetCore.Http;
 using System;
 
@@ -52,7 +51,8 @@ namespace Website.Services
             return !string.IsNullOrEmpty(userRole) && userRole.Equals(role, StringComparison.OrdinalIgnoreCase);
         }
 
-        public bool IsPlayer => IsUserInRole("Player");
-        public bool IsCoach => IsUserInRole("Coach") || IsUserInRole("Administrator");
+        // Updated user type properties
+        public bool IsClient => IsUserInRole("Client");
+        public bool IsAdmin => IsUserInRole("Admin");
     }
 }
