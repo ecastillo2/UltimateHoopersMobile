@@ -1,6 +1,7 @@
-﻿// In Attributes/AuthenticationAttribute.cs
+﻿// File: Attributes/AuthenticationAttribute.cs
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using System;
 using Website.Services;
 
 namespace Website.Attributes
@@ -16,9 +17,9 @@ namespace Website.Attributes
 
         public override void OnActionExecuting(ActionExecutingContext context)
         {
-            var authService = context.HttpContext.RequestServices.GetService<AuthenticationService>();
+            var authService = context.HttpContext.RequestServices.GetRequiredService<AuthenticationService>();
 
-            if (authService == null || !authService.IsAuthenticated)
+            if (!authService.IsAuthenticated)
             {
                 // Store the current URL to redirect back after login
                 var returnUrl = context.HttpContext.Request.Path + context.HttpContext.Request.QueryString;

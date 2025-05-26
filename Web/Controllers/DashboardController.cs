@@ -4,7 +4,7 @@ using Website.Services;
 
 namespace Web.Controllers
 {
-    [Authentication] // Require authentication for all actions
+    [Authentication] // Require authentication for all actions in this controller
     public class DashboardController : Controller
     {
         private readonly ILogger<DashboardController> _logger;
@@ -15,14 +15,13 @@ namespace Web.Controllers
             AuthenticationService authenticationService)
         {
             _logger = logger;
-            _authenticationService = authenticationService;
+            _authenticationService = authenticationService ?? throw new ArgumentNullException(nameof(authenticationService));
         }
 
         public IActionResult Dashboard()
         {
             // Pass user type to the view
             ViewData["UserType"] = _authenticationService.IsPlayer ? "Player" : "Coach";
-
             return View();
         }
 

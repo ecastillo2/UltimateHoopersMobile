@@ -23,8 +23,9 @@ builder.Services.AddSession(options =>
 // Add HttpClient factory
 builder.Services.AddHttpClient();
 // In Program.cs
+// In Program.cs where services are being registered
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<AuthenticationService>();
+builder.Services.AddScoped<Website.Services.AuthenticationService>();
 // Register API client services
 builder.Services.AddApiClientServices(builder.Configuration);
 

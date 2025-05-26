@@ -1,7 +1,6 @@
-﻿@model Website.ViewModels.RunsViewModel
-
-@{
-    ViewData["Title"] = "Runs";
+﻿@{
+    ViewData["Title"] = "Run Management";
+    var userType = ViewData["UserType"]?.ToString() ?? "Coach";
 }
 
 @section Styles {
@@ -21,19 +20,49 @@
             margin-bottom: 2rem;
         }
 
-        .client-card {
+        .run-card {
             border-radius: 15px;
             transition: all 0.3s ease;
             border: none;
             height: 100%;
         }
 
-            .client-card:hover {
+            .run-card:hover {
                 transform: translateY(-5px);
                 box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
             }
 
-        .client-avatar {
+        .run-banner {
+            height: 120px;
+            background-size: cover;
+            background-position: center;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+            position: relative;
+        }
+
+        .status-badge {
+            border-radius: 20px;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        .run-time {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+        }
+
+        .run-host {
             width: 50px;
             height: 50px;
             border-radius: 50%;
@@ -44,13 +73,11 @@
             align-items: center;
             justify-content: center;
             font-weight: bold;
-        }
-
-        .status-badge {
-            border-radius: 20px;
-            padding: 0.25rem 0.75rem;
-            font-size: 0.75rem;
-            font-weight: 600;
+            margin-top: -25px;
+            margin-left: 15px;
+            border: 3px solid white;
+            position: relative;
+            z-index: 10;
         }
 
         .search-box {
@@ -91,74 +118,753 @@
         .modal-footer {
             border-top: none;
         }
+
+        .progress-sm {
+            height: 6px;
+            border-radius: 3px;
+        }
+
+        .court-image {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .date-picker, .time-picker {
+            border-radius: 50px;
+            border: 1px solid #e9ecef;
+            padding: 0.375rem 1rem;
+        }
+
+        .participants-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
     </style>
 }
 
-<div class="container mt-4">
-    <h1>Runs</h1>
+<div class="dashboard-header">
+    <div class="container">
+        <h1>Run Management</h1>
+        <p class="lead">Create and manage basketball runs, track participants, and schedule sessions</p>
+    </div>
+</div>
 
+<div class="container">
     <div class="row mb-4">
         <div class="col-md-6">
-            <input type="text" class="form-control" placeholder="Search runs..." value="@Model.SearchTerm">
+            <div class="input-group mb-3">
+                <input type="text" class="form-control search-box" placeholder="Search runs..." aria-label="Search runs">
+                <button class="btn search-btn" type="button">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
         </div>
         <div class="col-md-4">
-            <select class="form-select">
+            <select class="form-select filter-dropdown">
                 <option selected>All Runs</option>
                 <option>Upcoming Runs</option>
                 <option>Past Runs</option>
+                <option>My Runs</option>
+                <option>Full Runs</option>
             </select>
         </div>
-        <div class="col-md-2">
-            <button class="btn btn-orange w-100">
+        <div class="col-md-2 text-end">
+            <button type="button" class="btn btn-orange w-100" data-bs-toggle="modal" data-bs-target="#addRunModal">
                 <i class="bi bi-plus-circle me-2"></i>Create Run
             </button>
         </div>
     </div>
 
-    <div class="row">
-        @if (Model?.Runs != null && Model.Runs.Any())
-        {
-            foreach (var run in Model.Runs)
-            {
-                <div class="col-md-6 mb-4">
-                    <div class="card shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title">@run.Name</h5>
-                            <p class="card-text">@run.Description</p>
-                            <p><strong>Date:</strong> @run.RunTime?</p>
-                            <p><strong>Location:</strong> @run.Address</p>
-                           @*  <p><strong>Host:</strong> @run.HostName</p>
-                            <div class="d-flex justify-content-between">
-                                <span>@run.CurrentParticipants / @run.MaxParticipants participants</span>
-                                <div>
-                                    <button class="btn btn-sm btn-outline-secondary me-2">View</button>
-                                    <button class="btn btn-sm btn-orange">Join</button>
-                                </div>
-                            </div> *@
+    <div class="row g-4">
+        <!-- Run 1 -->
+        <div class="col-md-6">
+            <div class="card run-card shadow-sm">
+                <div class="run-banner" style="background-image: url('https://placehold.co/600x200/1C2C5B/FFFFFF?text=Main+Court')">
+                    <span class="status-badge bg-success-subtle text-success">Upcoming</span>
+                    <span class="run-time"><i class="bi bi-clock me-1"></i>May 26, 2025 • 7:00 PM</span>
+                </div>
+                <div class="run-host">JD</div>
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h5 class="mb-1">Weeknight Run</h5>
+                            <p class="text-muted mb-0">Main Street Courts • Indoor</p>
+                        </div>
+                    </div>
+                    <p class="mb-3">Competitive 5v5 full court run. All skill levels welcome but be ready to play hard.</p>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="small">Spots filled</span>
+                            <span class="small text-orange">6/10</span>
+                        </div>
+                        <div class="progress progress-sm">
+                            <div class="progress-bar bg-orange" role="progressbar" style="width: 60%" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">Hosted by James Davis</span>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-navy me-2" data-bs-toggle="modal" data-bs-target="#editRunModal">
+                                <i class="bi bi-pencil me-1"></i>Edit
+                            </button>
+                            <button type="button" class="btn btn-sm btn-navy">
+                                <i class="bi bi-eye me-1"></i>View
+                            </button>
                         </div>
                     </div>
                 </div>
-            }
-        }
-        else
-        {
-            <div class="col-12 text-center py-5">
-                <h3>No runs found</h3>
-                <p>There are no runs available at the moment.</p>
             </div>
-        }
+        </div>
+
+        <!-- Run 2 -->
+        <div class="col-md-6">
+            <div class="card run-card shadow-sm">
+                <div class="run-banner" style="background-image: url('https://placehold.co/600x200/FF6B00/FFFFFF?text=Downtown+Gym')">
+                    <span class="status-badge bg-success-subtle text-success">Upcoming</span>
+                    <span class="run-time"><i class="bi bi-clock me-1"></i>May 28, 2025 • 6:30 PM</span>
+                </div>
+                <div class="run-host">MC</div>
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h5 class="mb-1">Downtown Run</h5>
+                            <p class="text-muted mb-0">City Gym • Indoor</p>
+                        </div>
+                    </div>
+                    <p class="mb-3">Intermediate level run focused on development. Coaches will be present to provide tips.</p>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="small">Spots filled</span>
+                            <span class="small text-orange">8/12</span>
+                        </div>
+                        <div class="progress progress-sm">
+                            <div class="progress-bar bg-orange" role="progressbar" style="width: 67%" aria-valuenow="67" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">Hosted by Mike Chen</span>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-navy me-2" data-bs-toggle="modal" data-bs-target="#editRunModal">
+                                <i class="bi bi-pencil me-1"></i>Edit
+                            </button>
+                            <button type="button" class="btn btn-sm btn-navy">
+                                <i class="bi bi-eye me-1"></i>View
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Run 3 -->
+        <div class="col-md-6">
+            <div class="card run-card shadow-sm">
+                <div class="run-banner" style="background-image: url('https://placehold.co/600x200/1C2C5B/FFFFFF?text=Westside+Park')">
+                    <span class="status-badge bg-warning-subtle text-warning">Almost Full</span>
+                    <span class="run-time"><i class="bi bi-clock me-1"></i>May 29, 2025 • 5:00 PM</span>
+                </div>
+                <div class="run-host">LR</div>
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h5 class="mb-1">Westside Park Run</h5>
+                            <p class="text-muted mb-0">Westside Courts • Outdoor</p>
+                        </div>
+                    </div>
+                    <p class="mb-3">Casual pickup games with rotating teams. Emphasis on fun and community building.</p>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="small">Spots filled</span>
+                            <span class="small text-orange">14/15</span>
+                        </div>
+                        <div class="progress progress-sm">
+                            <div class="progress-bar bg-orange" role="progressbar" style="width: 93%" aria-valuenow="93" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">Hosted by Lisa Rodriguez</span>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-navy me-2" data-bs-toggle="modal" data-bs-target="#editRunModal">
+                                <i class="bi bi-pencil me-1"></i>Edit
+                            </button>
+                            <button type="button" class="btn btn-sm btn-navy">
+                                <i class="bi bi-eye me-1"></i>View
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Run 4 -->
+        <div class="col-md-6">
+            <div class="card run-card shadow-sm">
+                <div class="run-banner" style="background-image: url('https://placehold.co/600x200/FF6B00/FFFFFF?text=Community+Center')">
+                    <span class="status-badge bg-danger-subtle text-danger">Full</span>
+                    <span class="run-time"><i class="bi bi-clock me-1"></i>May 27, 2025 • 8:00 PM</span>
+                </div>
+                <div class="run-host">RW</div>
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h5 class="mb-1">Community Center Run</h5>
+                            <p class="text-muted mb-0">Community Center • Indoor</p>
+                        </div>
+                    </div>
+                    <p class="mb-3">Advanced level run with structured gameplay. Focused on teamwork and strategy.</p>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="small">Spots filled</span>
+                            <span class="small text-orange">10/10</span>
+                        </div>
+                        <div class="progress progress-sm">
+                            <div class="progress-bar bg-orange" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">Hosted by Robert Williams</span>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-navy me-2" data-bs-toggle="modal" data-bs-target="#editRunModal">
+                                <i class="bi bi-pencil me-1"></i>Edit
+                            </button>
+                            <button type="button" class="btn btn-sm btn-navy">
+                                <i class="bi bi-eye me-1"></i>View
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Run 5 -->
+        <div class="col-md-6">
+            <div class="card run-card shadow-sm">
+                <div class="run-banner" style="background-image: url('https://placehold.co/600x200/1C2C5B/FFFFFF?text=Youth+Center')">
+                    <span class="status-badge bg-info-subtle text-info">Youth</span>
+                    <span class="run-time"><i class="bi bi-clock me-1"></i>May 30, 2025 • 4:00 PM</span>
+                </div>
+                <div class="run-host">AS</div>
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h5 class="mb-1">Youth Development Run</h5>
+                            <p class="text-muted mb-0">Youth Center • Indoor</p>
+                        </div>
+                    </div>
+                    <p class="mb-3">For players 13-16 years old. Focus on fundamentals and skill development with coaches.</p>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="small">Spots filled</span>
+                            <span class="small text-orange">7/12</span>
+                        </div>
+                        <div class="progress progress-sm">
+                            <div class="progress-bar bg-orange" role="progressbar" style="width: 58%" aria-valuenow="58" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">Hosted by Anna Smith</span>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-navy me-2" data-bs-toggle="modal" data-bs-target="#editRunModal">
+                                <i class="bi bi-pencil me-1"></i>Edit
+                            </button>
+                            <button type="button" class="btn btn-sm btn-navy">
+                                <i class="bi bi-eye me-1"></i>View
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Run 6 -->
+        <div class="col-md-6">
+            <div class="card run-card shadow-sm">
+                <div class="run-banner" style="background-image: url('https://placehold.co/600x200/FF6B00/FFFFFF?text=Recreation+Center')">
+                    <span class="status-badge bg-secondary-subtle text-secondary">Past</span>
+                    <span class="run-time"><i class="bi bi-clock me-1"></i>May 20, 2025 • 6:00 PM</span>
+                </div>
+                <div class="run-host">TJ</div>
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h5 class="mb-1">Rec Center Run</h5>
+                            <p class="text-muted mb-0">Recreation Center • Indoor</p>
+                        </div>
+                    </div>
+                    <p class="mb-3">All skill levels welcome. Mixed age groups with emphasis on sportsmanship.</p>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="small">Attendance</span>
+                            <span class="small text-orange">9/12</span>
+                        </div>
+                        <div class="progress progress-sm">
+                            <div class="progress-bar bg-orange" role="progressbar" style="width: 75%" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">Hosted by Tyler Jones</span>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-navy me-2" data-bs-toggle="modal" data-bs-target="#editRunModal">
+                                <i class="bi bi-pencil me-1"></i>Edit
+                            </button>
+                            <button type="button" class="btn btn-sm btn-navy">
+                                <i class="bi bi-eye me-1"></i>View
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    @if (Model?.HasNextPage == true)
-    {
-        <div class="d-flex justify-content-center mt-4">
-            <nav aria-label="Runs pagination">
-                <ul class="pagination">
-                    <li class="page-item">
-                        <a class="page-link" href="@Url.Action("Run", new { cursor = Model.NextCursor, direction = "next", limit = Model.PageSize, sortBy = Model.CurrentSortBy })">Next</a>
+    <!-- Pagination -->
+    <div class="d-flex justify-content-center mt-5">
+        <nav aria-label="Run pagination">
+            <ul class="pagination">
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item">
+                    <a class="page-link" href="#" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- Add Run Modal -->
+<div class="modal fade" id="addRunModal" tabindex="-1" aria-labelledby="addRunModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addRunModalLabel">Create New Run</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addRunForm">
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="runTitle" class="form-label">Run Title</label>
+                            <input type="text" class="form-control" id="runTitle" placeholder="e.g. Weeknight Run, Sunday Morning Basketball" required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="runDate" class="form-label">Date</label>
+                            <input type="date" class="form-control date-picker" id="runDate" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="runTime" class="form-label">Time</label>
+                            <input type="time" class="form-control time-picker" id="runTime" required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="courtLocation" class="form-label">Court Location</label>
+                            <select class="form-select" id="courtLocation" required>
+                                <option value="" selected disabled>Select a location</option>
+                                <option value="main-street">Main Street Courts</option>
+                                <option value="city-gym">City Gym</option>
+                                <option value="westside">Westside Park Courts</option>
+                                <option value="community">Community Center</option>
+                                <option value="youth">Youth Center</option>
+                                <option value="rec-center">Recreation Center</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="courtType" class="form-label">Court Type</label>
+                            <select class="form-select" id="courtType" required>
+                                <option value="indoor" selected>Indoor</option>
+                                <option value="outdoor">Outdoor</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="maxParticipants" class="form-label">Maximum Participants</label>
+                            <input type="number" class="form-control" id="maxParticipants" min="2" max="30" value="10" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="skillLevel" class="form-label">Skill Level</label>
+                            <select class="form-select" id="skillLevel" required>
+                                <option value="beginner">Beginner</option>
+                                <option value="intermediate" selected>Intermediate</option>
+                                <option value="advanced">Advanced</option>
+                                <option value="all">All Levels</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="runDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="runDescription" rows="3" placeholder="Describe the run, what to expect, what to bring, etc." required></textarea>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="runType" class="form-label">Run Type</label>
+                            <select class="form-select" id="runType" required>
+                                <option value="pickup" selected>Pickup Games</option>
+                                <option value="training">Training Session</option>
+                                <option value="tournament">Tournament</option>
+                                <option value="youth">Youth Development</option>
+                                <option value="women">Women's Only</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="makeRecurring">
+                                <label class="form-check-label" for="makeRecurring">
+                                    Make this a recurring run
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3 recurring-options" style="display: none;">
+                        <div class="col-md-6">
+                            <label for="recurringType" class="form-label">Recurrence</label>
+                            <select class="form-select" id="recurringType">
+                                <option value="weekly" selected>Weekly</option>
+                                <option value="biweekly">Bi-weekly</option>
+                                <option value="monthly">Monthly</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="recurringEndDate" class="form-label">End Date</label>
+                            <input type="date" class="form-control date-picker" id="recurringEndDate">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-orange">Create Run</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Run Modal -->
+<div class="modal fade" id="editRunModal" tabindex="-1" aria-labelledby="editRunModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editRunModalLabel">Edit Run</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="nav nav-tabs" id="editRunTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="details-tab" data-bs-toggle="tab" data-bs-target="#details-tab-pane" type="button" role="tab" aria-controls="details-tab-pane" aria-selected="true">Details</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="participants-tab" data-bs-toggle="tab" data-bs-target="#participants-tab-pane" type="button" role="tab" aria-controls="participants-tab-pane" aria-selected="false">Participants</button>
                     </li>
                 </ul>
-            </nav>
+                <div class="tab-content" id="editRunTabContent">
+                    <div class="tab-pane fade show active" id="details-tab-pane" role="tabpanel" aria-labelledby="details-tab" tabindex="0">
+                        <form id="editRunForm" class="mt-4">
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label for="editRunTitle" class="form-label">Run Title</label>
+                                    <input type="text" class="form-control" id="editRunTitle" value="Weeknight Run" required>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="editRunDate" class="form-label">Date</label>
+                                    <input type="date" class="form-control date-picker" id="editRunDate" value="2025-05-26" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="editRunTime" class="form-label">Time</label>
+                                    <input type="time" class="form-control time-picker" id="editRunTime" value="19:00" required>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="editCourtLocation" class="form-label">Court Location</label>
+                                    <select class="form-select" id="editCourtLocation" required>
+                                        <option value="main-street" selected>Main Street Courts</option>
+                                        <option value="city-gym">City Gym</option>
+                                        <option value="westside">Westside Park Courts</option>
+                                        <option value="community">Community Center</option>
+                                        <option value="youth">Youth Center</option>
+                                        <option value="rec-center">Recreation Center</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="editCourtType" class="form-label">Court Type</label>
+                                    <select class="form-select" id="editCourtType" required>
+                                        <option value="indoor" selected>Indoor</option>
+                                        <option value="outdoor">Outdoor</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="editMaxParticipants" class="form-label">Maximum Participants</label>
+                                    <input type="number" class="form-control" id="editMaxParticipants" min="2" max="30" value="10" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="editStatus" class="form-label">Status</label>
+                                    <select class="form-select" id="editStatus" required>
+                                        <option value="upcoming" selected>Upcoming</option>
+                                        <option value="full">Full</option>
+                                        <option value="cancelled">Cancelled</option>
+                                        <option value="completed">Completed</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label for="editRunDescription" class="form-label">Description</label>
+                                    <textarea class="form-control" id="editRunDescription" rows="3" required>Competitive 5v5 full court run. All skill levels welcome but be ready to play hard.</textarea>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="tab-pane fade" id="participants-tab-pane" role="tabpanel" aria-labelledby="participants-tab" tabindex="0">
+                        <div class="mt-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="mb-0">Current Participants (6/10)</h6>
+                                <button class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-person-plus me-1"></i>Add Participant
+                                </button>
+                            </div>
+                            <div class="participants-list">
+                                <div class="d-flex align-items-center p-2 border-bottom">
+                                    <div class="flex-shrink-0 me-3" style="width: 40px; height: 40px; background-color: var(--secondary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                                        JP
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">John Player</h6>
+                                        <span class="text-muted small">Joined May 20, 2025</span>
+                                    </div>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li><a class="dropdown-item" href="#"><i class="bi bi-envelope me-2"></i>Message</a></li>
+                                            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>View Profile</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-person-x me-2"></i>Remove</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center p-2 border-bottom">
+                                    <div class="flex-shrink-0 me-3" style="width: 40px; height: 40px; background-color: var(--secondary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                                        AW
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">Alex Williams</h6>
+                                        <span class="text-muted small">Joined May 21, 2025</span>
+                                    </div>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li><a class="dropdown-item" href="#"><i class="bi bi-envelope me-2"></i>Message</a></li>
+                                            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>View Profile</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-person-x me-2"></i>Remove</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center p-2 border-bottom">
+                                    <div class="flex-shrink-0 me-3" style="width: 40px; height: 40px; background-color: var(--secondary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                                        TS
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">Taylor Smith</h6>
+                                        <span class="text-muted small">Joined May 22, 2025</span>
+                                    </div>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li><a class="dropdown-item" href="#"><i class="bi bi-envelope me-2"></i>Message</a></li>
+                                            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>View Profile</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-person-x me-2"></i>Remove</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center p-2 border-bottom">
+                                    <div class="flex-shrink-0 me-3" style="width: 40px; height: 40px; background-color: var(--secondary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                                        RJ
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">Riley Johnson</h6>
+                                        <span class="text-muted small">Joined May 23, 2025</span>
+                                    </div>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li><a class="dropdown-item" href="#"><i class="bi bi-envelope me-2"></i>Message</a></li>
+                                            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>View Profile</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-person-x me-2"></i>Remove</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center p-2 border-bottom">
+                                    <div class="flex-shrink-0 me-3" style="width: 40px; height: 40px; background-color: var(--secondary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                                        MB
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">Morgan Brown</h6>
+                                        <span class="text-muted small">Joined May 24, 2025</span>
+                                    </div>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li><a class="dropdown-item" href="#"><i class="bi bi-envelope me-2"></i>Message</a></li>
+                                            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>View Profile</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-person-x me-2"></i>Remove</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center p-2">
+                                    <div class="flex-shrink-0 me-3" style="width: 40px; height: 40px; background-color: var(--secondary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                                        JD
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">James Davis</h6>
+                                        <span class="text-muted small">Host</span>
+                                    </div>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li><a class="dropdown-item" href="#"><i class="bi bi-envelope me-2"></i>Message</a></li>
+                                            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>View Profile</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4">
+                                <h6 class="mb-3">Waitlist</h6>
+                                <p class="text-muted small">No players on the waitlist</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger me-auto">Delete Run</button>
+                <button type="button" class="btn btn-orange">Save Changes</button>
+            </div>
         </div>
-    }
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle search functionality
+            const searchInput = document.querySelector('.search-box');
+            searchInput.addEventListener('keyup', function() {
+                const searchTerm = this.value.toLowerCase();
+                const runCards = document.querySelectorAll('.run-card');
+
+                runCards.forEach(card => {
+                    const runTitle = card.querySelector('h5').textContent.toLowerCase();
+                    const runLocation = card.querySelector('.text-muted').textContent.toLowerCase();
+                    const runDescription = card.querySelector('p.mb-3').textContent.toLowerCase();
+
+                    if (runTitle.includes(searchTerm) || runLocation.includes(searchTerm) || runDescription.includes(searchTerm)) {
+                        card.closest('.col-md-6').style.display = '';
+                    } else {
+                        card.closest('.col-md-6').style.display = 'none';
+                    }
+                });
+            });
+
+            // Handle filter dropdown
+            const filterDropdown = document.querySelector('.filter-dropdown');
+            filterDropdown.addEventListener('change', function() {
+                const filterValue = this.value.toLowerCase();
+                const runCards = document.querySelectorAll('.run-card');
+
+                runCards.forEach(card => {
+                    const statusBadge = card.querySelector('.status-badge').textContent.toLowerCase();
+                    const timeInfo = card.querySelector('.run-time').textContent.toLowerCase();
+                    const host = card.querySelector('.text-muted.small').textContent.toLowerCase();
+
+                    let shouldShow = true;
+
+                    if (filterValue === 'upcoming runs' && !statusBadge.includes('upcoming')) {
+                        shouldShow = false;
+                    } else if (filterValue === 'past runs' && !statusBadge.includes('past')) {
+                        shouldShow = false;
+                    } else if (filterValue === 'full runs' && !(statusBadge.includes('full') || statusBadge.includes('almost full'))) {
+                        shouldShow = false;
+                    } else if (filterValue === 'my runs' && !host.includes('hosted by james davis')) {
+                        shouldShow = false;
+                    }
+
+                    card.closest('.col-md-6').style.display = shouldShow ? '' : 'none';
+                });
+            });
+
+            // Handle recurring run checkbox
+            const makeRecurringCheckbox = document.getElementById('makeRecurring');
+            const recurringOptions = document.querySelector('.recurring-options');
+
+            makeRecurringCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    recurringOptions.style.display = 'flex';
+                } else {
+                    recurringOptions.style.display = 'none';
+                }
+            });
+
+            // Form submission handlers
+            document.getElementById('addRunForm')?.addEventListener('submit', function(e) {
+                e.preventDefault();
+                // Add form submission logic here
+                $('#addRunModal').modal('hide');
+            });
+
+            document.getElementById('editRunForm')?.addEventListener('submit', function(e) {
+                e.preventDefault();
+                // Edit form submission logic here
+                $('#editRunModal').modal('hide');
+            });
+        });
+    </script>
+}

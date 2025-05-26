@@ -1,6 +1,7 @@
 ﻿// File: Services/AuthenticationService.cs
 using Domain;
 using Microsoft.AspNetCore.Http;
+using System;
 
 namespace Website.Services
 {
@@ -10,7 +11,7 @@ namespace Website.Services
 
         public AuthenticationService(IHttpContextAccessor httpContextAccessor)
         {
-            _httpContextAccessor = httpContextAccessor;
+            _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
         }
 
         public bool IsAuthenticated => !string.IsNullOrEmpty(GetToken());
@@ -34,9 +35,6 @@ namespace Website.Services
                 // Store additional user info as needed
                 if (!string.IsNullOrEmpty(user.ClientId))
                     session.SetString("ClientId", user.ClientId);
-
-                if (!string.IsNullOrEmpty(user.Subscription))
-                    session.SetString("Subscription", user.Subscription);
 
                 // Store login timestamp
                 session.SetString("LoginTimestamp", DateTime.UtcNow.ToString("o"));

@@ -1,4 +1,5 @@
 ﻿using ApiClient.Authentication;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
@@ -35,7 +36,7 @@ namespace Web.Controllers
                     return RedirectToAction("Index", "Home", new { scrollTo = "login" });
                 }
 
-                // Store user information in session
+                // Store user information in session using our service
                 _authenticationService.StoreUserSession(user);
 
                 TempData["Success"] = "Successfully logged in as a player!";
@@ -67,7 +68,7 @@ namespace Web.Controllers
                     return RedirectToAction("Index", "Home", new { scrollTo = "login" });
                 }
 
-                // Store user information in session
+                // Store user information in session using our service
                 _authenticationService.StoreUserSession(user);
 
                 TempData["Success"] = "Successfully logged in as a coach!";
@@ -89,7 +90,7 @@ namespace Web.Controllers
         [HttpGet]
         public IActionResult Logout()
         {
-            // Clear session
+            // Clear session using our service
             _authenticationService.ClearUserSession();
 
             TempData["Success"] = "Successfully logged out.";
