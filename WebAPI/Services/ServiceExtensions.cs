@@ -43,6 +43,7 @@ namespace WebAPI.Extensions
             services.AddScoped<IPostRepository, PostRepository>();
             services.AddScoped<IGameRepository, GameRepository>();
             services.AddScoped<ICourtRepository, CourtRepository>();
+            services.AddScoped<IClientRepository, ClientRepository>();
             services.AddScoped<INotificationRepository, NotificationRepository>();
             services.AddScoped<IProductRepository, ProductRepository>();
             services.AddScoped<IRunRepository, RunRepository>();

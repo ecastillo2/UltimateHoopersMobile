@@ -210,244 +210,41 @@
                 <thead>
                     <tr>
                         <th>Client</th>
-                        <th>Position & Age</th>
+                        
                         <th>Date Joined</th>
-                        <th>Progress</th>
-                        <th>Next Session</th>
-                        <th>Status</th>
+                        
+           
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- Sample Data - Replace with server-side data -->
-                    <tr>
-                        <td>
-                            <div class="client-container">
-                                <div class="client-avatar">JP</div>
-                                <div>
-                                    <div class="fw-semibold">John Player</div>
-                                    <div class="text-muted small">ID: #2001</div>
+                    @foreach (var item in Model.Clients)
+                    {
+                        <tr>
+                            <td>
+                                <div class="client-container">
+                                    <div class="client-avatar">JP</div>
+                                    <div>
+                                        <div class="fw-semibold">@item.Client.Name</div>
+                                        <div class="text-muted small">ID: # @item.Client.ClientNumber</div>
+                                    </div>
                                 </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div>
-                                <span class="fw-medium">Shooting Guard</span>
-                                <div class="text-muted small">Age 16</div>
-                            </div>
-                        </td>
-                        <td>April 15, 2025</td>
-                        <td>
-                            <div class="progress-container">
-                                <span class="progress-text text-orange">72%</span>
-                                <div class="progress progress-sm w-100">
-                                    <div class="progress-bar bg-orange" role="progressbar" style="width: 72%" aria-valuenow="72" aria-valuemin="0" aria-valuemax="100"></div>
+                            </td>
+
+                            <td>@item.Client.CreatedDate</td>
+   
+                            <td>
+                                <div class="table-actions">
+                                    <button type="button" class="btn btn-sm btn-outline-primary action-icon" data-bs-toggle="modal" data-bs-target="#editClientModal" data-client-id="2001" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <a href="@Url.Action("ClientDetails", "Dashboard", new { id = "2001" })" class="btn btn-sm btn-primary action-icon" title="View">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
                                 </div>
-                            </div>
-                        </td>
-                        <td>May 26, 2025</td>
-                        <td><span class="status-badge bg-success-subtle text-success">Active</span></td>
-                        <td>
-                            <div class="table-actions">
-                                <button type="button" class="btn btn-sm btn-outline-primary action-icon" data-bs-toggle="modal" data-bs-target="#editClientModal" data-client-id="2001" title="Edit">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <a href="@Url.Action("ClientDetails", "Dashboard", new { id = "2001" })" class="btn btn-sm btn-primary action-icon" title="View">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="client-container">
-                                <div class="client-avatar">AW</div>
-                                <div>
-                                    <div class="fw-semibold">Alex Williams</div>
-                                    <div class="text-muted small">ID: #2002</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div>
-                                <span class="fw-medium">Point Guard</span>
-                                <div class="text-muted small">Age 15</div>
-                            </div>
-                        </td>
-                        <td>March 3, 2025</td>
-                        <td>
-                            <div class="progress-container">
-                                <span class="progress-text text-orange">45%</span>
-                                <div class="progress progress-sm w-100">
-                                    <div class="progress-bar bg-orange" role="progressbar" style="width: 45%" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>May 28, 2025</td>
-                        <td><span class="status-badge bg-success-subtle text-success">Active</span></td>
-                        <td>
-                            <div class="table-actions">
-                                <button type="button" class="btn btn-sm btn-outline-primary action-icon" data-bs-toggle="modal" data-bs-target="#editClientModal" data-client-id="2002" title="Edit">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <a href="@Url.Action("ClientDetails", "Dashboard", new { id = "2002" })" class="btn btn-sm btn-primary action-icon" title="View">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="client-container">
-                                <div class="client-avatar">TS</div>
-                                <div>
-                                    <div class="fw-semibold">Taylor Smith</div>
-                                    <div class="text-muted small">ID: #2003</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div>
-                                <span class="fw-medium">Forward</span>
-                                <div class="text-muted small">Age 17</div>
-                            </div>
-                        </td>
-                        <td>January 12, 2025</td>
-                        <td>
-                            <div class="progress-container">
-                                <span class="progress-text text-orange">60%</span>
-                                <div class="progress progress-sm w-100">
-                                    <div class="progress-bar bg-orange" role="progressbar" style="width: 60%" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>Not Scheduled</td>
-                        <td><span class="status-badge bg-warning-subtle text-warning">On Hold</span></td>
-                        <td>
-                            <div class="table-actions">
-                                <button type="button" class="btn btn-sm btn-outline-primary action-icon" data-bs-toggle="modal" data-bs-target="#editClientModal" data-client-id="2003" title="Edit">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <a href="@Url.Action("ClientDetails", "Dashboard", new { id = "2003" })" class="btn btn-sm btn-primary action-icon" title="View">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="client-container">
-                                <div class="client-avatar">RJ</div>
-                                <div>
-                                    <div class="fw-semibold">Riley Johnson</div>
-                                    <div class="text-muted small">ID: #2004</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div>
-                                <span class="fw-medium">Center</span>
-                                <div class="text-muted small">Age 16</div>
-                            </div>
-                        </td>
-                        <td>February 22, 2025</td>
-                        <td>
-                            <div class="progress-container">
-                                <span class="progress-text text-orange">30%</span>
-                                <div class="progress progress-sm w-100">
-                                    <div class="progress-bar bg-orange" role="progressbar" style="width: 30%" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>May 27, 2025</td>
-                        <td><span class="status-badge bg-success-subtle text-success">Active</span></td>
-                        <td>
-                            <div class="table-actions">
-                                <button type="button" class="btn btn-sm btn-outline-primary action-icon" data-bs-toggle="modal" data-bs-target="#editClientModal" data-client-id="2004" title="Edit">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <a href="@Url.Action("ClientDetails", "Dashboard", new { id = "2004" })" class="btn btn-sm btn-primary action-icon" title="View">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="client-container">
-                                <div class="client-avatar">MB</div>
-                                <div>
-                                    <div class="fw-semibold">Morgan Brown</div>
-                                    <div class="text-muted small">ID: #2005</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div>
-                                <span class="fw-medium">Forward</span>
-                                <div class="text-muted small">Age 15</div>
-                            </div>
-                        </td>
-                        <td>April 2, 2025</td>
-                        <td>
-                            <div class="progress-container">
-                                <span class="progress-text text-orange">25%</span>
-                                <div class="progress progress-sm w-100">
-                                    <div class="progress-bar bg-orange" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>May 30, 2025</td>
-                        <td><span class="status-badge bg-success-subtle text-success">Active</span></td>
-                        <td>
-                            <div class="table-actions">
-                                <button type="button" class="btn btn-sm btn-outline-primary action-icon" data-bs-toggle="modal" data-bs-target="#editClientModal" data-client-id="2005" title="Edit">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <a href="@Url.Action("ClientDetails", "Dashboard", new { id = "2005" })" class="btn btn-sm btn-primary action-icon" title="View">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="client-container">
-                                <div class="client-avatar">JD</div>
-                                <div>
-                                    <div class="fw-semibold">Jamie Davis</div>
-                                    <div class="text-muted small">ID: #2006</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div>
-                                <span class="fw-medium">Guard</span>
-                                <div class="text-muted small">Age 17</div>
-                            </div>
-                        </td>
-                        <td>November 10, 2024</td>
-                        <td>
-                            <div class="progress-container">
-                                <span class="progress-text text-orange">85%</span>
-                                <div class="progress progress-sm w-100">
-                                    <div class="progress-bar bg-orange" role="progressbar" style="width: 85%" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>March 15, 2025</td>
-                        <td><span class="status-badge bg-danger-subtle text-danger">Inactive</span></td>
-                        <td>
-                            <div class="table-actions">
-                                <button type="button" class="btn btn-sm btn-outline-primary action-icon" data-bs-toggle="modal" data-bs-target="#editClientModal" data-client-id="2006" title="Edit">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <a href="@Url.Action("ClientDetails", "Dashboard", new { id = "2006" })" class="btn btn-sm btn-primary action-icon" title="View">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
+                            </td>
+                        </tr>
+                    }
                 </tbody>
             </table>
         </div>
