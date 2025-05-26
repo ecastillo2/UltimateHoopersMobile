@@ -1,4 +1,6 @@
-﻿@{
+﻿@model Website.ViewModels.RunsViewModel
+
+@{
     ViewData["Title"] = "Run Management";
     var userType = ViewData["UserType"]?.ToString() ?? "Coach";
 }
@@ -142,6 +144,18 @@
             max-height: 200px;
             overflow-y: auto;
         }
+
+        .back-button {
+            margin-bottom: 20px;
+        }
+
+        .no-runs-message {
+            text-align: center;
+            padding: 3rem;
+            background-color: #f8f9fa;
+            border-radius: 15px;
+            margin: 2rem 0;
+        }
     </style>
 }
 
@@ -153,22 +167,36 @@
 </div>
 
 <div class="container">
+    <!-- Back button to dashboard -->
+    <div class="back-button">
+        <a href="@Url.Action("Dashboard", "Dashboard")" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+
     <div class="row mb-4">
         <div class="col-md-6">
-            <div class="input-group mb-3">
-                <input type="text" class="form-control search-box" placeholder="Search runs..." aria-label="Search runs">
-                <button class="btn search-btn" type="button">
-                    <i class="bi bi-search"></i>
-                </button>
-            </div>
+            <form method="get" action="@Url.Action("Run", "Dashboard")">
+                <input type="hidden" name="cursor" value="@Model.NextCursor" />
+                <input type="hidden" name="direction" value="next" />
+                <input type="hidden" name="limit" value="@Model.PageSize" />
+                <input type="hidden" name="sortBy" value="@Model.CurrentSortBy" />
+
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control search-box" name="searchTerm" placeholder="Search runs..." aria-label="Search runs" value="@Model.SearchTerm">
+                    <button class="btn search-btn" type="submit">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </form>
         </div>
         <div class="col-md-4">
-            <select class="form-select filter-dropdown">
-                <option selected>All Runs</option>
-                <option>Upcoming Runs</option>
-                <option>Past Runs</option>
-                <option>My Runs</option>
-                <option>Full Runs</option>
+            <select class="form-select filter-dropdown" id="runFilterDropdown">
+                <option value="all" selected>All Runs</option>
+                <option value="upcoming">Upcoming Runs</option>
+                <option value="past">Past Runs</option>
+                <option value="my">My Runs</option>
+                <option value="full">Full Runs</option>
             </select>
         </div>
         <div class="col-md-2 text-end">
@@ -178,268 +206,159 @@
         </div>
     </div>
 
+    <!-- Run cards -->
     <div class="row g-4">
-        <!-- Run 1 -->
-        <div class="col-md-6">
-            <div class="card run-card shadow-sm">
-                <div class="run-banner" style="background-image: url('https://placehold.co/600x200/1C2C5B/FFFFFF?text=Main+Court')">
-                    <span class="status-badge bg-success-subtle text-success">Upcoming</span>
-                    <span class="run-time"><i class="bi bi-clock me-1"></i>May 26, 2025 • 7:00 PM</span>
-                </div>
-                <div class="run-host">JD</div>
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div>
-                            <h5 class="mb-1">Weeknight Run</h5>
-                            <p class="text-muted mb-0">Main Street Courts • Indoor</p>
-                        </div>
-                    </div>
-                    <p class="mb-3">Competitive 5v5 full court run. All skill levels welcome but be ready to play hard.</p>
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between mb-1">
-                            <span class="small">Spots filled</span>
-                            <span class="small text-orange">6/10</span>
-                        </div>
-                        <div class="progress progress-sm">
-                            <div class="progress-bar bg-orange" role="progressbar" style="width: 60%" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="text-muted small">Hosted by James Davis</span>
-                        <div>
-                            <button type="button" class="btn btn-sm btn-outline-navy me-2" data-bs-toggle="modal" data-bs-target="#editRunModal">
-                                <i class="bi bi-pencil me-1"></i>Edit
-                            </button>
-                            <button type="button" class="btn btn-sm btn-navy">
-                                <i class="bi bi-eye me-1"></i>View
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        @if (Model?.Runs != null && Model.Runs.Any())
+        {
+            foreach (var run in Model.Runs)
+            {
+                // Determine run status badge
+                string badgeClass = "bg-success-subtle text-success";
+                string badgeText = "Upcoming";
 
-        <!-- Run 2 -->
-        <div class="col-md-6">
-            <div class="card run-card shadow-sm">
-                <div class="run-banner" style="background-image: url('https://placehold.co/600x200/FF6B00/FFFFFF?text=Downtown+Gym')">
-                    <span class="status-badge bg-success-subtle text-success">Upcoming</span>
-                    <span class="run-time"><i class="bi bi-clock me-1"></i>May 28, 2025 • 6:30 PM</span>
-                </div>
-                <div class="run-host">MC</div>
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div>
-                            <h5 class="mb-1">Downtown Run</h5>
-                            <p class="text-muted mb-0">City Gym • Indoor</p>
-                        </div>
-                    </div>
-                    <p class="mb-3">Intermediate level run focused on development. Coaches will be present to provide tips.</p>
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between mb-1">
-                            <span class="small">Spots filled</span>
-                            <span class="small text-orange">8/12</span>
-                        </div>
-                        <div class="progress progress-sm">
-                            <div class="progress-bar bg-orange" role="progressbar" style="width: 67%" aria-valuenow="67" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="text-muted small">Hosted by Mike Chen</span>
-                        <div>
-                            <button type="button" class="btn btn-sm btn-outline-navy me-2" data-bs-toggle="modal" data-bs-target="#editRunModal">
-                                <i class="bi bi-pencil me-1"></i>Edit
-                            </button>
-                            <button type="button" class="btn btn-sm btn-navy">
-                                <i class="bi bi-eye me-1"></i>View
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+             @*    if (run.IsFull)
+                {
+                    badgeClass = "bg-danger-subtle text-danger";
+                    badgeText = "Full";
+                } *@
+                 if (run.PlayerCount > 0 && run.PlayerLimit > 0 &&
+                (float)run.PlayerCount / run.PlayerLimit >= 0.85)
+                {
+                    badgeClass = "bg-warning-subtle text-warning";
+                    badgeText = "Almost Full";
+                }
+                else if (run.RunDate < DateTime.Now)
+                {
+                    badgeClass = "bg-secondary-subtle text-secondary";
+                    badgeText = "Past";
+                }
 
-        <!-- Run 3 -->
-        <div class="col-md-6">
-            <div class="card run-card shadow-sm">
-                <div class="run-banner" style="background-image: url('https://placehold.co/600x200/1C2C5B/FFFFFF?text=Westside+Park')">
-                    <span class="status-badge bg-warning-subtle text-warning">Almost Full</span>
-                    <span class="run-time"><i class="bi bi-clock me-1"></i>May 29, 2025 • 5:00 PM</span>
-                </div>
-                <div class="run-host">LR</div>
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div>
-                            <h5 class="mb-1">Westside Park Run</h5>
-                            <p class="text-muted mb-0">Westside Courts • Outdoor</p>
-                        </div>
-                    </div>
-                    <p class="mb-3">Casual pickup games with rotating teams. Emphasis on fun and community building.</p>
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between mb-1">
-                            <span class="small">Spots filled</span>
-                            <span class="small text-orange">14/15</span>
-                        </div>
-                        <div class="progress progress-sm">
-                            <div class="progress-bar bg-orange" role="progressbar" style="width: 93%" aria-valuenow="93" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="text-muted small">Hosted by Lisa Rodriguez</span>
-                        <div>
-                            <button type="button" class="btn btn-sm btn-outline-navy me-2" data-bs-toggle="modal" data-bs-target="#editRunModal">
-                                <i class="bi bi-pencil me-1"></i>Edit
-                            </button>
-                            <button type="button" class="btn btn-sm btn-navy">
-                                <i class="bi bi-eye me-1"></i>View
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                // Calculate fill percentage for progress bar
+                int fillPercentage = 0;
+               @*  if (run.PlayerLimit > 0)
+                {
+                    fillPercentage = (int)Math.Min(100, Math.Round(((double)run.PlayerCount / run.PlayerLimit) * 100));
+                } *@
 
-        <!-- Run 4 -->
-        <div class="col-md-6">
-            <div class="card run-card shadow-sm">
-                <div class="run-banner" style="background-image: url('https://placehold.co/600x200/FF6B00/FFFFFF?text=Community+Center')">
-                    <span class="status-badge bg-danger-subtle text-danger">Full</span>
-                    <span class="run-time"><i class="bi bi-clock me-1"></i>May 27, 2025 • 8:00 PM</span>
-                </div>
-                <div class="run-host">RW</div>
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div>
-                            <h5 class="mb-1">Community Center Run</h5>
-                            <p class="text-muted mb-0">Community Center • Indoor</p>
-                        </div>
-                    </div>
-                    <p class="mb-3">Advanced level run with structured gameplay. Focused on teamwork and strategy.</p>
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between mb-1">
-                            <span class="small">Spots filled</span>
-                            <span class="small text-orange">10/10</span>
-                        </div>
-                        <div class="progress progress-sm">
-                            <div class="progress-bar bg-orange" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="text-muted small">Hosted by Robert Williams</span>
-                        <div>
-                            <button type="button" class="btn btn-sm btn-outline-navy me-2" data-bs-toggle="modal" data-bs-target="#editRunModal">
-                                <i class="bi bi-pencil me-1"></i>Edit
-                            </button>
-                            <button type="button" class="btn btn-sm btn-navy">
-                                <i class="bi bi-eye me-1"></i>View
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                // Get host initials
+                string hostInitials = "NA";
+                if (!string.IsNullOrEmpty(run.ProfileId))
+                {
+                    var names = run.ProfileId.Split(' ');
+                    if (names.Length >= 2)
+                    {
+                        hostInitials = $"{names[0][0]}{names[1][0]}";
+                    }
+                    else if (names.Length == 1 && names[0].Length > 0)
+                    {
+                        hostInitials = names[0][0].ToString();
+                    }
+                }
 
-        <!-- Run 5 -->
-        <div class="col-md-6">
-            <div class="card run-card shadow-sm">
-                <div class="run-banner" style="background-image: url('https://placehold.co/600x200/1C2C5B/FFFFFF?text=Youth+Center')">
-                    <span class="status-badge bg-info-subtle text-info">Youth</span>
-                    <span class="run-time"><i class="bi bi-clock me-1"></i>May 30, 2025 • 4:00 PM</span>
-                </div>
-                <div class="run-host">AS</div>
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div>
-                            <h5 class="mb-1">Youth Development Run</h5>
-                            <p class="text-muted mb-0">Youth Center • Indoor</p>
-                        </div>
-                    </div>
-                    <p class="mb-3">For players 13-16 years old. Focus on fundamentals and skill development with coaches.</p>
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between mb-1">
-                            <span class="small">Spots filled</span>
-                            <span class="small text-orange">7/12</span>
-                        </div>
-                        <div class="progress progress-sm">
-                            <div class="progress-bar bg-orange" role="progressbar" style="width: 58%" aria-valuenow="58" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="text-muted small">Hosted by Anna Smith</span>
-                        <div>
-                            <button type="button" class="btn btn-sm btn-outline-navy me-2" data-bs-toggle="modal" data-bs-target="#editRunModal">
-                                <i class="bi bi-pencil me-1"></i>Edit
-                            </button>
-                            <button type="button" class="btn btn-sm btn-navy">
-                                <i class="bi bi-eye me-1"></i>View
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                // Get court theme color
+               @*  string courtColor = run.RunId % 2 == 0 ? "FF6B00" : "1C2C5B"; *@
+                string courtName = !string.IsNullOrEmpty(run.Address) ? run.Address : "Basketball Court";
 
-        <!-- Run 6 -->
-        <div class="col-md-6">
-            <div class="card run-card shadow-sm">
-                <div class="run-banner" style="background-image: url('https://placehold.co/600x200/FF6B00/FFFFFF?text=Recreation+Center')">
-                    <span class="status-badge bg-secondary-subtle text-secondary">Past</span>
-                    <span class="run-time"><i class="bi bi-clock me-1"></i>May 20, 2025 • 6:00 PM</span>
+                <div class="col-md-6">
+                    <div class="card run-card shadow-sm">
+                        <div class="run-banner" style="background-image: url('https://placehold.co/600x200/@@courtColor/FFFFFF?text=@Uri.EscapeDataString(courtName)')">
+                            <span class="status-badge @badgeClass">@badgeText</span>
+                            <span class="run-time"><i class="bi bi-clock me-1"></i>@(run.RunTime)</span>
+                        </div>
+                        <div class="run-host">@hostInitials</div>
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h5 class="mb-1">@run.Name</h5>
+                                    <p class="text-muted mb-0">@run.Address </p>
+                                </div>
+                            </div>
+                            <p class="mb-3">@run.Description</p>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="small">@(run.RunDate < DateTime.Now ? "Attendance" : "Spots filled")</span>
+                                    <span class="small text-orange">@run.PlayerCount/@run.PlayerLimit</span>
+                                </div>
+                                <div class="progress progress-sm">
+                                    <div class="progress-bar bg-orange" role="progressbar" style="width: @(fillPercentage)%" aria-valuenow="@fillPercentage" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                               @*  <span class="text-muted small">Hosted by @run.HostName</span> *@
+                                <div>
+                                    <button type="button" class="btn btn-sm btn-outline-navy me-2" data-bs-toggle="modal" data-bs-target="#editRunModal" data-run-id="@run.RunId">
+                                        <i class="bi bi-pencil me-1"></i>Edit
+                                    </button>
+                                    <a href="@Url.Action("RunDetails", "Dashboard", new { id = run.RunId })" class="btn btn-sm btn-navy">
+                                        <i class="bi bi-eye me-1"></i>View
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="run-host">TJ</div>
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div>
-                            <h5 class="mb-1">Rec Center Run</h5>
-                            <p class="text-muted mb-0">Recreation Center • Indoor</p>
-                        </div>
-                    </div>
-                    <p class="mb-3">All skill levels welcome. Mixed age groups with emphasis on sportsmanship.</p>
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between mb-1">
-                            <span class="small">Attendance</span>
-                            <span class="small text-orange">9/12</span>
-                        </div>
-                        <div class="progress progress-sm">
-                            <div class="progress-bar bg-orange" role="progressbar" style="width: 75%" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="text-muted small">Hosted by Tyler Jones</span>
-                        <div>
-                            <button type="button" class="btn btn-sm btn-outline-navy me-2" data-bs-toggle="modal" data-bs-target="#editRunModal">
-                                <i class="bi bi-pencil me-1"></i>Edit
-                            </button>
-                            <button type="button" class="btn btn-sm btn-navy">
-                                <i class="bi bi-eye me-1"></i>View
-                            </button>
-                        </div>
-                    </div>
+            }
+        }
+        else
+        {
+            <div class="col-12">
+                <div class="no-runs-message">
+                    <i class="bi bi-calendar-x" style="font-size: 3rem; color: var(--secondary-color);"></i>
+                    <h3 class="mt-3">No Runs Found</h3>
+                    <p class="text-muted">There are no runs available at the moment. Create a new run to get started!</p>
+                    <button type="button" class="btn btn-orange mt-3" data-bs-toggle="modal" data-bs-target="#addRunModal">
+                        <i class="bi bi-plus-circle me-2"></i>Create Run
+                    </button>
                 </div>
             </div>
-        </div>
+        }
     </div>
 
     <!-- Pagination -->
-    <div class="d-flex justify-content-center mt-5">
-        <nav aria-label="Run pagination">
-            <ul class="pagination">
-                <li class="page-item disabled">
-                    <a class="page-link" href="#" aria-label="Previous">
-                        <span aria-hidden="true">&laquo;</span>
-                    </a>
-                </li>
-                <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                <li class="page-item"><a class="page-link" href="#">3</a></li>
-                <li class="page-item">
-                    <a class="page-link" href="#" aria-label="Next">
-                        <span aria-hidden="true">&raquo;</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
-    </div>
+    @if (Model?.HasNextPage == true || Model?.HasPreviousPage == true)
+    {
+        <div class="d-flex justify-content-center mt-5">
+            <nav aria-label="Run pagination">
+                <ul class="pagination">
+                    @if (Model.HasPreviousPage)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" href="@Url.Action("Run", "Dashboard", new { cursor = Model.PreviousCursor, direction = "previous", limit = Model.PageSize, sortBy = Model.CurrentSortBy, searchTerm = Model.SearchTerm })" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    }
+
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+
+                    @if (Model.HasNextPage)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" href="@Url.Action("Run", "Dashboard", new { cursor = Model.NextCursor, direction = "next", limit = Model.PageSize, sortBy = Model.CurrentSortBy, searchTerm = Model.SearchTerm })" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        </div>
+    }
 </div>
 
 <!-- Add Run Modal -->
@@ -450,44 +369,44 @@
                 <h5 class="modal-title" id="addRunModalLabel">Create New Run</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <form id="addRunForm">
+            <form id="addRunForm" method="post" action="@Url.Action("CreateRun", "Dashboard")">
+                <div class="modal-body">
                     <div class="row mb-3">
                         <div class="col-md-12">
                             <label for="runTitle" class="form-label">Run Title</label>
-                            <input type="text" class="form-control" id="runTitle" placeholder="e.g. Weeknight Run, Sunday Morning Basketball" required>
+                            <input type="text" class="form-control" id="runTitle" name="Title" placeholder="e.g. Weeknight Run, Sunday Morning Basketball" required>
                         </div>
                     </div>
 
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="runDate" class="form-label">Date</label>
-                            <input type="date" class="form-control date-picker" id="runDate" required>
+                            <input type="date" class="form-control date-picker" id="runDate" name="RunDate" required>
                         </div>
                         <div class="col-md-6">
                             <label for="runTime" class="form-label">Time</label>
-                            <input type="time" class="form-control time-picker" id="runTime" required>
+                            <input type="time" class="form-control time-picker" id="runTime" name="RunTime" required>
                         </div>
                     </div>
 
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="courtLocation" class="form-label">Court Location</label>
-                            <select class="form-select" id="courtLocation" required>
+                            <select class="form-select" id="courtLocation" name="Location" required>
                                 <option value="" selected disabled>Select a location</option>
-                                <option value="main-street">Main Street Courts</option>
-                                <option value="city-gym">City Gym</option>
-                                <option value="westside">Westside Park Courts</option>
-                                <option value="community">Community Center</option>
-                                <option value="youth">Youth Center</option>
-                                <option value="rec-center">Recreation Center</option>
+                                <option value="Main Street Courts">Main Street Courts</option>
+                                <option value="City Gym">City Gym</option>
+                                <option value="Westside Park Courts">Westside Park Courts</option>
+                                <option value="Community Center">Community Center</option>
+                                <option value="Youth Center">Youth Center</option>
+                                <option value="Recreation Center">Recreation Center</option>
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label for="courtType" class="form-label">Court Type</label>
-                            <select class="form-select" id="courtType" required>
-                                <option value="indoor" selected>Indoor</option>
-                                <option value="outdoor">Outdoor</option>
+                            <select class="form-select" id="courtType" name="IsOutdoor" required>
+                                <option value="false" selected>Indoor</option>
+                                <option value="true">Outdoor</option>
                             </select>
                         </div>
                     </div>
@@ -495,15 +414,15 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="maxParticipants" class="form-label">Maximum Participants</label>
-                            <input type="number" class="form-control" id="maxParticipants" min="2" max="30" value="10" required>
+                            <input type="number" class="form-control" id="maxParticipants" name="MaxParticipants" min="2" max="30" value="10" required>
                         </div>
                         <div class="col-md-6">
                             <label for="skillLevel" class="form-label">Skill Level</label>
-                            <select class="form-select" id="skillLevel" required>
-                                <option value="beginner">Beginner</option>
-                                <option value="intermediate" selected>Intermediate</option>
-                                <option value="advanced">Advanced</option>
-                                <option value="all">All Levels</option>
+                            <select class="form-select" id="skillLevel" name="SkillLevel" required>
+                                <option value="Beginner">Beginner</option>
+                                <option value="Intermediate" selected>Intermediate</option>
+                                <option value="Advanced">Advanced</option>
+                                <option value="All Levels">All Levels</option>
                             </select>
                         </div>
                     </div>
@@ -511,19 +430,19 @@
                     <div class="row mb-3">
                         <div class="col-md-12">
                             <label for="runDescription" class="form-label">Description</label>
-                            <textarea class="form-control" id="runDescription" rows="3" placeholder="Describe the run, what to expect, what to bring, etc." required></textarea>
+                            <textarea class="form-control" id="runDescription" name="Description" rows="3" placeholder="Describe the run, what to expect, what to bring, etc." required></textarea>
                         </div>
                     </div>
 
                     <div class="row mb-3">
                         <div class="col-md-12">
                             <label for="runType" class="form-label">Run Type</label>
-                            <select class="form-select" id="runType" required>
-                                <option value="pickup" selected>Pickup Games</option>
-                                <option value="training">Training Session</option>
-                                <option value="tournament">Tournament</option>
-                                <option value="youth">Youth Development</option>
-                                <option value="women">Women's Only</option>
+                            <select class="form-select" id="runType" name="RunType" required>
+                                <option value="Pickup" selected>Pickup Games</option>
+                                <option value="Training">Training Session</option>
+                                <option value="Tournament">Tournament</option>
+                                <option value="Youth">Youth Development</option>
+                                <option value="Women">Women's Only</option>
                             </select>
                         </div>
                     </div>
@@ -531,7 +450,7 @@
                     <div class="row mb-3">
                         <div class="col-md-12">
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="makeRecurring">
+                                <input class="form-check-input" type="checkbox" id="makeRecurring" name="IsRecurring">
                                 <label class="form-check-label" for="makeRecurring">
                                     Make this a recurring run
                                 </label>
@@ -542,23 +461,23 @@
                     <div class="row mb-3 recurring-options" style="display: none;">
                         <div class="col-md-6">
                             <label for="recurringType" class="form-label">Recurrence</label>
-                            <select class="form-select" id="recurringType">
-                                <option value="weekly" selected>Weekly</option>
-                                <option value="biweekly">Bi-weekly</option>
-                                <option value="monthly">Monthly</option>
+                            <select class="form-select" id="recurringType" name="RecurringType">
+                                <option value="Weekly" selected>Weekly</option>
+                                <option value="Biweekly">Bi-weekly</option>
+                                <option value="Monthly">Monthly</option>
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label for="recurringEndDate" class="form-label">End Date</label>
-                            <input type="date" class="form-control date-picker" id="recurringEndDate">
+                            <input type="date" class="form-control date-picker" id="recurringEndDate" name="RecurringEndDate">
                         </div>
                     </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-orange">Create Run</button>
-            </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-orange">Create Run</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -582,42 +501,44 @@
                 </ul>
                 <div class="tab-content" id="editRunTabContent">
                     <div class="tab-pane fade show active" id="details-tab-pane" role="tabpanel" aria-labelledby="details-tab" tabindex="0">
-                        <form id="editRunForm" class="mt-4">
+                        <form id="editRunForm" method="post" action="@Url.Action("UpdateRun", "Dashboard")" class="mt-4">
+                            <input type="hidden" id="editRunId" name="Id" value="" />
+
                             <div class="row mb-3">
                                 <div class="col-md-12">
                                     <label for="editRunTitle" class="form-label">Run Title</label>
-                                    <input type="text" class="form-control" id="editRunTitle" value="Weeknight Run" required>
+                                    <input type="text" class="form-control" id="editRunTitle" name="Title" required>
                                 </div>
                             </div>
 
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label for="editRunDate" class="form-label">Date</label>
-                                    <input type="date" class="form-control date-picker" id="editRunDate" value="2025-05-26" required>
+                                    <input type="date" class="form-control date-picker" id="editRunDate" name="RunDate" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="editRunTime" class="form-label">Time</label>
-                                    <input type="time" class="form-control time-picker" id="editRunTime" value="19:00" required>
+                                    <input type="time" class="form-control time-picker" id="editRunTime" name="RunTime" required>
                                 </div>
                             </div>
 
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label for="editCourtLocation" class="form-label">Court Location</label>
-                                    <select class="form-select" id="editCourtLocation" required>
-                                        <option value="main-street" selected>Main Street Courts</option>
-                                        <option value="city-gym">City Gym</option>
-                                        <option value="westside">Westside Park Courts</option>
-                                        <option value="community">Community Center</option>
-                                        <option value="youth">Youth Center</option>
-                                        <option value="rec-center">Recreation Center</option>
+                                    <select class="form-select" id="editCourtLocation" name="Location" required>
+                                        <option value="Main Street Courts">Main Street Courts</option>
+                                        <option value="City Gym">City Gym</option>
+                                        <option value="Westside Park Courts">Westside Park Courts</option>
+                                        <option value="Community Center">Community Center</option>
+                                        <option value="Youth Center">Youth Center</option>
+                                        <option value="Recreation Center">Recreation Center</option>
                                     </select>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="editCourtType" class="form-label">Court Type</label>
-                                    <select class="form-select" id="editCourtType" required>
-                                        <option value="indoor" selected>Indoor</option>
-                                        <option value="outdoor">Outdoor</option>
+                                    <select class="form-select" id="editCourtType" name="IsOutdoor" required>
+                                        <option value="false">Indoor</option>
+                                        <option value="true">Outdoor</option>
                                     </select>
                                 </div>
                             </div>
@@ -625,15 +546,15 @@
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label for="editMaxParticipants" class="form-label">Maximum Participants</label>
-                                    <input type="number" class="form-control" id="editMaxParticipants" min="2" max="30" value="10" required>
+                                    <input type="number" class="form-control" id="editMaxParticipants" name="MaxParticipants" min="2" max="30" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="editStatus" class="form-label">Status</label>
-                                    <select class="form-select" id="editStatus" required>
-                                        <option value="upcoming" selected>Upcoming</option>
-                                        <option value="full">Full</option>
-                                        <option value="cancelled">Cancelled</option>
-                                        <option value="completed">Completed</option>
+                                    <select class="form-select" id="editStatus" name="Status" required>
+                                        <option value="Active">Active</option>
+                                        <option value="Full">Full</option>
+                                        <option value="Cancelled">Cancelled</option>
+                                        <option value="Completed">Completed</option>
                                     </select>
                                 </div>
                             </div>
@@ -641,152 +562,64 @@
                             <div class="row mb-3">
                                 <div class="col-md-12">
                                     <label for="editRunDescription" class="form-label">Description</label>
-                                    <textarea class="form-control" id="editRunDescription" rows="3" required>Competitive 5v5 full court run. All skill levels welcome but be ready to play hard.</textarea>
+                                    <textarea class="form-control" id="editRunDescription" name="Description" rows="3" required></textarea>
                                 </div>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-danger me-auto" id="deleteRunBtn">Delete Run</button>
+                                <button type="submit" class="btn btn-orange">Save Changes</button>
                             </div>
                         </form>
                     </div>
                     <div class="tab-pane fade" id="participants-tab-pane" role="tabpanel" aria-labelledby="participants-tab" tabindex="0">
                         <div class="mt-4">
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="mb-0">Current Participants (6/10)</h6>
-                                <button class="btn btn-sm btn-outline-primary">
+                                <h6 class="mb-0">Current Participants (<span id="currentParticipantsCount">0</span>/<span id="maxParticipantsCount">0</span>)</h6>
+                                <button class="btn btn-sm btn-outline-primary" id="addParticipantBtn">
                                     <i class="bi bi-person-plus me-1"></i>Add Participant
                                 </button>
                             </div>
-                            <div class="participants-list">
-                                <div class="d-flex align-items-center p-2 border-bottom">
-                                    <div class="flex-shrink-0 me-3" style="width: 40px; height: 40px; background-color: var(--secondary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
-                                        JP
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <h6 class="mb-0">John Player</h6>
-                                        <span class="text-muted small">Joined May 20, 2025</span>
-                                    </div>
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="bi bi-three-dots-vertical"></i>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end">
-                                            <li><a class="dropdown-item" href="#"><i class="bi bi-envelope me-2"></i>Message</a></li>
-                                            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>View Profile</a></li>
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-person-x me-2"></i>Remove</a></li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center p-2 border-bottom">
-                                    <div class="flex-shrink-0 me-3" style="width: 40px; height: 40px; background-color: var(--secondary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
-                                        AW
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <h6 class="mb-0">Alex Williams</h6>
-                                        <span class="text-muted small">Joined May 21, 2025</span>
-                                    </div>
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="bi bi-three-dots-vertical"></i>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end">
-                                            <li><a class="dropdown-item" href="#"><i class="bi bi-envelope me-2"></i>Message</a></li>
-                                            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>View Profile</a></li>
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-person-x me-2"></i>Remove</a></li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center p-2 border-bottom">
-                                    <div class="flex-shrink-0 me-3" style="width: 40px; height: 40px; background-color: var(--secondary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
-                                        TS
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <h6 class="mb-0">Taylor Smith</h6>
-                                        <span class="text-muted small">Joined May 22, 2025</span>
-                                    </div>
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="bi bi-three-dots-vertical"></i>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end">
-                                            <li><a class="dropdown-item" href="#"><i class="bi bi-envelope me-2"></i>Message</a></li>
-                                            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>View Profile</a></li>
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-person-x me-2"></i>Remove</a></li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center p-2 border-bottom">
-                                    <div class="flex-shrink-0 me-3" style="width: 40px; height: 40px; background-color: var(--secondary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
-                                        RJ
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <h6 class="mb-0">Riley Johnson</h6>
-                                        <span class="text-muted small">Joined May 23, 2025</span>
-                                    </div>
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="bi bi-three-dots-vertical"></i>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end">
-                                            <li><a class="dropdown-item" href="#"><i class="bi bi-envelope me-2"></i>Message</a></li>
-                                            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>View Profile</a></li>
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-person-x me-2"></i>Remove</a></li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center p-2 border-bottom">
-                                    <div class="flex-shrink-0 me-3" style="width: 40px; height: 40px; background-color: var(--secondary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
-                                        MB
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <h6 class="mb-0">Morgan Brown</h6>
-                                        <span class="text-muted small">Joined May 24, 2025</span>
-                                    </div>
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="bi bi-three-dots-vertical"></i>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end">
-                                            <li><a class="dropdown-item" href="#"><i class="bi bi-envelope me-2"></i>Message</a></li>
-                                            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>View Profile</a></li>
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-person-x me-2"></i>Remove</a></li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center p-2">
-                                    <div class="flex-shrink-0 me-3" style="width: 40px; height: 40px; background-color: var(--secondary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
-                                        JD
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <h6 class="mb-0">James Davis</h6>
-                                        <span class="text-muted small">Host</span>
-                                    </div>
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="bi bi-three-dots-vertical"></i>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end">
-                                            <li><a class="dropdown-item" href="#"><i class="bi bi-envelope me-2"></i>Message</a></li>
-                                            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>View Profile</a></li>
-                                        </ul>
-                                    </div>
+                            <div class="participants-list" id="participantsList">
+                                <!-- Participants will be loaded dynamically via JavaScript -->
+                                <div class="text-center py-4 text-muted">
+                                    <i class="bi bi-people"></i> Loading participants...
                                 </div>
                             </div>
 
                             <div class="mt-4">
                                 <h6 class="mb-3">Waitlist</h6>
-                                <p class="text-muted small">No players on the waitlist</p>
+                                <div id="waitlistContainer">
+                                    <p class="text-muted small">No players on the waitlist</p>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Run Confirmation Modal -->
+<div class="modal fade" id="deleteRunModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Deletion</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this run? This action cannot be undone.</p>
+                <p class="text-danger"><strong>Note:</strong> All participants will be notified that this run has been cancelled.</p>
+            </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger me-auto">Delete Run</button>
-                <button type="button" class="btn btn-orange">Save Changes</button>
+                <form id="deleteRunForm" method="post" action="@Url.Action("DeleteRun", "Dashboard")">
+                    <input type="hidden" id="deleteRunId" name="id" value="" />
+                    <button type="submit" class="btn btn-danger">Delete Run</button>
+                </form>
             </div>
         </div>
     </div>
@@ -795,76 +628,282 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Handle search functionality
-            const searchInput = document.querySelector('.search-box');
-            searchInput.addEventListener('keyup', function() {
-                const searchTerm = this.value.toLowerCase();
-                const runCards = document.querySelectorAll('.run-card');
+            // Set minimum date for date pickers to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('runDate').min = today;
 
-                runCards.forEach(card => {
-                    const runTitle = card.querySelector('h5').textContent.toLowerCase();
-                    const runLocation = card.querySelector('.text-muted').textContent.toLowerCase();
-                    const runDescription = card.querySelector('p.mb-3').textContent.toLowerCase();
-
-                    if (runTitle.includes(searchTerm) || runLocation.includes(searchTerm) || runDescription.includes(searchTerm)) {
-                        card.closest('.col-md-6').style.display = '';
-                    } else {
-                        card.closest('.col-md-6').style.display = 'none';
-                    }
-                });
-            });
-
-            // Handle filter dropdown
-            const filterDropdown = document.querySelector('.filter-dropdown');
-            filterDropdown.addEventListener('change', function() {
-                const filterValue = this.value.toLowerCase();
-                const runCards = document.querySelectorAll('.run-card');
-
-                runCards.forEach(card => {
-                    const statusBadge = card.querySelector('.status-badge').textContent.toLowerCase();
-                    const timeInfo = card.querySelector('.run-time').textContent.toLowerCase();
-                    const host = card.querySelector('.text-muted.small').textContent.toLowerCase();
-
-                    let shouldShow = true;
-
-                    if (filterValue === 'upcoming runs' && !statusBadge.includes('upcoming')) {
-                        shouldShow = false;
-                    } else if (filterValue === 'past runs' && !statusBadge.includes('past')) {
-                        shouldShow = false;
-                    } else if (filterValue === 'full runs' && !(statusBadge.includes('full') || statusBadge.includes('almost full'))) {
-                        shouldShow = false;
-                    } else if (filterValue === 'my runs' && !host.includes('hosted by james davis')) {
-                        shouldShow = false;
-                    }
-
-                    card.closest('.col-md-6').style.display = shouldShow ? '' : 'none';
-                });
-            });
+            if (document.getElementById('recurringEndDate')) {
+                document.getElementById('recurringEndDate').min = today;
+            }
 
             // Handle recurring run checkbox
             const makeRecurringCheckbox = document.getElementById('makeRecurring');
             const recurringOptions = document.querySelector('.recurring-options');
 
-            makeRecurringCheckbox.addEventListener('change', function() {
-                if (this.checked) {
-                    recurringOptions.style.display = 'flex';
-                } else {
-                    recurringOptions.style.display = 'none';
-                }
-            });
+            if (makeRecurringCheckbox && recurringOptions) {
+                makeRecurringCheckbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        recurringOptions.style.display = 'flex';
+                    } else {
+                        recurringOptions.style.display = 'none';
+                    }
+                });
+            }
 
-            // Form submission handlers
-            document.getElementById('addRunForm')?.addEventListener('submit', function(e) {
-                e.preventDefault();
-                // Add form submission logic here
-                $('#addRunModal').modal('hide');
-            });
+            // Handle filter dropdown
+            const filterDropdown = document.getElementById('runFilterDropdown');
+            if (filterDropdown) {
+                filterDropdown.addEventListener('change', function() {
+                    const filterValue = this.value.toLowerCase();
+                    const runCards = document.querySelectorAll('.run-card');
 
-            document.getElementById('editRunForm')?.addEventListener('submit', function(e) {
-                e.preventDefault();
-                // Edit form submission logic here
-                $('#editRunModal').modal('hide');
-            });
+                    if (filterValue === 'all') {
+                        // Show all runs
+                        runCards.forEach(card => {
+                            card.closest('.col-md-6').style.display = '';
+                        });
+                        return;
+                    }
+
+                    runCards.forEach(card => {
+                        const statusBadge = card.querySelector('.status-badge').textContent.toLowerCase();
+                        const timeInfo = card.querySelector('.run-time').textContent.toLowerCase();
+                        const host = card.querySelector('.text-muted.small').textContent.toLowerCase();
+
+                        let shouldShow = true;
+
+                        if (filterValue === 'upcoming' && !statusBadge.includes('upcoming')) {
+                            shouldShow = false;
+                        } else if (filterValue === 'past' && !statusBadge.includes('past')) {
+                            shouldShow = false;
+                        } else if (filterValue === 'full' && !(statusBadge.includes('full') || statusBadge.includes('almost full'))) {
+                            shouldShow = false;
+                        } else if (filterValue === 'my' && !host.includes('hosted by james davis')) {
+                            shouldShow = false;
+                        }
+
+                        card.closest('.col-md-6').style.display = shouldShow ? '' : 'none';
+                    });
+
+                    // Show "no runs" message if all are filtered out
+                    const visibleRuns = document.querySelectorAll('.run-card[style="display: none;"]');
+                    const noRunsMessage = document.querySelector('.no-runs-message');
+
+                    if (visibleRuns.length === runCards.length && noRunsMessage) {
+                        noRunsMessage.style.display = 'block';
+                    } else if (noRunsMessage) {
+                        noRunsMessage.style.display = 'none';
+                    }
+                });
+            }
+
+            // Handle edit run modal
+            const editRunModal = document.getElementById('editRunModal');
+            if (editRunModal) {
+                editRunModal.addEventListener('show.bs.modal', function(event) {
+                    const button = event.relatedTarget;
+                    const runId = button.getAttribute('data-run-id');
+                    document.getElementById('editRunId').value = runId;
+
+                    // Load run data via AJAX
+                    fetch(`@Url.Action("GetRunData", "Dashboard")?id=${runId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            // Populate form fields
+                            document.getElementById('editRunTitle').value = data.title;
+
+                            // Format date and time
+                            if (data.startTime) {
+                                const startTime = new Date(data.startTime);
+                                const dateString = startTime.toISOString().split('T')[0];
+                                document.getElementById('editRunDate').value = dateString;
+
+                                const hours = startTime.getHours().toString().padStart(2, '0');
+                                const minutes = startTime.getMinutes().toString().padStart(2, '0');
+                                document.getElementById('editRunTime').value = `${hours}:${minutes}`;
+                            }
+
+                            document.getElementById('editCourtLocation').value = data.location;
+                            document.getElementById('editCourtType').value = data.isOutdoor.toString();
+                            document.getElementById('editMaxParticipants').value = data.maxParticipants;
+                            document.getElementById('editStatus').value = data.status;
+                            document.getElementById('editRunDescription').value = data.description;
+
+                            // Set delete button run ID
+                            document.getElementById('deleteRunId').value = runId;
+
+                            // Update participants count
+                            document.getElementById('currentParticipantsCount').textContent = data.currentParticipants;
+                            document.getElementById('maxParticipantsCount').textContent = data.maxParticipants;
+
+                            // Load participants
+                            loadParticipants(runId);
+                        })
+                        .catch(error => {
+                            console.error('Error loading run data:', error);
+                            alert('Error loading run data. Please try again.');
+                        });
+                });
+            }
+
+            // Handle delete run button
+            const deleteRunBtn = document.getElementById('deleteRunBtn');
+            if (deleteRunBtn) {
+                deleteRunBtn.addEventListener('click', function() {
+                    const runId = document.getElementById('editRunId').value;
+                    document.getElementById('deleteRunId').value = runId;
+
+                    // Hide edit modal and show delete confirmation modal
+                    const editModal = bootstrap.Modal.getInstance(document.getElementById('editRunModal'));
+                    editModal.hide();
+
+                    const deleteModal = new bootstrap.Modal(document.getElementById('deleteRunModal'));
+                    deleteModal.show();
+                });
+            }
+
+            // Function to load participants
+            function loadParticipants(runId) {
+                const participantsList = document.getElementById('participantsList');
+
+                fetch(`@Url.Action("GetRunParticipants", "Dashboard")?runId=${runId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.length === 0) {
+                            participantsList.innerHTML = `
+                                <div class="text-center py-4 text-muted">
+                                    <p>No participants have joined this run yet.</p>
+                                </div>`;
+                            return;
+                        }
+
+                        let html = '';
+
+                        data.forEach(participant => {
+                            const initials = participant.name.split(' ')
+                                .map(name => name[0])
+                                .join('')
+                                .substring(0, 2);
+
+                            html += `
+                                <div class="d-flex align-items-center p-2 border-bottom">
+                                    <div class="flex-shrink-0 me-3" style="width: 40px; height: 40px; background-color: var(--secondary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                                        ${initials}
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">${participant.name}</h6>
+                                        <span class="text-muted small">Joined ${new Date(participant.joinedDate).toLocaleDateString()}</span>
+                                    </div>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li><a class="dropdown-item" href="#"><i class="bi bi-envelope me-2"></i>Message</a></li>
+                                            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>View Profile</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-danger remove-participant" data-participant-id="${participant.id}" href="#"><i class="bi bi-person-x me-2"></i>Remove</a></li>
+                                        </ul>
+                                    </div>
+                                </div>`;
+                        });
+
+                        participantsList.innerHTML = html;
+
+                        // Add event listeners to remove buttons
+                        document.querySelectorAll('.remove-participant').forEach(button => {
+                            button.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                const participantId = this.getAttribute('data-participant-id');
+                                const runId = document.getElementById('editRunId').value;
+
+                                if (confirm('Are you sure you want to remove this participant?')) {
+                                    removeParticipant(runId, participantId);
+                                }
+                            });
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error loading participants:', error);
+                        participantsList.innerHTML = `
+                            <div class="text-center py-4 text-danger">
+                                <p>Error loading participants. Please try again.</p>
+                            </div>`;
+                    });
+            }
+
+            // Function to remove participant
+            function removeParticipant(runId, participantId) {
+                fetch('@Url.Action("RemoveParticipant", "Dashboard")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify({ runId, participantId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Reload participants
+                        loadParticipants(runId);
+
+                        // Update count
+                        const currentCount = parseInt(document.getElementById('currentParticipantsCount').textContent);
+                        document.getElementById('currentParticipantsCount').textContent = currentCount - 1;
+                    } else {
+                        alert('Error removing participant: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error removing participant:', error);
+                    alert('Error removing participant. Please try again.');
+                });
+            }
+
+            // Add participant button
+            const addParticipantBtn = document.getElementById('addParticipantBtn');
+            if (addParticipantBtn) {
+                addParticipantBtn.addEventListener('click', function() {
+                    const runId = document.getElementById('editRunId').value;
+                    const currentCount = parseInt(document.getElementById('currentParticipantsCount').textContent);
+                    const maxCount = parseInt(document.getElementById('maxParticipantsCount').textContent);
+
+                    if (currentCount >= maxCount) {
+                        alert('This run is already at maximum capacity. Cannot add more participants.');
+                        return;
+                    }
+
+                    const email = prompt('Enter participant email address:');
+                    if (!email) return;
+
+                    // Add participant via AJAX
+                    fetch('@Url.Action("AddParticipant", "Dashboard")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        },
+                        body: JSON.stringify({ runId, email })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Reload participants
+                            loadParticipants(runId);
+
+                            // Update count
+                            document.getElementById('currentParticipantsCount').textContent = currentCount + 1;
+                        } else {
+                            alert('Error adding participant: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error adding participant:', error);
+                        alert('Error adding participant. Please try again.');
+                    });
+                });
+            }
         });
     </script>
 }
