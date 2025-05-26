@@ -7,7 +7,7 @@ namespace Website.ViewModels
     public class ClientsViewModel
     {
         // Properties for the view
-        public List<ClientDetailViewModelDto> Runs { get; set; } = new List<ClientDetailViewModelDto>();
+        public List<ClientDetailViewModelDto> Clients { get; set; } = new List<ClientDetailViewModelDto>();
 
         // Pagination properties
         public bool HasNextPage { get; set; }
@@ -29,7 +29,7 @@ namespace Website.ViewModels
 
             var viewModel = new ClientsViewModel
             {
-                Runs = result.Items?.ToList() ?? new List<ClientDetailViewModelDto>(),
+                Clients = result.Items?.ToList() ?? new List<ClientDetailViewModelDto>(),
                 PageSize = limit,
                 CurrentSortBy = sortBy
             };

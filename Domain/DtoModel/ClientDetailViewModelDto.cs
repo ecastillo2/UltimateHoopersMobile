@@ -8,7 +8,7 @@ namespace Domain.DtoModel
 {
     public class ClientDetailViewModelDto : ClientViewModelDto
     {
-
+        public Client Client { get; set; }
         public IList<Run> RunList { get; set; }
         public IList<Court> CourtList { get; set; }
         public IList<User> UserList { get; set; }

@@ -33,6 +33,15 @@ builder.Services.AddHttpClient<IRunApi, RunApi>(client =>
 {
  
 });
+builder.Services.AddHttpClient<IClientApi, ClientApi>(client =>
+{
+
+});
+
+//builder.Services.AddHttpClient<IUserApi, UserApi>(user =>
+//{
+
+//});
 // In Program.cs
 // Add session services
 builder.Services.AddDistributedMemoryCache();

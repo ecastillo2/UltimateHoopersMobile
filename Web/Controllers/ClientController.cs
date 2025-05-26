@@ -24,7 +24,7 @@ namespace Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Run(
+        public async Task<IActionResult> Client(
             string cursor = null,
             int limit = 10,
             string direction = "next",
@@ -57,7 +57,7 @@ namespace Web.Controllers
                 // Create view model
                 var viewModel = new ClientsViewModel
                 {
-                    Runs = result.Items,
+                    Clients = result.Items,
                     NextCursor = result.NextCursor,
                     //PreviousCursor = result.PreviousCursor,
                     //HasMore = result.HasMore,
