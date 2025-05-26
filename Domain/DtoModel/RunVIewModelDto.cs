@@ -56,7 +56,7 @@ namespace Domain.DtoModel
         public TimeSpan? StartTime { get; set; }
         public TimeSpan? EndTime { get; set; }
         public string? Type { get; set; }
-        public string? CreatedDate { get; set; }
+        public DateTime? CreatedDate { get; set; }
         public string? RunNumber { get; set; }
         public string? SkillLevel { get; set; }
         public string? PaymentMethod { get; set; }

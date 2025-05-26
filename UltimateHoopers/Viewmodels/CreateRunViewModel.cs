@@ -382,7 +382,7 @@ namespace UltimateHoopers.ViewModels
                     StartTime = StartTime,
                     EndTime = EndTime,
                     Type = !IsPublic ? "Private" : "Public",
-                    CreatedDate = DateTime.Now.ToString(),
+                    CreatedDate = DateTime.Now,
                     RunNumber = new Random().Next(1000, 9999).ToString(),
                     SkillLevel = SelectedSkillLevel,
                     TeamType = SelectedGameType,

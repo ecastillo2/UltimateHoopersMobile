@@ -287,70 +287,84 @@ namespace DataLayer.DAL.Repository
         /// <returns></returns>
         public async Task<List<Game>> GetGames()
         {
-            using (var context = _context)
+            try
             {
-                try
+                // Fetch all games - use DbSet property names that match your context
+                var games = await _context.Game.ToListAsync();
+
+                // Process each game to add player information
+                foreach (var game in games)
                 {
-                    // Fetch all games
-                    var games = await context.Game.ToListAsync();
+                    // Get winning player IDs for this game
+                    var winningPlayerIds = await _context.GameWinningPlayer
+                        .Where(wp => wp.GameId == game.GameId)
+                        .Select(wp => wp.ProfileId)
+                        .ToListAsync();
 
-                    // Process each game to add player information
-                    foreach (var game in games)
+                    // Get losing player IDs for this game
+                    var losingPlayerIds = await _context.GameLosingPlayer
+                        .Where(lp => lp.GameId == game.GameId)
+                        .Select(lp => lp.ProfileId)
+                        .ToListAsync();
+
+                    // Fetch winner profiles
+                    var winnerProfiles = await _context.Profile
+                        .Where(profile => winningPlayerIds.Contains(profile.ProfileId))
+                        .ToListAsync();
+
+                    // Mark winners
+                    foreach (var profile in winnerProfiles)
                     {
-                        // Get winning player IDs for this game
-                        var winningPlayerIds = await context.GameWinningPlayer
-                            .Where(wp => wp.GameId == game.GameId)
-                            .Select(wp => wp.ProfileId)
-                            .ToListAsync();
-
-                        // Get losing player IDs for this game
-                        var losingPlayerIds = await context.GameLosingPlayer
-                            .Where(lp => lp.GameId == game.GameId)
-                            .Select(lp => lp.ProfileId)
-                            .ToListAsync();
-
-                        // Fetch winner profiles
-                        var winnerProfiles = await context.Profile
-                            .Where(profile => winningPlayerIds.Contains(profile.ProfileId))
-                            .ToListAsync();
-
-                        // Mark winners
-                        foreach (var profile in winnerProfiles)
-                        {
-                            profile.WinOrLose = "W";
-                        }
-
-                        // Fetch loser profiles
-                        var loserProfiles = await context.Profile
-                            .Where(profile => losingPlayerIds.Contains(profile.ProfileId))
-                            .ToListAsync();
-
-                        // Mark losers
-                        foreach (var profile in loserProfiles)
-                        {
-                            profile.WinOrLose = "L";
-                        }
-
-                        // Initialize and populate the ProfileList
-                        game.ProfileList = new List<Profile>();
-                        game.ProfileList = winnerProfiles.Concat(loserProfiles).ToList();
-
-                        // Fetch the associated Run using RunId
-                        if (!string.IsNullOrEmpty(game.RunId))
-                        {
-                            game.Run = await context.Run
-                                .FirstOrDefaultAsync(run => run.RunId == game.RunId);
-                        }
+                        profile.WinOrLose = "W";
                     }
 
-                    return games;
+                    // Fetch loser profiles
+                    var loserProfiles = await _context.Profile
+                        .Where(profile => losingPlayerIds.Contains(profile.ProfileId))
+                        .ToListAsync();
+
+                    // Mark losers
+                    foreach (var profile in loserProfiles)
+                    {
+                        profile.WinOrLose = "L";
+                    }
+
+                    // Initialize and populate the ProfileList
+                    game.ProfileList = new List<Profile>();
+                    game.ProfileList.AddRange(winnerProfiles);
+                    game.ProfileList.AddRange(loserProfiles);
+
+                    // Fetch the associated Run using RunId
+                    if (!string.IsNullOrEmpty(game.RunId))
+                    {
+                        game.Run = await _context.Run
+                            .FirstOrDefaultAsync(run => run.RunId == game.RunId);
+                    }
+
+                    // Fetch the court if CourtId is available
+                    if (!string.IsNullOrEmpty(game.CourtId))
+                    {
+                        game.Court = await _context.Court
+                            .FirstOrDefaultAsync(court => court.CourtId == game.CourtId);
+                    }
                 }
-                catch (Exception ex)
+
+                return games;
+            }
+            catch (Exception ex)
+            {
+                // Improve error logging with more details
+                Console.WriteLine($"Error in GetGames: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+
+                // If inner exception exists, log it too
+                if (ex.InnerException != null)
                 {
-                    // Log the exception or handle it as needed
-                    Console.WriteLine($"Error fetching games: {ex.Message}");
-                    return new List<Game>();
+                    Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
                 }
+
+                // Return empty list to avoid null reference exceptions
+                return new List<Game>();
             }
         }
 
