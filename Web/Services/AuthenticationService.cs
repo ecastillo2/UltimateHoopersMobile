@@ -1,0 +1,60 @@
+﻿// File: Services/AuthenticationService.cs
+using Domain;
+using Microsoft.AspNetCore.Http;
+
+namespace Website.Services
+{
+    public class AuthenticationService
+    {
+        private readonly IHttpContextAccessor _httpContextAccessor;
+
+        public AuthenticationService(IHttpContextAccessor httpContextAccessor)
+        {
+            _httpContextAccessor = httpContextAccessor;
+        }
+
+        public bool IsAuthenticated => !string.IsNullOrEmpty(GetToken());
+
+        public string GetToken()
+        {
+            return _httpContextAccessor.HttpContext?.Session.GetString("UserToken");
+        }
+
+        public void StoreUserSession(User user)
+        {
+            var session = _httpContextAccessor.HttpContext?.Session;
+            if (session != null && user != null)
+            {
+                session.SetString("UserToken", user.Token);
+                session.SetString("UserName", $"{user.FirstName} {user.LastName}");
+                session.SetString("UserRole", user.AccessLevel);
+                session.SetString("UserId", user.UserId);
+                session.SetString("ProfileId", user.ProfileId);
+
+                // Store additional user info as needed
+                if (!string.IsNullOrEmpty(user.ClientId))
+                    session.SetString("ClientId", user.ClientId);
+
+                if (!string.IsNullOrEmpty(user.Subscription))
+                    session.SetString("Subscription", user.Subscription);
+
+                // Store login timestamp
+                session.SetString("LoginTimestamp", DateTime.UtcNow.ToString("o"));
+            }
+        }
+
+        public void ClearUserSession()
+        {
+            _httpContextAccessor.HttpContext?.Session.Clear();
+        }
+
+        public bool IsUserInRole(string role)
+        {
+            var userRole = _httpContextAccessor.HttpContext?.Session.GetString("UserRole");
+            return !string.IsNullOrEmpty(userRole) && userRole.Equals(role, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public bool IsPlayer => IsUserInRole("Player");
+        public bool IsCoach => IsUserInRole("Coach") || IsUserInRole("Administrator");
+    }
+}

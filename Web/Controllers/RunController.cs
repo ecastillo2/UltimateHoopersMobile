@@ -60,12 +60,12 @@ namespace Web.Controllers
                     Runs = result.Items,
                     NextCursor = result.NextCursor,
                     //PreviousCursor = result.PreviousCursor,
-                    HasMore = result.HasMore,
+                    //HasMore = result.HasMore,
                     //TotalCount = result.TotalCount,
-                    CurrentLimit = limit,
+                    //CurrentLimit = limit,
                     CurrentSortBy = sortBy,
-                    UserRole = userRole,
-                    ProfileId = profileId
+                    //UserRole = userRole,
+                    //ProfileId = profileId
                 };
 
                 return View(viewModel);

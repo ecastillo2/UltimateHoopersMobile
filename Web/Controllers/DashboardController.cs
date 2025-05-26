@@ -1,109 +1,49 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Website.Attributes;
+using Website.Services;
 
 namespace Web.Controllers
 {
+    [Authentication] // Require authentication for all actions
     public class DashboardController : Controller
     {
         private readonly ILogger<DashboardController> _logger;
+        private readonly AuthenticationService _authenticationService;
 
-        public DashboardController(ILogger<DashboardController> logger)
+        public DashboardController(
+            ILogger<DashboardController> logger,
+            AuthenticationService authenticationService)
         {
             _logger = logger;
+            _authenticationService = authenticationService;
         }
 
         public IActionResult Dashboard()
         {
-            // In a real app, we would check if the user is authenticated here
-            // For demo, we'll just check if there's a Success message indicating login
-            if (TempData["Success"]?.ToString()?.Contains("logged in") != true)
-            {
-                // Not logged in, redirect to home
-                TempData["Error"] = "You must be logged in to access the dashboard.";
-                return RedirectToAction("Index", "Home", new { scrollTo = "login" });
-            }
+            // Pass user type to the view
+            ViewData["UserType"] = _authenticationService.IsPlayer ? "Player" : "Coach";
 
-            // For this demo, we'll create a view model based on login type
-            bool isPlayer = TempData["Success"]?.ToString()?.Contains("player") == true;
-
-            // Pass the login type to the view
-            ViewData["UserType"] = isPlayer ? "Player" : "Coach";
-
-            // In a real app, we would load user-specific data here
             return View();
         }
 
+        [Authentication("Coach", "Administrator")] // Only allow coaches and administrators
         public IActionResult Client()
         {
-            //// Check login status similar to Dashboard action
-            //if (TempData["Success"]?.ToString()?.Contains("logged in") != true)
-            //{
-            //    // Not logged in, redirect to home
-            //    TempData["Error"] = "You must be logged in to access the client management.";
-            //    return RedirectToAction("Index", "Home", new { scrollTo = "login" });
-            //}
-
-            //// Check if user is a coach (only coaches should access client management)
-            bool isPlayer = TempData["Success"]?.ToString()?.Contains("player") == true;
-            if (isPlayer)
-            {
-                TempData["Error"] = "Players cannot access the client management section.";
-                return RedirectToAction("Dashboard");
-            }
-
             ViewData["UserType"] = "Coach";
-
-            // In a real app, we would fetch client data here
-            // For demo, we'll use hard-coded data in the view
             return View();
         }
 
+        [Authentication("Coach", "Administrator")] // Only allow coaches and administrators
         public IActionResult User()
         {
-            // Check login status similar to other actions
-            if (TempData["Success"]?.ToString()?.Contains("logged in") != true)
-            {
-                // Not logged in, redirect to home
-                TempData["Error"] = "You must be logged in to access the user management.";
-                return RedirectToAction("Index", "Home", new { scrollTo = "login" });
-            }
-
-            // Check if user is a coach (only coaches should access user management)
-            bool isPlayer = TempData["Success"]?.ToString()?.Contains("player") == true;
-            if (isPlayer)
-            {
-                TempData["Error"] = "Players cannot access the user management section.";
-                return RedirectToAction("Dashboard");
-            }
-
             ViewData["UserType"] = "Coach";
-
-            // In a real app, we would fetch user data here
-            // For demo, we'll use hard-coded data in the view
             return View();
         }
 
+        [Authentication("Coach", "Administrator")] // Only allow coaches and administrators
         public IActionResult Run()
         {
-            // Check login status similar to other actions
-            if (TempData["Success"]?.ToString()?.Contains("logged in") != true)
-            {
-                // Not logged in, redirect to home
-                TempData["Error"] = "You must be logged in to access the user management.";
-                return RedirectToAction("Index", "Home", new { scrollTo = "login" });
-            }
-
-            // Check if user is a coach (only coaches should access user management)
-            bool isPlayer = TempData["Success"]?.ToString()?.Contains("player") == true;
-            if (isPlayer)
-            {
-                TempData["Error"] = "Players cannot access the user management section.";
-                return RedirectToAction("Dashboard");
-            }
-
             ViewData["UserType"] = "Coach";
-
-            // In a real app, we would fetch user data here
-            // For demo, we'll use hard-coded data in the view
             return View();
         }
     }

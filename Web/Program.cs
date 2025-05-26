@@ -1,8 +1,10 @@
 using ApiClient;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
+using WebAPI.ApiClients;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,10 +22,29 @@ builder.Services.AddSession(options =>
 
 // Add HttpClient factory
 builder.Services.AddHttpClient();
-
+// In Program.cs
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<AuthenticationService>();
 // Register API client services
 builder.Services.AddApiClientServices(builder.Configuration);
-builder.Services.IRunApi(builder.Configuration);
+
+builder.Services.AddHttpClient<IRunApi, RunApi>(client =>
+{
+ 
+});
+// In Program.cs
+// Add session services
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromHours(2); // Set session timeout (e.g., 2 hours)
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Use Always in production
+});
+
+// Then after building the app, before mapping controllers:
 
 var app = builder.Build();
 

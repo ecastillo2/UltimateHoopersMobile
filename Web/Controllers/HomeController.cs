@@ -1,26 +1,28 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using Web.Models;
+using Website.Services;
 
 namespace Web.Controllers
 {
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly AuthenticationService _authenticationService;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(
+            ILogger<HomeController> logger,
+            AuthenticationService authenticationService)
         {
             _logger = logger;
+            _authenticationService = authenticationService ?? throw new ArgumentNullException(nameof(authenticationService));
         }
 
         public IActionResult Index()
         {
-            // If user is logged in and trying to access the home page,
-            // redirect them to the dashboard instead
-            if (TempData["Success"]?.ToString()?.Contains("logged in") == true)
+            // If user is logged in, redirect to dashboard
+            if (_authenticationService.IsAuthenticated)
             {
-                // Preserve the success message for one more redirect
-                TempData.Keep("Success");
                 return RedirectToAction("Dashboard", "Dashboard");
             }
 

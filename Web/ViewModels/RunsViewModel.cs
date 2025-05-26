@@ -1,17 +1,63 @@
 ﻿using Domain.DtoModel;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Website.ViewModels
 {
     public class RunsViewModel
     {
-        public IEnumerable<RunDetailViewModelDto> Runs { get; set; }
+        // Properties for the view
+        public List<RunDetailViewModelDto> Runs { get; set; } = new List<RunDetailViewModelDto>();
+
+        // Pagination properties
+        public bool HasNextPage { get; set; }
+        public bool HasPreviousPage { get; set; }
         public string NextCursor { get; set; }
         public string PreviousCursor { get; set; }
-        public bool HasMore { get; set; }
-        public int TotalCount { get; set; }
-        public int CurrentLimit { get; set; }
-        public string CurrentSortBy { get; set; }
-        public string UserRole { get; set; }
-        public string ProfileId { get; set; }
+        public int PageSize { get; set; } = 20; // Default value
+
+        // Additional properties
+        public string CurrentSortBy { get; set; } = "Points";
+        public string SearchTerm { get; set; }
+        public string FilterOption { get; set; }
+
+        // Static mapping method
+        public static RunsViewModel FromPaginatedResult(CursorPaginatedResultDto<RunDetailViewModelDto> result, string sortBy = "Points", int limit = 20)
+        {
+            if (result == null)
+                return new RunsViewModel { CurrentSortBy = sortBy, PageSize = limit };
+
+            var viewModel = new RunsViewModel
+            {
+                Runs = result.Items?.ToList() ?? new List<RunDetailViewModelDto>(),
+                PageSize = limit,
+                CurrentSortBy = sortBy
+            };
+
+            // Try to get pagination properties if they exist
+            // Use reflection to safely check for properties
+            var resultType = result.GetType();
+
+            var hasNextPageProp = resultType.GetProperty("HasNextPage");
+            if (hasNextPageProp != null)
+                viewModel.HasNextPage = (bool)hasNextPageProp.GetValue(result);
+
+            var hasPreviousPageProp = resultType.GetProperty("HasPreviousPage");
+            if (hasPreviousPageProp != null)
+                viewModel.HasPreviousPage = (bool)hasPreviousPageProp.GetValue(result);
+
+            var nextCursorProp = resultType.GetProperty("NextCursor");
+            if (nextCursorProp != null)
+                viewModel.NextCursor = (string)nextCursorProp.GetValue(result);
+
+            // For previous cursor, we'll try common variations
+            var prevCursorProp = resultType.GetProperty("PreviousCursor") ??
+                                resultType.GetProperty("PrevCursor") ??
+                                resultType.GetProperty("PrevPageCursor");
+            if (prevCursorProp != null)
+                viewModel.PreviousCursor = (string)prevCursorProp.GetValue(result);
+
+            return viewModel;
+        }
     }
 }
