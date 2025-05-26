@@ -206,7 +206,7 @@ namespace UltimateHoopers.Services
                                     JoinedRunList = item.JoinedRunProfileList,
                                     RunDate = item.RunDate,
                                     UserName = "test",
-                                    RunTime =   item.RunTime,
+                                    StartTime =   item.StartTime,
                                     EndTime = item.EndTime,
                                     PlayerCount = item.JoinedRunProfileList != null ? item.JoinedRunProfileList.Count : 0
 

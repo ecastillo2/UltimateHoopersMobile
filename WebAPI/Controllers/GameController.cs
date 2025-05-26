@@ -1,172 +1,249 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Domain;
 using Microsoft.AspNetCore.Authorization;
-using System.Net;
-using DataLayer.DAL.Repository;
-using DataLayer.Context;
 using DataLayer.DAL.Interface;
+using Domain.DtoModel;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace WebWebAPI.Controllers
+namespace WebAPI.Controllers
 {
     /// <summary>
-    /// Game Controller
+    /// Controller for managing game-related operations
     /// </summary>
     [Route("api/[controller]")]
-    [Authorize]
-    public class GameController : Controller
+    [ApiController]
+    public class GameController : ControllerBase
     {
-        HttpResponseMessage returnMessage = new HttpResponseMessage();
-        private IGameRepository repository;        
-        private readonly IConfiguration _configuration;
+        private readonly IGameRepository _repository;
+        private readonly ILogger<GameController> _logger;
 
         /// <summary>
-        /// Game Controller
+        /// Initializes a new instance of the GameController
         /// </summary>
-        /// <param name="context"></param>
-        /// <param name="configuration"></param>
-        public GameController(ApplicationContext context, IConfiguration configuration)
+        /// <param name="repository">Game repository</param>
+        /// <param name="logger">Logger</param>
+        public GameController(IGameRepository repository, ILogger<GameController> logger)
         {
-            this._configuration = configuration;
-            this.repository = new GameRepository(context);
-
+            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         /// <summary>
-        /// Get Games
+        /// Get all games
         /// </summary>
-        /// <returns></returns>
+        /// <returns>List of all games</returns>
+        /// <response code="200">Returns the list of games</response>
+        /// <response code="500">If an error occurred while retrieving games</response>
         [HttpGet("GetGames")]
-        
-        public async Task<List<Game>> GetGames()
+        [ProducesResponseType(typeof(List<Game>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetGames()
         {
-
-            return await repository.GetGames();
-
+            try
+            {
+                var games = await _repository.GetGames();
+                return Ok(games);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving games");
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new { message = "An error occurred while retrieving games" });
+            }
         }
 
-
         /// <summary>
-        /// Get Game By Id
+        /// Get a game by ID
         /// </summary>
-        /// <param name="gameId"></param>
-        /// <returns></returns>
+        /// <param name="gameId">The ID of the game to retrieve</param>
+        /// <returns>The game with the specified ID</returns>
+        /// <response code="200">Returns the game</response>
+        /// <response code="404">If the game was not found</response>
+        /// <response code="500">If an error occurred while retrieving the game</response>
         [HttpGet("GetGameById")]
-        public async Task<Game> GetGameById(string gameId)
+        [ProducesResponseType(typeof(Game), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetGameById(string gameId)
         {
             try
             {
-                return await repository.GetGameById(gameId);
-            }
-            catch(Exception ex)
-            {
-                throw ex;
-            }
+                var game = await _repository.GetGameById(gameId);
 
+                if (game == null)
+                    return NotFound(new { message = $"Game with ID {gameId} not found" });
+
+                return Ok(game);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving game {GameId}", gameId);
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new { message = "An error occurred while retrieving the game" });
+            }
         }
 
         /// <summary>
-        /// Get Games By ProfileId
+        /// Get games by profile ID
         /// </summary>
-        /// <param name="ProfileId"></param>
-        /// <returns></returns>
-        //[Authorize]
+        /// <param name="profileId">The ID of the profile</param>
+        /// <returns>List of games for the specified profile</returns>
+        /// <response code="200">Returns the list of games</response>
+        /// <response code="500">If an error occurred while retrieving games</response>
         [HttpGet("GetGamesByProfileId")]
-        public async Task<List<Game>> GetGamesByProfileId(string ProfileId)
+        [ProducesResponseType(typeof(List<Game>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetGamesByProfileId(string profileId)
         {
             try
             {
-                return await repository.GetGamesByProfileId(ProfileId);
+                var games = await _repository.GetGamesByProfileId(profileId);
+                return Ok(games);
             }
             catch (Exception ex)
             {
-                throw ex;
+                _logger.LogError(ex, "Error retrieving games for profile {ProfileId}", profileId);
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new { message = "An error occurred while retrieving games for the profile" });
             }
-
         }
 
         /// <summary>
-        /// Create Game
+        /// Create a new game
         /// </summary>
-        /// <param name="game"></param>
-        /// <returns></returns>
+        /// <param name="game">The game to create</param>
+        /// <returns>Result of the creation operation</returns>
+        /// <response code="201">If the game was created successfully</response>
+        /// <response code="400">If the game data is invalid</response>
+        /// <response code="500">If an error occurred while creating the game</response>
         [HttpPost("CreateGame")]
-        public async Task CreateTag([FromBody] Game game)
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> CreateGame([FromBody] Game game)
         {
-            
             try
             {
-                  await  repository.InsertGame(game);
+                if (game == null)
+                    return BadRequest(new { message = "Game data is required" });
+
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                await _repository.InsertGame(game);
+
+                return CreatedAtAction(nameof(GetGameById), new { gameId = game.GameId }, game);
             }
             catch (Exception ex)
             {
-                var x = ex;
+                _logger.LogError(ex, "Error creating game");
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new { message = "An error occurred while creating the game" });
             }
-
         }
 
-
         /// <summary>
-        /// Update Game
+        /// Update an existing game
         /// </summary>
-        /// <param name="game"></param>
-        /// <returns></returns>
-        
-        [HttpPost("UpdateGame")]
-        public async Task UpdateGame([FromBody] Game game)
+        /// <param name="game">The game with updated information</param>
+        /// <returns>Result of the update operation</returns>
+        /// <response code="204">If the game was updated successfully</response>
+        /// <response code="400">If the game data is invalid</response>
+        /// <response code="404">If the game was not found</response>
+        /// <response code="500">If an error occurred while updating the game</response>
+        [HttpPut("UpdateGame")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> UpdateGame([FromBody] Game game)
         {
-
             try
             {
-                await repository.UpdateGame(game);
+                if (game == null)
+                    return BadRequest(new { message = "Game data is required" });
 
+                if (string.IsNullOrEmpty(game.GameId))
+                    return BadRequest(new { message = "Game ID is required" });
+
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var existingGame = await _repository.GetGameById(game.GameId);
+                if (existingGame == null)
+                    return NotFound(new { message = $"Game with ID {game.GameId} not found" });
+
+                await _repository.UpdateGame(game);
+
+                return NoContent();
             }
-            catch
+            catch (Exception ex)
             {
-                var message = new HttpResponseMessage(HttpStatusCode.BadRequest);
+                _logger.LogError(ex, "Error updating game {GameId}", game?.GameId);
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new { message = "An error occurred while updating the game" });
             }
-
         }
 
         /// <summary>
-        /// Get Game History
+        /// Get game history
         /// </summary>
-        /// <returns></returns>
-        //[Authorize]
+        /// <returns>Game history</returns>
+        /// <response code="200">Returns the game history</response>
+        /// <response code="500">If an error occurred while retrieving game history</response>
         [HttpGet("GetGameHistory")]
-        public async Task<List<Game>> GetGameHistory()
+        [ProducesResponseType(typeof(List<Game>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetGameHistory()
         {
             try
             {
-                return await repository.GetGameHistory();
-
+                var gameHistory = await _repository.GetGameHistory();
+                return Ok(gameHistory);
             }
             catch (Exception ex)
             {
-                throw ex;
+                _logger.LogError(ex, "Error retrieving game history");
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new { message = "An error occurred while retrieving game history" });
             }
         }
 
         /// <summary>
-        /// Delete Game
+        /// Delete a game
         /// </summary>
-        /// <param name="gameId"></param>
-        /// <returns></returns>
+        /// <param name="gameId">The ID of the game to delete</param>
+        /// <returns>Result of the deletion operation</returns>
+        /// <response code="204">If the game was deleted successfully</response>
+        /// <response code="404">If the game was not found</response>
+        /// <response code="500">If an error occurred while deleting the game</response>
         [HttpDelete("DeleteGame")]
-        public async Task<HttpResponseMessage> DeleteGame(string gameId)
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> DeleteGame(string gameId)
         {
             try
             {
-                await repository.DeleteGame(gameId);
+                var existingGame = await _repository.GetGameById(gameId);
+                if (existingGame == null)
+                    return NotFound(new { message = $"Game with ID {gameId} not found" });
 
-                returnMessage.RequestMessage = new HttpRequestMessage(HttpMethod.Post, "DeleteGame");
+                await _repository.DeleteGame(gameId);
 
-                return await Task.FromResult(returnMessage);
+                return NoContent();
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.ToString());
+                _logger.LogError(ex, "Error deleting game {GameId}", gameId);
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new { message = "An error occurred while deleting the game" });
             }
-            return await Task.FromResult(returnMessage);
         }
     }
 }

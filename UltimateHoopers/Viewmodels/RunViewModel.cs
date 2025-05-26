@@ -55,7 +55,7 @@ namespace UltimateHoopers.ViewModels
                     Address = dto.Run.Court?.Address ?? "Address not available",
                     DayOfMonth = runDate.Day.ToString(),
                     Month = runDate.ToString("MMM").ToUpper(),
-                    Time = $"{dto.Run.RunTime ?? "TBD"} - {dto.Run.EndTime ?? "TBD"}",
+                    Time = $"{dto.Run.StartTime} - {dto.Run.EndTime}",
                     CurrentPlayerCount = dto.Run.JoinedRunList?.Count ?? 0,
                     PlayerLimit = dto.Run.PlayerLimit ?? 10
                 };

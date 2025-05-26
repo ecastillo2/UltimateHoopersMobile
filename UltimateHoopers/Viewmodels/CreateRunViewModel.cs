@@ -16,7 +16,7 @@ namespace UltimateHoopers.ViewModels
         private string _courtSearchText;
         private Court _selectedCourt;
         private DateTime _runDate = DateTime.Now.AddDays(1);
-        private TimeSpan _runTime = new TimeSpan(18, 0, 0); // 6:00 PM
+        private TimeSpan _startTime = new TimeSpan(18, 0, 0); // 6:00 PM
         private TimeSpan _endTime = new TimeSpan(20, 0, 0); // 8:00 PM
         private string _selectedSkillLevel = "All Levels";
         private string _selectedGameType = "5-on-5";
@@ -78,12 +78,12 @@ namespace UltimateHoopers.ViewModels
             }
         }
 
-        public TimeSpan RunTime
+        public TimeSpan StartTime
         {
-            get => _runTime;
+            get => _startTime;
             set
             {
-                _runTime = value;
+                _startTime = value;
                 OnPropertyChanged();
                 HasUnsavedChanges = true;
                 ValidateCanCreate();
@@ -375,12 +375,12 @@ namespace UltimateHoopers.ViewModels
                     RunId = Guid.NewGuid().ToString(),
                     CourtId = SelectedCourt.CourtId,
                     ProfileId = App.User?.ProfileId,
-                    RunDate = RunDate.Add(RunTime),
+                    RunDate = RunDate.Add(StartTime),
                     Status = "Active",
                     Cost = HasCost ? Cost : 0,
                     Description = Description,
-                    RunTime = RunTime.ToString(),
-                    EndTime = EndTime.ToString(),
+                    StartTime = StartTime,
+                    EndTime = EndTime,
                     Type = !IsPublic ? "Private" : "Public",
                     CreatedDate = DateTime.Now.ToString(),
                     RunNumber = new Random().Next(1000, 9999).ToString(),
@@ -395,7 +395,7 @@ namespace UltimateHoopers.ViewModels
                 // For demo purposes, just show a success message
                 await Application.Current.MainPage.DisplayAlert(
                     "Success",
-                    $"Run created at {SelectedCourt.Name} on {RunDate.ToShortDateString()} at {RunTime:hh\\:mm}!",
+                    $"Run created at {SelectedCourt.Name} on {RunDate.ToShortDateString()} at {StartTime:hh\\:mm}!",
                     "OK");
 
                 // Reset has unsaved changes flag

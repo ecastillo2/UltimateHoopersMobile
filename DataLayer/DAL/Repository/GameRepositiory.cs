@@ -16,7 +16,6 @@ namespace DataLayer.DAL.Repository
         public GameRepository(ApplicationContext context)
         {
             _context = context;
-
         }
 
         /// <summary>
@@ -50,18 +49,33 @@ namespace DataLayer.DAL.Repository
                         .Select(lp => lp.ProfileId)
                         .ToListAsync();
 
-                    //// Fetch winner profiles
-                    //game.WinnersList = await context.Profile
-                    //    .Where(profile => winningPlayerIds.Contains(profile.ProfileId))
-                    //    .ToListAsync();
+                    // Initialize the lists if they're null
+                    game.ProfileList = new List<Profile>();
 
-                    //// Fetch loser profiles
-                    //game.LossersList = await context.Profile
-                    //    .Where(profile => losingPlayerIds.Contains(profile.ProfileId))
-                    //    .ToListAsync();
+                    // Fetch winner profiles
+                    var winnerProfiles = await context.Profile
+                        .Where(profile => winningPlayerIds.Contains(profile.ProfileId))
+                        .ToListAsync();
 
-                    //// Populate the main ProfileList
-                    //game.ProfileList = game.WinnersList.Concat(game.LossersList).ToList();
+                    // Mark winners
+                    foreach (var profile in winnerProfiles)
+                    {
+                        profile.WinOrLose = "W";
+                    }
+
+                    // Fetch loser profiles
+                    var loserProfiles = await context.Profile
+                        .Where(profile => losingPlayerIds.Contains(profile.ProfileId))
+                        .ToListAsync();
+
+                    // Mark losers
+                    foreach (var profile in loserProfiles)
+                    {
+                        profile.WinOrLose = "L";
+                    }
+
+                    // Populate the main ProfileList with both winners and losers
+                    game.ProfileList = winnerProfiles.Concat(loserProfiles).ToList();
 
                     // Fetch the associated Run using RunId
                     if (!string.IsNullOrEmpty(game.RunId))
@@ -136,9 +150,8 @@ namespace DataLayer.DAL.Repository
                             profile.WinOrLose = "L";
                         }
 
-                        // Assign winners and losers to the game
-                        //game.WinnersList = winnerProfiles;
-                        //game.LossersList = loserProfiles;
+                        // Initialize the lists if they're null
+                        game.ProfileList = new List<Profile>();
 
                         // Populate the combined ProfileList
                         game.ProfileList = winnerProfiles.Concat(loserProfiles).ToList();
@@ -164,10 +177,6 @@ namespace DataLayer.DAL.Repository
                 }
             }
         }
-
-
-
-
 
         /// <summary>
         /// Get Games By ProfileId
@@ -203,7 +212,63 @@ namespace DataLayer.DAL.Repository
                         .Where(g => allGameIds.Contains(g.GameId))
                         .ToListAsync();
 
-                  
+                    // Process each game to add player information
+                    var processedGames = new List<Game>();
+
+                    foreach (var game in games)
+                    {
+                        // Determine if the requested profile is a winner or loser
+                        bool isWinner = winningGameIds.Contains(game.GameId);
+
+                      
+
+                        // Get all winning players for this game
+                        var winningPlayerIds = await context.GameWinningPlayer
+                            .Where(wp => wp.GameId == game.GameId)
+                            .Select(wp => wp.ProfileId)
+                            .ToListAsync();
+
+                        // Get all losing players for this game
+                        var losingPlayerIds = await context.GameLosingPlayer
+                            .Where(lp => lp.GameId == game.GameId)
+                            .Select(lp => lp.ProfileId)
+                            .ToListAsync();
+
+                        // Fetch winner profiles
+                        var winnerProfiles = await context.Profile
+                            .Where(p => winningPlayerIds.Contains(p.ProfileId))
+                            .ToListAsync();
+
+                        // Mark winners
+                        foreach (var profile in winnerProfiles)
+                        {
+                            profile.WinOrLose = "W";
+                        }
+
+                        // Fetch loser profiles
+                        var loserProfiles = await context.Profile
+                            .Where(p => losingPlayerIds.Contains(p.ProfileId))
+                            .ToListAsync();
+
+                        // Mark losers
+                        foreach (var profile in loserProfiles)
+                        {
+                            profile.WinOrLose = "L";
+                        }
+
+                        // Initialize and populate the ProfileList
+                        game.ProfileList = new List<Profile>();
+                        game.ProfileList = winnerProfiles.Concat(loserProfiles).ToList();
+
+                        // Fetch the associated Run if available
+                        if (!string.IsNullOrEmpty(game.RunId))
+                        {
+                            game.Run = await context.Run
+                                .FirstOrDefaultAsync(r => r.RunId == game.RunId);
+                        }
+
+                        processedGames.Add(game);
+                    }
 
                     return processedGames;
                 }
@@ -215,6 +280,7 @@ namespace DataLayer.DAL.Repository
                 }
             }
         }
+
         /// <summary>
         /// Get Games
         /// </summary>
@@ -228,30 +294,48 @@ namespace DataLayer.DAL.Repository
                     // Fetch all games
                     var games = await context.Game.ToListAsync();
 
-                    // Parse WinProfileIdsStatusString and LoseProfileIdsStatusString
+                    // Process each game to add player information
                     foreach (var game in games)
                     {
-                        // Deserialize the JSON strings
-                        var winProfileStatuses = DeserializeProfileStatuses(game.WinProfileIdsStatusString);
-                        var loseProfileStatuses = DeserializeProfileStatuses(game.LoseProfileIdsStatusString);
-
-                        // Extract Profile IDs from statuses
-                        var winProfileIds = winProfileStatuses.Select(p => p.ProfileId).ToList();
-                        var loseProfileIds = loseProfileStatuses.Select(p => p.ProfileId).ToList();
-
-                        // Fetch profiles from the database
-                        game.WinnersList = await context.Profile
-                            .Where(profile => winProfileIds.Contains(profile.ProfileId))
+                        // Get winning player IDs for this game
+                        var winningPlayerIds = await context.GameWinningPlayer
+                            .Where(wp => wp.GameId == game.GameId)
+                            .Select(wp => wp.ProfileId)
                             .ToListAsync();
 
-                        game.LossersList = await context.Profile
-                            .Where(profile => loseProfileIds.Contains(profile.ProfileId))
+                        // Get losing player IDs for this game
+                        var losingPlayerIds = await context.GameLosingPlayer
+                            .Where(lp => lp.GameId == game.GameId)
+                            .Select(lp => lp.ProfileId)
                             .ToListAsync();
 
-                        // Populate the main ProfileList
-                        game.ProfileList = game.WinnersList.Concat(game.LossersList).ToList();
+                        // Fetch winner profiles
+                        var winnerProfiles = await context.Profile
+                            .Where(profile => winningPlayerIds.Contains(profile.ProfileId))
+                            .ToListAsync();
 
-                        // Fetch the associated PrivateRun using PrivateRunId
+                        // Mark winners
+                        foreach (var profile in winnerProfiles)
+                        {
+                            profile.WinOrLose = "W";
+                        }
+
+                        // Fetch loser profiles
+                        var loserProfiles = await context.Profile
+                            .Where(profile => losingPlayerIds.Contains(profile.ProfileId))
+                            .ToListAsync();
+
+                        // Mark losers
+                        foreach (var profile in loserProfiles)
+                        {
+                            profile.WinOrLose = "L";
+                        }
+
+                        // Initialize and populate the ProfileList
+                        game.ProfileList = new List<Profile>();
+                        game.ProfileList = winnerProfiles.Concat(loserProfiles).ToList();
+
+                        // Fetch the associated Run using RunId
                         if (!string.IsNullOrEmpty(game.RunId))
                         {
                             game.Run = await context.Run
@@ -265,29 +349,8 @@ namespace DataLayer.DAL.Repository
                 {
                     // Log the exception or handle it as needed
                     Console.WriteLine($"Error fetching games: {ex.Message}");
-                    return null;
+                    return new List<Game>();
                 }
-            }
-        }
-
-        /// <summary>
-        /// Deserializes a JSON string into a list of ProfileStatus objects.
-        /// </summary>
-        /// <param name="jsonString">JSON string representing profile statuses.</param>
-        /// <returns>List of ProfileStatus objects.</returns>
-        private List<ProfileStatus> DeserializeProfileStatuses(string? jsonString)
-        {
-            if (string.IsNullOrEmpty(jsonString))
-                return new List<ProfileStatus>();
-
-            try
-            {
-                return JsonConvert.DeserializeObject<List<ProfileStatus>>(jsonString) ?? new List<ProfileStatus>();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error deserializing JSON string: {ex.Message}");
-                return new List<ProfileStatus>();
             }
         }
 
@@ -303,13 +366,13 @@ namespace DataLayer.DAL.Repository
                 try
                 {
                     model.GameId = Guid.NewGuid().ToString();
-                    model.CreatedDate = DateTime.Now.ToString("MM/dd/yyyy");
+                    model.CreatedDate = DateTime.UtcNow;
                     model.GameNumber = UniqueIdNumber.GenerateSixDigit();
                     await context.Game.AddAsync(model);
                 }
                 catch (Exception ex)
                 {
-
+                    Console.WriteLine($"Error inserting game: {ex.Message}");
                 }
                 await Save();
             }
@@ -328,17 +391,17 @@ namespace DataLayer.DAL.Repository
 
                 if (existingItem != null)
                 {
+                    // Update properties from model to existingItem
+                    existingItem.Status = model.Status;
+                    existingItem.RunId = model.RunId;
+                    existingItem.CourtId = model.CourtId;
+                    // Add other properties as needed
 
                     context.Game.Update(existingItem);
                     await Save();
                 }
-                else
-                {
-
-                }
             }
         }
-
 
         /// <summary>
         /// Delete Game
@@ -350,23 +413,23 @@ namespace DataLayer.DAL.Repository
             using (var context = _context)
             {
                 Game obj = (from u in context.Game
-                           where u.GameId == GameId
-                           select u).FirstOrDefault();
+                            where u.GameId == GameId
+                            select u).FirstOrDefault();
 
-
-
-                _context.Game.Remove(obj);
-                await Save();
+                if (obj != null)
+                {
+                    _context.Game.Remove(obj);
+                    await Save();
+                }
             }
         }
 
         /// <summary>
         /// Dispose
         /// </summary>
-        /// <exception cref="NotImplementedException"></exception>
         public void Dispose()
         {
-            throw new NotImplementedException();
+            _context?.Dispose();
         }
 
         /// <summary>
@@ -377,6 +440,5 @@ namespace DataLayer.DAL.Repository
         {
             return await _context.SaveChangesAsync();
         }
-         
     }
 }
