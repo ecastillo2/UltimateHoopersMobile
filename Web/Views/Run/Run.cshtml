@@ -201,6 +201,74 @@
         </a>
     </div>
 
+    <!-- Run Filters -->
+    <div class="mb-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Filter Runs</h5>
+                    <button class="btn btn-sm btn-outline-secondary" id="resetFilters">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i>
+                        Reset Filters
+                    </button>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label for="statusFilter" class="form-label">Status</label>
+                        <select class="form-select" id="statusFilter">
+                            <option value="all" selected>All Statuses</option>
+                            <option value="upcoming">Upcoming</option>
+                            <option value="almost-full">Almost Full</option>
+                            <option value="past">Past</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label for="dateFilter" class="form-label">Date</label>
+                        <select class="form-select" id="dateFilter">
+                            <option value="all" selected>All Dates</option>
+                            <option value="today">Today</option>
+                            <option value="this-week">This Week</option>
+                            <option value="upcoming">Upcoming</option>
+                            <option value="past">Past</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label for="locationFilter" class="form-label">Location</label>
+                        <select class="form-select" id="locationFilter">
+                            <option value="all" selected>All Locations</option>
+                            <option value="Main Street Courts">Main Street Courts</option>
+                            <option value="City Gym">City Gym</option>
+                            <option value="Westside Park Courts">Westside Park Courts</option>
+                            <option value="Community Center">Community Center</option>
+                            <option value="Youth Center">Youth Center</option>
+                            <option value="Recreation Center">Recreation Center</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label for="typeFilter" class="form-label">Run Type</label>
+                        <select class="form-select" id="typeFilter">
+                            <option value="all" selected>All Types</option>
+                            <option value="pickup">Pickup</option>
+                            <option value="training">Training</option>
+                            <option value="tournament">Tournament</option>
+                            <option value="youth">Youth</option>
+                            <option value="women">Women</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mt-3" id="activeFilters">
+                    <span class="badge bg-secondary me-2">Active Filters:</span>
+                    <span class="text-muted filter-none">None</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row mb-4">
         <div class="col-12 text-end">
             <button type="button" class="btn btn-orange" data-bs-toggle="modal" data-bs-target="#addRunModal">
@@ -221,7 +289,6 @@
                             <th>Date & Time</th>
                             <th>Location</th>
                             <th>Host</th>
-                           @*  <th>Capacity</th> *@
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -245,13 +312,6 @@
                                 badgeText = "Past";
                             }
 
-                            // Calculate fill percentage for progress bar
-                          @*   int fillPercentage = 0;
-                            if (run.PlayerLimit > 0)
-                            {
-                                fillPercentage = (int)Math.Min(100, Math.Round(((double)run.PlayerCount / run.PlayerLimit?) * 100));
-                            } *@
-
                             // Get host initials
                             string hostInitials = "NA";
                             if (!string.IsNullOrEmpty(run.ProfileId))
@@ -267,7 +327,9 @@
                                 }
                             }
 
-                            <tr>
+                            <tr data-run-type="@(run.Status?.ToLower() ?? "pickup")"
+                                data-capacity-current="@run.PlayerCount"
+                                data-capacity-max="@run.PlayerLimit">
                                 <td>@run.Name</td>
                                 <td>@run.RunTime</td>
                                 <td>@run.Address</td>
@@ -277,14 +339,6 @@
                                         <span>@run.ProfileId</span>
                                     </div>
                                 </td>
-                               @*  <td>
-                                    <div class="capacity-container">
-                                        <span class="capacity-text">@run.PlayerCount/@run.PlayerLimit</span>
-                                        <div class="progress progress-sm w-100">
-                                            <div class="progress-bar bg-orange" role="progressbar" style="width: @(fillPercentage)%" aria-valuenow="@fillPercentage" aria-valuemin="0" aria-valuemax="100"></div>
-                                        </div>
-                                    </div>
-                                </td> *@
                                 <td><span class="badge @badgeClass badge-pill">@badgeText</span></td>
                                 <td>
                                     <div class="table-actions">
@@ -324,12 +378,12 @@
                 <h5 class="modal-title" id="addRunModalLabel">Create New Run</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="addRunForm" method="post" action="@Url.Action("CreateRun", "Dashboard")">
+            <form id="addRunForm" method="post" action="@Url.Action("Create", "Run")">
                 <div class="modal-body">
                     <div class="row mb-3">
                         <div class="col-md-12">
                             <label for="runTitle" class="form-label">Run Title</label>
-                            <input type="text" class="form-control" id="runTitle" name="Title" placeholder="e.g. Weeknight Run, Sunday Morning Basketball" required>
+                            <input type="text" class="form-control" id="runTitle" name="Name" placeholder="e.g. Weeknight Run, Sunday Morning Basketball" required>
                         </div>
                     </div>
 
@@ -347,7 +401,7 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="courtLocation" class="form-label">Court Location</label>
-                            <select class="form-select" id="courtLocation" name="Location" required>
+                            <select class="form-select" id="courtLocation" name="Address" required>
                                 <option value="" selected disabled>Select a location</option>
                                 <option value="Main Street Courts">Main Street Courts</option>
                                 <option value="City Gym">City Gym</option>
@@ -369,7 +423,7 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="maxParticipants" class="form-label">Maximum Participants</label>
-                            <input type="number" class="form-control" id="maxParticipants" name="MaxParticipants" min="2" max="30" value="10" required>
+                            <input type="number" class="form-control" id="maxParticipants" name="PlayerLimit" min="2" max="30" value="10" required>
                         </div>
                         <div class="col-md-6">
                             <label for="skillLevel" class="form-label">Skill Level</label>
@@ -456,13 +510,13 @@
                 </ul>
                 <div class="tab-content" id="editRunTabContent">
                     <div class="tab-pane fade show active" id="details-tab-pane" role="tabpanel" aria-labelledby="details-tab" tabindex="0">
-                        <form id="editRunForm" method="post" action="@Url.Action("UpdateRun", "Dashboard")" class="mt-4">
-                            <input type="hidden" id="editRunId" name="Id" value="" />
+                        <form id="editRunForm" method="post" action="@Url.Action("Edit", "Run")" class="mt-4">
+                            <input type="hidden" id="editRunId" name="RunId" value="" />
 
                             <div class="row mb-3">
                                 <div class="col-md-12">
                                     <label for="editRunTitle" class="form-label">Run Title</label>
-                                    <input type="text" class="form-control" id="editRunTitle" name="Title" required>
+                                    <input type="text" class="form-control" id="editRunTitle" name="Name" required>
                                 </div>
                             </div>
 
@@ -480,7 +534,7 @@
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label for="editCourtLocation" class="form-label">Court Location</label>
-                                    <select class="form-select" id="editCourtLocation" name="Location" required>
+                                    <select class="form-select" id="editCourtLocation" name="Address" required>
                                         <option value="Main Street Courts">Main Street Courts</option>
                                         <option value="City Gym">City Gym</option>
                                         <option value="Westside Park Courts">Westside Park Courts</option>
@@ -501,15 +555,16 @@
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label for="editMaxParticipants" class="form-label">Maximum Participants</label>
-                                    <input type="number" class="form-control" id="editMaxParticipants" name="MaxParticipants" min="2" max="30" required>
+                                    <input type="number" class="form-control" id="editMaxParticipants" name="PlayerLimit" min="2" max="30" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="editStatus" class="form-label">Status</label>
-                                    <select class="form-select" id="editStatus" name="Status" required>
-                                        <option value="Active">Active</option>
-                                        <option value="Full">Full</option>
-                                        <option value="Cancelled">Cancelled</option>
-                                        <option value="Completed">Completed</option>
+                                    <label for="editRunType" class="form-label">Run Type</label>
+                                    <select class="form-select" id="editRunType" name="RunType" required>
+                                        <option value="Pickup">Pickup Games</option>
+                                        <option value="Training">Training Session</option>
+                                        <option value="Tournament">Tournament</option>
+                                        <option value="Youth">Youth Development</option>
+                                        <option value="Women">Women's Only</option>
                                     </select>
                                 </div>
                             </div>
@@ -571,7 +626,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form id="deleteRunForm" method="post" action="@Url.Action("DeleteRun", "Dashboard")">
+                <form id="deleteRunForm" method="post" action="@Url.Action("Delete", "Run")">
                     <input type="hidden" id="deleteRunId" name="id" value="" />
                     <button type="submit" class="btn btn-danger">Delete Run</button>
                 </form>
@@ -592,7 +647,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize DataTable
-            $('#runsTable').DataTable({
+            const runsTable = $('#runsTable').DataTable({
                 responsive: true,
                 lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
                 dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip',
@@ -606,10 +661,215 @@
                 },
                 columnDefs: [
                     { className: "align-middle", targets: "_all" },
-                    { orderable: false, targets: [6] } // Disable sorting on the Actions column
+                    { orderable: false, targets: [5] } // Disable sorting on the Actions column
                 ],
                 order: [[1, 'asc']] // Sort by Date & Time column by default
             });
+
+            // Filter references
+            const statusFilter = $('#statusFilter');
+            const dateFilter = $('#dateFilter');
+            const locationFilter = $('#locationFilter');
+            const typeFilter = $('#typeFilter');
+            const resetFiltersBtn = $('#resetFilters');
+            const activeFiltersContainer = $('#activeFilters');
+
+            // Apply filter function
+            function applyFilters() {
+                // Remove any existing custom filter to prevent stacking
+                if ($.fn.dataTable.ext.search.length > 0) {
+                    $.fn.dataTable.ext.search.pop();
+                }
+
+                // Create a new custom filter function
+                $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                    // Only apply this filter to our runsTable
+                    if (settings.nTable.id !== 'runsTable') return true;
+
+                    // Skip filtering if all filters are set to 'all'
+                    if (statusFilter.val() === 'all' &&
+                        dateFilter.val() === 'all' &&
+                        locationFilter.val() === 'all' &&
+                        typeFilter.val() === 'all') {
+                        return true;
+                    }
+
+                    // Status filtering (column 4 contains the status badge)
+                    if (statusFilter.val() !== 'all') {
+                        const status = data[4].toLowerCase();
+                        const statusValue = statusFilter.val().toLowerCase();
+
+                        // Match based on status badge text
+                        if (statusValue === 'upcoming' && !status.includes('upcoming')) {
+                            return false;
+                        }
+                        if (statusValue === 'almost-full' && !status.includes('almost full')) {
+                            return false;
+                        }
+                        if (statusValue === 'past' && !status.includes('past')) {
+                            return false;
+                        }
+                    }
+
+                    // Date filtering (column 1 contains the date)
+                    if (dateFilter.val() !== 'all') {
+                        const dateString = data[1];
+                        const date = new Date(dateString);
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0); // Set to start of today
+
+                        const tomorrow = new Date(today);
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+
+                        const endOfWeek = new Date(today);
+                        endOfWeek.setDate(endOfWeek.getDate() + 7);
+
+                        switch (dateFilter.val()) {
+                            case 'today':
+                                // Date must be today
+                                if (date < today || date >= tomorrow) {
+                                    return false;
+                                }
+                                break;
+                            case 'this-week':
+                                // Date must be between today and end of the week
+                                if (date < today || date > endOfWeek) {
+                                    return false;
+                                }
+                                break;
+                            case 'upcoming':
+                                // Date must be in the future
+                                if (date < today) {
+                                    return false;
+                                }
+                                break;
+                            case 'past':
+                                // Date must be in the past
+                                if (date >= today) {
+                                    return false;
+                                }
+                                break;
+                        }
+                    }
+
+                    // Location filtering (column 2 contains location)
+                    if (locationFilter.val() !== 'all') {
+                        const location = data[2];
+                        if (location !== locationFilter.val()) {
+                            return false;
+                        }
+                    }
+
+                    // Run Type filtering
+                    if (typeFilter.val() !== 'all') {
+                        const row = $(runsTable.row(dataIndex).node());
+                        const runType = row.data('run-type');
+                        if (runType !== typeFilter.val()) {
+                            return false;
+                        }
+                    }
+
+                    // If we got here, the row passes all filters
+                    return true;
+                });
+
+                // Redraw the table to apply filters
+                runsTable.draw();
+
+                // Update the active filters display
+                updateActiveFilters();
+            }
+
+            // Update the active filters display
+            function updateActiveFilters() {
+                // Clear the current active filters display (except the label)
+                activeFiltersContainer.find('.filter-badge, .filter-none').remove();
+
+                // Check if any filters are active
+                const hasActiveFilters =
+                    statusFilter.val() !== 'all' ||
+                    dateFilter.val() !== 'all' ||
+                    locationFilter.val() !== 'all' ||
+                    typeFilter.val() !== 'all';
+
+                // If no filters are active, show "None"
+                if (!hasActiveFilters) {
+                    activeFiltersContainer.append(
+                        $('<span>').addClass('text-muted filter-none').text('None')
+                    );
+                    return;
+                }
+
+                // Add badges for active filters
+                if (statusFilter.val() !== 'all') {
+                    addFilterBadge('Status', formatFilterValue(statusFilter.val()), function() {
+                        statusFilter.val('all');
+                        applyFilters();
+                    });
+                }
+
+                if (dateFilter.val() !== 'all') {
+                    addFilterBadge('Date', formatFilterValue(dateFilter.val()), function() {
+                        dateFilter.val('all');
+                        applyFilters();
+                    });
+                }
+
+                if (locationFilter.val() !== 'all') {
+                    addFilterBadge('Location', locationFilter.val(), function() {
+                        locationFilter.val('all');
+                        applyFilters();
+                    });
+                }
+
+                if (typeFilter.val() !== 'all') {
+                    addFilterBadge('Type', formatFilterValue(typeFilter.val()), function() {
+                        typeFilter.val('all');
+                        applyFilters();
+                    });
+                }
+            }
+
+            // Helper function to format filter values for display
+            function formatFilterValue(value) {
+                return value
+                    .split('-')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(' ');
+            }
+
+            // Add a filter badge to the display
+            function addFilterBadge(label, value, removeCallback) {
+                const badge = $('<span>')
+                    .addClass('badge bg-primary me-2 filter-badge')
+                    .text(`${label}: ${value}`);
+
+                const removeBtn = $('<button>')
+                    .addClass('btn-close btn-close-white ms-1')
+                    .css('font-size', '0.5rem')
+                    .on('click', removeCallback);
+
+                badge.append(removeBtn);
+                activeFiltersContainer.append(badge);
+            }
+
+            // Add event listeners to filters
+            statusFilter.on('change', applyFilters);
+            dateFilter.on('change', applyFilters);
+            locationFilter.on('change', applyFilters);
+            typeFilter.on('change', applyFilters);
+
+            // Reset filters button
+            resetFiltersBtn.on('click', function() {
+                statusFilter.val('all');
+                dateFilter.val('all');
+                locationFilter.val('all');
+                typeFilter.val('all');
+                applyFilters();
+            });
+
+            // Initialize with current filter values
+            applyFilters();
 
             // Set minimum date for date pickers to today
             const today = new Date().toISOString().split('T')[0];
@@ -642,15 +902,15 @@
                     document.getElementById('editRunId').value = runId;
 
                     // Load run data via AJAX
-                    fetch(`@Url.Action("GetRunData", "Dashboard")?id=${runId}`)
+                    fetch(`@Url.Action("GetRunData", "Run")?id=${runId}`)
                         .then(response => response.json())
                         .then(data => {
                             // Populate form fields
-                            document.getElementById('editRunTitle').value = data.title || data.name;
+                            document.getElementById('editRunTitle').value = data.name || '';
 
                             // Format date and time
-                            if (data.startTime || data.runDate) {
-                                const startTime = new Date(data.startTime || data.runDate);
+                            if (data.runDate) {
+                                const startTime = new Date(data.runDate);
                                 const dateString = startTime.toISOString().split('T')[0];
                                 document.getElementById('editRunDate').value = dateString;
 
@@ -659,18 +919,18 @@
                                 document.getElementById('editRunTime').value = `${hours}:${minutes}`;
                             }
 
-                            document.getElementById('editCourtLocation').value = data.location || data.address;
+                            document.getElementById('editCourtLocation').value = data.address || '';
                             document.getElementById('editCourtType').value = (data.isOutdoor || false).toString();
-                            document.getElementById('editMaxParticipants').value = data.maxParticipants || data.playerLimit;
-                            document.getElementById('editStatus').value = data.status || 'Active';
-                            document.getElementById('editRunDescription').value = data.description;
+                            document.getElementById('editMaxParticipants').value = data.playerLimit || 10;
+                            document.getElementById('editRunType').value = data.runType || 'Pickup';
+                            document.getElementById('editRunDescription').value = data.description || '';
 
                             // Set delete button run ID
                             document.getElementById('deleteRunId').value = runId;
 
                             // Update participants count
-                            document.getElementById('currentParticipantsCount').textContent = data.currentParticipants || data.playerCount;
-                            document.getElementById('maxParticipantsCount').textContent = data.maxParticipants || data.playerLimit;
+                            document.getElementById('currentParticipantsCount').textContent = data.playerCount || 0;
+                            document.getElementById('maxParticipantsCount').textContent = data.playerLimit || 0;
 
                             // Load participants
                             loadParticipants(runId);
@@ -702,7 +962,7 @@
             function loadParticipants(runId) {
                 const participantsList = document.getElementById('participantsList');
 
-                fetch(`@Url.Action("GetRunParticipants", "Dashboard")?runId=${runId}`)
+                fetch(`@Url.Action("GetRunParticipants", "Run")?runId=${runId}`)
                     .then(response => response.json())
                     .then(data => {
                         if (data.length === 0) {
@@ -770,7 +1030,7 @@
 
             // Function to remove participant
             function removeParticipant(runId, participantId) {
-                fetch('@Url.Action("RemoveParticipant", "Dashboard")', {
+                fetch('@Url.Action("RemoveParticipant", "Run")', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -789,9 +1049,7 @@
                         document.getElementById('currentParticipantsCount').textContent = currentCount - 1;
 
                         // Refresh the table
-                        if (typeof refreshTable === 'function') {
-                            refreshTable();
-                        }
+                        runsTable.ajax.reload();
                     } else {
                         alert('Error removing participant: ' + data.message);
                     }
@@ -819,7 +1077,7 @@
                     if (!email) return;
 
                     // Add participant via AJAX
-                    fetch('@Url.Action("AddParticipant", "Dashboard")', {
+                    fetch('@Url.Action("AddParticipant", "Run")', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -837,9 +1095,7 @@
                             document.getElementById('currentParticipantsCount').textContent = currentCount + 1;
 
                             // Refresh the table
-                            if (typeof refreshTable === 'function') {
-                                refreshTable();
-                            }
+                            runsTable.ajax.reload();
                         } else {
                             alert('Error adding participant: ' + data.message);
                         }
@@ -850,29 +1106,6 @@
                     });
                 });
             }
-
-            // Function to refresh DataTable (can be called after operations that change data)
-            function refreshTable() {
-                if ($.fn.DataTable.isDataTable('#runsTable')) {
-                    $('#runsTable').DataTable().ajax.reload();
-                } else {
-                    // If not initialized as AJAX DataTable, just reload the page
-                    location.reload();
-                }
-            }
-
-            // Add form submission handlers
-            document.getElementById('addRunForm')?.addEventListener('submit', function(e) {
-                // Default form submission
-            });
-
-            document.getElementById('editRunForm')?.addEventListener('submit', function(e) {
-                // Default form submission
-            });
-
-            document.getElementById('deleteRunForm')?.addEventListener('submit', function(e) {
-                // Default form submission
-            });
         });
     </script>
 }
