@@ -1,10 +1,16 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using DataLayer.DAL;
+using DataLayer.DAL.Interface;
+using DataLayer.DAL.Repository;
+using Domain;
+using Domain.DtoModel;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using DataLayer.DAL;
-using Domain;
+
 
 namespace WebAPI.Controllers
 {
@@ -12,36 +18,138 @@ namespace WebAPI.Controllers
     [Route("api/[controller]")]
     public class UserController : ControllerBase
     {
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IUserRepository _repository;
         private readonly ILogger<UserController> _logger;
 
-        public UserController(IUnitOfWork unitOfWork, ILogger<UserController> logger)
+        public UserController(IUserRepository repository, ILogger<UserController> logger)
         {
-            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetUsers(CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Get clients with cursor-based pagination for efficient scrolling
+        /// </summary>
+        [HttpGet("clients/cursor")]
+        [ProducesResponseType(typeof(CursorPaginatedResultDto<UserDetailViewModelDto>), 200)]
+        public async Task<IActionResult> GetClientsWithCursor(
+            [FromQuery] string cursor = null,
+            [FromQuery] int limit = 20,
+            [FromQuery] string direction = "next",
+            [FromQuery] string sortBy = "Points",
+            CancellationToken cancellationToken = default)
         {
             try
             {
-                var users = await _unitOfWork.User.GetAllAsync(cancellationToken: cancellationToken);
-                return Ok(users);
+                var (users, nextCursor) = await _repository
+                    .GetUsersWithCursorAsync(cursor, limit, direction, sortBy, cancellationToken);
+
+                // Create a list to hold our detailed profile view models
+                var detailedViewModels = new List<UserDetailViewModelDto>();
+
+                // Enrich each profile with additional data
+                foreach (var item in users)
+                {
+                    // Get additional profile data using the profile's ID
+                    var user = item;
+                    var profile = await _repository.GetProfileByUserId(item.UserId, cancellationToken);
+
+                    // Create a detailed view model with all the additional data
+                    var detailedViewModel = new UserDetailViewModelDto()
+                    {
+                        User = user,
+                        Profile = profile,
+                    };
+
+                    // Add to our list
+                    detailedViewModels.Add(detailedViewModel);
+                }
+
+                var result = new CursorPaginatedResultDto<UserDetailViewModelDto>
+                {
+                    Items = detailedViewModels,
+                    NextCursor = nextCursor,
+                    HasMore = !string.IsNullOrEmpty(nextCursor),
+                    Direction = direction,
+                    SortBy = sortBy
+                };
+
+                return Ok(result);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving users");
-                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving users");
+                _logger.LogError(ex, "Error retrieving cursor-based clients");
+                return StatusCode(500, "An error occurred while retrieving cursor-based clients");
             }
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<User>> GetUser(string id, CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Get users with cursor-based pagination for efficient scrolling
+        /// </summary>
+        [HttpGet("cursor")]
+        [ProducesResponseType(typeof(CursorPaginatedResultDto<UserDetailViewModelDto>), 200)]
+        public async Task<IActionResult> GetUsersWithCursor(
+            [FromQuery] string cursor = null,
+            [FromQuery] int limit = 20,
+            [FromQuery] string direction = "next",
+            [FromQuery] string sortBy = "Points",
+            CancellationToken cancellationToken = default)
         {
             try
             {
-                var user = await _unitOfWork.User.GetByIdAsync(id, cancellationToken);
+                var (users, nextCursor) = await _repository
+                    .GetUsersWithCursorAsync(cursor, limit, direction, sortBy, cancellationToken);
+
+                // Create a list to hold our detailed profile view models
+                var detailedViewModels = new List<UserDetailViewModelDto>();
+
+                // Enrich each profile with additional data
+                foreach (var item in users)
+                {
+                    // Get additional profile data using the profile's ID
+                    var user = item;
+                    var profile = await _repository.GetProfileByUserId(item.UserId, cancellationToken);
+
+                    // Create a detailed view model with all the additional data
+                    var detailedViewModel = new UserDetailViewModelDto()
+                    {
+                        User = user,
+                        Profile = profile,
+                    };
+
+                    // Add to our list
+                    detailedViewModels.Add(detailedViewModel);
+                }
+
+                var result = new CursorPaginatedResultDto<UserDetailViewModelDto>
+                {
+                    Items = detailedViewModels,
+                    NextCursor = nextCursor,
+                    HasMore = !string.IsNullOrEmpty(nextCursor),
+                    Direction = direction,
+                    SortBy = sortBy
+                };
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving cursor-based users");
+                return StatusCode(500, "An error occurred while retrieving cursor-based users");
+            }
+        }
+
+        /// <summary>
+        /// Get User by ID
+        /// </summary>
+        [HttpGet("{id}")]
+        [ProducesResponseType(typeof(UserDetailViewModelDto), 200)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> GetUserById(string id, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var user = await _repository.GetUserByIdAsync(id, cancellationToken);
 
                 if (user == null)
                     return NotFound();
@@ -50,166 +158,49 @@ namespace WebAPI.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving user {UserId}", id);
-                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the user");
+                _logger.LogError(ex, "Error retrieving User {UserId}", id);
+                return StatusCode(500, "An error occurred while retrieving the User");
             }
         }
 
-        [HttpPost]
-        public async Task<ActionResult<User>> CreateUser([FromBody] User user, [FromQuery] string password, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                // Validate required fields
-                if (string.IsNullOrEmpty(password))
-                    return BadRequest("Password is required");
-
-                if (string.IsNullOrEmpty(user.Email))
-                    return BadRequest("Email is required");
-
-                // Check if email is available
-                var isEmailAvailable = await _unitOfWork.User.IsEmailAvailableAsync(user.Email, cancellationToken);
-                if (!isEmailAvailable)
-                    return BadRequest("Email is already in use");
-
-                // Start a transaction
-                await _unitOfWork.BeginTransactionAsync(cancellationToken);
-
-                try
-                {
-                    // Create the user with the password
-                    var createdUser = await _unitOfWork.User.CreateUserAsync(user, password, cancellationToken);
-
-                    // Create a profile for the user if one doesn't exist
-                    if (string.IsNullOrEmpty(createdUser.ProfileId))
-                    {
-                        var profile = new Profile
-                        {
-                            ProfileId = Guid.NewGuid().ToString(),
-                            UserId = createdUser.UserId,
-                            UserName = string.IsNullOrEmpty(user.UserName) ? user.Email.Split('@')[0] : user.UserName,
-                            Status = "Active"
-                        };
-
-                        // Create a new setting for the profile
-                        var setting = new Setting
-                        {
-                            SettingId = Guid.NewGuid().ToString(),
-                            ProfileId = profile.ProfileId,
-                            AllowComments = true,
-                            ShowGameHistory = true,
-                            AllowEmailNotification = true
-                        };
-
-                        var success = await _unitOfWork.Profile.UpdateProfileAsync(profile, cancellationToken);
-                        if (!success)
-                        {
-                            await _unitOfWork.RollbackTransactionAsync(cancellationToken);
-                            return StatusCode(StatusCodes.Status500InternalServerError, "Failed to create profile for user");
-                        }
-
-                        // Update the user with the profile ID
-                        createdUser.ProfileId = profile.ProfileId;
-                        _unitOfWork.User.Update(createdUser); // This method doesn't return a Task
-                        await _unitOfWork.SaveChangesAsync(cancellationToken); // Save the changes
-                    }
-
-                    // Commit the transaction
-                    await _unitOfWork.CommitTransactionAsync(cancellationToken);
-
-                    // Remove sensitive data before returning
-                    createdUser.Password = null;
-                    createdUser.PasswordHash = null;
-
-                    return CreatedAtAction(nameof(GetUser), new { id = createdUser.UserId }, createdUser);
-                }
-                catch (Exception)
-                {
-                    // Rollback the transaction if any step fails
-                    await _unitOfWork.RollbackTransactionAsync(cancellationToken);
-                    throw;
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating user");
-                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while creating the user");
-            }
-        }
-
+        /// <summary>
+        /// Update User
+        /// </summary>
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateUser(string id, [FromBody] User user, CancellationToken cancellationToken = default)
+        [Authorize]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> UpdateUser(string id, UserUpdateModelDto model, CancellationToken cancellationToken)
         {
-            if (id != user.UserId)
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (id != model.UserId)
                 return BadRequest("User ID mismatch");
 
             try
             {
-                var existingUser = await _unitOfWork.User.GetByIdAsync(id, cancellationToken);
+                var user = await _repository.GetUserByIdAsync(id, cancellationToken);
 
-                if (existingUser == null)
-                    return NotFound();
+                if (user == null)
+                    return NotFound($"User with ID {id} not found");
 
-                // Update only allowed fields
-                existingUser.FirstName = user.FirstName;
-                existingUser.LastName = user.LastName;
-                existingUser.PhoneNumber = user.PhoneNumber;
-                existingUser.City = user.City;
-                existingUser.State = user.State;
-                existingUser.Zip = user.Zip;
-                existingUser.Country = user.Country;
-                existingUser.Status = user.Status;
+                // Update User properties from model
+                model.UpdateUser(user);
 
-                // Update the user
-                _unitOfWork.User.Update(existingUser);
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                var success = await _repository.UpdateUserAsync(user, cancellationToken);
+
+                if (!success)
+                    return StatusCode(500, "Failed to update User");
 
                 return NoContent();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating user {UserId}", id);
-                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while updating the user");
+                return StatusCode(500, "An error occurred while updating the user");
             }
         }
-
-        [HttpPut("{id}/change-password")]
-        public async Task<IActionResult> ChangePassword(string id, [FromBody] ChangePasswordModel model, CancellationToken cancellationToken = default)
-        {
-            if (string.IsNullOrEmpty(model.NewPassword))
-                return BadRequest("New password is required");
-
-            try
-            {
-                var user = await _unitOfWork.User.GetByIdAsync(id, cancellationToken);
-
-                if (user == null)
-                    return NotFound();
-
-                // If current password is provided, verify it
-                if (!string.IsNullOrEmpty(model.CurrentPassword))
-                {
-                    var isPasswordValid = _unitOfWork.User.VerifyPassword(user, model.CurrentPassword);
-                    if (!isPasswordValid)
-                        return BadRequest("Current password is incorrect");
-                }
-
-                // Change the password
-                await _unitOfWork.User.ChangePasswordAsync(id, model.NewPassword, cancellationToken);
-
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error changing password for user {UserId}", id);
-                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while changing the password");
-            }
-        }
-    }
-
-    public class ChangePasswordModel
-    {
-        public string CurrentPassword { get; set; }
-        public string NewPassword { get; set; }
     }
 }

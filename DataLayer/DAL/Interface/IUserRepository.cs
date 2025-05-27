@@ -1,16 +1,68 @@
-﻿using System.Collections.Generic;
+﻿using DataLayer.DAL.Interface;
+using Domain;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using DataLayer.DAL.Interface;
-using Domain;
 
 namespace DataLayer.DAL.Interface
 {
     /// <summary>
     /// Interface for user repository operations
     /// </summary>
-    public interface IUserRepository : IGenericRepository<User>
+    public interface IUserRepository : IDisposable, IAsyncDisposable
     {
+
+        /// <summary>
+        /// Get all PrivateRuns
+        /// </summary>
+        Task<List<User>> GetUsersAsync(CancellationToken cancellationToken = default);
+
+      
+
+        /// <summary>
+        /// Get PrivateRuns with cursor-based pagination for efficient scrolling
+        /// </summary>
+        /// <param name="cursor">The cursor value from the last item in the previous page, null for first page</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="direction">Direction of scrolling: "next" or "previous"</param>
+        /// <param name="sortBy">Field to sort by (e.g., "Points", "PlayerNumber", "Status")</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>Courts and the next cursor value</returns>
+        Task<(List<User> Users, string NextCursor)> GetUsersWithCursorAsync(
+            string cursor = null,
+            int limit = 20,
+            string direction = "next",
+            string sortBy = "Points",
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Stream all PrivateRuns for efficient memory usage with large datasets
+        /// </summary>
+        IAsyncEnumerable<User> StreamAllUsersAsync(
+            [EnumeratorCancellation] CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Get PrivateRun by ID
+        /// </summary>
+        Task<User> GetUserByIdAsync(
+            string privateRunId,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Get PrivateRun by ID
+        /// </summary>
+        Task<Profile> GetProfileByUserId(
+            string privateRunId,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Update a profile
+        /// </summary>
+        Task<bool> UpdateUserAsync(
+            User privateRun,
+            CancellationToken cancellationToken = default);
+
         /// <summary>
         /// Get user by email
         /// </summary>
@@ -27,27 +79,6 @@ namespace DataLayer.DAL.Interface
         /// <returns>True if email is available, false if already in use</returns>
         Task<bool> IsEmailAvailableAsync(string email, CancellationToken cancellationToken = default);
 
-        /// <summary>
-        /// Update the last login date for a user
-        /// </summary>
-        /// <param name="userId">User ID</param>
-        /// <param name="cancellationToken">Cancellation token</param>
-        Task UpdateLastLoginDateAsync(string userId, CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Get admin users (with Access Level = "Admin")
-        /// </summary>
-        /// <param name="cancellationToken">Cancellation token</param>
-        /// <returns>List of admin users</returns>
-        Task<List<User>> GetAdminUsersAsync(CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Get users by status
-        /// </summary>
-        /// <param name="status">Status to filter by</param>
-        /// <param name="cancellationToken">Cancellation token</param>
-        /// <returns>List of users with matching status</returns>
-        Task<List<User>> GetUsersByStatusAsync(string status, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Create a new user with secure password hashing
@@ -66,12 +97,17 @@ namespace DataLayer.DAL.Interface
         /// <returns>True if password is correct, false otherwise</returns>
         bool VerifyPassword(User user, string password);
 
+
         /// <summary>
-        /// Change a user's password
+        /// Update the last login date for a user
         /// </summary>
         /// <param name="userId">User ID</param>
-        /// <param name="newPassword">New plain text password (will be hashed)</param>
         /// <param name="cancellationToken">Cancellation token</param>
-        Task ChangePasswordAsync(string userId, string newPassword, CancellationToken cancellationToken = default);
+        Task UpdateLastLoginDateAsync(string userId, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Save changes to database
+        /// </summary>
+        Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }

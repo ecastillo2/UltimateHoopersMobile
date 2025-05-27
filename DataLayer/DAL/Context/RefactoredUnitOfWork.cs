@@ -42,7 +42,7 @@ namespace DataLayer.DAL
         }
 
         // Property implementations with lazy loading
-        public IUserRepository User => _userRepository ??= new UserRepository(_context, (ILogger<UserRepository>)_logger);
+        public IUserRepository User => _userRepository ??= new UserRepository(_context, null);
         public IProfileRepository Profile => _profileRepository ??= new ProfileRepository(_context, null);
         public IPostRepository Post => _postRepository ??= new PostRepository(_context, null);
         public IGameRepository Game => _gameRepository ??= new GameRepository(_context);

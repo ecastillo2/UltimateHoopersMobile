@@ -106,7 +106,7 @@ namespace WebAPI.Services
 
                 // Get user from database
                 var userId = userIdClaim.Value;
-                var user = await _userRepository.GetByIdAsync(userId);
+                var user = await _userRepository.GetUserByIdAsync(userId);
 
                 if (user == null)
                 {
@@ -121,7 +121,7 @@ namespace WebAPI.Services
                 }
 
                 // Update last login
-                await _userRepository.UpdateLastLoginDateAsync(userId);
+               // await _userRepository.UpdateLastLoginDateAsync(userId);
 
                 // Generate a new token
                 user.Token = GenerateJwtToken(user);

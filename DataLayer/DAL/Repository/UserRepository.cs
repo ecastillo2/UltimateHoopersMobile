@@ -2,18 +2,189 @@
 using DataLayer.DAL.Interface;
 using Domain;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Runtime.CompilerServices;
 
 namespace DataLayer.DAL.Repository
 {
     /// <summary>
     /// Implementation of the User repository with proper error handling
     /// </summary>
-    public class UserRepository : GenericRepository<User>, IUserRepository
+    public class UserRepository :  IUserRepository
     {
-        public UserRepository(ApplicationContext context, ILogger<UserRepository> logger = null)
-            : base(context, logger)
+        private readonly ApplicationContext _context;
+        private readonly ILogger<UserRepository> _logger;
+        private readonly IConfiguration _configuration;
+        private bool _disposed = false;
+
+        public UserRepository(ApplicationContext context, IConfiguration configuration, ILogger<UserRepository> logger = null)
         {
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _logger = logger;
+        }
+
+        public async Task<List<User>> GetUsersAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await _context.User
+                    .AsNoTracking()
+                    .ToListAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error retrieving Runs");
+                throw;
+            }
+        }
+
+       
+
+        public async Task<(List<User> Users, string NextCursor)> GetUsersWithCursorAsync(
+            string cursor = null,
+            int limit = 20,
+            string direction = "next",
+            string sortBy = "Points",
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                // Default query starting point
+                IQueryable<User> query = _context.User.AsNoTracking();
+
+                // Parse the cursor if provided
+                CursorData cursorData = null;
+                if (!string.IsNullOrEmpty(cursor))
+                {
+                    try
+                    {
+                        // Decode and deserialize cursor
+                        var decodedCursor = System.Text.Encoding.UTF8.GetString(
+                            Convert.FromBase64String(cursor));
+                        cursorData = System.Text.Json.JsonSerializer.Deserialize<CursorData>(decodedCursor);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger?.LogWarning(ex, "Invalid cursor format. Starting from beginning");
+                        // If cursor parsing fails, ignore and start from beginning
+                        cursorData = null;
+                    }
+                }
+
+
+                // Execute query with limit
+                var privateRuns = await query.Take(limit + 1).ToListAsync(cancellationToken);
+
+                // Check if we have a next page by fetching limit+1 items
+                string nextCursor = null;
+                if (privateRuns.Count > limit)
+                {
+                    // Remove the extra item we retrieved to check for "has next page"
+                    var lastItem = privateRuns[limit];
+                    privateRuns.RemoveAt(limit);
+
+                    // Create cursor for next page based on last item properties
+                    var newCursorData = new ClientCursorData
+                    {
+                        Id = lastItem.ClientId,
+
+
+                    };
+
+                    var serialized = System.Text.Json.JsonSerializer.Serialize(newCursorData);
+                    nextCursor = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(serialized));
+                }
+
+                // If we requested previous direction and got results, we need to reverse the order
+                if (direction.ToLowerInvariant() == "previous" && privateRuns.Any())
+                {
+                    privateRuns.Reverse();
+                }
+
+                return (privateRuns, nextCursor);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting Runs with cursor");
+                throw;
+            }
+        }
+
+        public async IAsyncEnumerable<User> StreamAllUsersAsync(
+    [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            var batchSize = 100;
+            var lastId = string.Empty;
+
+            while (true)
+            {
+                List<User> batch;
+                try
+                {
+                    batch = await _context.User
+                        .AsNoTracking()
+                        .Where(p => string.Compare(p.UserId, lastId) > 0)
+                        .OrderBy(p => p.UserId)
+                        .Take(batchSize)
+                        .ToListAsync(cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogError(ex, "Error streaming PrivateRuns");
+                    throw;
+                }
+
+                if (batch.Count == 0)
+                    break;
+
+                foreach (var privateRun in batch)
+                {
+                    yield return privateRun;
+                    lastId = privateRun.UserId;
+                }
+
+                if (batch.Count < batchSize)
+                    break;
+            }
+        }
+
+
+        public async Task<User> GetUserByIdAsync(
+            string runId,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await _context.User
+                    .AsNoTracking()
+
+                    .FirstOrDefaultAsync(p => p.UserId == runId, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting PrivateRun {PrivateRunId}", runId);
+                throw;
+            }
+        }
+
+        public async Task<Profile> GetProfileByUserId(
+           string runId,
+           CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await _context.Profile
+                    .AsNoTracking()
+
+                    .FirstOrDefaultAsync(p => p.UserId == runId, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting PrivateRun {PrivateRunId}", runId);
+                throw;
+            }
         }
 
         /// <summary>
@@ -23,7 +194,7 @@ namespace DataLayer.DAL.Repository
         {
             try
             {
-                return await _dbSet
+                return await _context.User
                     .AsNoTracking()
                     .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
             }
@@ -41,7 +212,7 @@ namespace DataLayer.DAL.Repository
         {
             try
             {
-                return !await _dbSet
+                return !await _context.User
                     .AnyAsync(u => u.Email.ToLower() == email.ToLower(), cancellationToken);
             }
             catch (Exception ex)
@@ -51,71 +222,6 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        /// <summary>
-        /// Update the last login date for a user
-        /// </summary>
-        public async Task UpdateLastLoginDateAsync(string userId, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var user = await _dbSet.FindAsync(new object[] { userId }, cancellationToken);
-
-                if (user != null)
-                {
-                    user.LastLoginDate = DateTime.Now.ToString();
-                    _context.Entry(user).State = EntityState.Modified;
-                    await SaveAsync(cancellationToken);
-                    _logger?.LogInformation("Updated last login date for user {UserId}", userId);
-                }
-                else
-                {
-                    _logger?.LogWarning("User not found when updating last login date: {UserId}", userId);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogError(ex, "Error updating last login date for user {UserId}", userId);
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Get admin users (with Access Level = "Admin")
-        /// </summary>
-        public async Task<List<User>> GetAdminUsersAsync(CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                return await _dbSet
-                    .AsNoTracking()
-                    .Where(u => u.AccessLevel == "Admin")
-                    .ToListAsync(cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogError(ex, "Error getting admin users");
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Get users by status
-        /// </summary>
-        public async Task<List<User>> GetUsersByStatusAsync(string status, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                return await _dbSet
-                    .AsNoTracking()
-                    .Where(u => u.Status == status)
-                    .ToListAsync(cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogError(ex, "Error getting users by status: {Status}", status);
-                throw;
-            }
-        }
 
         /// <summary>
         /// Create a new user with secure password hashing
@@ -142,8 +248,8 @@ namespace DataLayer.DAL.Repository
                 if (string.IsNullOrEmpty(user.AccessLevel))
                     user.AccessLevel = "Standard";
 
-                await _dbSet.AddAsync(user, cancellationToken);
-                await SaveAsync(cancellationToken);
+                await _context.User.AddAsync(user, cancellationToken);
+                await SaveChangesAsync(cancellationToken);
 
                 _logger?.LogInformation("Created new user {UserId} with email {Email}", user.UserId, user.Email);
 
@@ -192,30 +298,79 @@ namespace DataLayer.DAL.Repository
         }
 
         /// <summary>
-        /// Change a user's password
+        /// Update the last login date for a user
         /// </summary>
-        public async Task ChangePasswordAsync(string userId, string newPassword, CancellationToken cancellationToken = default)
+        public async Task UpdateLastLoginDateAsync(string userId, CancellationToken cancellationToken = default)
         {
             try
             {
-                var user = await _dbSet.FindAsync(new object[] { userId }, cancellationToken);
+                var user = await _context.User.FindAsync(new object[] { userId }, cancellationToken);
 
-                if (user == null)
-                    throw new KeyNotFoundException($"User with ID {userId} not found");
-
-                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
-                user.SecurityStamp = Guid.NewGuid().ToString();
-
-                _context.Entry(user).State = EntityState.Modified;
-                await SaveAsync(cancellationToken);
-
-                _logger?.LogInformation("Changed password for user {UserId}", userId);
+                if (user != null)
+                {
+                    user.LastLoginDate = DateTime.Now.ToString();
+                    _context.Entry(user).State = EntityState.Modified;
+                    await SaveChangesAsync(cancellationToken);
+                    _logger?.LogInformation("Updated last login date for user {UserId}", userId);
+                }
+                else
+                {
+                    _logger?.LogWarning("User not found when updating last login date: {UserId}", userId);
+                }
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Error changing password for user {UserId}", userId);
+                _logger?.LogError(ex, "Error updating last login date for user {UserId}", userId);
                 throw;
             }
+        }
+
+        public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await _context.SaveChangesAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error saving changes to database");
+                throw;
+            }
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    _context.Dispose();
+                }
+
+                _disposed = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            if (!_disposed)
+            {
+                await _context.DisposeAsync();
+                _disposed = true;
+            }
+
+            GC.SuppressFinalize(this);
+        }
+
+        public Task<bool> UpdateUserAsync(User privateRun, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
         }
     }
 }

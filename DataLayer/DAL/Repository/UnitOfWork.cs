@@ -47,7 +47,7 @@ namespace DataLayer.DAL
         /// <summary>
         /// Gets the user repository
         /// </summary>
-        public IUserRepository User => _userRepository ??= new UserRepository(_context);
+        public IUserRepository User => _userRepository ??= new UserRepository(_context, null);
 
         /// <summary>
         /// Gets the profile repository
