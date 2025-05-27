@@ -51,11 +51,6 @@
             padding: 0.375rem 1rem;
         }
 
-        .participants-list {
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
         .badge-pill {
             border-radius: 20px;
             padding: 0.35em 0.65em;
@@ -183,13 +178,31 @@
             border-radius: 15px;
             margin: 2rem 0;
         }
+
+        /* Scouting Report styles */
+        .form-range::-webkit-slider-thumb {
+            background: var(--primary-color);
+        }
+
+        .form-range::-moz-range-thumb {
+            background: var(--primary-color);
+        }
+
+        .form-range::-ms-thumb {
+            background: var(--primary-color);
+        }
+
+        /* Toast container */
+        .toast-container {
+            z-index: 9999;
+        }
     </style>
 }
 
 <div class="dashboard-header">
     <div class="container">
-        <h1>User</h1>
-        @* <p class="lead">Create and manage basketball runs, track participants, and schedule sessions</p> *@
+        <h1>Users</h1>
+        <p class="lead">Manage users, view profiles, and evaluate players</p>
     </div>
 </div>
 
@@ -201,12 +214,12 @@
         </a>
     </div>
 
-    <!-- Run Filters -->
+    <!-- User Filters -->
     <div class="mb-4">
         <div class="card shadow-sm">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="mb-0">Filter Runs</h5>
+                    <h5 class="mb-0">Filter Users</h5>
                     <button class="btn btn-sm btn-outline-secondary" id="resetFilters">
                         <i class="bi bi-arrow-counterclockwise me-1"></i>
                         Reset Filters
@@ -214,49 +227,35 @@
                 </div>
 
                 <div class="row g-3">
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <label for="statusFilter" class="form-label">Status</label>
                         <select class="form-select" id="statusFilter">
                             <option value="all" selected>All Statuses</option>
-                            <option value="upcoming">Upcoming</option>
-                            <option value="almost-full">Almost Full</option>
-                            <option value="past">Past</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="pending">Pending</option>
                         </select>
                     </div>
 
-                    <div class="col-md-3">
-                        <label for="dateFilter" class="form-label">Date</label>
-                        <select class="form-select" id="dateFilter">
-                            <option value="all" selected>All Dates</option>
+                    <div class="col-md-4">
+                        <label for="roleFilter" class="form-label">Role</label>
+                        <select class="form-select" id="roleFilter">
+                            <option value="all" selected>All Roles</option>
+                            <option value="admin">Admin</option>
+                            <option value="client">Client</option>
+                            <option value="coach">Coach</option>
+                            <option value="player">Player</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="signupDateFilter" class="form-label">Signup Date</label>
+                        <select class="form-select" id="signupDateFilter">
+                            <option value="all" selected>All Time</option>
                             <option value="today">Today</option>
                             <option value="this-week">This Week</option>
-                            <option value="upcoming">Upcoming</option>
-                            <option value="past">Past</option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-3">
-                        <label for="locationFilter" class="form-label">Location</label>
-                        <select class="form-select" id="locationFilter">
-                            <option value="all" selected>All Locations</option>
-                            <option value="Main Street Courts">Main Street Courts</option>
-                            <option value="City Gym">City Gym</option>
-                            <option value="Westside Park Courts">Westside Park Courts</option>
-                            <option value="Community Center">Community Center</option>
-                            <option value="Youth Center">Youth Center</option>
-                            <option value="Recreation Center">Recreation Center</option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-3">
-                        <label for="typeFilter" class="form-label">Run Type</label>
-                        <select class="form-select" id="typeFilter">
-                            <option value="all" selected>All Types</option>
-                            <option value="pickup">Pickup</option>
-                            <option value="training">Training</option>
-                            <option value="tournament">Tournament</option>
-                            <option value="youth">Youth</option>
-                            <option value="women">Women</option>
+                            <option value="this-month">This Month</option>
+                            <option value="this-year">This Year</option>
                         </select>
                     </div>
                 </div>
@@ -271,8 +270,8 @@
 
     <div class="row mb-4">
         <div class="col-12 text-end">
-            <button type="button" class="btn btn-orange" data-bs-toggle="modal" data-bs-target="#addRunModal">
-                <i class="bi bi-plus-circle me-2"></i>Create Run
+            <button type="button" class="btn btn-orange" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                <i class="bi bi-plus-circle me-2"></i>Add User
             </button>
         </div>
     </div>
@@ -282,40 +281,49 @@
     {
         <div class="card shadow-sm">
             <div class="card-body">
-                <table id="runsTable" class="table table-striped table-hover w-100">
+                <table id="usersTable" class="table table-striped table-hover w-100">
                     <thead>
                         <tr>
-
-                            <th>UserName</th>
+                            <th>Username</th>
                             <th>Sign Up Date</th>
-
+                            <th>Status</th>
+                            <th>Role</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var run in Model.Users)
+                        @foreach (var user in Model.Users)
                         {
-
-
                             <tr data-status="active">
                                 <td>
-                                    <div class="client-container">
-
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded-circle bg-navy text-white d-flex align-items-center justify-content-center me-2" style="width: 36px; height: 36px;">
+                                            @if (!string.IsNullOrEmpty(user.User.FirstName) && !string.IsNullOrEmpty(user.User.LastName))
+                                            {
+                                                <span>@(user.User.FirstName[0])@(user.User.LastName[0])</span>
+                                            }
+                                            else
+                                            {
+                                                <span>@(user.Profile.UserName?.Substring(0, 1) ?? "U")</span>
+                                            }
+                                        </div>
                                         <div>
-                                            <div class="fw-semibold">@run.Profile.UserName</div>
-                                            <div class="text-muted small">PN: #@run.Profile.PlayerNumber</div>
+                                            <div class="fw-semibold">@user.Profile.UserName</div>
+                                            <div class="text-muted small">@(user.User.FirstName) @(user.User.LastName)</div>
                                         </div>
                                     </div>
                                 </td>
-
-                                <td>@(run.User.SignUpDate?.ToString("MM/dd/yyyy") ?? "N/A")</td>
-
+                                <td>@(user.User.SignUpDate?.ToString("MM/dd/yyyy") ?? "N/A")</td>
+                                <td>
+                                    <span class="badge bg-success badge-pill">Active</span>
+                                </td>
+                                <td>@(user.User.AccessLevel ?? "User")</td>
                                 <td>
                                     <div class="table-actions">
-                                        <button type="button" class="btn btn-sm btn-outline-primary action-icon" data-bs-toggle="modal" data-bs-target="#editRunModal" data-run-id="@run.User.UserId" title="Edit">
+                                        <button type="button" class="btn btn-sm btn-outline-primary action-icon" data-bs-toggle="modal" data-bs-target="#editUserModal" data-user-id="@user.User.UserId" title="Edit">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                        <a href="@Url.Action("RunDetails", "Dashboard", new { id = run.User.UserId })" class="btn btn-sm btn-primary action-icon" title="View">
+                                        <a href="@Url.Action("Details", "User", new { id = user.User.UserId })" class="btn btn-sm btn-primary action-icon" title="View Profile">
                                             <i class="bi bi-eye"></i>
                                         </a>
                                     </div>
@@ -330,310 +338,397 @@
     else
     {
         <div class="no-runs-message">
-            <i class="bi bi-calendar-x" style="font-size: 3rem; color: var(--secondary-color);"></i>
-            <h3 class="mt-3">No Runs Found</h3>
-            <p class="text-muted">There are no runs available at the moment. Create a new run to get started!</p>
-            <button type="button" class="btn btn-orange mt-3" data-bs-toggle="modal" data-bs-target="#addRunModal">
-                <i class="bi bi-plus-circle me-2"></i>Create Run
+            <i class="bi bi-people" style="font-size: 3rem; color: var(--secondary-color);"></i>
+            <h3 class="mt-3">No Users Found</h3>
+            <p class="text-muted">There are no users available at the moment. Add a new user to get started!</p>
+            <button type="button" class="btn btn-orange mt-3" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                <i class="bi bi-plus-circle me-2"></i>Add User
             </button>
         </div>
     }
 </div>
 
-<!-- Add Run Modal -->
-<div class="modal fade" id="addRunModal" tabindex="-1" aria-labelledby="addRunModalLabel" aria-hidden="true">
+<!-- Add User Modal -->
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addRunModalLabel">Create New Run</h5>
+                <h5 class="modal-title" id="addUserModalLabel">Add New User</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="addRunForm" method="post" action="@Url.Action("Create", "Run")">
+            <form id="addUserForm" method="post" action="@Url.Action("Create", "User")">
+                @Html.AntiForgeryToken()
                 <div class="modal-body">
                     <div class="row mb-3">
-                        <div class="col-md-12">
-                            <label for="runTitle" class="form-label">Run Title</label>
-                            <input type="text" class="form-control" id="runTitle" name="Name" placeholder="e.g. Weeknight Run, Sunday Morning Basketball" required>
+                        <div class="col-md-6">
+                            <label for="firstName" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="firstName" name="FirstName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="lastName" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="lastName" name="LastName" required>
                         </div>
                     </div>
 
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="runDate" class="form-label">Date</label>
-                            <input type="date" class="form-control date-picker" id="runDate" name="RunDate" required>
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="Email" required>
                         </div>
                         <div class="col-md-6">
-                            <label for="runTime" class="form-label">Time</label>
-                            <input type="time" class="form-control time-picker" id="runTime" name="RunTime" required>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="courtLocation" class="form-label">Court Location</label>
-                            <select class="form-select" id="courtLocation" name="Address" required>
-                                <option value="" selected disabled>Select a location</option>
-                                <option value="Main Street Courts">Main Street Courts</option>
-                                <option value="City Gym">City Gym</option>
-                                <option value="Westside Park Courts">Westside Park Courts</option>
-                                <option value="Community Center">Community Center</option>
-                                <option value="Youth Center">Youth Center</option>
-                                <option value="Recreation Center">Recreation Center</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="courtType" class="form-label">Court Type</label>
-                            <select class="form-select" id="courtType" name="IsOutdoor" required>
-                                <option value="false" selected>Indoor</option>
-                                <option value="true">Outdoor</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="maxParticipants" class="form-label">Maximum Participants</label>
-                            <input type="number" class="form-control" id="maxParticipants" name="PlayerLimit" min="2" max="30" value="10" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="skillLevel" class="form-label">Skill Level</label>
-                            <select class="form-select" id="skillLevel" name="SkillLevel" required>
-                                <option value="Beginner">Beginner</option>
-                                <option value="Intermediate" selected>Intermediate</option>
-                                <option value="Advanced">Advanced</option>
-                                <option value="All Levels">All Levels</option>
-                            </select>
+                            <label for="phoneNumber" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="phoneNumber" name="PhoneNumber">
                         </div>
                     </div>
 
                     <div class="row mb-3">
                         <div class="col-md-12">
-                            <label for="runDescription" class="form-label">Description</label>
-                            <textarea class="form-control" id="runDescription" name="Description" rows="3" placeholder="Describe the run, what to expect, what to bring, etc." required></textarea>
+                            <label for="address" class="form-label">Address</label>
+                            <input type="text" class="form-control" id="address" name="Address">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="city" class="form-label">City</label>
+                            <input type="text" class="form-control" id="city" name="City">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="state" class="form-label">State</label>
+                            <input type="text" class="form-control" id="state" name="State">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="zip" class="form-label">Zip Code</label>
+                            <input type="text" class="form-control" id="zip" name="Zip">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="userRole" class="form-label">User Role</label>
+                            <select class="form-select" id="userRole" name="AccessLevel" required>
+                                <option value="Client">Client</option>
+                                <option value="Admin">Admin</option>
+                                <option value="Coach">Coach</option>
+                                <option value="Player">Player</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" name="Password" required>
+                            <div class="form-text">Minimum 6 characters, at least one number and one letter.</div>
                         </div>
                     </div>
 
                     <div class="row mb-3">
                         <div class="col-md-12">
-                            <label for="runType" class="form-label">Run Type</label>
-                            <select class="form-select" id="runType" name="RunType" required>
-                                <option value="Pickup" selected>Pickup Games</option>
-                                <option value="Training">Training Session</option>
-                                <option value="Tournament">Tournament</option>
-                                <option value="Youth">Youth Development</option>
-                                <option value="Women">Women's Only</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-12">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="makeRecurring" name="IsRecurring">
-                                <label class="form-check-label" for="makeRecurring">
-                                    Make this a recurring run
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3 recurring-options" style="display: none;">
-                        <div class="col-md-6">
-                            <label for="recurringType" class="form-label">Recurrence</label>
-                            <select class="form-select" id="recurringType" name="RecurringType">
-                                <option value="Weekly" selected>Weekly</option>
-                                <option value="Biweekly">Bi-weekly</option>
-                                <option value="Monthly">Monthly</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="recurringEndDate" class="form-label">End Date</label>
-                            <input type="date" class="form-control date-picker" id="recurringEndDate" name="RecurringEndDate">
+                            <label for="notes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="notes" name="Notes" rows="3"></textarea>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-orange">Create Run</button>
+                    <button type="submit" class="btn btn-orange">Add User</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Edit Run Modal -->
-<div class="modal fade" id="editRunModal" tabindex="-1" aria-labelledby="editRunModalLabel" aria-hidden="true">
+<!-- Edit User Modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editRunModalLabel">Edit User</h5>
+                <h5 class="modal-title" id="editUserModalLabel">Edit User</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <ul class="nav nav-tabs" id="editRunTabs" role="tablist">
+                <ul class="nav nav-tabs" id="editUserTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="profile-details-tab" data-bs-toggle="tab" data-bs-target="#profile-details-tab-pane" type="button" role="tab" aria-controls="profile-details-tab-pane" aria-selected="true">Profile Details</button>
+                        <button class="nav-link active" id="profile-details-tab" data-bs-toggle="tab" data-bs-target="#profile-details-tab-pane" type="button" role="tab" aria-controls="profile-details-tab-pane" aria-selected="true">User Details</button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="user-tab" data-bs-toggle="tab" data-bs-target="#user-tab-pane" type="button" role="tab" aria-controls="user-tab-pane" aria-selected="false">User</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="participants-tab" data-bs-toggle="tab" data-bs-target="#participants-tab-pane" type="button" role="tab" aria-controls="participants-tab-pane" aria-selected="false">Participants</button>
+                        <button class="nav-link" id="scouting-tab" data-bs-toggle="tab" data-bs-target="#scouting-tab-pane" type="button" role="tab" aria-controls="scouting-tab-pane" aria-selected="false">Scouting Report</button>
                     </li>
                 </ul>
-                <div class="tab-content" id="editRunTabContent">
+                <div class="tab-content" id="editUserTabContent">
+                    <!-- User Details Tab -->
                     <div class="tab-pane fade show active" id="profile-details-tab-pane" role="tabpanel" aria-labelledby="profile-details-tab" tabindex="0">
-                        <form id="editRunForm" method="post" action="@Url.Action("Edit", "Run")" class="mt-4">
-                            <input type="hidden" id="editRunId" name="RunId" value="" />
+                        <form id="editUserForm" method="post" action="@Url.Action("Edit", "User")" class="mt-4">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" id="editUserId" name="UserId" value="" />
 
                             <div class="row mb-3">
-                                <div class="col-md-12">
-                                    <label for="editRunTitle" class="form-label">Run Title</label>
-                                    <input type="text" class="form-control" id="editRunTitle" name="Name" required>
+                                <div class="col-md-6">
+                                    <label for="editFirstName" class="form-label">First Name</label>
+                                    <input type="text" class="form-control" id="editFirstName" name="FirstName" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="editLastName" class="form-label">Last Name</label>
+                                    <input type="text" class="form-control" id="editLastName" name="LastName" required>
                                 </div>
                             </div>
 
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <label for="editRunDate" class="form-label">Date</label>
-                                    <input type="date" class="form-control date-picker" id="editRunDate" name="RunDate" required>
+                                    <label for="editEmail" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="editEmail" name="Email" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="editRunTime" class="form-label">Time</label>
-                                    <input type="time" class="form-control time-picker" id="editRunTime" name="RunTime" required>
-                                </div>
-                            </div>
-
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="editCourtLocation" class="form-label">Court Location</label>
-                                    <select class="form-select" id="editCourtLocation" name="Address" required>
-                                        <option value="Main Street Courts">Main Street Courts</option>
-                                        <option value="City Gym">City Gym</option>
-                                        <option value="Westside Park Courts">Westside Park Courts</option>
-                                        <option value="Community Center">Community Center</option>
-                                        <option value="Youth Center">Youth Center</option>
-                                        <option value="Recreation Center">Recreation Center</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="editCourtType" class="form-label">Court Type</label>
-                                    <select class="form-select" id="editCourtType" name="IsOutdoor" required>
-                                        <option value="false">Indoor</option>
-                                        <option value="true">Outdoor</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="editMaxParticipants" class="form-label">Maximum Participants</label>
-                                    <input type="number" class="form-control" id="editMaxParticipants" name="PlayerLimit" min="2" max="30" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="editRunType" class="form-label">Run Type</label>
-                                    <select class="form-select" id="editRunType" name="RunType" required>
-                                        <option value="Pickup">Pickup Games</option>
-                                        <option value="Training">Training Session</option>
-                                        <option value="Tournament">Tournament</option>
-                                        <option value="Youth">Youth Development</option>
-                                        <option value="Women">Women's Only</option>
-                                    </select>
+                                    <label for="editPhoneNumber" class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" id="editPhoneNumber" name="PhoneNumber">
                                 </div>
                             </div>
 
                             <div class="row mb-3">
                                 <div class="col-md-12">
-                                    <label for="editRunDescription" class="form-label">Description</label>
-                                    <textarea class="form-control" id="editRunDescription" name="Description" rows="3" required></textarea>
+                                    <label for="editAddress" class="form-label">Address</label>
+                                    <input type="text" class="form-control" id="editAddress" name="Address">
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label for="editCity" class="form-label">City</label>
+                                    <input type="text" class="form-control" id="editCity" name="City">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="editState" class="form-label">State</label>
+                                    <input type="text" class="form-control" id="editState" name="State">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="editZip" class="form-label">Zip Code</label>
+                                    <input type="text" class="form-control" id="editZip" name="Zip">
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="editUserRole" class="form-label">User Role</label>
+                                    <select class="form-select" id="editUserRole" name="AccessLevel">
+                                        <option value="Client">Client</option>
+                                        <option value="Admin">Admin</option>
+                                        <option value="Coach">Coach</option>
+                                        <option value="Player">Player</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="editUserStatus" class="form-label">Status</label>
+                                    <select class="form-select" id="editUserStatus" name="Status">
+                                        <option value="Active">Active</option>
+                                        <option value="Inactive">Inactive</option>
+                                        <option value="Pending">Pending</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label for="editNotes" class="form-label">Notes</label>
+                                    <textarea class="form-control" id="editNotes" name="Notes" rows="3"></textarea>
                                 </div>
                             </div>
 
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-danger me-auto" id="deleteRunBtn">Delete Run</button>
+                                <button type="button" class="btn btn-danger me-auto" id="deleteUserBtn">Delete User</button>
                                 <button type="submit" class="btn btn-orange">Save Changes</button>
                             </div>
                         </form>
                     </div>
-                    <div class="tab-pane fade" id="user-tab-pane" role="tabpanel" aria-labelledby="user-tab" tabindex="0">
+
+                    <!-- Scouting Report Tab -->
+                    <div class="tab-pane fade" id="scouting-tab-pane" role="tabpanel" aria-labelledby="scouting-tab" tabindex="0">
                         <div class="mt-4">
-                            <h6 class="mb-3">User Information</h6>
-                            <form id="editUserForm" method="post" action="@Url.Action("Edit", "User")">
-                                <input type="hidden" id="editUserId" name="UserId" value="" />
+                            <h6 class="mb-3">Player Scouting Report</h6>
+                            <form id="editScoutingForm" method="post" action="@Url.Action("UpdateScoutingReport", "User")">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" id="scoutingUserId" name="UserId" value="" />
+                                <input type="hidden" id="scoutingReportId" name="ScoutingReportId" value="" />
 
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label for="editFirstName" class="form-label">First Name</label>
-                                        <input type="text" class="form-control" id="editFirstName" name="FirstName" required>
+                                <!-- Player Metrics -->
+                                <div class="row mb-4">
+                                    <div class="col-md-12 mb-3">
+                                        <h6 class="text-navy">Player Metrics</h6>
+                                        <hr>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label for="editLastName" class="form-label">Last Name</label>
-                                        <input type="text" class="form-control" id="editLastName" name="LastName" required>
+                                    <div class="col-md-3 mb-3">
+                                        <label for="height" class="form-label">Height (in)</label>
+                                        <input type="number" class="form-control" id="height" name="Height" min="36" max="96" step="0.5">
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label for="weight" class="form-label">Weight (lbs)</label>
+                                        <input type="number" class="form-control" id="weight" name="Weight" min="50" max="400">
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label for="wingspan" class="form-label">Wingspan (in)</label>
+                                        <input type="number" class="form-control" id="wingspan" name="Wingspan" min="36" max="96" step="0.5">
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label for="verticalJump" class="form-label">Vertical Jump (in)</label>
+                                        <input type="number" class="form-control" id="verticalJump" name="VerticalJump" min="0" max="60" step="0.5">
                                     </div>
                                 </div>
 
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label for="editEmail" class="form-label">Email</label>
-                                        <input type="email" class="form-control" id="editEmail" name="Email" required>
+                                <!-- Skill Ratings -->
+                                <div class="row mb-4">
+                                    <div class="col-md-12 mb-3">
+                                        <h6 class="text-navy">Skill Ratings (1-10)</h6>
+                                        <hr>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label for="editPhone" class="form-label">Phone Number</label>
-                                        <input type="tel" class="form-control" id="editPhone" name="PhoneNumber">
+                                    <div class="col-md-4 mb-3">
+                                        <label for="shooting" class="form-label">Shooting</label>
+                                        <input type="range" class="form-range" id="shooting" name="Shooting" min="1" max="10" step="1" value="5" oninput="document.getElementById('shootingValue').textContent=this.value">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="small text-muted">Beginner (1)</span>
+                                            <span class="small text-primary fw-bold" id="shootingValue">5</span>
+                                            <span class="small text-muted">Elite (10)</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="ballHandling" class="form-label">Ball Handling</label>
+                                        <input type="range" class="form-range" id="ballHandling" name="BallHandling" min="1" max="10" step="1" value="5" oninput="document.getElementById('ballHandlingValue').textContent=this.value">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="small text-muted">Beginner (1)</span>
+                                            <span class="small text-primary fw-bold" id="ballHandlingValue">5</span>
+                                            <span class="small text-muted">Elite (10)</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="passing" class="form-label">Passing</label>
+                                        <input type="range" class="form-range" id="passing" name="Passing" min="1" max="10" step="1" value="5" oninput="document.getElementById('passingValue').textContent=this.value">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="small text-muted">Beginner (1)</span>
+                                            <span class="small text-primary fw-bold" id="passingValue">5</span>
+                                            <span class="small text-muted">Elite (10)</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="defense" class="form-label">Defense</label>
+                                        <input type="range" class="form-range" id="defense" name="Defense" min="1" max="10" step="1" value="5" oninput="document.getElementById('defenseValue').textContent=this.value">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="small text-muted">Beginner (1)</span>
+                                            <span class="small text-primary fw-bold" id="defenseValue">5</span>
+                                            <span class="small text-muted">Elite (10)</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="rebounding" class="form-label">Rebounding</label>
+                                        <input type="range" class="form-range" id="rebounding" name="Rebounding" min="1" max="10" step="1" value="5" oninput="document.getElementById('reboundingValue').textContent=this.value">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="small text-muted">Beginner (1)</span>
+                                            <span class="small text-primary fw-bold" id="reboundingValue">5</span>
+                                            <span class="small text-muted">Elite (10)</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="athleticism" class="form-label">Athleticism</label>
+                                        <input type="range" class="form-range" id="athleticism" name="Athleticism" min="1" max="10" step="1" value="5" oninput="document.getElementById('athleticismValue').textContent=this.value">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="small text-muted">Beginner (1)</span>
+                                            <span class="small text-primary fw-bold" id="athleticismValue">5</span>
+                                            <span class="small text-muted">Elite (10)</span>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div class="row mb-3">
+                                <!-- Player Profile -->
+                                <div class="row mb-4">
+                                    <div class="col-md-12 mb-3">
+                                        <h6 class="text-navy">Player Profile</h6>
+                                        <hr>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="primaryPosition" class="form-label">Primary Position</label>
+                                        <select class="form-select" id="primaryPosition" name="PrimaryPosition">
+                                            <option value="">Select position...</option>
+                                            <option value="PG">Point Guard (PG)</option>
+                                            <option value="SG">Shooting Guard (SG)</option>
+                                            <option value="SF">Small Forward (SF)</option>
+                                            <option value="PF">Power Forward (PF)</option>
+                                            <option value="C">Center (C)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="secondaryPosition" class="form-label">Secondary Position</label>
+                                        <select class="form-select" id="secondaryPosition" name="SecondaryPosition">
+                                            <option value="">Select position...</option>
+                                            <option value="PG">Point Guard (PG)</option>
+                                            <option value="SG">Shooting Guard (SG)</option>
+                                            <option value="SF">Small Forward (SF)</option>
+                                            <option value="PF">Power Forward (PF)</option>
+                                            <option value="C">Center (C)</option>
+                                            <option value="None">None</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="playingStyle" class="form-label">Playing Style</label>
+                                        <select class="form-select" id="playingStyle" name="PlayingStyle">
+                                            <option value="">Select style...</option>
+                                            <option value="Shooter">Shooter</option>
+                                            <option value="Slasher">Slasher</option>
+                                            <option value="Playmaker">Playmaker</option>
+                                            <option value="Defender">Defender</option>
+                                            <option value="Post Player">Post Player</option>
+                                            <option value="All-Around">All-Around</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="experienceLevel" class="form-label">Experience Level</label>
+                                        <select class="form-select" id="experienceLevel" name="ExperienceLevel">
+                                            <option value="">Select level...</option>
+                                            <option value="Beginner">Beginner</option>
+                                            <option value="Intermediate">Intermediate</option>
+                                            <option value="Advanced">Advanced</option>
+                                            <option value="Elite">Elite</option>
+                                            <option value="Professional">Professional</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Scouting Notes -->
+                                <div class="row mb-4">
+                                    <div class="col-md-12 mb-3">
+                                        <h6 class="text-navy">Scouting Notes</h6>
+                                        <hr>
+                                    </div>
+                                    <div class="col-md-12 mb-3">
+                                        <label for="strengths" class="form-label">Strengths</label>
+                                        <textarea class="form-control" id="strengths" name="Strengths" rows="3" placeholder="Player's key strengths and positive attributes..."></textarea>
+                                    </div>
+                                    <div class="col-md-12 mb-3">
+                                        <label for="weaknesses" class="form-label">Areas for Improvement</label>
+                                        <textarea class="form-control" id="weaknesses" name="Weaknesses" rows="3" placeholder="Skills or areas that need development..."></textarea>
+                                    </div>
+                                    <div class="col-md-12 mb-3">
+                                        <label for="scoutingNotes" class="form-label">Additional Notes</label>
+                                        <textarea class="form-control" id="scoutingNotes" name="ScoutingNotes" rows="3" placeholder="Other observations, player tendencies, coaching suggestions..."></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- Evaluation Metadata (if exists) -->
+                                <div id="evaluationMetadata" class="row mb-4" style="display: none;">
                                     <div class="col-md-12">
-                                        <label for="editAddress" class="form-label">Address</label>
-                                        <input type="text" class="form-control" id="editAddress" name="Address">
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="col-md-4">
-                                        <label for="editCity" class="form-label">City</label>
-                                        <input type="text" class="form-control" id="editCity" name="City">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="editState" class="form-label">State</label>
-                                        <input type="text" class="form-control" id="editState" name="State">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="editZip" class="form-label">Zip Code</label>
-                                        <input type="text" class="form-control" id="editZip" name="Zip">
+                                        <div class="alert alert-info">
+                                            <div class="d-flex align-items-center">
+                                                <i class="bi bi-info-circle me-2"></i>
+                                                <div>
+                                                    <small>Evaluation by <span id="evaluatedBy">-</span> on <span id="evaluationDate">-</span></small>
+                                                    <br>
+                                                    <small>Last updated: <span id="lastUpdated">-</span></small>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                                    <button type="submit" class="btn btn-orange">Save Changes</button>
+                                    <button type="submit" class="btn btn-orange">Save Scouting Report</button>
                                 </div>
                             </form>
-                        </div>
-                    </div>
-                    <div class="tab-pane fade" id="participants-tab-pane" role="tabpanel" aria-labelledby="participants-tab" tabindex="0">
-                        <div class="mt-4">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="mb-0">Current Participants (<span id="currentParticipantsCount">0</span>/<span id="maxParticipantsCount">0</span>)</h6>
-                                <button class="btn btn-sm btn-outline-primary" id="addParticipantBtn">
-                                    <i class="bi bi-person-plus me-1"></i>Add Participant
-                                </button>
-                            </div>
-                            <div class="participants-list" id="participantsList">
-                                <!-- Participants will be loaded dynamically via JavaScript -->
-                                <div class="text-center py-4 text-muted">
-                                    <i class="bi bi-people"></i> Loading participants...
-                                </div>
-                            </div>
-
-                            <div class="mt-4">
-                                <h6 class="mb-3">Waitlist</h6>
-                                <div id="waitlistContainer">
-                                    <p class="text-muted small">No players on the waitlist</p>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -642,8 +737,8 @@
     </div>
 </div>
 
-<!-- Delete Run Confirmation Modal -->
-<div class="modal fade" id="deleteRunModal" tabindex="-1" aria-hidden="true">
+<!-- Delete User Confirmation Modal -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -651,19 +746,23 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>Are you sure you want to delete this run? This action cannot be undone.</p>
-                <p class="text-danger"><strong>Note:</strong> All participants will be notified that this run has been cancelled.</p>
+                <p>Are you sure you want to delete this user? This action cannot be undone.</p>
+                <p class="text-danger"><strong>Note:</strong> All related data for this user will be permanently deleted.</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form id="deleteRunForm" method="post" action="@Url.Action("Delete", "Run")">
-                    <input type="hidden" id="deleteRunId" name="id" value="" />
-                    <button type="submit" class="btn btn-danger">Delete Run</button>
+                <form id="deleteUserForm" method="post" action="@Url.Action("Delete", "User")">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="deleteUserId" name="id" value="" />
+                    <button type="submit" class="btn btn-danger">Delete User</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Toast Container for Notifications -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
 
 @section Scripts {
     <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
@@ -677,7 +776,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize DataTable
-            const runsTable = $('#runsTable').DataTable({
+            const usersTable = $('#usersTable').DataTable({
                 responsive: true,
                 lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
                 dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip',
@@ -691,16 +790,15 @@
                 },
                 columnDefs: [
                     { className: "align-middle", targets: "_all" },
-                    { orderable: false, targets: [2] } // Disable sorting on the Actions column
+                    { orderable: false, targets: [4] } // Disable sorting on the Actions column
                 ],
                 order: [[1, 'asc']] // Sort by Sign Up Date column by default
             });
 
             // Filter references
             const statusFilter = $('#statusFilter');
-            const dateFilter = $('#dateFilter');
-            const locationFilter = $('#locationFilter');
-            const typeFilter = $('#typeFilter');
+            const roleFilter = $('#roleFilter');
+            const signupDateFilter = $('#signupDateFilter');
             const resetFiltersBtn = $('#resetFilters');
             const activeFiltersContainer = $('#activeFilters');
 
@@ -713,89 +811,70 @@
 
                 // Create a new custom filter function
                 $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
-                    // Only apply this filter to our runsTable
-                    if (settings.nTable.id !== 'runsTable') return true;
+                    // Only apply this filter to our usersTable
+                    if (settings.nTable.id !== 'usersTable') return true;
 
                     // Skip filtering if all filters are set to 'all'
                     if (statusFilter.val() === 'all' &&
-                        dateFilter.val() === 'all' &&
-                        locationFilter.val() === 'all' &&
-                        typeFilter.val() === 'all') {
+                        roleFilter.val() === 'all' &&
+                        signupDateFilter.val() === 'all') {
                         return true;
                     }
 
-                    // Status filtering (column 4 contains the status badge)
+                    // Status filtering (column 2 contains the status badge)
                     if (statusFilter.val() !== 'all') {
-                        const status = data[4] ? data[4].toLowerCase() : '';
+                        const status = data[2].toLowerCase();
                         const statusValue = statusFilter.val().toLowerCase();
 
-                        // Match based on status badge text
-                        if (statusValue === 'upcoming' && !status.includes('upcoming')) {
-                            return false;
-                        }
-                        if (statusValue === 'almost-full' && !status.includes('almost full')) {
-                            return false;
-                        }
-                        if (statusValue === 'past' && !status.includes('past')) {
+                        if (!status.includes(statusValue)) {
                             return false;
                         }
                     }
 
-                    // Date filtering (column 1 contains the date)
-                    if (dateFilter.val() !== 'all') {
+                    // Role filtering (column 3 contains the role)
+                    if (roleFilter.val() !== 'all') {
+                        const role = data[3].toLowerCase();
+                        const roleValue = roleFilter.val().toLowerCase();
+
+                        if (!role.includes(roleValue)) {
+                            return false;
+                        }
+                    }
+
+                    // Signup date filtering (column 1 contains the date)
+                    if (signupDateFilter.val() !== 'all') {
                         const dateString = data[1];
                         const date = new Date(dateString);
                         const today = new Date();
                         today.setHours(0, 0, 0, 0); // Set to start of today
 
-                        const tomorrow = new Date(today);
-                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        const startOfWeek = new Date(today);
+                        startOfWeek.setDate(today.getDate() - today.getDay()); // Sunday
 
-                        const endOfWeek = new Date(today);
-                        endOfWeek.setDate(endOfWeek.getDate() + 7);
+                        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                        const startOfYear = new Date(today.getFullYear(), 0, 1);
 
-                        switch (dateFilter.val()) {
+                        switch (signupDateFilter.val()) {
                             case 'today':
-                                // Date must be today
-                                if (date < today || date >= tomorrow) {
-                                    return false;
-                                }
-                                break;
-                            case 'this-week':
-                                // Date must be between today and end of the week
-                                if (date < today || date > endOfWeek) {
-                                    return false;
-                                }
-                                break;
-                            case 'upcoming':
-                                // Date must be in the future
                                 if (date < today) {
                                     return false;
                                 }
                                 break;
-                            case 'past':
-                                // Date must be in the past
-                                if (date >= today) {
+                            case 'this-week':
+                                if (date < startOfWeek) {
                                     return false;
                                 }
                                 break;
-                        }
-                    }
-
-                    // Location filtering (column 2 contains location)
-                    if (locationFilter.val() !== 'all') {
-                        const location = data[2];
-                        if (location !== locationFilter.val()) {
-                            return false;
-                        }
-                    }
-
-                    // Run Type filtering
-                    if (typeFilter.val() !== 'all') {
-                        const row = $(runsTable.row(dataIndex).node());
-                        const runType = row.data('run-type');
-                        if (runType !== typeFilter.val()) {
-                            return false;
+                            case 'this-month':
+                                if (date < startOfMonth) {
+                                    return false;
+                                }
+                                break;
+                            case 'this-year':
+                                if (date < startOfYear) {
+                                    return false;
+                                }
+                                break;
                         }
                     }
 
@@ -804,7 +883,7 @@
                 });
 
                 // Redraw the table to apply filters
-                runsTable.draw();
+                usersTable.draw();
 
                 // Update the active filters display
                 updateActiveFilters();
@@ -818,9 +897,8 @@
                 // Check if any filters are active
                 const hasActiveFilters =
                     statusFilter.val() !== 'all' ||
-                    dateFilter.val() !== 'all' ||
-                    locationFilter.val() !== 'all' ||
-                    typeFilter.val() !== 'all';
+                    roleFilter.val() !== 'all' ||
+                    signupDateFilter.val() !== 'all';
 
                 // If no filters are active, show "None"
                 if (!hasActiveFilters) {
@@ -838,23 +916,16 @@
                     });
                 }
 
-                if (dateFilter.val() !== 'all') {
-                    addFilterBadge('Date', formatFilterValue(dateFilter.val()), function() {
-                        dateFilter.val('all');
+                if (roleFilter.val() !== 'all') {
+                    addFilterBadge('Role', formatFilterValue(roleFilter.val()), function() {
+                        roleFilter.val('all');
                         applyFilters();
                     });
                 }
 
-                if (locationFilter.val() !== 'all') {
-                    addFilterBadge('Location', locationFilter.val(), function() {
-                        locationFilter.val('all');
-                        applyFilters();
-                    });
-                }
-
-                if (typeFilter.val() !== 'all') {
-                    addFilterBadge('Type', formatFilterValue(typeFilter.val()), function() {
-                        typeFilter.val('all');
+                if (signupDateFilter.val() !== 'all') {
+                    addFilterBadge('Signup Date', formatFilterValue(signupDateFilter.val()), function() {
+                        signupDateFilter.val('all');
                         applyFilters();
                     });
                 }
@@ -885,266 +956,315 @@
 
             // Add event listeners to filters
             statusFilter.on('change', applyFilters);
-            dateFilter.on('change', applyFilters);
-            locationFilter.on('change', applyFilters);
-            typeFilter.on('change', applyFilters);
+            roleFilter.on('change', applyFilters);
+            signupDateFilter.on('change', applyFilters);
 
             // Reset filters button
             resetFiltersBtn.on('click', function() {
                 statusFilter.val('all');
-                dateFilter.val('all');
-                locationFilter.val('all');
-                typeFilter.val('all');
+                roleFilter.val('all');
+                signupDateFilter.val('all');
                 applyFilters();
             });
 
             // Initialize with current filter values
             applyFilters();
 
-            // Set minimum date for date pickers to today
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('runDate').min = today;
-
-            if (document.getElementById('recurringEndDate')) {
-                document.getElementById('recurringEndDate').min = today;
-            }
-
-            // Handle recurring run checkbox
-            const makeRecurringCheckbox = document.getElementById('makeRecurring');
-            const recurringOptions = document.querySelector('.recurring-options');
-
-            if (makeRecurringCheckbox && recurringOptions) {
-                makeRecurringCheckbox.addEventListener('change', function() {
-                    if (this.checked) {
-                        recurringOptions.style.display = 'flex';
-                    } else {
-                        recurringOptions.style.display = 'none';
-                    }
-                });
-            }
-
-            // Handle edit run modal
-            const editRunModal = document.getElementById('editRunModal');
-            if (editRunModal) {
-                editRunModal.addEventListener('show.bs.modal', function(event) {
+            // Handle edit user modal
+            const editUserModal = document.getElementById('editUserModal');
+            if (editUserModal) {
+                editUserModal.addEventListener('show.bs.modal', function(event) {
                     const button = event.relatedTarget;
-                    const runId = button.getAttribute('data-run-id');
-                    document.getElementById('editRunId').value = runId;
-                    document.getElementById('editUserId').value = runId;
+                    const userId = button.getAttribute('data-user-id');
 
-                    // Load run data via AJAX
-                    fetch(`@Url.Action("GetUserData", "User")?id=${runId}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            // Populate form fields
-                            document.getElementById('editRunTitle').value = data.name || '';
-                            document.getElementById('editFirstName').value = data.FirestName || '';
-                            document.getElementById('editLastName').value = data.lastName || '';
-                            document.getElementById('editEmail').value = data.email || '';
-                            document.getElementById('editPhone').value = data.phoneNumber || '';
-                            document.getElementById('editAddress').value = data.address || '';
-                            document.getElementById('editCity').value = data.city || '';
-                            document.getElementById('editState').value = data.state || '';
-                            document.getElementById('editZip').value = data.zip || '';
+                    // Set user ID in the user details form
+                    document.getElementById('editUserId').value = userId;
 
-                            // Format date and time if available
-                            if (data.runDate) {
-                                const startTime = new Date(data.runDate);
-                                const dateString = startTime.toISOString().split('T')[0];
-                                document.getElementById('editRunDate').value = dateString;
+                    // Set user ID in the scouting report form
+                    document.getElementById('scoutingUserId').value = userId;
 
-                                const hours = startTime.getHours().toString().padStart(2, '0');
-                                const minutes = startTime.getMinutes().toString().padStart(2, '0');
-                                document.getElementById('editRunTime').value = `${hours}:${minutes}`;
-                            }
+                    // Load user data
+                    loadUserData(userId);
 
-                            document.getElementById('editCourtLocation').value = data.address || '';
-                            document.getElementById('editCourtType').value = (data.isOutdoor || false).toString();
-                            document.getElementById('editMaxParticipants').value = data.playerLimit || 10;
-                            document.getElementById('editRunType').value = data.runType || 'Pickup';
-                            document.getElementById('editRunDescription').value = data.description || '';
+                    // Load scouting report data
+                    loadScoutingReport(userId);
 
-                            // Set delete button run ID
-                            document.getElementById('deleteRunId').value = runId;
-
-                            // Update participants count
-                            document.getElementById('currentParticipantsCount').textContent = data.playerCount || 0;
-                            document.getElementById('maxParticipantsCount').textContent = data.playerLimit || 0;
-
-                            // Load participants
-                            loadParticipants(runId);
-                        })
-                        .catch(error => {
-                            console.error('Error loading user data:', error);
-                            alert('Error loading user data. Please try again.');
-                        });
+                    // Set delete button user ID
+                    document.getElementById('deleteUserId').value = userId;
                 });
             }
 
-            // Handle delete run button
-            const deleteRunBtn = document.getElementById('deleteRunBtn');
-            if (deleteRunBtn) {
-                deleteRunBtn.addEventListener('click', function() {
-                    const runId = document.getElementById('editRunId').value;
-                    document.getElementById('deleteRunId').value = runId;
+            // Handle delete user button
+            const deleteUserBtn = document.getElementById('deleteUserBtn');
+            if (deleteUserBtn) {
+                deleteUserBtn.addEventListener('click', function() {
+                    const userId = document.getElementById('editUserId').value;
+                    document.getElementById('deleteUserId').value = userId;
 
                     // Hide edit modal and show delete confirmation modal
-                    const editModal = bootstrap.Modal.getInstance(document.getElementById('editRunModal'));
+                    const editModal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
                     editModal.hide();
 
-                    const deleteModal = new bootstrap.Modal(document.getElementById('deleteRunModal'));
+                    const deleteModal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
                     deleteModal.show();
                 });
             }
 
-            // Function to load participants
-            function loadParticipants(runId) {
-                const participantsList = document.getElementById('participantsList');
-
-                fetch(`@Url.Action("GetRunParticipants", "Run")?runId=${runId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.length === 0) {
-                            participantsList.innerHTML = `
-                                <div class="text-center py-4 text-muted">
-                                    <p>No participants have joined this run yet.</p>
-                                </div>`;
-                            return;
+            // Function to load user data
+            function loadUserData(userId) {
+                fetch(`@Url.Action("GetUserData", "User")?id=${userId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
                         }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            // Populate form fields
+                            document.getElementById('editFirstName').value = data.user.firstName || '';
+                            document.getElementById('editLastName').value = data.user.lastName || '';
+                            document.getElementById('editEmail').value = data.user.email || '';
+                            document.getElementById('editPhoneNumber').value = data.user.phoneNumber || '';
+                            document.getElementById('editAddress').value = data.user.address || '';
+                            document.getElementById('editCity').value = data.user.city || '';
+                            document.getElementById('editState').value = data.user.state || '';
+                            document.getElementById('editZip').value = data.user.zip || '';
 
-                        let html = '';
-
-                        data.forEach(participant => {
-                            const initials = participant.name.split(' ')
-                                .map(name => name[0])
-                                .join('')
-                                .substring(0, 2);
-
-                            html += `
-                                <div class="d-flex align-items-center p-2 border-bottom">
-                                    <div class="flex-shrink-0 me-3" style="width: 40px; height: 40px; background-color: var(--secondary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
-                                        ${initials}
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <h6 class="mb-0">${participant.name}</h6>
-                                        <span class="text-muted small">Joined ${new Date(participant.joinedDate).toLocaleDateString()}</span>
-                                    </div>
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="bi bi-three-dots-vertical"></i>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end">
-                                            <li><a class="dropdown-item" href="#"><i class="bi bi-envelope me-2"></i>Message</a></li>
-                                            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>View Profile</a></li>
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li><a class="dropdown-item text-danger remove-participant" data-participant-id="${participant.id}" href="#"><i class="bi bi-person-x me-2"></i>Remove</a></li>
-                                        </ul>
-                                    </div>
-                                </div>`;
-                        });
-
-                        participantsList.innerHTML = html;
-
-                        // Add event listeners to remove buttons
-                        document.querySelectorAll('.remove-participant').forEach(button => {
-                            button.addEventListener('click', function(e) {
-                                e.preventDefault();
-                                const participantId = this.getAttribute('data-participant-id');
-                                const runId = document.getElementById('editRunId').value;
-
-                                if (confirm('Are you sure you want to remove this participant?')) {
-                                    removeParticipant(runId, participantId);
+                            // Select values
+                            const userRoleSelect = document.getElementById('editUserRole');
+                            if (userRoleSelect && data.user.accessLevel) {
+                                for (let i = 0; i < userRoleSelect.options.length; i++) {
+                                    if (userRoleSelect.options[i].value === data.user.accessLevel) {
+                                        userRoleSelect.selectedIndex = i;
+                                        break;
+                                    }
                                 }
-                            });
-                        });
+                            }
+
+                            const statusSelect = document.getElementById('editUserStatus');
+                            if (statusSelect && data.user.status) {
+                                for (let i = 0; i < statusSelect.options.length; i++) {
+                                    if (statusSelect.options[i].value === data.user.status) {
+                                        statusSelect.selectedIndex = i;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            // Additional fields
+                            document.getElementById('editNotes').value = data.user.notes || '';
+                        } else {
+                            console.error('Error loading user data:', data.message);
+                            showToast('Error', 'Failed to load user data. Please try again.', 'danger');
+                        }
                     })
                     .catch(error => {
-                        console.error('Error loading participants:', error);
-                        participantsList.innerHTML = `
-                            <div class="text-center py-4 text-danger">
-                                <p>Error loading participants. Please try again.</p>
-                            </div>`;
+                        console.error('Error fetching user data:', error);
+                        showToast('Error', 'Failed to load user data. Please try again.', 'danger');
                     });
             }
 
-            // Function to remove participant
-            function removeParticipant(runId, participantId) {
-                fetch('@Url.Action("RemoveParticipant", "Run")', {
+            // Function to load scouting report data
+            function loadScoutingReport(userId) {
+                fetch(`@Url.Action("GetScoutingReport", "User")?id=${userId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            const report = data.scoutingReport;
+
+                            // Set the scouting report ID if it exists
+                            document.getElementById('scoutingReportId').value = report.scoutingReportId || '';
+
+                            // Player Metrics
+                            document.getElementById('height').value = report.height || '';
+                            document.getElementById('weight').value = report.weight || '';
+                            document.getElementById('wingspan').value = report.wingspan || '';
+                            document.getElementById('verticalJump').value = report.verticalJump || '';
+
+                            // Skill Ratings
+                            const setSkillValue = (id, value) => {
+                                const slider = document.getElementById(id);
+                                const valueDisplay = document.getElementById(`${id}Value`);
+                                if (slider && valueDisplay) {
+                                    slider.value = value || 5;
+                                    valueDisplay.textContent = value || 5;
+                                }
+                            };
+
+                            setSkillValue('shooting', report.shooting);
+                            setSkillValue('ballHandling', report.ballHandling);
+                            setSkillValue('passing', report.passing);
+                            setSkillValue('defense', report.defense);
+                            setSkillValue('rebounding', report.rebounding);
+                            setSkillValue('athleticism', report.athleticism);
+
+                            // Player Profile
+                            const setSelectValue = (id, value) => {
+                                const select = document.getElementById(id);
+                                if (select && value) {
+                                    for (let i = 0; i < select.options.length; i++) {
+                                        if (select.options[i].value === value) {
+                                            select.selectedIndex = i;
+                                            break;
+                                        }
+                                    }
+                                }
+                            };
+
+                            setSelectValue('primaryPosition', report.primaryPosition);
+                            setSelectValue('secondaryPosition', report.secondaryPosition);
+                            setSelectValue('playingStyle', report.playingStyle);
+                            setSelectValue('experienceLevel', report.experienceLevel);
+
+                            // Scouting Notes
+                            document.getElementById('strengths').value = report.strengths || '';
+                            document.getElementById('weaknesses').value = report.weaknesses || '';
+                            document.getElementById('scoutingNotes').value = report.scoutingNotes || '';
+
+                            // Evaluation Metadata
+                            const metadataSection = document.getElementById('evaluationMetadata');
+                            if (report.scoutingReportId) {
+                                // Show metadata if report exists
+                                metadataSection.style.display = 'flex';
+
+                                // Format dates
+                                const formatDate = (dateString) => {
+                                    if (!dateString) return '-';
+                                    const date = new Date(dateString);
+                                    return date.toLocaleDateString('en-US', {
+                                        year: 'numeric',
+                                        month: 'short',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    });
+                                };
+
+                                document.getElementById('evaluatedBy').textContent = report.evaluatedBy || '-';
+                                document.getElementById('evaluationDate').textContent = formatDate(report.evaluationDate);
+                                document.getElementById('lastUpdated').textContent = formatDate(report.lastUpdated);
+                            } else {
+                                // Hide metadata for new reports
+                                metadataSection.style.display = 'none';
+                            }
+                        } else {
+                            console.error('Error loading scouting report:', data.message);
+                            // Reset form
+                            document.getElementById('editScoutingForm').reset();
+                            document.getElementById('evaluationMetadata').style.display = 'none';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching scouting report:', error);
+                        // Reset form
+                        document.getElementById('editScoutingForm').reset();
+                        document.getElementById('evaluationMetadata').style.display = 'none';
+                    });
+            }
+
+            // Helper function to show toast notifications
+            function showToast(title, message, type = 'success') {
+                // Check if toast container exists, create if not
+                let toastContainer = document.querySelector('.toast-container');
+                if (!toastContainer) {
+                    toastContainer = document.createElement('div');
+                    toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+                    document.body.appendChild(toastContainer);
+                }
+
+                // Create toast element
+                const toastId = 'toast-' + Date.now();
+                const toastHtml = `
+                    <div id="${toastId}" class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                <strong>${title}</strong>: ${message}
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                `;
+
+                // Add toast to container
+                toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+
+                // Initialize and show toast
+                const toastElement = document.getElementById(toastId);
+                const toast = new bootstrap.Toast(toastElement, { autohide: true, delay: 5000 });
+                toast.show();
+
+                // Remove toast after hiding
+                toastElement.addEventListener('hidden.bs.toast', function() {
+                    toastElement.remove();
+                });
+            }
+
+            // AJAX form submission for the scouting report
+            document.getElementById('editScoutingForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                // Get form data
+                const formData = new FormData(this);
+                const scoutingReport = {};
+
+                // Convert FormData to object
+                for (const [key, value] of formData.entries()) {
+                    scoutingReport[key] = value;
+                }
+
+                // Send AJAX request
+                fetch('@Url.Action("SaveScoutingReportAjax", "User")', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
                     },
-                    body: JSON.stringify({ runId, participantId })
+                    body: JSON.stringify(scoutingReport)
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Reload participants
-                        loadParticipants(runId);
+                        // Show success message
+                        showToast('Success', data.message);
 
-                        // Update count
-                        const currentCount = parseInt(document.getElementById('currentParticipantsCount').textContent);
-                        document.getElementById('currentParticipantsCount').textContent = currentCount - 1;
+                        // Update the scouting report ID if it's a new report
+                        document.getElementById('scoutingReportId').value = data.scoutingReport.scoutingReportId;
 
-                        // Refresh the table
-                        runsTable.ajax.reload();
+                        // Update metadata
+                        const metadataSection = document.getElementById('evaluationMetadata');
+                        metadataSection.style.display = 'flex';
+
+                        const formatDate = (dateString) => {
+                            if (!dateString) return '-';
+                            const date = new Date(dateString);
+                            return date.toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            });
+                        };
+
+                        document.getElementById('evaluatedBy').textContent = data.scoutingReport.evaluatedBy || '-';
+                        document.getElementById('evaluationDate').textContent = formatDate(data.scoutingReport.evaluationDate);
+                        document.getElementById('lastUpdated').textContent = formatDate(data.scoutingReport.lastUpdated);
                     } else {
-                        alert('Error removing participant: ' + data.message);
+                        // Show error message
+                        showToast('Error', data.message, 'danger');
                     }
                 })
                 .catch(error => {
-                    console.error('Error removing participant:', error);
-                    alert('Error removing participant. Please try again.');
+                    console.error('Error saving scouting report:', error);
+                    showToast('Error', 'Failed to save scouting report. Please try again.', 'danger');
                 });
-            }
-
-            // Add participant button
-            const addParticipantBtn = document.getElementById('addParticipantBtn');
-            if (addParticipantBtn) {
-                addParticipantBtn.addEventListener('click', function() {
-                    const runId = document.getElementById('editRunId').value;
-                    const currentCount = parseInt(document.getElementById('currentParticipantsCount').textContent);
-                    const maxCount = parseInt(document.getElementById('maxParticipantsCount').textContent);
-
-                    if (currentCount >= maxCount) {
-                        alert('This run is already at maximum capacity. Cannot add more participants.');
-                        return;
-                    }
-
-                    const email = prompt('Enter participant email address:');
-                    if (!email) return;
-
-                    // Add participant via AJAX
-                    fetch('@Url.Action("AddParticipant", "Run")', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
-                        },
-                        body: JSON.stringify({ runId, email })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            // Reload participants
-                            loadParticipants(runId);
-
-                            // Update count
-                            document.getElementById('currentParticipantsCount').textContent = currentCount + 1;
-
-                            // Refresh the table
-                            runsTable.ajax.reload();
-                        } else {
-                            alert('Error adding participant: ' + data.message);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error adding participant:', error);
-                        alert('Error adding participant. Please try again.');
-                    });
-                });
-            }
+            });
         });
     </script>
 }
