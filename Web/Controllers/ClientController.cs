@@ -278,25 +278,7 @@ namespace Web.Controllers
                     // If you have a method to get courts, use it here
                      clientCourts = await _clientApi.GetClientCourtsAsync(id, accessToken, cancellationToken);
 
-                    // For mock purposes, we'll create some sample courts
-                    if (client.ClientId != null && client.ClientId.Length > 5)
-                    {
-                        clientCourts.Add(new Court
-                        {
-                            CourtId = Guid.NewGuid().ToString(),
-                            ClientId = client.ClientId,
-                            Name = "Main Street Courts",
-
-                        });
-
-                        clientCourts.Add(new Court
-                        {
-                            CourtId = Guid.NewGuid().ToString(),
-                            ClientId = client.ClientId,
-                            Name = "Westside Park Courts",
-
-                        });
-                    }
+                   
                 }
                 catch (Exception courtEx)
                 {

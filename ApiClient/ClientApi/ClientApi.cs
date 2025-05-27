@@ -55,9 +55,10 @@ namespace WebAPI.ApiClients
         {
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            var response = await _httpClient.GetAsync($"{_baseUrl}/api/Client/GetClientById?clientId={clientId}", cancellationToken);
-            response.EnsureSuccessStatusCode();
+            // Use the correct route format that matches the [HttpGet("{id}")] attribute
+            var response = await _httpClient.GetAsync($"{_baseUrl}/api/Client/{clientId}", cancellationToken);
 
+            response.EnsureSuccessStatusCode();
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
             return JsonSerializer.Deserialize<Client>(content, _jsonOptions);
         }
