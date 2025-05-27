@@ -135,7 +135,6 @@ namespace Web.Controllers
                 }
 
 
-
                 // Set the current date if not provided
                 if (client.CreatedDate == default)
                 {
@@ -288,9 +287,7 @@ namespace Web.Controllers
                             CourtId = Guid.NewGuid().ToString(),
                             ClientId = client.ClientId,
                             Name = "Main Street Courts",
-                            Location = "Downtown",
-                            Type = "Indoor",
-                            IsPreferred = true
+
                         });
 
                         clientCourts.Add(new Court
@@ -298,9 +295,7 @@ namespace Web.Controllers
                             CourtId = Guid.NewGuid().ToString(),
                             ClientId = client.ClientId,
                             Name = "Westside Park Courts",
-                            Location = "West Side",
-                            Type = "Outdoor",
-                            IsPreferred = false
+
                         });
                     }
                 }
@@ -313,14 +308,12 @@ namespace Web.Controllers
 
 
 
-
                 // Format the response
                 var clientData = new
                 {
                     clientId = client.ClientId,
                     clientNumber = client.ClientNumber,
                     name = client.Name,
-
                     address = client.Address,
                     city = client.City,
                     state = client.State,
@@ -331,10 +324,7 @@ namespace Web.Controllers
                     courtList = clientCourts.Select(c => new
                     {
                         courtId = c.CourtId,
-                        name = c.Name,
-                        location = c.Location,
-                        type = c.Type,
-                        isPreferred = c.IsPreferred
+                        name = c.Name
                     }).ToList(),
                     success = true
                 };
@@ -347,176 +337,5 @@ namespace Web.Controllers
                 return Json(new { success = false, message = "Error retrieving client data" });
             }
         }
-
-        // Court management API endpoints
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddClientCourt([FromBody] CourtDto courtData, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var accessToken = HttpContext.Session.GetString("UserToken");
-                if (string.IsNullOrEmpty(accessToken))
-                {
-                    return Json(new { success = false, message = "Authentication required" });
-                }
-
-                // Create a Court object from the DTO
-                var court = new Court
-                {
-                    CourtId = Guid.NewGuid().ToString(),
-                    ClientId = courtData.ClientId,
-                    Name = courtData.Name,
-                    Location = courtData.Location,
-                    Type = courtData.Type,
-                    IsPreferred = courtData.IsPreferred
-                };
-
-                // Add court to client (replace with your actual API call)
-                // var addedCourt = await _clientApi.AddClientCourtAsync(court, accessToken, cancellationToken);
-
-                // For now, mock the response
-                var addedCourt = court;
-
-                return Json(new
-                {
-                    success = true,
-                    court = new
-                    {
-                        courtId = addedCourt.CourtId,
-                        name = addedCourt.Name,
-                        location = addedCourt.Location,
-                        type = addedCourt.Type,
-                        isPreferred = addedCourt.IsPreferred
-                    }
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error adding court to client");
-                return Json(new { success = false, message = "Error adding court to client" });
-            }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetCourtData(string courtId, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var accessToken = HttpContext.Session.GetString("UserToken");
-                if (string.IsNullOrEmpty(accessToken))
-                {
-                    return Json(new { success = false, message = "Authentication required" });
-                }
-
-                // Get court details (replace with your actual API call)
-                // var court = await _clientApi.GetCourtByIdAsync(courtId, accessToken, cancellationToken);
-
-                // For now, mock the response
-                var court = new Court
-                {
-                    CourtId = courtId,
-                    Name = "Mock Court",
-                    Location = "Mock Location",
-                    Type = "Indoor",
-                    IsPreferred = true
-                };
-
-                return Json(court);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error retrieving court data: {CourtId}", courtId);
-                return Json(new { success = false, message = "Error retrieving court data" });
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateClientCourt([FromBody] CourtDto courtData, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var accessToken = HttpContext.Session.GetString("UserToken");
-                if (string.IsNullOrEmpty(accessToken))
-                {
-                    return Json(new { success = false, message = "Authentication required" });
-                }
-
-                // Create a Court object from the DTO
-                var court = new Court
-                {
-                    CourtId = courtData.CourtId,
-                    ClientId = courtData.ClientId,
-                    Name = courtData.Name,
-                    Location = courtData.Location,
-                    Type = courtData.Type,
-                    IsPreferred = courtData.IsPreferred
-                };
-
-                // Update court (replace with your actual API call)
-                // await _clientApi.UpdateClientCourtAsync(court, accessToken, cancellationToken);
-
-                return Json(new { success = true });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error updating court: {CourtId}", courtData.CourtId);
-                return Json(new { success = false, message = "Error updating court" });
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> RemoveClientCourt([FromBody] RemoveCourtDto removeData, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var accessToken = HttpContext.Session.GetString("UserToken");
-                if (string.IsNullOrEmpty(accessToken))
-                {
-                    return Json(new { success = false, message = "Authentication required" });
-                }
-
-                // Remove court (replace with your actual API call)
-                // await _clientApi.RemoveClientCourtAsync(removeData.ClientId, removeData.CourtId, accessToken, cancellationToken);
-
-                return Json(new { success = true });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error removing court: {CourtId} from client: {ClientId}",
-                    removeData.CourtId, removeData.ClientId);
-                return Json(new { success = false, message = "Error removing court" });
-            }
-        }
-    }
-
-    // DTOs for the court operations
-    public class CourtDto
-    {
-        public string CourtId { get; set; }
-        public string ClientId { get; set; }
-        public string Name { get; set; }
-        public string Location { get; set; }
-        public string Type { get; set; }
-        public bool IsPreferred { get; set; }
-    }
-
-    public class RemoveCourtDto
-    {
-        public string ClientId { get; set; }
-        public string CourtId { get; set; }
-    }
-
-    // Court model (you may already have this in your Domain project)
-    public class Court
-    {
-        public string CourtId { get; set; }
-        public string ClientId { get; set; }
-        public string Name { get; set; }
-        public string Location { get; set; }
-        public string Type { get; set; }
-        public bool IsPreferred { get; set; }
     }
 }
