@@ -2,10 +2,6 @@
 using Domain;
 using Microsoft.AspNetCore.Authorization;
 using DataLayer.DAL.Interface;
-using Domain.DtoModel;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace WebAPI.Controllers
 {

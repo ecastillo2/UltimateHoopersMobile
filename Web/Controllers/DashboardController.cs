@@ -45,5 +45,12 @@ namespace Web.Controllers
             ViewData["UserType"] = "Admin";
             return View();
         }
+
+        [Authentication("Admin")] // Only allow administrators
+        public IActionResult Reports()
+        {
+            ViewData["UserType"] = "Admin";
+            return RedirectToAction("Index", "Reports");
+        }
     }
 }

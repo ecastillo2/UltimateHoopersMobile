@@ -1,0 +1,615 @@
+﻿@model Website.ViewModels.ReportViewModel
+
+@{
+    ViewData["Title"] = "Reports";
+    var userType = ViewData["UserType"]?.ToString() ?? "Admin";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css">
+    <style>
+        :root {
+            --primary-color: #FF6B00;
+            --secondary-color: #1C2C5B;
+            --accent-color: #3BACB6;
+            --light-color: #F8F9FA;
+            --dark-color: #212529;
+        }
+
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #0b1733 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .back-button {
+            margin-bottom: 20px;
+        }
+
+        .report-card {
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            height: 100%;
+            border: none;
+        }
+
+        .report-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .report-card .card-header {
+            background-color: var(--secondary-color);
+            color: white;
+            border-bottom: none;
+            padding: 1.25rem;
+        }
+
+        .btn-orange {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-orange:hover {
+            background-color: #e05e00;
+            color: white;
+        }
+
+        .btn-navy {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-navy:hover {
+            background-color: #162249;
+            color: white;
+        }
+
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            padding: 0.5rem 1rem;
+        }
+
+        .flatpickr-input {
+            background-color: #fff !important;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            background-color: var(--light-color);
+            color: var(--dark-color);
+            font-weight: 600;
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .data-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .data-table tr:nth-child(even) {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        .data-table tr:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .report-actions {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 10;
+        }
+
+        .no-data-message {
+            text-align: center;
+            padding: 3rem;
+            background-color: #f8f9fa;
+            border-radius: 15px;
+            margin: 2rem 0;
+        }
+
+        .report-type-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            margin-bottom: 1rem;
+        }
+
+        .report-type-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .report-type-card.selected {
+            border-color: var(--primary-color);
+        }
+
+        .report-icon {
+            width: 48px;
+            height: 48px;
+            background-color: rgba(255, 107, 0, 0.1);
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-size: 1.5rem;
+            margin-right: 1rem;
+        }
+
+        .report-summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-card {
+            flex: 1;
+            min-width: 200px;
+            padding: 1.5rem;
+            border-radius: 10px;
+            background-color: #fff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+
+        .summary-card h3 {
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .summary-card p {
+            margin-bottom: 0;
+            color: var(--dark-color);
+            font-weight: 500;
+        }
+
+        .tabs-container {
+            margin-bottom: 2rem;
+        }
+
+        .nav-tabs {
+            border-bottom: none;
+        }
+
+        .nav-tabs .nav-link {
+            border: none;
+            color: var(--dark-color);
+            font-weight: 500;
+            padding: 1rem 1.5rem;
+            border-radius: 0;
+            margin-right: 0.5rem;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--primary-color);
+            background-color: transparent;
+            border-bottom: 3px solid var(--primary-color);
+        }
+
+        .tab-content {
+            padding: 2rem 0;
+        }
+
+        @@media (max-width: 767px) {
+            .report-actions {
+                position: static;
+                margin-bottom: 1rem;
+                display: flex;
+                justify-content: center;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+}
+
+<div class="dashboard-header">
+    <div class="container">
+        <h1>Reports Dashboard</h1>
+        <p class="lead">Generate insights and analytics about your basketball training platform</p>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Back button to dashboard -->
+    <div class="back-button">
+        <a href="@Url.Action("Dashboard", "Dashboard")" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-lg-4 col-md-5">
+            <!-- Report Configuration -->
+            <div class="card shadow-sm report-card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Configure Report</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-controller="Reports" asp-action="GenerateReport" method="post" id="reportForm">
+                        <div class="mb-3">
+                            <label asp-for="SelectedReportType" class="form-label">Report Type</label>
+                            <select asp-for="SelectedReportType" class="form-select" id="reportType">
+                                @foreach (var reportType in Model.AvailableReportTypes)
+                                {
+                                    <option value="@reportType">@reportType.Replace("Report", "").Replace("Engagement", " Engagement").Replace("Activity", " Activity")</option>
+                                }
+                            </select>
+                            <span asp-validation-for="SelectedReportType" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="StartDate" class="form-label">Start Date</label>
+                            <input asp-for="StartDate" type="date" class="form-control date-picker" id="startDate">
+                            <span asp-validation-for="StartDate" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="EndDate" class="form-label">End Date</label>
+                            <input asp-for="EndDate" type="date" class="form-control date-picker" id="endDate">
+                            <span asp-validation-for="EndDate" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="GroupBy" class="form-label">Group By</label>
+                            <select asp-for="GroupBy" class="form-select" id="groupBy">
+                                <option value="Day">Day</option>
+                                <option value="Week">Week</option>
+                                <option value="Month">Month</option>
+                            </select>
+                            <span asp-validation-for="GroupBy" class="text-danger"></span>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-orange w-100">
+                            <i class="bi bi-graph-up me-2"></i>Generate Report
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Report Types Guide -->
+            <div class="card shadow-sm report-card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Report Types</h5>
+                </div>
+                <div class="card-body">
+                    <div class="report-type-card p-3 rounded selected" data-report-type="UserActivity">
+                        <div class="d-flex align-items-center">
+                            <div class="report-icon">
+                                <i class="bi bi-activity"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">User Activity</h6>
+                                <p class="text-muted small mb-0">Logins, profile views, feature usage</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="report-type-card p-3 rounded" data-report-type="ClientEngagement">
+                        <div class="d-flex align-items-center">
+                            <div class="report-icon">
+                                <i class="bi bi-people"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Client Engagement</h6>
+                                <p class="text-muted small mb-0">Sessions, messages, goals</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="report-type-card p-3 rounded" data-report-type="RunParticipation">
+                        <div class="d-flex align-items-center">
+                            <div class="report-icon">
+                                <i class="bi bi-calendar-event"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Run Participation</h6>
+                                <p class="text-muted small mb-0">Runs created, participants, averages</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="report-type-card p-3 rounded" data-report-type="NewSignups">
+                        <div class="d-flex align-items-center">
+                            <div class="report-icon">
+                                <i class="bi bi-person-plus"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">New Signups</h6>
+                                <p class="text-muted small mb-0">Free accounts, paid accounts, conversion</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="report-type-card p-3 rounded" data-report-type="UserRetention">
+                        <div class="d-flex align-items-center">
+                            <div class="report-icon">
+                                <i class="bi bi-arrow-repeat"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">User Retention</h6>
+                                <p class="text-muted small mb-0">1-day, 7-day, 30-day retention rates</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-8 col-md-7">
+            <!-- Report Results -->
+            <div class="card shadow-sm report-card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">@Model.ReportTitle</h5>
+                    
+                    @if (Model.ReportData.Any())
+                    {
+                        <div class="report-actions">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-download me-1"></i> Export
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="exportDropdown">
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("ExportReport", "Reports", new { reportType = Model.SelectedReportType, startDate = Model.StartDate, endDate = Model.EndDate, groupBy = Model.GroupBy, format = "csv" })">
+                                            <i class="bi bi-filetype-csv me-2"></i>CSV
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("ExportReport", "Reports", new { reportType = Model.SelectedReportType, startDate = Model.StartDate, endDate = Model.EndDate, groupBy = Model.GroupBy, format = "json" })">
+                                            <i class="bi bi-filetype-json me-2"></i>JSON
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-4">@Model.ReportDescription</p>
+                    
+                    @if (Model.ReportData.Any())
+                    {
+                        <!-- Report Summary -->
+                        <div class="report-summary">
+                            @{
+                                // Calculate summary statistics
+                                var categories = Model.ReportData.Select(d => d.Category).Distinct().ToList();
+                                
+                                foreach (var category in categories)
+                                {
+                                    var categoryData = Model.ReportData.Where(d => d.Category == category).ToList();
+                                    var total = categoryData.Sum(d => d.Value);
+                                    var average = Math.Round(categoryData.Average(d => d.Value), 1);
+                                    
+                                    <div class="summary-card">
+                                        <h3>@average</h3>
+                                        <p>Avg @category</p>
+                                    </div>
+                                }
+                            }
+                        </div>
+                        
+                        <!-- Tabs for Chart and Table views -->
+                        <div class="tabs-container">
+                            <ul class="nav nav-tabs" id="reportTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="chart-tab" data-bs-toggle="tab" data-bs-target="#chart-tab-pane" type="button" role="tab" aria-controls="chart-tab-pane" aria-selected="true">
+                                        <i class="bi bi-graph-up me-2"></i>Chart
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="table-tab" data-bs-toggle="tab" data-bs-target="#table-tab-pane" type="button" role="tab" aria-controls="table-tab-pane" aria-selected="false">
+                                        <i class="bi bi-table me-2"></i>Table
+                                    </button>
+                                </li>
+                            </ul>
+                            
+                            <div class="tab-content" id="reportTabContent">
+                                <div class="tab-pane fade show active" id="chart-tab-pane" role="tabpanel" aria-labelledby="chart-tab" tabindex="0">
+                                    <div class="chart-container">
+                                        <canvas id="reportChart"></canvas>
+                                    </div>
+                                </div>
+                                
+                                <div class="tab-pane fade" id="table-tab-pane" role="tabpanel" aria-labelledby="table-tab" tabindex="0">
+                                    <div class="table-responsive">
+                                        <table class="data-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Date</th>
+                                                    @foreach (var category in categories)
+                                                    {
+                                                        <th>@category</th>
+                                                    }
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @{
+                                                    // Group data by date
+                                                    var groupedByDate = Model.ReportData
+                                                        .GroupBy(d => d.Date)
+                                                        .OrderBy(g => g.Key)
+                                                        .ToList();
+                                                    
+                                                    foreach (var group in groupedByDate)
+                                                    {
+                                                        <tr>
+                                                            <td>@group.Key.ToString("MMM dd, yyyy")</td>
+                                                            @foreach (var category in categories)
+                                                            {
+                                                                var value = group.FirstOrDefault(d => d.Category == category)?.Value ?? 0;
+                                                                <td>@value</td>
+                                                            }
+                                                        </tr>
+                                                    }
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="no-data-message">
+                            <i class="bi bi-graph-up" style="font-size: 3rem; color: var(--secondary-color);"></i>
+                            <h3 class="mt-3">No Report Data Available</h3>
+                            <p class="text-muted">Select your report parameters and click 'Generate Report' to view the results.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize date pickers
+            flatpickr('.date-picker', {
+                dateFormat: 'Y-m-d',
+                allowInput: true
+            });
+
+            // Handle report type card selection
+            const reportTypeCards = document.querySelectorAll('.report-type-card');
+            const reportTypeSelect = document.getElementById('reportType');
+            
+            reportTypeCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    // Remove selected class from all cards
+                    reportTypeCards.forEach(c => c.classList.remove('selected'));
+                    
+                    // Add selected class to clicked card
+                    this.classList.add('selected');
+                    
+                    // Update select value
+                    const reportType = this.getAttribute('data-report-type');
+                    reportTypeSelect.value = reportType;
+                });
+            });
+            
+            // Update card selection when select changes
+            reportTypeSelect.addEventListener('change', function() {
+                const selectedValue = this.value;
+                
+                reportTypeCards.forEach(card => {
+                    if (card.getAttribute('data-report-type') === selectedValue) {
+                        card.classList.add('selected');
+                    } else {
+                        card.classList.remove('selected');
+                    }
+                });
+            });
+
+            // Initialize chart if data exists
+            @if (Model.ReportData.Any())
+            {
+                <text>
+                // Prepare chart data
+                const chartData = {
+                    labels: [@Html.Raw(string.Join(",", Model.ReportData
+                        .GroupBy(d => d.Date)
+                        .OrderBy(g => g.Key)
+                        .Select(g => $"'{g.Key.ToString("MMM dd")}'")
+                    ))],
+                    datasets: [
+                        @foreach (var category in Model.ReportData.Select(d => d.Category).Distinct())
+                        {
+                            var colorHue = Math.Abs(category.GetHashCode() % 360);
+                            <text>
+                            {
+                                label: '@category',
+                                data: [@Html.Raw(string.Join(",", Model.ReportData
+                                    .Where(d => d.Category == category)
+                                    .OrderBy(d => d.Date)
+                                    .Select(d => d.Value)
+                                ))],
+                                backgroundColor: 'hsla(@colorHue, 70%, 60%, 0.2)',
+                                borderColor: 'hsla(@colorHue, 70%, 50%, 1)',
+                                borderWidth: 2,
+                                tension: 0.4,
+                                pointRadius: 4,
+                                pointHoverRadius: 6
+                            },
+                            </text>
+                        }
+                    ]
+                };
+
+                // Create chart
+                const ctx = document.getElementById('reportChart').getContext('2d');
+                const reportChart = new Chart(ctx, {
+                    type: 'line',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                backgroundColor: 'rgba(28, 44, 91, 0.9)',
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                borderColor: '#FF6B00',
+                                borderWidth: 2,
+                                padding: 12,
+                                displayColors: true,
+                                callbacks: {
+                                    title: function(tooltipItems) {
+                                        return tooltipItems[0].label;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                }
+                            }
+                        }
+                    }
+                });
+                </text>
+            }
+        });
+    </script>
+}
