@@ -1,7 +1,4 @@
-﻿
-       
-        
-@model Website.ViewModels.ClientsViewModel
+﻿@model Website.ViewModels.ClientsViewModel
 
 @{
     ViewData["Title"] = "Client Management";
@@ -213,7 +210,7 @@
                 </div>
 
                 <div class="row g-3">
-                    <div class="col-md-3">
+                    <div class="col-md-6">
                         <label for="statusFilter" class="form-label">Status</label>
                         <select class="form-select" id="statusFilter">
                             <option value="all" selected>All Statuses</option>
@@ -223,29 +220,7 @@
                         </select>
                     </div>
 
-                    <div class="col-md-3">
-                        <label for="skillLevelFilter" class="form-label">Skill Level</label>
-                        <select class="form-select" id="skillLevelFilter">
-                            <option value="all" selected>All Levels</option>
-                            <option value="beginner">Beginner</option>
-                            <option value="intermediate">Intermediate</option>
-                            <option value="advanced">Advanced</option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-3">
-                        <label for="positionFilter" class="form-label">Position</label>
-                        <select class="form-select" id="positionFilter">
-                            <option value="all" selected>All Positions</option>
-                            <option value="Point Guard">Point Guard</option>
-                            <option value="Shooting Guard">Shooting Guard</option>
-                            <option value="Small Forward">Small Forward</option>
-                            <option value="Power Forward">Power Forward</option>
-                            <option value="Center">Center</option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-3">
+                    <div class="col-md-6">
                         <label for="joinDateFilter" class="form-label">Join Date</label>
                         <select class="form-select" id="joinDateFilter">
                             <option value="all" selected>All Time</option>
@@ -285,7 +260,6 @@
                             <th>Date Joined</th>
                             <th>Address</th>
                             <th>Phone#</th>
-                            <th>Signed Up Date</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -307,7 +281,7 @@
                                 }
                             }
 
-                            <tr>
+                            <tr data-status="active">
                                 <td>
                                     <div class="client-container">
                                         <div class="client-avatar">@clientInitials</div>
@@ -317,10 +291,9 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td>@item.Client.CreatedDate</td>
+                                <td>@(item.Client.CreatedDate?.ToString("MM/dd/yyyy") ?? "N/A")</td>
                                 <td>@item.Client.Address, @item.Client.City, @item.Client.State, @item.Client.Zip</td>
                                 <td>@item.Client.PhoneNumber</td>
-                                <td>@item.Client.CreatedDate</td>
                                 <td>
                                     <div class="table-actions">
                                         <button type="button" class="btn btn-sm btn-outline-primary action-icon" data-bs-toggle="modal" data-bs-target="#editClientModal" data-client-id="@item.Client.ClientId" title="Edit">
@@ -479,7 +452,7 @@
                             </div>
                         </form>
                     </div>
-                    
+
                     <!-- Courts Tab Content -->
                     <div class="tab-pane fade" id="courts-tab-pane" role="tabpanel" aria-labelledby="courts-tab" tabindex="0">
                         <div class="mt-4">
@@ -550,6 +523,11 @@
 
     <script>
              document.addEventListener('DOMContentLoaded', function() {
+            // Log all data-date attributes to help debugging
+            document.querySelectorAll('[data-date]').forEach(el => {
+                console.log('Found data-date:', el.getAttribute('data-date'));
+            });
+
             // Initialize DataTable
             const clientsTable = $('#clientsTable').DataTable({
                 responsive: true,
@@ -565,7 +543,7 @@
                 },
                 columnDefs: [
                     { className: "align-middle", targets: "_all" },
-                    { orderable: false, targets: [5] } // Disable sorting on the Actions column
+                    { orderable: false, targets: [4] } // Disable sorting on the Actions column
                 ],
                 order: [[1, 'desc']] // Sort by Date Joined column by default (newest first)
             });
@@ -826,114 +804,91 @@
 
             function setupFilters(table) {
                 const statusFilter = $('#statusFilter');
-                const skillLevelFilter = $('#skillLevelFilter');
-                const positionFilter = $('#positionFilter');
                 const joinDateFilter = $('#joinDateFilter');
                 const resetFiltersBtn = $('#resetFilters');
                 const activeFiltersContainer = $('#activeFilters');
 
                 // Apply filter function
                 function applyFilters() {
-                    // Implementation of filters...
-                    // Remove any existing custom filter to prevent stacking
-                    if ($.fn.dataTable.ext.search.length > 0) {
-                        $.fn.dataTable.ext.search.pop();
-                    }
-
-                    // Create a new custom filter function
-                    $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
-                        // Only apply this filter to our clientsTable
-                        if (settings.nTable.id !== 'clientsTable') return true;
-
-                        // Skip filtering if all filters are set to 'all'
-                        if (statusFilter.val() === 'all' &&
-                            skillLevelFilter.val() === 'all' &&
-                            positionFilter.val() === 'all' &&
-                            joinDateFilter.val() === 'all') {
-                            return true;
-                        }
-
-                        // Get the row element
-                        const row = $(table.row(dataIndex).node());
-
-                        // Status filtering (using data attribute)
-                        if (statusFilter.val() !== 'all') {
-                            const status = row.attr('data-status') || '';
-                            if (status.toLowerCase() !== statusFilter.val().toLowerCase()) {
-                                return false;
-                            }
-                        }
-
-                        // Skill Level filtering (using data attribute)
-                        if (skillLevelFilter.val() !== 'all') {
-                            const skillLevel = row.attr('data-skill-level') || '';
-                            if (skillLevel.toLowerCase() !== skillLevelFilter.val().toLowerCase()) {
-                                return false;
-                            }
-                        }
-
-                        // Position filtering (using data attribute)
-                        if (positionFilter.val() !== 'all') {
-                            const position = row.attr('data-position') || '';
-                            if (position !== positionFilter.val()) {
-                                return false;
-                            }
-                        }
-
-                        // Join Date filtering (column 1 contains the date)
-                        if (joinDateFilter.val() !== 'all') {
-                            const dateString = data[1];
-                            if (!dateString) return true; // Skip if no date
-
-                            try {
-                                const joinDate = new Date(dateString);
-                                const today = new Date();
-
-                                // Calculate dates for different period filters
-                                const thisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-
-                                const threeMonthsAgo = new Date(today);
-                                threeMonthsAgo.setMonth(today.getMonth() - 3);
-
-                                const sixMonthsAgo = new Date(today);
-                                sixMonthsAgo.setMonth(today.getMonth() - 6);
-
-                                const thisYear = new Date(today.getFullYear(), 0, 1);
-
-                                switch (joinDateFilter.val()) {
-                                    case 'this-month':
-                                        if (joinDate < thisMonth) {
-                                            return false;
-                                        }
-                                        break;
-                                    case 'last-3-months':
-                                        if (joinDate < threeMonthsAgo) {
-                                            return false;
-                                        }
-                                        break;
-                                    case 'last-6-months':
-                                        if (joinDate < sixMonthsAgo) {
-                                            return false;
-                                        }
-                                        break;
-                                    case 'this-year':
-                                        if (joinDate < thisYear) {
-                                            return false;
-                                        }
-                                        break;
-                                }
-                            } catch (e) {
-                                console.error("Error parsing date:", e);
-                                return true; // If date parsing fails, include the row
-                            }
-                        }
-
-                        // If we got here, the row passes all filters
-                        return true;
+                    console.log("Applying filters", {
+                        status: statusFilter.val(),
+                        joinDate: joinDateFilter.val()
                     });
 
-                    // Redraw the table to apply filters
-                    table.draw();
+                    // Clear existing filters
+                    table.search('').columns().search('').draw();
+
+                    // Get all rows
+                    const rows = table.rows().nodes().to$();
+
+                    // Hide all rows first
+                    rows.hide();
+
+                    // Show rows that match our filters
+                    rows.each(function(i, row) {
+                        const $row = $(row);
+                        let showRow = true;
+
+                        // Status filtering
+                        if (statusFilter.val() !== 'all') {
+                            const status = $row.attr('data-status') || '';
+                            if (status.toLowerCase() !== statusFilter.val().toLowerCase()) {
+                                showRow = false;
+                            }
+                        }
+
+                        // Date filtering
+                        if (showRow && joinDateFilter.val() !== 'all') {
+                            const dateAttr = $row.attr('data-date');
+                            if (!dateAttr || dateAttr === '') {
+                                showRow = false;
+                            } else {
+                                try {
+                                    const joinDate = new Date(dateAttr);
+                                    const today = new Date();
+
+                                    // Calculate reference dates
+                                    const thisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                                    const threeMonthsAgo = new Date(today);
+                                    threeMonthsAgo.setMonth(today.getMonth() - 3);
+                                    const sixMonthsAgo = new Date(today);
+                                    sixMonthsAgo.setMonth(today.getMonth() - 6);
+                                    const thisYear = new Date(today.getFullYear(), 0, 1);
+
+                                    switch (joinDateFilter.val()) {
+                                        case 'this-month':
+                                            if (joinDate < thisMonth) {
+                                                showRow = false;
+                                            }
+                                            break;
+                                        case 'last-3-months':
+                                            if (joinDate < threeMonthsAgo) {
+                                                showRow = false;
+                                            }
+                                            break;
+                                        case 'last-6-months':
+                                            if (joinDate < sixMonthsAgo) {
+                                                showRow = false;
+                                            }
+                                            break;
+                                        case 'this-year':
+                                            if (joinDate < thisYear) {
+                                                showRow = false;
+                                            }
+                                            break;
+                                    }
+                                } catch (e) {
+                                    console.error("Error parsing date:", dateAttr, e);
+                                    showRow = false;
+                                }
+                            }
+                        }
+
+                        // Show row if it passed all filters
+                        if (showRow) {
+                            $row.show();
+                        }
+                    });
 
                     // Update the active filters display
                     updateActiveFilters();
@@ -947,8 +902,6 @@
                     // Check if any filters are active
                     const hasActiveFilters =
                         statusFilter.val() !== 'all' ||
-                        skillLevelFilter.val() !== 'all' ||
-                        positionFilter.val() !== 'all' ||
                         joinDateFilter.val() !== 'all';
 
                     // If no filters are active, show "None"
@@ -963,20 +916,6 @@
                     if (statusFilter.val() !== 'all') {
                         addFilterBadge('Status', formatFilterValue(statusFilter.val()), function() {
                             statusFilter.val('all');
-                            applyFilters();
-                        });
-                    }
-
-                    if (skillLevelFilter.val() !== 'all') {
-                        addFilterBadge('Skill Level', formatFilterValue(skillLevelFilter.val()), function() {
-                            skillLevelFilter.val('all');
-                            applyFilters();
-                        });
-                    }
-
-                    if (positionFilter.val() !== 'all') {
-                        addFilterBadge('Position', formatFilterValue(positionFilter.val()), function() {
-                            positionFilter.val('all');
                             applyFilters();
                         });
                     }
@@ -1014,17 +953,17 @@
 
                 // Add event listeners to filters
                 statusFilter.on('change', applyFilters);
-                skillLevelFilter.on('change', applyFilters);
-                positionFilter.on('change', applyFilters);
                 joinDateFilter.on('change', applyFilters);
 
                 // Reset filters button
                 resetFiltersBtn.on('click', function() {
                     statusFilter.val('all');
-                    skillLevelFilter.val('all');
-                    positionFilter.val('all');
                     joinDateFilter.val('all');
                     applyFilters();
+
+                    // Show all rows
+                    table.rows().nodes().to$().show();
+                    table.draw();
                 });
 
                 // Initialize with current filter values
