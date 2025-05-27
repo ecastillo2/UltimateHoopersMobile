@@ -1,7 +1,7 @@
 ﻿@model Website.ViewModels.UsersViewModel
 
 @{
-    ViewData["Title"] = "Run Management";
+    ViewData["Title"] = "Users";
     var userType = ViewData["UserType"]?.ToString() ?? "Coach";
 }
 
@@ -188,8 +188,8 @@
 
 <div class="dashboard-header">
     <div class="container">
-        <h1>Run Management</h1>
-        <p class="lead">Create and manage basketball runs, track participants, and schedule sessions</p>
+        <h1>User</h1>
+        @* <p class="lead">Create and manage basketball runs, track participants, and schedule sessions</p> *@
     </div>
 </div>
 
@@ -285,7 +285,7 @@
                 <table id="runsTable" class="table table-striped table-hover w-100">
                     <thead>
                         <tr>
-                            <th>Name</th>
+                           
                             <th>UserName</th>
                             <th>Sign Up Date</th>
                            
@@ -295,32 +295,21 @@
                     <tbody>
                         @foreach (var run in Model.Users)
                         {
-                            // Determine run status badge
-                            string badgeClass = "bg-success";
-                            string badgeText = "Upcoming";
 
-                           
+                        
+                            <tr data-status="active">
+                                <td>
+                                    <div class="client-container">
+                                        
+                                        <div>
+                                            <div class="fw-semibold">@run.Profile.UserName</div>
+                                            <div class="text-muted small">PN: #@run.Profile.PlayerNumber</div>
+                                        </div>
+                                    </div>
+                                </td>
+                               
+                                <td>@(run.User.SignUpDate?.ToString("MM/dd/yyyy") ?? "N/A")</td>
 
-                            // Get host initials
-                            string hostInitials = "NA";
-                            if (!string.IsNullOrEmpty(run.ProfileId))
-                            {
-                                var names = run.ProfileId.Split(' ');
-                                if (names.Length >= 2)
-                                {
-                                    hostInitials = $"{names[0][0]}{names[1][0]}";
-                                }
-                                else if (names.Length == 1 && names[0].Length > 0)
-                                {
-                                    hostInitials = names[0][0].ToString();
-                                }
-                            }
-
-                            <tr data-run-type="@(run.Status?.ToLower() ?? "pickup")" >
-                                <td>@run.User.FirstName @run.User.LastName</td>
-                                <td>@run.User.Profile.UserName</td>
-                                <td>@run.User.SignUpDate</td>
-                                
                                 <td>
                                     <div class="table-actions">
                                         <button type="button" class="btn btn-sm btn-outline-primary action-icon" data-bs-toggle="modal" data-bs-target="#editRunModal" data-run-id="@run.User.UserId" title="Edit">

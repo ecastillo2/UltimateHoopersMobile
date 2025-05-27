@@ -240,7 +240,7 @@ namespace DataLayer.DAL.Repository
                 // Hash the password before storing
                 user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
                 user.SecurityStamp = Guid.NewGuid().ToString();
-                user.SignUpDate = DateTime.Now.ToString();
+                user.SignUpDate = DateTime.UtcNow;
 
                 if (string.IsNullOrEmpty(user.Status))
                     user.Status = "Active";
@@ -308,7 +308,7 @@ namespace DataLayer.DAL.Repository
 
                 if (user != null)
                 {
-                    user.LastLoginDate = DateTime.Now.ToString();
+                    user.LastLoginDate = DateTime.UtcNow;
                     _context.Entry(user).State = EntityState.Modified;
                     await SaveChangesAsync(cancellationToken);
                     _logger?.LogInformation("Updated last login date for user {UserId}", userId);

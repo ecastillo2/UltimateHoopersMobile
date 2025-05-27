@@ -27,61 +27,7 @@ namespace WebAPI.Controllers
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        /// <summary>
-        /// Get clients with cursor-based pagination for efficient scrolling
-        /// </summary>
-        [HttpGet("clients/cursor")]
-        [ProducesResponseType(typeof(CursorPaginatedResultDto<UserDetailViewModelDto>), 200)]
-        public async Task<IActionResult> GetClientsWithCursor(
-            [FromQuery] string cursor = null,
-            [FromQuery] int limit = 20,
-            [FromQuery] string direction = "next",
-            [FromQuery] string sortBy = "Points",
-            CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var (users, nextCursor) = await _repository
-                    .GetUsersWithCursorAsync(cursor, limit, direction, sortBy, cancellationToken);
 
-                // Create a list to hold our detailed profile view models
-                var detailedViewModels = new List<UserDetailViewModelDto>();
-
-                // Enrich each profile with additional data
-                foreach (var item in users)
-                {
-                    // Get additional profile data using the profile's ID
-                    var user = item;
-                    var profile = await _repository.GetProfileByUserId(item.UserId, cancellationToken);
-
-                    // Create a detailed view model with all the additional data
-                    var detailedViewModel = new UserDetailViewModelDto()
-                    {
-                        User = user,
-                        Profile = profile,
-                    };
-
-                    // Add to our list
-                    detailedViewModels.Add(detailedViewModel);
-                }
-
-                var result = new CursorPaginatedResultDto<UserDetailViewModelDto>
-                {
-                    Items = detailedViewModels,
-                    NextCursor = nextCursor,
-                    HasMore = !string.IsNullOrEmpty(nextCursor),
-                    Direction = direction,
-                    SortBy = sortBy
-                };
-
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error retrieving cursor-based clients");
-                return StatusCode(500, "An error occurred while retrieving cursor-based clients");
-            }
-        }
 
         /// <summary>
         /// Get users with cursor-based pagination for efficient scrolling

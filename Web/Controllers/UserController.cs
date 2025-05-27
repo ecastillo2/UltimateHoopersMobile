@@ -21,9 +21,9 @@ namespace Web.Controllers
 
         public UserController(
             IUserApi userApi,
-            ILogger<ClientController> logger)
+            ILogger<UserController> logger)
         {
-            _userApi = userApi ?? throw new ArgumentNullException(nameof(clientApi));
+            _userApi = userApi ?? throw new ArgumentNullException(nameof(userApi));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -50,7 +50,7 @@ namespace Web.Controllers
                 var profileId = HttpContext.Session.GetString("ProfileId");
 
                 // Get clients with cursor pagination
-                var result = await _userApi.GetClientsWithCursorAsync(
+                var result = await _userApi.GetUsersWithCursorAsync(
                     cursor: cursor,
                     limit: limit,
                     direction: direction,
@@ -136,13 +136,13 @@ namespace Web.Controllers
                 }
 
                 // Set the current date if not provided
-                if (client.CreatedDate == default)
+                if (client.SignUpDate == default)
                 {
-                    client.CreatedDate = DateTime.UtcNow;
+                    client.SignUpDate = DateTime.UtcNow;
                 }
 
                 // Create new client
-                var createdClient = await _userApi.CreateClientAsync(client, accessToken, cancellationToken);
+                var createdClient = await _userApi.CreateUserAsync(client, accessToken, cancellationToken);
 
                 TempData["Success"] = "Client created successfully.";
                 return RedirectToAction("Client");
@@ -188,7 +188,7 @@ namespace Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Client client, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Edit(User client, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -231,7 +231,7 @@ namespace Web.Controllers
                 }
 
                 // Get client details first to check permissions
-                var client = await _userApi.GetClientByIdAsync(id, accessToken, cancellationToken);
+                var client = await _userApi.GetUserByIdAsync(id, accessToken, cancellationToken);
                 if (client == null)
                 {
                     TempData["Error"] = "Client not found.";
@@ -254,7 +254,7 @@ namespace Web.Controllers
 
         // Client data retrieval for AJAX requests
         [HttpGet]
-        public async Task<IActionResult> GetClientData(string id, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetUserData(string id, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -266,7 +266,7 @@ namespace Web.Controllers
                 }
 
                 // Get client details
-                var client = await _userApi.GetClientByIdAsync(id, accessToken, cancellationToken);
+                var client = await _userApi.GetUserByIdAsync(id, accessToken, cancellationToken);
                 if (client == null)
                 {
                     return Json(new { success = false, message = "Client not found" });
@@ -293,16 +293,16 @@ namespace Web.Controllers
                 // Format the response
                 var clientData = new
                 {
-                    clientId = client.ClientId,
-                    clientNumber = client.ClientNumber,
-                    name = client.Name,
+                    userId = client.UserId,
+                    
+                    FirestName = client.FirstName,
                     address = client.Address,
                     city = client.City,
                     state = client.State,
                     zip = client.Zip,
                     phoneNumber = client.PhoneNumber,
 
-                    createdDate = client.CreatedDate,
+                    
                     courtList = clientCourts.Select(c => new
                     {
                         courtId = c.CourtId,

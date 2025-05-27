@@ -37,6 +37,10 @@ builder.Services.AddHttpClient<IClientApi, ClientApi>(client =>
 {
 
 });
+builder.Services.AddHttpClient<IUserApi, UserApi>(client =>
+{
+
+});
 
 //builder.Services.AddHttpClient<IUserApi, UserApi>(user =>
 //{

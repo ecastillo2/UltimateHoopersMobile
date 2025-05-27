@@ -119,7 +119,7 @@ namespace WebAPI.ApiClients
                 queryParams.Add($"sortBy={Uri.EscapeDataString(sortBy)}");
 
                 var queryString = string.Join("&", queryParams);
-                var requestUrl = $"{_baseUrl}/api/Client/cursor{(queryParams.Any() ? "?" + queryString : "")}";
+                var requestUrl = $"{_baseUrl}/api/User/cursor{(queryParams.Any() ? "?" + queryString : "")}";
 
                 // Make the request
                 var response = await _httpClient.GetAsync(requestUrl, cancellationToken);

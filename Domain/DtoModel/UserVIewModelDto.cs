@@ -57,8 +57,8 @@ namespace Domain.DtoModel
         public string? City { get; set; }
         public string? State { get; set; }
         public string? Zip { get; set; }
-        public string? SignUpDate { get; set; }
-        public string? LastLoginDate { get; set; }
+        public DateTime? SignUpDate { get; set; }
+        public DateTime? LastLoginDate { get; set; }
         public string? Role { get; set; }
         public string? Password { get; set; }
         public string? AccessLevel { get; set; }
