@@ -1,6 +1,7 @@
 ﻿using DataLayer.Context;
 using DataLayer.DAL.Repository;
 using Domain;
+using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;

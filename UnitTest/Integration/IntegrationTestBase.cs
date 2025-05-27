@@ -21,7 +21,7 @@ namespace UnitTest.Integration
             var response = await _client.GetAsync(requestUri);
             response.EnsureSuccessStatusCode();
 
-            var content = await response.Content.ReadAsStringContent();
+            var content = await response.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<T>(content, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true

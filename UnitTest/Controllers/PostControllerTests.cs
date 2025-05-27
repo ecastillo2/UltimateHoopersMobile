@@ -24,7 +24,7 @@ namespace UnitTest.Controllers
             _mockConfiguration = new Mock<IConfiguration>();
 
             // Setup controller with mock repository and configuration
-            _controller = new PostController(_mockRepository.Object, _mockConfiguration.Object);
+            _controller = new PostController((DataLayer.Context.ApplicationContext)_mockRepository.Object, _mockConfiguration.Object);
 
             // Setup HTTP context with headers for TimeZone
             var httpContext = new DefaultHttpContext();
