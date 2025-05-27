@@ -398,6 +398,10 @@
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="courts-tab" data-bs-toggle="tab" data-bs-target="#courts-tab-pane" type="button" role="tab" aria-controls="courts-tab-pane" aria-selected="false">Courts</button>
                     </li>
+                    <!-- Users Tab -->
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="users-tab" data-bs-toggle="tab" data-bs-target="#users-tab-pane" type="button" role="tab" aria-controls="users-tab-pane" aria-selected="false">Users</button>
+                    </li>
                 </ul>
                 <div class="tab-content" id="editClientTabContent">
                     <div class="tab-pane fade show active" id="details-tab-pane" role="tabpanel" aria-labelledby="details-tab" tabindex="0">
@@ -475,6 +479,39 @@
                                         <tr>
                                             <td colspan="5" class="text-center py-4 text-muted">
                                                 Loading courts...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Users Tab Content -->
+                    <div class="tab-pane fade" id="users-tab-pane" role="tabpanel" aria-labelledby="users-tab" tabindex="0">
+                        <div class="mt-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="mb-0">Associated Users</h6>
+                                <button class="btn btn-sm btn-outline-primary" id="addUserBtn">
+                                    <i class="bi bi-person-plus me-1"></i>Add User
+                                </button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>User</th>
+                                            <th>Email</th>
+                                            <th>Role</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="usersTableBody">
+                                        <!-- User data will be displayed here -->
+                                        <tr>
+                                            <td colspan="5" class="text-center py-4 text-muted">
+                                                Loading users...
                                             </td>
                                         </tr>
                                     </tbody>
@@ -603,13 +640,288 @@
                 });
             }
 
-            // Handle add court button
-            const addCourtBtn = document.getElementById('addCourtBtn');
-            if (addCourtBtn) {
-                addCourtBtn.addEventListener('click', function() {
+            // Handle add user button
+            const addUserBtn = document.getElementById('addUserBtn');
+            if (addUserBtn) {
+                addUserBtn.addEventListener('click', function() {
                     const clientId = document.getElementById('editClientId').value;
-                    console.log("Adding court for client ID:", clientId);
-                    addClientCourt(clientId);
+                    console.log("Adding user for client ID:", clientId);
+                    addClientUser(clientId);
+                });
+            }
+
+            function loadClientUsers(clientId) {
+                console.log("Loading users for client ID:", clientId);
+
+                if (!clientId) {
+                    console.error("Error: No client ID provided to loadClientUsers");
+                    document.getElementById('usersTableBody').innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center py-4 text-danger">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                Error: No client ID available. Please try again.
+                            </td>
+                        </tr>`;
+                    return;
+                }
+
+                fetch(`/Client/GetClientUsers?clientId=${clientId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Display the users in the users tab
+                        displayClientUsers(data || []);
+                        console.log("Users loaded successfully:", data);
+                    })
+                    .catch(error => {
+                        console.error('Error loading client users:', error);
+                        // Show error in users table
+                        document.getElementById('usersTableBody').innerHTML = `
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-danger">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    Error loading users. Please try again.
+                                </td>
+                            </tr>`;
+                    });
+            }
+
+            window.displayClientUsers = function(users) {
+                console.log("Displaying users:", users);
+                const usersTableBody = document.getElementById('usersTableBody');
+                if (!usersTableBody) {
+                    console.error("Users table body element not found");
+                    return;
+                }
+
+                if (!users || users.length === 0) {
+                    usersTableBody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center py-4 text-muted">
+                                No users associated with this client.
+                            </td>
+                        </tr>`;
+                    return;
+                }
+
+                let html = '';
+                users.forEach(user => {
+                    // Get user initials
+                    let userInitials = "NA";
+                    if (user.firstName && user.lastName) {
+                        userInitials = `${user.firstName[0]}${user.lastName[0]}`;
+                    } else if (user.firstName) {
+                        userInitials = user.firstName[0];
+                    } else if (user.email) {
+                        userInitials = user.email[0].toUpperCase();
+                    }
+
+                    // Determine status class
+                    let statusClass = "bg-success";
+                    if (user.status === "Inactive") {
+                        statusClass = "bg-secondary";
+                    } else if (user.status === "Pending") {
+                        statusClass = "bg-warning";
+                    }
+
+                    html += `
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 me-3" style="width: 36px; height: 36px; background-color: var(--secondary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                                        ${userInitials}
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold">${user.firstName || ''} ${user.lastName || ''}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>${user.email || 'N/A'}</td>
+                            <td>${user.role || 'User'}</td>
+                            <td><span class="badge ${statusClass} badge-pill">${user.status || 'Active'}</span></td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button type="button" class="btn btn-outline-primary edit-user-btn"
+                                            data-user-id="${user.userId}"
+                                            data-bs-toggle="tooltip"
+                                            title="Edit User">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger remove-user-btn"
+                                            data-user-id="${user.userId}"
+                                            data-bs-toggle="tooltip"
+                                            title="Remove User">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>`;
+                });
+
+                usersTableBody.innerHTML = html;
+
+                // Add event listeners to user action buttons
+                document.querySelectorAll('.edit-user-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const userId = this.getAttribute('data-user-id');
+                        const clientId = document.getElementById('editClientId').value;
+                        console.log("Editing user:", userId, "for client:", clientId);
+                        editClientUser(clientId, userId);
+                    });
+                });
+
+                document.querySelectorAll('.remove-user-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const userId = this.getAttribute('data-user-id');
+                        const clientId = document.getElementById('editClientId').value;
+                        console.log("Removing user:", userId, "from client:", clientId);
+                        removeClientUser(clientId, userId);
+                    });
+                });
+
+                // Initialize tooltips
+                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+            }
+
+            window.addClientUser = function(clientId) {
+                console.log("Adding user for client ID:", clientId);
+
+                if (!clientId) {
+                    console.error("Error: No client ID provided to addClientUser");
+                    alert("Error: Cannot add user - client ID is missing");
+                    return;
+                }
+
+                // Open prompt for email
+                const email = prompt('Enter user email address:');
+                if (!email) return;
+
+                // Create user object with only required fields
+                const userData = {
+                    clientId: clientId,
+                    email: email
+                };
+
+                // Get the token from the form
+                const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+                console.log("Sending user data:", userData);
+
+                // Send to server - replace with your actual endpoint
+                fetch('/Client/AddClientUser', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': token
+                    },
+                    body: JSON.stringify(userData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Add user response:", data);
+                    if (data.success) {
+                        // Reload users list
+                        loadClientUsers(clientId);
+                    } else {
+                        alert('Error adding user: ' + (data.message || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error adding user:', error);
+                    alert('Error adding user. Please try again.');
+                });
+            }
+
+            window.editClientUser = function(clientId, userId) {
+                console.log("Editing user:", userId, "for client:", clientId);
+
+                if (!clientId || !userId) {
+                    console.error("Error: Missing IDs for editClientUser", { clientId, userId });
+                    alert("Error: Cannot edit user - missing required information");
+                    return;
+                }
+
+                // You would typically fetch user data here first, but for simplicity:
+                const email = prompt('Enter new email address:');
+                if (email === null) return;
+
+                const userData = {
+                    clientId: clientId,
+                    userId: userId,
+                    email: email
+                };
+
+                // Get the token from the form
+                const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+                // Send to server - replace with your actual endpoint
+                fetch('/Client/UpdateClientUser', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': token
+                    },
+                    body: JSON.stringify(userData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Reload users list
+                        loadClientUsers(clientId);
+                    } else {
+                        alert('Error updating user: ' + (data.message || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating user:', error);
+                    alert('Error updating user. Please try again.');
+                });
+            }
+
+            window.removeClientUser = function(clientId, userId) {
+                console.log("Removing user:", userId, "from client:", clientId);
+
+                if (!clientId || !userId) {
+                    console.error("Error: Missing IDs for removeClientUser", { clientId, userId });
+                    alert("Error: Cannot remove user - missing required information");
+                    return;
+                }
+
+                if (!confirm('Are you sure you want to remove this user from the client?')) {
+                    return;
+                }
+
+                // Get the token from the form
+                const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+                // Send to server - replace with your actual endpoint
+                fetch('/Client/RemoveClientUser', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': token
+                    },
+                    body: JSON.stringify({ clientId, userId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Reload users list
+                        loadClientUsers(clientId);
+                    } else {
+                        alert('Error removing user: ' + (data.message || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error removing user:', error);
+                    alert('Error removing user. Please try again.');
                 });
             }
 

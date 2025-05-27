@@ -1,777 +1,150 @@
 ﻿using Domain;
-using Newtonsoft.Json;
+using Domain.DtoModel;
+using Microsoft.Extensions.Configuration;
+using System;
+using System.Collections.Generic;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using UltimateHoopers.Models;
 
-namespace ApiClient
+namespace WebAPI.ApiClients
 {
-    public static class UserApi
+    /// <summary>
+    /// Implementation of Client API client
+    /// </summary>
+    public class UserApi : IUserApi
     {
-        static WebApi _api = new WebApi();
+        private readonly HttpClient _httpClient;
+        private readonly string _baseUrl;
+        private readonly JsonSerializerOptions _jsonOptions;
 
-        /// <summary>
-        /// Get Users
-        /// </summary>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task<List<User>> GetUsers(string token)
+        public UserApi(HttpClient httpClient, IConfiguration configuration)
         {
-            WebApi _api = new WebApi();
-            List<User> modelList = new List<User>();
+            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+            _baseUrl = configuration["ApiSettings:BaseUrl"] ?? "https://ultimatehoopersapi.azurewebsites.net";
 
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
+            _jsonOptions = new JsonSerializerOptions
             {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                try
-                {
-                    var response = await client.GetAsync("api/User/GetUsers/");
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        modelList = JsonConvert.DeserializeObject<List<User>>(responseString);
-
-                    }
-                }
-
-                catch (Exception ex)
-                {
-                    var x = ex;
-                }
-
-            }
-
-            return modelList;
-
+                PropertyNameCaseInsensitive = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
         }
 
         /// <summary>
-        /// Create User
+        /// Get all Clients
         /// </summary>
-        /// <param name="user"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task<bool> CreateUser(User user, string token)
+        public async Task<List<User>> GetUsersAsync(string accessToken, CancellationToken cancellationToken = default)
         {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            var response = await _httpClient.GetAsync($"{_baseUrl}/api/User/GetUsers", cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            return JsonSerializer.Deserialize<List<User>>(content, _jsonOptions);
+        }
+
+        /// <summary>
+        /// Get Run by ID
+        /// </summary>
+        public async Task<User> GetUserByIdAsync(string Id, string accessToken, CancellationToken cancellationToken = default)
+        {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            // Use the correct route format that matches the [HttpGet("{id}")] attribute
+            var response = await _httpClient.GetAsync($"{_baseUrl}/api/User/{Id}", cancellationToken);
+
+            response.EnsureSuccessStatusCode();
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            return JsonSerializer.Deserialize<User>(content, _jsonOptions);
+        }
+
+     
+
+        /// <summary>
+        /// Create a new Run
+        /// </summary>
+        public async Task<User> CreateUserAsync(User client, string accessToken, CancellationToken cancellationToken = default)
+        {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            var jsonContent = new StringContent(
+                JsonSerializer.Serialize(client, _jsonOptions),
+                Encoding.UTF8,
+                "application/json");
+
+            var response = await _httpClient.PostAsync($"{_baseUrl}/api/User/CreateUser", jsonContent, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            return JsonSerializer.Deserialize<User>(content, _jsonOptions);
+        }
+
        
-           
-            var userJsonString = JsonConvert.SerializeObject(user);
-            var clientBaseAddress = _api.Intial();
-
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                HttpContent content = new StringContent(userJsonString, Encoding.UTF8, "application/json");
-               
-                try
-                {
-                    var response = await client.PostAsync("api/User/CreateUser/", content);
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                }
-
-                catch (Exception ex)
-                {
-                    var x = ex;
-
-                }
-
-            }
-            return true;
-        }
 
         /// <summary>
-        /// Get User By Id
+        /// Delete a Run
         /// </summary>
-        /// <param name="userId"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task<User> GetUserById(string userId, string token)
+        public async Task<bool> DeleteUserAsync(string Id, string accessToken, CancellationToken cancellationToken = default)
         {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            User _user = new User();
-            string urlParameters = "?userId=" + userId;
-
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer "+ token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-               
-                try
-                {
-                    var response = await client.GetAsync("api/User/GetUserId" + urlParameters);
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                    if (response.IsSuccessStatusCode)
-                    {
-
-                        _user = JsonConvert.DeserializeObject<User>(responseString);
-
-
-                    }
-                }
-
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.ToString());
-
-                }
-
-            }
-            return _user;
+            var response = await _httpClient.DeleteAsync($"{_baseUrl}/api/User/DeleteUser?Id={Id}", cancellationToken);
+            return response.IsSuccessStatusCode;
         }
 
 
-        /// <summary>
-        /// Get User By Id
-        /// </summary>
-        /// <param name="userId"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task<List<User>> GetAdminUsers( string token)
+        public async Task<CursorPaginatedResultDto<UserDetailViewModelDto>> GetUsersWithCursorAsync(string cursor = null, int limit = 20, string direction = "next", string sortBy = "Points", string accessToken = null, CancellationToken cancellationToken = default)
         {
-
-            List<User> _user = new List<User>();
-            
-
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
+            try
             {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                try
+                // Set authentication header if token is provided
+                if (!string.IsNullOrEmpty(accessToken))
                 {
-                    var response = await client.GetAsync("api/User/GetAdminUsers");
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                    if (response.IsSuccessStatusCode)
-                    {
-
-                        _user = JsonConvert.DeserializeObject<List<User>>(responseString);
-
-
-                    }
+                    _httpClient.DefaultRequestHeaders.Authorization =
+                        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
                 }
 
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.ToString());
+                // Build query string
+                var queryParams = new List<string>();
+                if (!string.IsNullOrEmpty(cursor))
+                    queryParams.Add($"cursor={Uri.EscapeDataString(cursor)}");
 
-                }
+                queryParams.Add($"limit={limit}");
+                queryParams.Add($"direction={Uri.EscapeDataString(direction)}");
+                queryParams.Add($"sortBy={Uri.EscapeDataString(sortBy)}");
 
+                var queryString = string.Join("&", queryParams);
+                var requestUrl = $"{_baseUrl}/api/Client/cursor{(queryParams.Any() ? "?" + queryString : "")}";
+
+                // Make the request
+                var response = await _httpClient.GetAsync(requestUrl, cancellationToken);
+                response.EnsureSuccessStatusCode();
+
+                // Deserialize the response
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+                return JsonSerializer.Deserialize<CursorPaginatedResultDto<UserDetailViewModelDto>>(content, _jsonOptions);
             }
-            return _user;
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"API request error: {ex.Message}");
+                throw;
+            }
+            catch (JsonException ex)
+            {
+                Console.WriteLine($"JSON parsing error: {ex.Message}");
+                throw;
+            }
         }
 
-        /// <summary>
-        /// Update User
-        /// </summary>
-        /// <param name="user"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task<bool> UpdateUser(User user, string token)
+       
+        public Task<bool> UpdateUserAsync(User run, string accessToken, CancellationToken cancellationToken = default)
         {
-            
-            var userJsonString = JsonConvert.SerializeObject(user);
-
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer "+ token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                HttpContent content = new StringContent(userJsonString, Encoding.UTF8, "application/json");
-                try
-                {
-                    var response = await client.PostAsync("api/User/UpdateUser", content);
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                }
-
-                catch (Exception ex)
-                {
-                    var x = ex;
-
-                }
-
-                return true;
-            }
-
-        }
-
-        /// <summary>
-        /// Update User Email
-        /// </summary>
-        /// <param name="user"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task<bool> UpdateUserEmail(User user, string token)
-        {
-
-            var userJsonString = JsonConvert.SerializeObject(user);
-
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                HttpContent content = new StringContent(userJsonString, Encoding.UTF8, "application/json");
-                try
-                {
-                    var response = await client.PostAsync("api/User/UpdateUserEmail", content);
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                }
-
-                catch (Exception ex)
-                {
-                    var x = ex;
-
-                }
-
-                return true;
-            }
-
-        }
-
-        /// <summary>
-        /// Update Name
-        /// </summary>
-        /// <param name="user"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task<bool> UpdateName(User user, string token)
-        {
-
-            var userJsonString = JsonConvert.SerializeObject(user);
-
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                HttpContent content = new StringContent(userJsonString, Encoding.UTF8, "application/json");
-                try
-                {
-                    var response = await client.PostAsync("api/User/UpdateName", content);
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                }
-
-                catch (Exception ex)
-                {
-                    var x = ex;
-
-                }
-
-                return true;
-            }
-
-        }
-
-        /// <summary>
-        /// Update Name
-        /// </summary>
-        /// <param name="user"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task<bool> UpdateSeg(User user, string token)
-        {
-
-            var userJsonString = JsonConvert.SerializeObject(user);
-
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                HttpContent content = new StringContent(userJsonString, Encoding.UTF8, "application/json");
-                try
-                {
-                    var response = await client.PostAsync("api/User/UpdateSeg", content);
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                }
-
-                catch (Exception ex)
-                {
-                    var x = ex;
-
-                }
-
-                return true;
-            }
-
-        }
-
-
-        /// <summary>
-        /// Update Name
-        /// </summary>
-        /// <param name="user"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task<bool> UpdateSubId(User user, string token)
-        {
-
-            var userJsonString = JsonConvert.SerializeObject(user);
-
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                HttpContent content = new StringContent(userJsonString, Encoding.UTF8, "application/json");
-                try
-                {
-                    var response = await client.PostAsync("api/User/UpdateSubId", content);
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                }
-
-                catch (Exception ex)
-                {
-                    var x = ex;
-
-                }
-
-                return true;
-            }
-
-        }
-
-        /// <summary>
-        /// Update PlayerName
-        /// </summary>
-        /// <param name="user"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task<bool> UpdatePlayerName(User user, string token)
-        {
-
-            var userJsonString = JsonConvert.SerializeObject(user);
-
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                HttpContent content = new StringContent(userJsonString, Encoding.UTF8, "application/json");
-                try
-                {
-                    var response = await client.PostAsync("api/User/UpdatePlayerName", content);
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                }
-
-                catch (Exception ex)
-                {
-                    var x = ex;
-
-                }
-
-                return true;
-            }
-
-        }
-
-        /// <summary>
-        /// Update Password
-        /// </summary>
-        /// <param name="user"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task<bool> UpdatePassword(User user, string token)
-        {
-
-            var userJsonString = JsonConvert.SerializeObject(user);
-
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                HttpContent content = new StringContent(userJsonString, Encoding.UTF8, "application/json");
-                try
-                {
-                    var response = await client.PostAsync("api/User/UpdatePassword", content);
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                }
-
-                catch (Exception ex)
-                {
-                    var x = ex;
-
-                }
-
-                return true;
-            }
-
-        }
-
-        /// <summary>
-        /// Generate Password
-        /// </summary>
-        /// <param name="userId"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task<bool> GeneratePassword(string userId, string token)
-        {
-            User _user = new User();
-            string urlParameters = "?userId=" + userId;
-
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                try
-                {
-                    var response = await client.GetAsync("api/User/GeneratePassword" + urlParameters);
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                   
-                }
-
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.ToString());
-
-                }
-
-            }
-            return true;
-
-        }
-
-        /// <summary>
-        /// Update LastLoginDate
-        /// </summary>
-        /// <param name="userId"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task<bool> UpdateLastLoginDate(string userId, string token)
-        {
-
-
-            User _user = new User();
-            string urlParameters = "?userId=" + userId;
-
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                try
-                {
-                    var response = await client.GetAsync("api/User/UpdateLastLoginDate" + urlParameters);
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-
-                }
-
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.ToString());
-
-                }
-
-            }
-            return true;
-
-        }
-
-        /// <summary>
-        /// UnActivate Account
-        /// </summary>
-        /// <param name="userId"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task<bool> UnActivateAccount(string userId, string token)
-        {
-            User _user = new User();
-            string urlParameters = "?userId=" + userId;
-
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                try
-                {
-                    var response = await client.GetAsync("api/User/UnActivateAccount" + urlParameters);
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-
-                }
-
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.ToString());
-
-                }
-
-            }
-            return true;
-
-        }
-
-        /// <summary>
-        /// Delete User
-        /// </summary>
-        /// <param name="userId"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task DeleteUser(string userId, string token)
-        {
-            WebApi _api = new WebApi();
-            User _user = new User();
-            string urlParameters = "?userId=" + userId;
-
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                try
-                {
-                    var response = await client.DeleteAsync("api/User/DeleteUser" + urlParameters);
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                    if (response.IsSuccessStatusCode)
-                    {
-
-                    }
-                }
-
-                catch (Exception ex)
-                {
-                    var x = ex;
-
-                }
-
-            }
-          
-        }
-
-        /// <summary>
-        /// Is EmailAvailable
-        /// </summary>
-        /// <param name="email"></param>
-        /// <returns></returns>
-        public static async Task<bool> IsEmailAvailable(string email)
-        {
-            string isAvailable=string.Empty;
-
-            WebApi _api = new WebApi();
-            User _user = new User();
-            string urlParameters = "?email=" + email;
-
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer ");
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                try
-                {
-                    var response = await client.GetAsync("api/User/IsEmailAvailable" + urlParameters);
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                    if (response.IsSuccessStatusCode)
-                    {
-
-                        isAvailable = responseString.ToString();
-
-
-                    }
-                }
-
-                catch (Exception ex)
-                {
-                    var x = ex;
-
-                }
-
-                return Convert.ToBoolean(isAvailable);
-            }
-
-        }
-
-        /// <summary>
-        /// Get UserByEmail
-        /// </summary>
-        /// <param name="email"></param>
-        /// <returns></returns>
-        public static async Task<User> GetUserByEmail(string email)
-        {
-
-            User _user = new User();
-            string urlParameters = "?email=" + email;
-
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer ");
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                try
-                {
-                    var response = await client.GetAsync("api/User/GetUserByEmail" + urlParameters);
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                    if (response.IsSuccessStatusCode)
-                    {
-
-                        _user = JsonConvert.DeserializeObject<User>(responseString);
-
-
-                    }
-                }
-
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.ToString());
-
-                }
-
-            }
-            return _user;
-        }
-
-        /// <summary>
-        /// GenerateForgotPasswordToken
-        /// </summary>
-        /// <param name="sV_User"></param>
-        /// <returns></returns>
-        public static async Task<bool> GenerateForgotPasswordToken(User sV_User)
-        {
-
-            var userJsonString = JsonConvert.SerializeObject(sV_User);
-
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer ");
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                HttpContent content = new StringContent(userJsonString, Encoding.UTF8, "application/json");
-                try
-                {
-                    var response = await client.PostAsync("api/User/GenerateForgotPasswordToken", content);
-
-
-                }
-
-                catch (Exception ex)
-                {
-                    var x = ex;
-
-                }
-
-                return true;
-            }
-
-        }
-
-        /// <summary>
-        /// Reset ForgottenPassword
-        /// </summary>
-        /// <param name="user"></param>
-        /// <returns></returns>
-        public static async Task<bool> ResetForgottenPassword(User user)
-        {
-            var userJsonString = JsonConvert.SerializeObject(user);
-            var clientBaseAddress = _api.Intial();
-
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer ");
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                HttpContent content = new StringContent(userJsonString, Encoding.UTF8, "application/json");
-                try
-                {
-                    var response = await client.PostAsync("api/User/ResetForgottenPassword", content);
-
-
-                }
-
-                catch (Exception ex)
-                {
-                    var x = ex;
-
-                }
-
-                return true;
-            }
-
+            throw new NotImplementedException();
         }
     }
 }
