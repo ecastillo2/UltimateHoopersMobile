@@ -1,4 +1,7 @@
-﻿@model Website.ViewModels.ClientsViewModel
+﻿
+       
+        
+@model Website.ViewModels.ClientsViewModel
 
 @{
     ViewData["Title"] = "Client Management";
@@ -476,7 +479,7 @@
                             </div>
                         </form>
                     </div>
-
+                    
                     <!-- Courts Tab Content -->
                     <div class="tab-pane fade" id="courts-tab-pane" role="tabpanel" aria-labelledby="courts-tab" tabindex="0">
                         <div class="mt-4">
@@ -546,166 +549,386 @@
     <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize DataTable
-            const clientsTable = $('#clientsTable').DataTable({
-                responsive: true,
-                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
-                dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip',
-                language: {
-                    search: "_INPUT_",
-                    searchPlaceholder: "Search clients...",
-                    lengthMenu: "Show _MENU_ clients per page",
-                    info: "Showing _START_ to _END_ of _TOTAL_ clients",
-                    infoEmpty: "Showing 0 to 0 of 0 clients",
-                    infoFiltered: "(filtered from _MAX_ total clients)"
-                },
-                columnDefs: [
-                    { className: "align-middle", targets: "_all" },
-                    { orderable: false, targets: [5] } // Disable sorting on the Actions column
-                ],
-                order: [[1, 'desc']] // Sort by Date Joined column by default (newest first)
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize DataTable
+        const clientsTable = $('#clientsTable').DataTable({
+            responsive: true,
+            lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip',
+            language: {
+                search: "_INPUT_",
+                searchPlaceholder: "Search clients...",
+                lengthMenu: "Show _MENU_ clients per page",
+                info: "Showing _START_ to _END_ of _TOTAL_ clients",
+                infoEmpty: "Showing 0 to 0 of 0 clients",
+                infoFiltered: "(filtered from _MAX_ total clients)"
+            },
+            columnDefs: [
+                { className: "align-middle", targets: "_all" },
+                { orderable: false, targets: [5] } // Disable sorting on the Actions column
+            ],
+            order: [[1, 'desc']] // Sort by Date Joined column by default (newest first)
+        });
+
+        // Filter references and implementation
+        setupFilters(clientsTable);
+
+        // Edit client modal functionality - directly extract data from datatable row
+        const editClientModal = document.getElementById('editClientModal');
+        if (editClientModal) {
+            editClientModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const clientId = button.getAttribute('data-client-id');
+                document.getElementById('editClientId').value = clientId;
+                
+                // Show loading indicator in the courts tab
+                document.getElementById('courtsTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-muted">
+                            <div class="spinner-border spinner-border-sm text-secondary me-2" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            Loading courts data...
+                        </td>
+                    </tr>`;
+                
+                // Find the row in the DataTable
+                const rowData = findRowDataById(clientsTable, clientId);
+                
+                if (rowData) {
+                    // We found the client in the datatable - use this data to pre-populate
+                    populateEditFormFromRowData(rowData);
+                } else {
+                    // Fallback: If not found in datatable (rare case), use API
+                    fetchClientDataFromApi(clientId);
+                }
             });
+        }
 
-            // Filter references and implementation
-            setupFilters(clientsTable);
+        // Handle delete client button
+        const deleteClientBtn = document.getElementById('deleteClientBtn');
+        if (deleteClientBtn) {
+            deleteClientBtn.addEventListener('click', function() {
+                const clientId = document.getElementById('editClientId').value;
+                document.getElementById('deleteClientId').value = clientId;
 
-            // Edit client modal functionality - directly extract data from datatable row
-            const editClientModal = document.getElementById('editClientModal');
-            if (editClientModal) {
-                editClientModal.addEventListener('show.bs.modal', function(event) {
-                    const button = event.relatedTarget;
-                    const clientId = button.getAttribute('data-client-id');
-                    document.getElementById('editClientId').value = clientId;
+                // Hide edit modal and show delete confirmation modal
+                const editModal = bootstrap.Modal.getInstance(document.getElementById('editClientModal'));
+                editModal.hide();
 
-                    // Show loading indicator in the courts tab
+                const deleteModal = new bootstrap.Modal(document.getElementById('deleteClientModal'));
+                deleteModal.show();
+            });
+        }
+
+        // Handle add court button
+        const addCourtBtn = document.getElementById('addCourtBtn');
+        if (addCourtBtn) {
+            addCourtBtn.addEventListener('click', function() {
+                const clientId = document.getElementById('editClientId').value;
+                addClientCourt(clientId);
+            });
+        }
+
+       
+        function findRowDataById(table, clientId) {
+            // Get all edit buttons from the table
+            const editButtons = table.rows().nodes().toArray().map(row => 
+                row.querySelector('button[data-client-id="' + clientId + '"]')
+            );
+            
+            // Find the button with the matching client ID
+            const matchingButton = editButtons.find(button => button && button.getAttribute('data-client-id') === clientId);
+            
+            if (matchingButton) {
+                // Get the row element that contains this button
+                const row = matchingButton.closest('tr');
+                // Get the row data
+                const rowData = table.row(row).data();
+                return rowData;
+            }
+            
+            return null;
+        }
+        
+     
+        function populateEditFormFromRowData(rowData) {
+            // Parse client name from the first column's HTML (it contains the client avatar and name)
+            let clientName = '';
+            let clientNumber = '';
+            
+            // Create a temporary element to parse the HTML
+            const tempEl = document.createElement('div');
+            tempEl.innerHTML = rowData[0];
+            
+            // Extract the name from the fw-semibold div
+            const nameEl = tempEl.querySelector('.fw-semibold');
+            if (nameEl) {
+                clientName = nameEl.textContent.trim();
+            }
+            
+            // Extract the client number from the small div
+            const smallEl = tempEl.querySelector('.text-muted.small');
+            if (smallEl) {
+                // Example format: "ID: #12345"
+                const match = smallEl.textContent.match(/ID: #(\S+)/);
+                if (match && match[1]) {
+                    clientNumber = match[1];
+                }
+            }
+            
+            // Get address parts
+            const addressFull = rowData[2]; // "Address, City, State, Zip"
+            const addressParts = addressFull.split(',').map(part => part.trim());
+            
+            const address = addressParts[0] || '';
+            const city = addressParts[1] || '';
+            const state = addressParts[2] || '';
+            const zip = addressParts[3] || '';
+            
+            // Phone number is in column 3
+            const phoneNumber = rowData[3] || '';
+            
+            // Date joined / Created date is in column 1
+            const createdDate = rowData[1] || '';
+            
+            // Set values in the form
+            document.getElementById('editClientNumber').value = clientNumber;
+            document.getElementById('editName').value = clientName;
+            document.getElementById('editAddress').value = address;
+            document.getElementById('editCity').value = city;
+            document.getElementById('editState').value = state;
+            document.getElementById('editZip').value = zip;
+            document.getElementById('editPhoneNumber').value = phoneNumber;
+            document.getElementById('editCreatedDate').value = createdDate;
+            
+            // We still need to fetch courts from the API
+            const clientId = document.getElementById('editClientId').value;
+            fetchAdditionalClientData(clientId);
+        }
+        
+      
+        function fetchAdditionalClientData(clientId) {
+            // Load the courts directly
+            loadClientCourts(clientId);
+        }
+        
+        
+        function fetchClientDataFromApi(clientId) {
+            fetch(`/Client/GetClientData?id=${clientId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Populate form fields with API data
+                    document.getElementById('editClientNumber').value = data.clientNumber || '';
+                    document.getElementById('editName').value = data.name || '';
+                    document.getElementById('editAddress').value = data.address || '';
+                    document.getElementById('editCity').value = data.city || '';
+                    document.getElementById('editState').value = data.state || '';
+                    document.getElementById('editZip').value = data.zip || '';
+                    document.getElementById('editPhoneNumber').value = data.phoneNumber || '';
+                    document.getElementById('editNotes').value = data.notes || '';
+                    document.getElementById('editCreatedDate').value = data.createdDate || '';
+                    
+                    // Display court data in the courts tab
+                    displayClientCourts(data.courtList || []);
+                    
+                    console.log("Courts loaded:", data.courtList);
+                })
+                .catch(error => {
+                    console.error('Error loading client data:', error);
+                    alert('Error loading client data. Please try again.');
+                    
+                    // Show error in courts table
                     document.getElementById('courtsTableBody').innerHTML = `
                         <tr>
-                            <td colspan="5" class="text-center py-4 text-muted">
-                                <div class="spinner-border spinner-border-sm text-secondary me-2" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                                Loading courts data...
+                            <td colspan="2" class="text-center py-4 text-danger">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                Error loading client data. Please try again.
                             </td>
                         </tr>`;
+                });
+        }
+        
+       
+        function setupFilters(table) {
+            const statusFilter = $('#statusFilter');
+            const skillLevelFilter = $('#skillLevelFilter');
+            const positionFilter = $('#positionFilter');
+            const joinDateFilter = $('#joinDateFilter');
+            const resetFiltersBtn = $('#resetFilters');
+            const activeFiltersContainer = $('#activeFilters');
 
-                    // Find the row in the DataTable
-                    const rowData = findRowDataById(clientsTable, clientId);
+            // Apply filter function
+            function applyFilters() {
+                // Implementation of filters...
+                // Remove any existing custom filter to prevent stacking
+                if ($.fn.dataTable.ext.search.length > 0) {
+                    $.fn.dataTable.ext.search.pop();
+                }
 
-                    if (rowData) {
-                        // We found the client in the datatable - use this data to pre-populate
-                        populateEditFormFromRowData(rowData);
-                    } else {
-                        // Fallback: If not found in datatable (rare case), use API
-                        fetchClientDataFromApi(clientId);
+                // Create a new custom filter function
+                $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                    // Only apply this filter to our clientsTable
+                    if (settings.nTable.id !== 'clientsTable') return true;
+
+                    // Skip filtering if all filters are set to 'all'
+                    if (statusFilter.val() === 'all' &&
+                        skillLevelFilter.val() === 'all' &&
+                        positionFilter.val() === 'all' &&
+                        joinDateFilter.val() === 'all') {
+                        return true;
                     }
-                });
-            }
 
-            // Handle delete client button
-            const deleteClientBtn = document.getElementById('deleteClientBtn');
-            if (deleteClientBtn) {
-                deleteClientBtn.addEventListener('click', function() {
-                    const clientId = document.getElementById('editClientId').value;
-                    document.getElementById('deleteClientId').value = clientId;
+                    // Get the row element
+                    const row = $(table.row(dataIndex).node());
 
-                    // Hide edit modal and show delete confirmation modal
-                    const editModal = bootstrap.Modal.getInstance(document.getElementById('editClientModal'));
-                    editModal.hide();
-
-                    const deleteModal = new bootstrap.Modal(document.getElementById('deleteClientModal'));
-                    deleteModal.show();
-                });
-            }
-
-            // Handle add court button
-            const addCourtBtn = document.getElementById('addCourtBtn');
-            if (addCourtBtn) {
-                addCourtBtn.addEventListener('click', function() {
-                    const clientId = document.getElementById('editClientId').value;
-                    addClientCourt(clientId);
-                });
-            }
-
-           
-            function findRowDataById(table, clientId) {
-                // Get all edit buttons from the table
-                const editButtons = table.rows().nodes().toArray().map(row =>
-                    row.querySelector('button[data-client-id="' + clientId + '"]')
-                );
-
-                // Find the button with the matching client ID
-                const matchingButton = editButtons.find(button => button && button.getAttribute('data-client-id') === clientId);
-
-                if (matchingButton) {
-                    // Get the row element that contains this button
-                    const row = matchingButton.closest('tr');
-                    // Get the row data
-                    const rowData = table.row(row).data();
-                    return rowData;
-                }
-
-                return null;
-            }
-
-           
-            function populateEditFormFromRowData(rowData) {
-                // Parse client name from the first column's HTML (it contains the client avatar and name)
-                let clientName = '';
-                let clientNumber = '';
-
-                // Create a temporary element to parse the HTML
-                const tempEl = document.createElement('div');
-                tempEl.innerHTML = rowData[0];
-
-                // Extract the name from the fw-semibold div
-                const nameEl = tempEl.querySelector('.fw-semibold');
-                if (nameEl) {
-                    clientName = nameEl.textContent.trim();
-                }
-
-                // Extract the client number from the small div
-                const smallEl = tempEl.querySelector('.text-muted.small');
-                if (smallEl) {
-                    // Example format: "ID: #12345"
-                    const match = smallEl.textContent.match(/ID: #(\S+)/);
-                    if (match && match[1]) {
-                        clientNumber = match[1];
+                    // Status filtering (using data attribute)
+                    if (statusFilter.val() !== 'all') {
+                        const status = row.attr('data-status') || '';
+                        if (status.toLowerCase() !== statusFilter.val().toLowerCase()) {
+                            return false;
+                        }
                     }
-                }
 
-                // Get address parts
-                const addressFull = rowData[2]; // "Address, City, State, Zip"
-                const addressParts = addressFull.split(',').map(part => part.trim());
+                    // Skill Level filtering (using data attribute)
+                    if (skillLevelFilter.val() !== 'all') {
+                        const skillLevel = row.attr('data-skill-level') || '';
+                        if (skillLevel.toLowerCase() !== skillLevelFilter.val().toLowerCase()) {
+                            return false;
+                        }
+                    }
 
-                const address = addressParts[0] || '';
-                const city = addressParts[1] || '';
-                const state = addressParts[2] || '';
-                const zip = addressParts[3] || '';
+                    // Position filtering (using data attribute)
+                    if (positionFilter.val() !== 'all') {
+                        const position = row.attr('data-position') || '';
+                        if (position !== positionFilter.val()) {
+                            return false;
+                        }
+                    }
 
-                // Phone number is in column 3
-                const phoneNumber = rowData[3] || '';
+                    // Join Date filtering (column 1 contains the date)
+                    if (joinDateFilter.val() !== 'all') {
+                        const dateString = data[1];
+                        if (!dateString) return true; // Skip if no date
 
-                // Date joined / Created date is in column 1
-                const createdDate = rowData[1] || '';
+                        try {
+                            const joinDate = new Date(dateString);
+                            const today = new Date();
 
-                // Set values in the form
-                document.getElementById('editClientNumber').value = clientNumber;
-                document.getElementById('editName').value = clientName;
-                document.getElementById('editAddress').value = address;
-                document.getElementById('editCity').value = city;
-                document.getElementById('editState').value = state;
-                document.getElementById('editZip').value = zip;
-                document.getElementById('editPhoneNumber').value = phoneNumber;
-                document.getElementById('editCreatedDate').value = createdDate;
+                            // Calculate dates for different period filters
+                            const thisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
-                // We still need to fetch courts from the API
-                const clientId = document.getElementById('editClientId').value;
-                fetchAdditionalClientData(clientId);
+                            const threeMonthsAgo = new Date(today);
+                            threeMonthsAgo.setMonth(today.getMonth() - 3);
+
+                            const sixMonthsAgo = new Date(today);
+                            sixMonthsAgo.setMonth(today.getMonth() - 6);
+
+                            const thisYear = new Date(today.getFullYear(), 0, 1);
+
+                            switch (joinDateFilter.val()) {
+                                case 'this-month':
+                                    if (joinDate < thisMonth) {
+                                        return false;
+                                    }
+                                    break;
+                                case 'last-3-months':
+                                    if (joinDate < threeMonthsAgo) {
+                                        return false;
+                                    }
+                                    break;
+                                case 'last-6-months':
+                                    if (joinDate < sixMonthsAgo) {
+                                        return false;
+                                    }
+                                    break;
+                                case 'this-year':
+                                    if (joinDate < thisYear) {
+                                        return false;
+                                    }
+                                    break;
+                            }
+                        } catch (e) {
+                            console.error("Error parsing date:", e);
+                            return true; // If date parsing fails, include the row
+                        }
+                    }
+
+                    // If we got here, the row passes all filters
+                    return true;
+                });
+
+                // Redraw the table to apply filters
+                table.draw();
+
+                // Update the active filters display
+                updateActiveFilters();
             }
 
-          
-            function fetchAdditionalClientData(clientId) {
+            // Update the active filters display
+            function updateActiveFilters() {
+                // Clear the current active filters display (except the label)
+                activeFiltersContainer.find('.filter-badge, .filter-none').remove();
+
+                // Check if any filters are active
+                const hasActiveFilters =
+                    statusFilter.val() !== 'all' ||
+                    skillLevelFilter.val() !== 'all' ||
+                    positionFilter.val() !== 'all' ||
+                    joinDateFilter.val() !== 'all';
+
+                // If no filters are active, show "None"
+                if (!hasActiveFilters) {
+                    activeFiltersContainer.append(
+                        $('<span>').addClass('text-muted filter-none').text('None')
+                    );
+                    return;
+                }
+
+                // Add badges for active filters
+                if (statusFilter.val() !== 'all') {
+                    addFilterBadge('Status', formatFilterValue(statusFilter.val()), function() {
+                        statusFilter.val('all');
+                        applyFilters();
+                    });
+                }
+
+                if (skillLevelFilter.val() !== 'all') {
+                    addFilterBadge('Skill Level', formatFilterValue(skillLevelFilter.val()), function() {
+                        skillLevelFilter.val('all');
+                        applyFilters();
+                    });
+                }
+
+                if (positionFilter.val() !== 'all') {
+                    addFilterBadge('Position', formatFilterValue(positionFilter.val()), function() {
+                        positionFilter.val('all');
+                        applyFilters();
+                    });
+                }
+
+                if (joinDateFilter.val() !== 'all') {
+                    addFilterBadge('Join Date', formatFilterValue(joinDateFilter.val()), function() {
+                        joinDateFilter.val('all');
+                        applyFilters();
+                    });
+                }
+            }
+
+            // Helper function to format filter values for display
+            function formatFilterValue(value) {
+                return value
+                    .split('-')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(' ');
+            }
+
+                 function loadClientCourts(clientId) {
                 fetch(`/Client/GetClientData?id=${clientId}`)
                     .then(response => {
                         if (!response.ok) {
@@ -714,470 +937,262 @@
                         return response.json();
                     })
                     .then(data => {
-                        // Only update notes if available
+                        // Display the courts in the courts tab
+                        displayClientCourts(data.courtList || []);
+
+                        // Also populate notes if available
                         if (data.notes) {
                             document.getElementById('editNotes').value = data.notes;
                         }
-
-                        // Always update the courts list
-                        displayClientCourts(data.courtList || []);
                     })
                     .catch(error => {
-                        console.error('Error fetching additional client data:', error);
-                        // If we fail to get additional data, the form still has the basic info
-                        // Just show an empty courts list
-                        displayClientCourts([]);
-                    });
-            }
-
-           
-            function fetchClientDataFromApi(clientId) {
-                fetch(`/Client/GetClientData?id=${clientId}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        // Populate form fields with API data
-                        document.getElementById('editClientNumber').value = data.clientNumber || '';
-                        document.getElementById('editName').value = data.name || '';
-                        document.getElementById('editAddress').value = data.address || '';
-                        document.getElementById('editCity').value = data.city || '';
-                        document.getElementById('editState').value = data.state || '';
-                        document.getElementById('editZip').value = data.zip || '';
-                        document.getElementById('editPhoneNumber').value = data.phoneNumber || '';
-                        document.getElementById('editNotes').value = data.notes || '';
-                        document.getElementById('editCreatedDate').value = data.createdDate || '';
-
-                        // Display court data
-                        displayClientCourts(data.courtList || []);
-                    })
-                    .catch(error => {
-                        console.error('Error loading client data:', error);
-                        alert('Error loading client data. Please try again.');
-
+                        console.error('Error loading client courts:', error);
                         // Show error in courts table
                         document.getElementById('courtsTableBody').innerHTML = `
                             <tr>
                                 <td colspan="2" class="text-center py-4 text-danger">
                                     <i class="bi bi-exclamation-triangle me-2"></i>
-                                    Error loading client data. Please try again.
+                                    Error loading courts. Please try again.
                                 </td>
                             </tr>`;
                     });
             }
 
-           
-            function setupFilters(table) {
-                const statusFilter = $('#statusFilter');
-                const skillLevelFilter = $('#skillLevelFilter');
-                const positionFilter = $('#positionFilter');
-                const joinDateFilter = $('#joinDateFilter');
-                const resetFiltersBtn = $('#resetFilters');
-                const activeFiltersContainer = $('#activeFilters');
+            // Add a filter badge to the display
+            function addFilterBadge(label, value, removeCallback) {
+                const badge = $('<span>')
+                    .addClass('badge bg-primary me-2 filter-badge')
+                    .text(`${label}: ${value}`);
 
-                // Apply filter function
-                function applyFilters() {
-                    // Implementation of filters...
-                    // Remove any existing custom filter to prevent stacking
-                    if ($.fn.dataTable.ext.search.length > 0) {
-                        $.fn.dataTable.ext.search.pop();
-                    }
+                const removeBtn = $('<button>')
+                    .addClass('btn-close btn-close-white ms-1')
+                    .css('font-size', '0.5rem')
+                    .on('click', removeCallback);
 
-                    // Create a new custom filter function
-                    $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
-                        // Only apply this filter to our clientsTable
-                        if (settings.nTable.id !== 'clientsTable') return true;
+                badge.append(removeBtn);
+                activeFiltersContainer.append(badge);
+            }
 
-                        // Skip filtering if all filters are set to 'all'
-                        if (statusFilter.val() === 'all' &&
-                            skillLevelFilter.val() === 'all' &&
-                            positionFilter.val() === 'all' &&
-                            joinDateFilter.val() === 'all') {
-                            return true;
-                        }
+            // Add event listeners to filters
+            statusFilter.on('change', applyFilters);
+            skillLevelFilter.on('change', applyFilters);
+            positionFilter.on('change', applyFilters);
+            joinDateFilter.on('change', applyFilters);
 
-                        // Get the row element
-                        const row = $(table.row(dataIndex).node());
-
-                        // Status filtering (using data attribute)
-                        if (statusFilter.val() !== 'all') {
-                            const status = row.attr('data-status') || '';
-                            if (status.toLowerCase() !== statusFilter.val().toLowerCase()) {
-                                return false;
-                            }
-                        }
-
-                        // Skill Level filtering (using data attribute)
-                        if (skillLevelFilter.val() !== 'all') {
-                            const skillLevel = row.attr('data-skill-level') || '';
-                            if (skillLevel.toLowerCase() !== skillLevelFilter.val().toLowerCase()) {
-                                return false;
-                            }
-                        }
-
-                        // Position filtering (using data attribute)
-                        if (positionFilter.val() !== 'all') {
-                            const position = row.attr('data-position') || '';
-                            if (position !== positionFilter.val()) {
-                                return false;
-                            }
-                        }
-
-                        // Join Date filtering (column 1 contains the date)
-                        if (joinDateFilter.val() !== 'all') {
-                            const dateString = data[1];
-                            if (!dateString) return true; // Skip if no date
-
-                            try {
-                                const joinDate = new Date(dateString);
-                                const today = new Date();
-
-                                // Calculate dates for different period filters
-                                const thisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-
-                                const threeMonthsAgo = new Date(today);
-                                threeMonthsAgo.setMonth(today.getMonth() - 3);
-
-                                const sixMonthsAgo = new Date(today);
-                                sixMonthsAgo.setMonth(today.getMonth() - 6);
-
-                                const thisYear = new Date(today.getFullYear(), 0, 1);
-
-                                switch (joinDateFilter.val()) {
-                                    case 'this-month':
-                                        if (joinDate < thisMonth) {
-                                            return false;
-                                        }
-                                        break;
-                                    case 'last-3-months':
-                                        if (joinDate < threeMonthsAgo) {
-                                            return false;
-                                        }
-                                        break;
-                                    case 'last-6-months':
-                                        if (joinDate < sixMonthsAgo) {
-                                            return false;
-                                        }
-                                        break;
-                                    case 'this-year':
-                                        if (joinDate < thisYear) {
-                                            return false;
-                                        }
-                                        break;
-                                }
-                            } catch (e) {
-                                console.error("Error parsing date:", e);
-                                return true; // If date parsing fails, include the row
-                            }
-                        }
-
-                        // If we got here, the row passes all filters
-                        return true;
-                    });
-
-                    // Redraw the table to apply filters
-                    table.draw();
-
-                    // Update the active filters display
-                    updateActiveFilters();
-                }
-
-                // Update the active filters display
-                function updateActiveFilters() {
-                    // Clear the current active filters display (except the label)
-                    activeFiltersContainer.find('.filter-badge, .filter-none').remove();
-
-                    // Check if any filters are active
-                    const hasActiveFilters =
-                        statusFilter.val() !== 'all' ||
-                        skillLevelFilter.val() !== 'all' ||
-                        positionFilter.val() !== 'all' ||
-                        joinDateFilter.val() !== 'all';
-
-                    // If no filters are active, show "None"
-                    if (!hasActiveFilters) {
-                        activeFiltersContainer.append(
-                            $('<span>').addClass('text-muted filter-none').text('None')
-                        );
-                        return;
-                    }
-
-                    // Add badges for active filters
-                    if (statusFilter.val() !== 'all') {
-                        addFilterBadge('Status', formatFilterValue(statusFilter.val()), function() {
-                            statusFilter.val('all');
-                            applyFilters();
-                        });
-                    }
-
-                    if (skillLevelFilter.val() !== 'all') {
-                        addFilterBadge('Skill Level', formatFilterValue(skillLevelFilter.val()), function() {
-                            skillLevelFilter.val('all');
-                            applyFilters();
-                        });
-                    }
-
-                    if (positionFilter.val() !== 'all') {
-                        addFilterBadge('Position', formatFilterValue(positionFilter.val()), function() {
-                            positionFilter.val('all');
-                            applyFilters();
-                        });
-                    }
-
-                    if (joinDateFilter.val() !== 'all') {
-                        addFilterBadge('Join Date', formatFilterValue(joinDateFilter.val()), function() {
-                            joinDateFilter.val('all');
-                            applyFilters();
-                        });
-                    }
-                }
-
-                // Helper function to format filter values for display
-                function formatFilterValue(value) {
-                    return value
-                        .split('-')
-                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                        .join(' ');
-                }
-
-                // Add a filter badge to the display
-                function addFilterBadge(label, value, removeCallback) {
-                    const badge = $('<span>')
-                        .addClass('badge bg-primary me-2 filter-badge')
-                        .text(`${label}: ${value}`);
-
-                    const removeBtn = $('<button>')
-                        .addClass('btn-close btn-close-white ms-1')
-                        .css('font-size', '0.5rem')
-                        .on('click', removeCallback);
-
-                    badge.append(removeBtn);
-                    activeFiltersContainer.append(badge);
-                }
-
-                // Add event listeners to filters
-                statusFilter.on('change', applyFilters);
-                skillLevelFilter.on('change', applyFilters);
-                positionFilter.on('change', applyFilters);
-                joinDateFilter.on('change', applyFilters);
-
-                // Reset filters button
-                resetFiltersBtn.on('click', function() {
-                    statusFilter.val('all');
-                    skillLevelFilter.val('all');
-                    positionFilter.val('all');
-                    joinDateFilter.val('all');
-                    applyFilters();
-                });
-
-                // Initialize with current filter values
+            // Reset filters button
+            resetFiltersBtn.on('click', function() {
+                statusFilter.val('all');
+                skillLevelFilter.val('all');
+                positionFilter.val('all');
+                joinDateFilter.val('all');
                 applyFilters();
+            });
+
+            // Initialize with current filter values
+            applyFilters();
+        }
+
+        // Function to display client courts - simplified
+        window.displayClientCourts = function(courts) {
+            const courtsTableBody = document.getElementById('courtsTableBody');
+            if (!courtsTableBody) return;
+            
+            if (!courts || courts.length === 0) {
+                courtsTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="2" class="text-center py-4 text-muted">
+                            No courts associated with this client.
+                        </td>
+                    </tr>`;
+                return;
             }
-
-            // Function to display client courts - simplified
-            window.displayClientCourts = function(courts) {
-                const courtsTableBody = document.getElementById('courtsTableBody');
-                if (!courtsTableBody) return;
-
-                if (!courts || courts.length === 0) {
-                    courtsTableBody.innerHTML = `
-                        <tr>
-                            <td colspan="2" class="text-center py-4 text-muted">
-                                No courts associated with this client.
-                            </td>
-                        </tr>`;
-                    return;
-                }
-
-                let html = '';
-                courts.forEach(court => {
-                    html += `
-                        <tr>
-                            <td>${court.name || 'N/A'}</td>
-                            <td>
-                                <div class="btn-group btn-group-sm">
-                                    <button type="button" class="btn btn-outline-primary edit-court-btn"
-                                            data-court-id="${court.courtId}"
-                                            data-bs-toggle="tooltip"
-                                            title="Edit Court">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-outline-danger remove-court-btn"
-                                            data-court-id="${court.courtId}"
-                                            data-bs-toggle="tooltip"
-                                            title="Remove Court">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>`;
+            
+            let html = '';
+            courts.forEach(court => {
+                html += `
+                    <tr>
+                        <td>${court.name || 'N/A'}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-outline-primary edit-court-btn" 
+                                        data-court-id="${court.courtId}" 
+                                        data-bs-toggle="tooltip" 
+                                        title="Edit Court">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-danger remove-court-btn" 
+                                        data-court-id="${court.courtId}"
+                                        data-bs-toggle="tooltip" 
+                                        title="Remove Court">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>`;
+            });
+            
+            courtsTableBody.innerHTML = html;
+            
+            // Add event listeners to court action buttons
+            document.querySelectorAll('.edit-court-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const courtId = this.getAttribute('data-court-id');
+                    editClientCourt(document.getElementById('editClientId').value, courtId);
                 });
-
-                courtsTableBody.innerHTML = html;
-
-                // Add event listeners to court action buttons
-                document.querySelectorAll('.edit-court-btn').forEach(button => {
-                    button.addEventListener('click', function() {
-                        const courtId = this.getAttribute('data-court-id');
-                        editClientCourt(document.getElementById('editClientId').value, courtId);
-                    });
+            });
+            
+            document.querySelectorAll('.remove-court-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const courtId = this.getAttribute('data-court-id');
+                    removeClientCourt(document.getElementById('editClientId').value, courtId);
                 });
-
-                document.querySelectorAll('.remove-court-btn').forEach(button => {
-                    button.addEventListener('click', function() {
-                        const courtId = this.getAttribute('data-court-id');
-                        removeClientCourt(document.getElementById('editClientId').value, courtId);
-                    });
-                });
-
-                // Initialize tooltips
-                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-                var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                    return new bootstrap.Tooltip(tooltipTriggerEl)
-                });
-            }
-
-            // Court management functions - same as before
-            window.addClientCourt = function(clientId) {
-                // Simplified - only ask for court name
-                const courtName = prompt('Enter court name:');
-                if (!courtName) return;
-
-                // Create court object with only required fields
-                const courtData = {
-                    clientId: clientId,
-                    name: courtName
-                };
-
-                // Get the token from the form
-                const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
-
-                // Send to server
-                fetch('@Url.Action("AddClientCourt", "Client")', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': token
-                    },
-                    body: JSON.stringify(courtData)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Reload courts list
-                        fetch(`@Url.Action("GetClientData", "Client")?id=${clientId}`)
-                            .then(response => response.json())
-                            .then(clientData => {
-                                displayClientCourts(clientData.courtList || []);
-                            })
-                            .catch(error => {
-                                console.error('Error reloading client data:', error);
-                            });
-                    } else {
-                        alert('Error adding court: ' + (data.message || 'Unknown error'));
-                    }
-                })
-                .catch(error => {
-                    console.error('Error adding court:', error);
-                    alert('Error adding court. Please try again.');
-                });
-            }
-
-            window.editClientCourt = function(clientId, courtId) {
-                // Get current court data first
-                fetch(`@Url.Action("GetCourtData", "Client")?courtId=${courtId}`)
-                    .then(response => response.json())
-                    .then(court => {
-                        // Prompt for updated values - simplified
-                        const courtName = prompt('Court name:', court.name || '');
-                        if (courtName === null) return;
-
-                        // Create updated court object with only required fields
-                        const courtData = {
-                            courtId: courtId,
-                            clientId: clientId,
-                            name: courtName
-                        };
-
-                        // Get the token from the form
-                        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
-
-                        // Send to server
-                        fetch('@Url.Action("UpdateClientCourt", "Client")', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'RequestVerificationToken': token
-                            },
-                            body: JSON.stringify(courtData)
-                        })
+            });
+            
+            // Initialize tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            });
+        }
+        
+        // Court management functions - same as before
+        window.addClientCourt = function(clientId) {
+            // Simplified - only ask for court name
+            const courtName = prompt('Enter court name:');
+            if (!courtName) return;
+            
+            // Create court object with only required fields
+            const courtData = {
+                clientId: clientId,
+                name: courtName
+            };
+            
+            // Get the token from the form
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            
+            // Send to server
+            fetch('@Url.Action("AddClientCourt", "Client")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                },
+                body: JSON.stringify(courtData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload courts list
+                    fetch(`@Url.Action("GetClientData", "Client")?id=${clientId}`)
                         .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                // Reload courts list
-                                fetch(`@Url.Action("GetClientData", "Client")?id=${clientId}`)
-                                    .then(response => response.json())
-                                    .then(clientData => {
-                                        displayClientCourts(clientData.courtList || []);
-                                    })
-                                    .catch(error => {
-                                        console.error('Error reloading client data:', error);
-                                    });
-                            } else {
-                                alert('Error updating court: ' + (data.message || 'Unknown error'));
-                            }
+                        .then(clientData => {
+                            displayClientCourts(clientData.courtList || []);
                         })
                         .catch(error => {
-                            console.error('Error updating court:', error);
-                            alert('Error updating court. Please try again.');
+                            console.error('Error reloading client data:', error);
                         });
+                } else {
+                    alert('Error adding court: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error adding court:', error);
+                alert('Error adding court. Please try again.');
+            });
+        }
+        
+        window.editClientCourt = function(clientId, courtId) {
+            // Get current court data first
+            fetch(`@Url.Action("GetCourtData", "Client")?courtId=${courtId}`)
+                .then(response => response.json())
+                .then(court => {
+                    // Prompt for updated values - simplified
+                    const courtName = prompt('Court name:', court.name || '');
+                    if (courtName === null) return;
+                    
+                    // Create updated court object with only required fields
+                    const courtData = {
+                        courtId: courtId,
+                        clientId: clientId,
+                        name: courtName
+                    };
+                    
+                    // Get the token from the form
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+                    
+                    // Send to server
+                    fetch('@Url.Action("UpdateClientCourt", "Client")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': token
+                        },
+                        body: JSON.stringify(courtData)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Reload courts list
+                            fetch(`@Url.Action("GetClientData", "Client")?id=${clientId}`)
+                                .then(response => response.json())
+                                .then(clientData => {
+                                    displayClientCourts(clientData.courtList || []);
+                                })
+                                .catch(error => {
+                                    console.error('Error reloading client data:', error);
+                                });
+                        } else {
+                            alert('Error updating court: ' + (data.message || 'Unknown error'));
+                        }
                     })
                     .catch(error => {
-                        console.error('Error getting court data:', error);
-                        alert('Error getting court data. Please try again.');
+                        console.error('Error updating court:', error);
+                        alert('Error updating court. Please try again.');
                     });
-            }
-
-            window.removeClientCourt = function(clientId, courtId) {
-                if (!confirm('Are you sure you want to remove this court?')) {
-                    return;
-                }
-
-                // Get the token from the form
-                const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
-
-                fetch('@Url.Action("RemoveClientCourt", "Client")', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': token
-                    },
-                    body: JSON.stringify({ clientId, courtId })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Reload courts list
-                        fetch(`@Url.Action("GetClientData", "Client")?id=${clientId}`)
-                            .then(response => response.json())
-                            .then(clientData => {
-                                displayClientCourts(clientData.courtList || []);
-                            })
-                            .catch(error => {
-                                console.error('Error reloading client data:', error);
-                            });
-                    } else {
-                        alert('Error removing court: ' + (data.message || 'Unknown error'));
-                    }
                 })
                 .catch(error => {
-                    console.error('Error removing court:', error);
-                    alert('Error removing court. Please try again.');
+                    console.error('Error getting court data:', error);
+                    alert('Error getting court data. Please try again.');
                 });
+        }
+        
+        window.removeClientCourt = function(clientId, courtId) {
+            if (!confirm('Are you sure you want to remove this court?')) {
+                return;
             }
-        });
+            
+            // Get the token from the form
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            
+            fetch('@Url.Action("RemoveClientCourt", "Client")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                },
+                body: JSON.stringify({ clientId, courtId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload courts list
+                    fetch(`@Url.Action("GetClientData", "Client")?id=${clientId}`)
+                        .then(response => response.json())
+                        .then(clientData => {
+                            displayClientCourts(clientData.courtList || []);
+                        })
+                        .catch(error => {
+                            console.error('Error reloading client data:', error);
+                        });
+                } else {
+                    alert('Error removing court: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error removing court:', error);
+                alert('Error removing court. Please try again.');
+            });
+        }
+    });
     </script>
 }

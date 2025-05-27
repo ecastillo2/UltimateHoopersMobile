@@ -202,10 +202,29 @@ namespace DataLayer.DAL.Repository
             }
         }
 
+    
 
-        public async Task<List<Court>> GetCourtsByClientIdAsync(
+        public async Task<List<Court>> GetCourtByClientIdAsync(
      string clientId,
      CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await _context.Court
+                    .AsNoTracking()
+                    .Where(c => c.ClientId == clientId)
+                    .ToListAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting courts for Client {ClientId}", clientId);
+                throw;
+            }
+        }
+
+        public async Task<List<Court>> GetClientCourtsAsync(
+    string clientId,
+    CancellationToken cancellationToken = default)
         {
             try
             {
@@ -304,6 +323,7 @@ namespace DataLayer.DAL.Repository
             throw new NotImplementedException();
         }
 
+    
         #endregion
     }
 

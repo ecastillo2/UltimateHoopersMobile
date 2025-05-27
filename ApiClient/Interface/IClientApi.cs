@@ -36,6 +36,11 @@ namespace WebAPI.ApiClients
         Task<Client> GetClientByIdAsync(string runId, string accessToken, CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Get Run by ID
+        /// </summary>
+        Task<List<Court>> GetClientCourtsAsync(string runId, string accessToken, CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Create a new Run
         /// </summary>
         Task<Client> CreateClientAsync(Client run, string accessToken, CancellationToken cancellationToken = default);

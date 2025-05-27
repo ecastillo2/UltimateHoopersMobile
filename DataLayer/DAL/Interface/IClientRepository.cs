@@ -58,11 +58,16 @@ namespace DataLayer.DAL.Interface
         /// <summary>
         /// Get PrivateRun by ID
         /// </summary>
-        Task<List<Court>> GetCourtsByClientIdAsync(
+        Task<List<Court>> GetCourtByClientIdAsync(
             string clientId,
             CancellationToken cancellationToken = default);
 
-       
+        /// <summary>
+        /// Get PrivateRun by ID
+        /// </summary>
+        Task<List<Court>> GetClientCourtsAsync(
+            string clientId,
+            CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Update a profile

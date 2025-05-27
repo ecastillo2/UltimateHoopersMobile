@@ -134,7 +134,6 @@ namespace Web.Controllers
                     return RedirectToAction("Index", "Home", new { scrollTo = "login" });
                 }
 
-
                 // Set the current date if not provided
                 if (client.CreatedDate == default)
                 {
@@ -277,7 +276,7 @@ namespace Web.Controllers
                 try
                 {
                     // If you have a method to get courts, use it here
-                    // clientCourts = await _clientApi.GetClientCourtsAsync(id, accessToken, cancellationToken);
+                     clientCourts = await _clientApi.GetClientCourtsAsync(id, accessToken, cancellationToken);
 
                     // For mock purposes, we'll create some sample courts
                     if (client.ClientId != null && client.ClientId.Length > 5)

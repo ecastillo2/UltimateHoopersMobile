@@ -63,6 +63,20 @@ namespace WebAPI.ApiClients
         }
 
         /// <summary>
+        /// Get Run by ID
+        /// </summary>
+        public async Task<List<Court>> GetClientCourtsAsync(string clientId, string accessToken, CancellationToken cancellationToken = default)
+        {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            var response = await _httpClient.GetAsync($"{_baseUrl}/api/Client/{clientId}/courts", cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            return JsonSerializer.Deserialize<List<Court>>(content, _jsonOptions);
+        }
+
+        /// <summary>
         /// Create a new Run
         /// </summary>
         public async Task<Client> CreateClientAsync(Client client, string accessToken, CancellationToken cancellationToken = default)

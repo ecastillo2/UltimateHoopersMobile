@@ -28,8 +28,10 @@ namespace WebAPI.Controllers
         }
 
         /// <summary>
-        /// Get all Runs
+        /// GetClients
         /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpGet]
         [ProducesResponseType(typeof(IEnumerable<RunViewModelDto>), 200)]
         public async Task<IActionResult> GetClients(CancellationToken cancellationToken)
@@ -48,7 +50,30 @@ namespace WebAPI.Controllers
             }
         }
 
-     
+        /// <summary>
+        /// Get courts for a specific client
+        /// </summary>
+        /// <param name="clientId">The client ID</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        [HttpGet("{clientId}/courts")]
+        [ProducesResponseType(typeof(IEnumerable<Court>), 200)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> GetClientCourtsAsync(string clientId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var privateRuns = await _repository.GetClientCourtsAsync(clientId,cancellationToken);
+                
+                return Ok(privateRuns);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving PrivateRuns");
+                return StatusCode(500, "An error occurred while retrieving PrivateRuns");
+            }
+        }
+
 
         /// <summary>
         /// Get profiles with cursor-based pagination for efficient scrolling
@@ -76,17 +101,17 @@ namespace WebAPI.Controllers
                 {
                     // Get additional profile data using the profile's ID
                     var privateRun = item;
-                    var court = await _repository.GetCourtsByClientIdAsync(item.ClientId, cancellationToken);
-                   
-                    
+                    var court = await _repository.GetCourtByClientIdAsync(item.ClientId, cancellationToken);
+
+
 
                     // Create a detailed view model with all the additional data
                     var detailedViewModel = new ClientDetailViewModelDto()
                     {
                         Client = item,
                         CourtList = court,
-                        
-                        
+
+
                     };
 
                     // Add to our list
@@ -136,7 +161,6 @@ namespace WebAPI.Controllers
                 return StatusCode(500, "An error occurred while retrieving the PrivateRun");
             }
         }
-
 
 
 
