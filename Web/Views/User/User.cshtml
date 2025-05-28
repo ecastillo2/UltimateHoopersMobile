@@ -293,33 +293,13 @@
                                     <label for="editEmail" class="form-label">Email</label>
                                     <input type="email" class="form-control" id="editEmail" name="Email" required>
                                 </div>
+
                                 <div class="col-md-6">
-                                    <label for="editPhoneNumber" class="form-label">Phone Number</label>
-                                    <input type="tel" class="form-control" id="editPhoneNumber" name="PhoneNumber">
+                                    <label for="phoneNumber" class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" id="phoneNumber" name="PhoneNumber">
                                 </div>
                             </div>
 
-                            <div class="row mb-3">
-                                <div class="col-md-12">
-                                    <label for="editAddress" class="form-label">Address</label>
-                                    <input type="text" class="form-control" id="editAddress" name="Address">
-                                </div>
-                            </div>
-
-                            <div class="row mb-3">
-                                <div class="col-md-4">
-                                    <label for="editCity" class="form-label">City</label>
-                                    <input type="text" class="form-control" id="editCity" name="City">
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="editState" class="form-label">State</label>
-                                    <input type="text" class="form-control" id="editState" name="State">
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="editZip" class="form-label">Zip Code</label>
-                                    <input type="text" class="form-control" id="editZip" name="Zip">
-                                </div>
-                            </div>
 
                             <div class="row mb-3">
                                 <div class="col-md-6">
@@ -341,12 +321,7 @@
                                 </div>
                             </div>
 
-                            <div class="row mb-3">
-                                <div class="col-md-12">
-                                    <label for="editNotes" class="form-label">Notes</label>
-                                    <textarea class="form-control" id="editNotes" name="Notes" rows="3"></textarea>
-                                </div>
-                            </div>
+                           
 
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -500,37 +475,7 @@
                                 <input type="hidden" id="scoutingUserId" name="UserId" value="" />
                                 <input type="hidden" id="scoutingReportId" name="ScoutingReportId" value="" />
 
-                                <!-- Player Metrics -->
-                                <div class="row mb-4">
-                                    <div class="col-md-3 mb-3">
-                                        <label for="height" class="form-label">Height</label>
-                                        <div class="input-group">
-                                            <input type="text" class="form-control" id="height" name="Height" placeholder="6'2&quot;">
-                                            <span class="input-group-text">ft/in</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3 mb-3">
-                                        <label for="weight" class="form-label">Weight</label>
-                                        <div class="input-group">
-                                            <input type="number" class="form-control" id="weight" name="Weight" placeholder="185">
-                                            <span class="input-group-text">lbs</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3 mb-3">
-                                        <label for="wingspan" class="form-label">Wingspan</label>
-                                        <div class="input-group">
-                                            <input type="text" class="form-control" id="wingspan" name="Wingspan" placeholder="6'5&quot;">
-                                            <span class="input-group-text">ft/in</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3 mb-3">
-                                        <label for="verticalJump" class="form-label">Vertical Jump</label>
-                                        <div class="input-group">
-                                            <input type="number" class="form-control" id="verticalJump" name="VerticalJump" placeholder="32">
-                                            <span class="input-group-text">in</span>
-                                        </div>
-                                    </div>
-                                </div>
+                               
 
                                 <!-- Player Position & Experience -->
                                 <div class="row mb-4">
@@ -569,16 +514,7 @@
                                             <option value="All-Around">All-Around</option>
                                         </select>
                                     </div>
-                                    <div class="col-md-3 mb-3">
-                                        <label for="experienceLevel" class="form-label">Experience Level</label>
-                                        <select class="form-select" id="experienceLevel" name="ExperienceLevel">
-                                            <option value="">Select level</option>
-                                            <option value="Beginner">Beginner</option>
-                                            <option value="Intermediate">Intermediate</option>
-                                            <option value="Advanced">Advanced</option>
-                                            <option value="Elite">Elite</option>
-                                        </select>
-                                    </div>
+                                    
                                 </div>
 
                                 <!-- Skill Ratings -->
