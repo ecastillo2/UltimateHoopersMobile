@@ -132,10 +132,21 @@ namespace WebAPI.Controllers
                         .Where(p => p != null)
                         .ToList();
 
+                    var scoutingReport = await (
+            from userTable in _context.User
+            join profileTable in _context.Profile on user.UserId equals profile.UserId
+            join report in _context.ScoutingReport on profile.ProfileId equals report.ProfileId
+            where user.UserId == user.UserId
+            select report
+        )
+        .AsNoTracking()
+        .FirstOrDefaultAsync(cancellationToken);
+
                     profile.FollowersList = thisFollowers ?? new List<Profile>();
                     profile.FollowingList = thisFollowings ?? new List<Profile>();
                     profile.FollowersCount = profile.FollowersList.Count;
                     profile.FollowingCount = profile.FollowingList.Count;
+                    profile.ScoutingReport = scoutingReport;
 
                     detailedViewModels.Add(new UserDetailViewModelDto
                     {

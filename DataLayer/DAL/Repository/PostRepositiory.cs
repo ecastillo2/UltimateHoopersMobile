@@ -473,8 +473,7 @@ namespace DataLayer.DAL.Repository
                         ThumbnailUrl = x.post.ThumbnailUrl,
                         FirstName = x.profile.UserName,
                         ProfileImageURL = x.profile.ImageURL,
-                        UserName = x.profile.UserName,
-                        StarRating = x.profile.StarRating,
+                        UserName = x.profile.UserName,                     
                         PostText = x.post.PostText,
                         PostCommentCount = _context.PostComment.Count(c => c.PostId == x.post.PostId)
                     })
@@ -951,7 +950,7 @@ namespace DataLayer.DAL.Repository
                         FirstName = x.profile.UserName,
                         ProfileImageURL = x.profile.ImageURL,
                         UserName = x.profile.UserName,
-                        StarRating = x.profile.StarRating,
+                    
                         PostCommentCount = _context.PostComment.Count(c => c.PostId == x.post.PostId)
                     })
                     .ToListAsync();

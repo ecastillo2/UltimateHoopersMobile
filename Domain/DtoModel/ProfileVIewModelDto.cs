@@ -41,23 +41,23 @@ namespace Domain.DtoModel
 
         }
 
-        public string ProfileId { get; set; }
-        public string UserId { get; set; }
-        public string UserName { get; set; }
-        public string Height { get; set; }
-        public string Weight { get; set; }
-        public string Position { get; set; }
-        public string Ranking { get; set; }
-        public string StarRating { get; set; }
-        public string Bio { get; set; }
-        public string ImageURL { get; set; }
-        public string PlayerArchetype { get; set; }
-        public string City { get; set; }
-        public string Zip { get; set; }
-        public string PlayerNumber { get; set; }
-        public string Status { get; set; }
+        public string? ProfileId { get; set; }
+        public string? UserId { get; set; }
+        public string? UserName { get; set; }
+        public string? Height { get; set; }
+        public string? Weight { get; set; }
+        public string? Position { get; set; }
+        public int? Ranking { get; set; }
+        public decimal? StarRating { get; set; }
+        public string? Bio { get; set; }
+        public string? ImageURL { get; set; }
+        public string? PlayerArchetype { get; set; }
+        public string? City { get; set; }
+        public string? Zip { get; set; }
+        public string? PlayerNumber { get; set; }
+        public string? Status { get; set; }
         public int? Points { get; set; }
-        public string LastRunDate { get; set; }
+        public string? LastRunDate { get; set; }
         public bool? TopRecord { get; set; }
         public bool? OnSquad { get; set; }
         public Profile Profile { get; set; }

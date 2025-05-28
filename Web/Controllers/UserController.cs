@@ -324,12 +324,13 @@ namespace Web.Controllers
                     starRating = profileData.StarRating,
                     profileImage = profileData.ImageURL,
                     playerNumber = "#" + profileData.PlayerNumber,
-                    zip = profileData.Zip.ToString(),
-                    height = profileData.Height,
+                    zip = profileData.Zip.ToString() ?? "",
+                    height = profileData.Height ?? "",
                     status = "Active",
                     record = profileData.TotalWins + "-" + profileData.TotalLosses,
-                    followersCount = profileData.FollowersCount.ToString(),
-                    followingsCount = profileData.FollowingCount.ToString(),
+                    followersCount = profileData.FollowersCount.ToString() ,
+                    followingsCount = profileData.FollowingCount.ToString() ,
+                    city = profileData.City ?? "",
                     stats = new { runsJoined = 12 , runsHosted = 3 , achievements = 5 }
                 };
 
@@ -418,31 +419,31 @@ namespace Web.Controllers
                 var hasExistingReport = !string.IsNullOrEmpty(id) && id.Length > 0 && char.IsDigit(id[0]) && int.Parse(id[0].ToString()) % 2 == 0;
 
                 // In a real implementation, you would fetch this from your database
-                var profileData = await _userApi.GetProfileScoutingReportByUserId(id, accessToken, cancellationToken);
+                var scoutingReportData= await _userApi.GetProfileScoutingReportByUserId(id, accessToken, cancellationToken);
 
                 var scoutingReport = new
                 {
-                    scoutingReportId = hasExistingReport ? "SR-" + id : "",
-                    height = "6'2\"",
-                    weight = 185,
-                    wingspan = "6'5\"",
+                    scoutingReportId = scoutingReportData.ScoutingReportId,
+                    //height = "6'2\"",
+                    //weight = 185,
+                    //wingspan = "6'5\"",
                     verticalJump = 32,
-                    primaryPosition = "SG",
-                    secondaryPosition = "PG",
-                    playingStyle = "Shooter",
-                    experienceLevel = "Intermediate",
-                    shooting = 8,
-                    ballHandling = 7,
-                    passing = 6,
-                    defense = 7,
-                    rebounding = 5,
-                    athleticism = 8,
-                    strengths = "Great shooter with quick release. Good ball handler with ability to create own shot.",
-                    weaknesses = "Needs to improve defensive positioning and rebounding technique.",
-                    scoutingNotes = "Shows potential as a combo guard. Work on decision making in transition.",
-                    evaluatedBy = hasExistingReport ? "Coach Mike" : null,
-                    evaluationDate = hasExistingReport ? DateTime.UtcNow.AddDays(-14) : (DateTime?)null,
-                    lastUpdated = hasExistingReport ? DateTime.UtcNow.AddDays(-7) : (DateTime?)null
+                    PrimaryPosition = string.IsNullOrWhiteSpace(scoutingReportData?.PrimaryPosition)? "": scoutingReportData.PrimaryPosition,
+                    SecondaryPosition = string.IsNullOrWhiteSpace(scoutingReportData?.SecondaryPosition)? "": scoutingReportData.SecondaryPosition,
+                    PlayingStyle = string.IsNullOrWhiteSpace(scoutingReportData?.PlayingStyle)? "": scoutingReportData.PlayingStyle,
+                    //experienceLevel = "Intermediate",
+                    shooting = scoutingReportData.Shooting,
+                    ballHandling = scoutingReportData.BallHandling,
+                    passing = scoutingReportData.Passing,
+                    defense = scoutingReportData.Defense,
+                    rebounding = scoutingReportData.Redounding,
+                    athleticism = scoutingReportData.Athleticism,
+                    strengths = scoutingReportData.Strengths,
+                    weaknesses = scoutingReportData.AreasforImprovement,
+                    scoutingNotes = scoutingReportData.AdditionalNotes,
+                    //evaluatedBy = hasExistingReport ? "Coach Mike" : null,
+                    //evaluationDate = hasExistingReport ? DateTime.UtcNow.AddDays(-14) : (DateTime?)null,
+                    lastUpdated = scoutingReportData.LastUpdated
                 };
 
                 return Json(new { success = true, scoutingReport });

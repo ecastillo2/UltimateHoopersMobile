@@ -177,7 +177,7 @@ namespace DataLayer.DAL.Repository
             try
             {
                 // 1. Get the ProfileId from the User with given UserId
-                var profileId = await _context.User
+                var profileId = await _context.Profile
                     .AsNoTracking()
                     .Where(u => u.UserId == userId)
                     .Select(u => u.ProfileId)
