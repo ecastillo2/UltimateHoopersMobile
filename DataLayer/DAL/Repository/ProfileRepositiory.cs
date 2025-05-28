@@ -1,16 +1,18 @@
-﻿using System;
+﻿using DataLayer.Context;
+using DataLayer.DAL.Context;
+using DataLayer.DAL.Interface;
+using Domain;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Internal;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using DataLayer.Context;
-using DataLayer.DAL.Context;
-using DataLayer.DAL.Interface;
-using Domain;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 
 namespace DataLayer.DAL.Repository
 {
@@ -349,10 +351,61 @@ namespace DataLayer.DAL.Repository
         {
             try
             {
-                return await _context.Profile
+                var result = await _context.Profile
                     .AsNoTracking()
                     .Include(p => p.Setting)
                     .FirstOrDefaultAsync(p => p.ProfileId == profileId, cancellationToken);
+                 
+
+                result.TotalWins = await _context.GameWinningPlayer
+                    .AsNoTracking()
+                    .CountAsync(p => p.ProfileId == result.ProfileId, cancellationToken);
+
+                result.TotalLosses = await _context.GameLosingPlayer
+                    .AsNoTracking()
+                    .CountAsync(p => p.ProfileId == result.ProfileId, cancellationToken);
+
+
+                #region Follow/Following
+
+                //Followers
+                var followers = await _context.Follower
+                    .AsNoTracking()
+                    .Where(f => f.ProfileId == result.ProfileId) // who follows this user
+                    .ToListAsync(cancellationToken);
+
+                //Followings
+                var followings = await _context.Following
+                    .AsNoTracking()
+                    .Where(f => f.FollowingProfileId == result.ProfileId) // who follows this user
+                    .ToListAsync(cancellationToken);
+
+                // Extract the follower IDs
+                var followerIds = followers.Select(f => f.FollowerProfileId).ToList();
+
+                // Extract the follower IDs
+                var followingIds = followings.Select(f => f.ProfileId).ToList();
+
+                // Get the matching profile records
+                var followerProfiles = await _context.Profile
+                    .AsNoTracking()
+                    .Where(p => followerIds.Contains(p.ProfileId))
+                    .ToListAsync(cancellationToken);
+
+                // Get the matching profile records
+                var followingProfiles = await _context.Profile
+                    .AsNoTracking()
+                    .Where(p => followingIds.Contains(p.ProfileId))
+                    .ToListAsync(cancellationToken);
+
+                result.FollowersList = followerProfiles;
+                result.FollowingList = followingProfiles;
+
+                result.FollowersCount = followerProfiles.Count();
+                result.FollowingCount = followingProfiles.Count();
+                #endregion
+
+                return result;
             }
             catch (Exception ex)
             {

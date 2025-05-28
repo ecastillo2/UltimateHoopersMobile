@@ -13,8 +13,8 @@ namespace Domain
         public string? Height { get; set; }
         public string? Weight { get; set; }
         public string? Position { get; set; }
-        public string? Ranking { get; set; }
-        public string? StarRating { get; set; }
+        public int? Ranking { get; set; }
+        public decimal? StarRating { get; set; }
         public string? QRCode { get; set; }
         public string? Bio { get; set; }
         public string? ImageURL { get; set; }
@@ -55,10 +55,10 @@ namespace Domain
         public string? RatedCount { get; set; }
 
         [NotMapped]
-        public string? FollowersCount { get; set; }
+        public int? FollowersCount { get; set; }
 
         [NotMapped]
-        public string? FollowingCount { get; set; }
+        public int? FollowingCount { get; set; }
         [NotMapped]
         public string? Email { get; set; }
 
@@ -101,6 +101,11 @@ namespace Domain
         public string? AcceptedInvite { get; set; }
         [NotMapped]
         public string? FullName { get; set; }
+        [NotMapped]
+        public List<Profile>? FollowersList { get; set; }
+
+        [NotMapped]
+        public List<Profile>? FollowingList { get; set; }
 
 
 

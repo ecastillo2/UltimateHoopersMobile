@@ -12,13 +12,6 @@ namespace Domain.DtoModel
         public Setting Setting { get; set; }
         public ScoutingReport? ScoutingReport { get; set; }
         public GameStatistics GameStatistics { get; set; }
-        public string FollowersCount { get; set; }
-        public string FollowingCount { get; set; }
-
-        public ProfileDetailViewModelDto(Profile profile) : base(profile)
-        {
-            FollowersCount = profile.FollowersCount;
-            FollowingCount = profile.FollowingCount;
-        }
+       
     }
 }

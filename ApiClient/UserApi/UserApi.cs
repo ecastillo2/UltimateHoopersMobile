@@ -78,6 +78,21 @@ namespace WebAPI.ApiClients
             return JsonSerializer.Deserialize<Profile>(content, _jsonOptions);
         }
 
+        /// <summary>
+        /// Get Run by ID
+        /// </summary>
+        public async Task<ScoutingReport> GetProfileScoutingReportByUserId(string Id, string accessToken, CancellationToken cancellationToken = default)
+        {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            // Use the correct route format that matches the [HttpGet("{id}")] attribute
+            var response = await _httpClient.GetAsync($"{_baseUrl}/api/User/{Id}/scoutingreport", cancellationToken);
+
+            response.EnsureSuccessStatusCode();
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            return JsonSerializer.Deserialize<ScoutingReport>(content, _jsonOptions);
+        }
+
 
 
         /// <summary>

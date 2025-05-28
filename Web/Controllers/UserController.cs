@@ -320,16 +320,16 @@ namespace Web.Controllers
                 {
                     userName = profileData.UserName,
                     position = profileData.Position,
-                    ranking = profileData.Ranking,
+                    ranking = "#" + profileData.Ranking,
                     starRating = profileData.StarRating,
                     profileImage = profileData.ImageURL,
-                    playerNumber ="#"+ profileData.PlayerNumber,
-                    zip = profileData.Zip,
+                    playerNumber = "#" + profileData.PlayerNumber,
+                    zip = profileData.Zip.ToString(),
                     height = profileData.Height,
                     status = "Active",
-                    record = profileData.TotalWins +"-"+ profileData.TotalLosses,
-                    
-
+                    record = profileData.TotalWins + "-" + profileData.TotalLosses,
+                    followersCount = profileData.FollowersCount.ToString(),
+                    followingsCount = profileData.FollowingCount.ToString(),
                     stats = new { runsJoined = 12 , runsHosted = 3 , achievements = 5 }
                 };
 
@@ -402,7 +402,7 @@ namespace Web.Controllers
 
         // Scouting report retrieval
         [HttpGet]
-        public IActionResult GetScoutingReport(string id, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetScoutingReportAsync(string id, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -416,6 +416,9 @@ namespace Web.Controllers
                 // In a real implementation, you would fetch this from your database
                 // For now, return mock data based on the ID to simulate different data
                 var hasExistingReport = !string.IsNullOrEmpty(id) && id.Length > 0 && char.IsDigit(id[0]) && int.Parse(id[0].ToString()) % 2 == 0;
+
+                // In a real implementation, you would fetch this from your database
+                var profileData = await _userApi.GetProfileScoutingReportByUserId(id, accessToken, cancellationToken);
 
                 var scoutingReport = new
                 {

@@ -115,7 +115,7 @@ namespace WebAPI.Controllers
                     var gameStats = await _profileRepository.GetProfileGameStatisticsAsync(profileId, cancellationToken);
 
                     // Create a detailed view model with all the additional data
-                    var detailedViewModel = new ProfileDetailViewModelDto(profile)
+                    var detailedViewModel = new ProfileDetailViewModelDto()
                     {
                         Setting = setting != null ? new Setting(setting) : null,
                         ScoutingReport = scoutingReport != null ? new ScoutingReport(scoutingReport) : null,
@@ -166,7 +166,7 @@ namespace WebAPI.Controllers
                 var scoutingReport = await _profileRepository.GetScoutingReportAsync(id, cancellationToken);
                 var gameStats = await _profileRepository.GetProfileGameStatisticsAsync(id, cancellationToken);
 
-                var viewModel = new ProfileDetailViewModelDto(profile)
+                var viewModel = new ProfileDetailViewModelDto()
                 {
                     Setting = setting != null ? new Setting(setting) : null,
                     ScoutingReport = scoutingReport != null ? new ScoutingReport(scoutingReport) : null,
@@ -203,7 +203,7 @@ namespace WebAPI.Controllers
                 var scoutingReport = await _profileRepository.GetScoutingReportAsync(profile.ProfileId, cancellationToken);
                 var gameStats = await _profileRepository.GetProfileGameStatisticsAsync(profile.ProfileId, cancellationToken);
 
-                var viewModel = new ProfileDetailViewModelDto(profile)
+                var viewModel = new ProfileDetailViewModelDto()
                 {
                     Setting = setting != null ? new Setting(setting) : null,
                     ScoutingReport = scoutingReport != null ? new ScoutingReport(scoutingReport) : null,

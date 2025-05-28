@@ -33,12 +33,17 @@ namespace WebAPI.ApiClients
         /// <summary>
         /// Get Run by ID
         /// </summary>
-        Task<User> GetUserByIdAsync(string runId, string accessToken, CancellationToken cancellationToken = default);
+        Task<User> GetUserByIdAsync(string userId, string accessToken, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get Run by ID
         /// </summary>
-        Task<Profile> GetProfileByUserId(string runId, string accessToken, CancellationToken cancellationToken = default);
+        Task<Profile> GetProfileByUserId(string userId, string accessToken, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Get Run by ID
+        /// </summary>
+        Task<ScoutingReport> GetProfileScoutingReportByUserId(string userId, string accessToken, CancellationToken cancellationToken = default);
 
 
         /// <summary>

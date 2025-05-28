@@ -57,6 +57,13 @@ namespace DataLayer.DAL.Interface
             CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Get PrivateRun by ID
+        /// </summary>
+        Task<ScoutingReport> GetProfileScoutingReportByUserId(
+            string privateRunId,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Update a profile
         /// </summary>
         Task<bool> UpdateUserAsync(

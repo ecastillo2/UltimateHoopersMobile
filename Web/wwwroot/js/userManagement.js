@@ -575,6 +575,8 @@ document.addEventListener('DOMContentLoaded', function () {
         safeUpdateElement('profileZip', profile.zip || '--');
         safeUpdateElement('profileRecord', profile.record || '--');
         safeUpdateElement('profileNumber', profile.playerNumber || '--');
+        safeUpdateElement('profileFollowersCount', profile.followersCount || '--');
+        safeUpdateElement('profileFollowingsCount', profile.followingsCount || '--');
 
         // Win/Loss/Points stats
         safeUpdateElement('profileWins', profile.totalWins || '0');

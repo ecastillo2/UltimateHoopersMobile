@@ -4,6 +4,7 @@ using Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using SkiaSharp;
 using System.Runtime.CompilerServices;
 
 namespace DataLayer.DAL.Repository
@@ -169,23 +170,111 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<Profile> GetProfileByUserId(
-           string runId,
-           CancellationToken cancellationToken = default)
+        public async Task<ScoutingReport?> GetProfileScoutingReportByUserId(
+     string userId,
+     CancellationToken cancellationToken = default)
         {
             try
             {
-                return await _context.Profile
+                // 1. Get the ProfileId from the User with given UserId
+                var profileId = await _context.User
                     .AsNoTracking()
+                    .Where(u => u.UserId == userId)
+                    .Select(u => u.ProfileId)
+                    .FirstOrDefaultAsync(cancellationToken);
 
-                    .FirstOrDefaultAsync(p => p.UserId == runId, cancellationToken);
+                if (string.IsNullOrEmpty(profileId))
+                {
+                    _logger?.LogWarning("No profile found for UserId {UserId}", userId);
+                    return null;
+                }
+
+                // 2. Get the scouting report for that profile
+                var scoutingReport = await _context.ScoutingReport
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(sr => sr.ProfileId == profileId, cancellationToken);
+
+                return scoutingReport;
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Error getting PrivateRun {PrivateRunId}", runId);
+                _logger?.LogError(ex, "Error getting ScoutingReport for UserId {UserId}", userId);
                 throw;
             }
         }
+
+
+        public async Task<Profile> GetProfileByUserId(
+    string runId,
+    CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var result = await _context.Profile
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(p => p.UserId == runId, cancellationToken);
+
+                if (result == null)
+                {
+                    _logger?.LogWarning("Profile not found for UserId: {UserId}", runId);
+                    return null;
+                }
+
+                result.TotalWins = await _context.GameWinningPlayer
+                    .AsNoTracking()
+                    .CountAsync(p => p.ProfileId == result.ProfileId, cancellationToken);
+
+                result.TotalLosses = await _context.GameLosingPlayer
+                    .AsNoTracking()
+                    .CountAsync(p => p.ProfileId == result.ProfileId, cancellationToken);
+
+                // Followers
+                var followersList = await _context.Follower
+                    .AsNoTracking()
+                    .Where(f => f.ProfileId == result.ProfileId)
+                    .ToListAsync(cancellationToken);
+
+                // Followings
+                var followingsList = await _context.Following
+                    .AsNoTracking()
+                    .Where(f => f.FollowingProfileId == result.ProfileId)
+                    .ToListAsync(cancellationToken);
+
+                // Extract the follower/following IDs if any
+                var followerIds = followersList.Select(f => f.FollowerProfileId).ToList();
+                var followingIds = followingsList.Select(f => f.ProfileId).ToList();
+
+                // Fetch profiles
+                var followerProfiles = followerIds.Any()
+                    ? await _context.Profile
+                        .AsNoTracking()
+                        .Where(p => followerIds.Contains(p.ProfileId))
+                        .ToListAsync(cancellationToken)
+                    : new List<Profile>();
+
+                var followingProfiles = followingIds.Any()
+                    ? await _context.Profile
+                        .AsNoTracking()
+                        .Where(p => followingIds.Contains(p.ProfileId))
+                        .ToListAsync(cancellationToken)
+                    : new List<Profile>();
+
+                // Assign to result
+                result.FollowersList = followerProfiles;
+                result.FollowingList = followingProfiles;
+
+                result.FollowersCount = followerProfiles.Count;
+                result.FollowingCount = followingProfiles.Count;
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting profile by UserId: {UserId}", runId);
+                throw;
+            }
+        }
+
 
         /// <summary>
         /// Get user by email with proper error handling
@@ -228,32 +317,93 @@ namespace DataLayer.DAL.Repository
         /// </summary>
         public async Task<User> CreateUserAsync(User user, string password, CancellationToken cancellationToken = default)
         {
+            // Validate inputs first
+            if (user == null)
+                throw new ArgumentNullException(nameof(user));
+
+            if (string.IsNullOrEmpty(password))
+                throw new ArgumentException("Password is required", nameof(password));
+
             try
             {
-                if (string.IsNullOrEmpty(password))
-                    throw new ArgumentException("Password is required", nameof(password));
+                // Use a transaction to ensure all operations succeed or fail together
+                using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
 
-                // Generate a new user ID if not provided
-                if (string.IsNullOrEmpty(user.UserId))
-                    user.UserId = Guid.NewGuid().ToString();
+                try
+                {
+                    // Generate a new user ID if not provided
+                    user.UserId ??= Guid.NewGuid().ToString();
 
-                // Hash the password before storing
-                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
-                user.SecurityStamp = Guid.NewGuid().ToString();
-                user.SignUpDate = DateTime.UtcNow;
+                    // Hash the password before storing
+                    user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
+                    user.SecurityStamp = Guid.NewGuid().ToString();
+                    user.SignUpDate = DateTime.UtcNow;
+                    user.Status ??= "Active";
+                    user.AccessLevel ??= "Standard";
 
-                if (string.IsNullOrEmpty(user.Status))
-                    user.Status = "Active";
+                    // Get default ranking in a more efficient way
+                    int defaultRanking = await _context.Profile
+                        .Where(p => p.Status == "Active")
+                        .CountAsync(cancellationToken);
 
-                if (string.IsNullOrEmpty(user.AccessLevel))
-                    user.AccessLevel = "Standard";
+                    // Create profile with minimal properties
+                    var profileId = Guid.NewGuid().ToString();
+                    var playerNumber = Common.UniqueIdNumber.GenerateSixDigit();
 
-                await _context.User.AddAsync(user, cancellationToken);
-                await SaveChangesAsync(cancellationToken);
+                    var profile = new Profile
+                    {
+                        UserId = user.UserId,
+                        ProfileId = profileId,
+                        Position = "N/A",
+                        Ranking = defaultRanking + 1,
+                        StarRating = 1,
+                        ImageURL = $"https://uhblobstorageaccount.blob.core.windows.net/profileimage/{profileId}+.webp",
+                        PlayerNumber = playerNumber
+                    };
 
-                _logger?.LogInformation("Created new user {UserId} with email {Email}", user.UserId, user.Email);
+                    // Create scouting report with default values
+                    var report = new ScoutingReport
+                    {
+                        ScoutingReportId = Guid.NewGuid().ToString(),
+                        ProfileId = profileId,
+                        Shooting = 1,
+                        BallHandling = 1,
+                        Passing = 1,
+                        Defense = 1,
+                        Redounding = 1,
+                        Athleticism = 1
+                    };
 
-                return user;
+                    // Create default settings
+                    var setting = new Setting
+                    {
+                        SettingId = Guid.NewGuid().ToString(),
+                        AllowEmailNotification = true,
+                        AllowComments = true,
+                        ShowGameHistory = true
+                    };
+
+                    // Add all entities in batch
+                    await _context.User.AddAsync(user, cancellationToken);
+                    await _context.Profile.AddAsync(profile, cancellationToken);
+                    await _context.ScoutingReport.AddAsync(report, cancellationToken);
+                    await _context.Setting.AddAsync(setting, cancellationToken);
+
+                    // Save changes once
+                    await _context.SaveChangesAsync(cancellationToken);
+
+                    // Commit transaction
+                    await transaction.CommitAsync(cancellationToken);
+
+                    _logger?.LogInformation("Created new user {UserId} with email {Email}", user.UserId, user.Email);
+                    return user;
+                }
+                catch (Exception)
+                {
+                    // Rollback transaction on error
+                    await transaction.RollbackAsync(cancellationToken);
+                    throw;
+                }
             }
             catch (Exception ex)
             {
