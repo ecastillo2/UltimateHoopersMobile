@@ -48,7 +48,7 @@ namespace Domain.DtoModel
         public string? Weight { get; set; }
         public string? Position { get; set; }
         public int? Ranking { get; set; }
-        public decimal? StarRating { get; set; }
+        public int? StarRating { get; set; }
         public string? Bio { get; set; }
         public string? ImageURL { get; set; }
         public string? PlayerArchetype { get; set; }
@@ -57,15 +57,15 @@ namespace Domain.DtoModel
         public string? PlayerNumber { get; set; }
         public string? Status { get; set; }
         public int? Points { get; set; }
-        public string? LastRunDate { get; set; }
+        public DateTime? LastRunDate { get; set; }
         public bool? TopRecord { get; set; }
         public bool? OnSquad { get; set; }
         public Profile Profile { get; set; }
         public SettingViewModelDto Setting { get; set; }
         public ScoutingReport ScoutingReport { get; set; }
         public GameStatistics GameStatistics { get; set; }
-        public string FollowersCount { get; set; }
-        public string FollowingCount { get; set; }
+        public int FollowersCount { get; set; }
+        public int FollowingCount { get; set; }
 
     }
 }

@@ -181,7 +181,7 @@ namespace DataLayer.DAL.Interface
         /// </summary>
         Task<bool> UpdateLastRunDateAsync(
             string profileId,
-            string lastRunDate,
+            DateTime lastRunDate,
             CancellationToken cancellationToken = default);
 
         /// <summary>

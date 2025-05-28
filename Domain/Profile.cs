@@ -14,7 +14,7 @@ namespace Domain
         public string? Weight { get; set; }
         public string? Position { get; set; }
         public int? Ranking { get; set; }
-        public decimal? StarRating { get; set; }
+        public int? StarRating { get; set; }
         public string? QRCode { get; set; }
         public string? Bio { get; set; }
         public string? ImageURL { get; set; }
@@ -24,7 +24,7 @@ namespace Domain
         public string? PlayerNumber { get; set; }
         public string? Status { get; set; }
         public int? Points { get; set; }
-        public string? LastRunDate { get; set; }
+        public DateTime? LastRunDate { get; set; }
         public bool? TopRecord { get; set; }
         public bool? OnSquad { get; set; }
        
@@ -52,7 +52,7 @@ namespace Domain
         public bool? Followed { get; set; }
 
         [NotMapped]
-        public string? RatedCount { get; set; }
+        public int? RatedCount { get; set; }
 
         [NotMapped]
         public int? FollowersCount { get; set; }
@@ -81,12 +81,12 @@ namespace Domain
         public string? PointsScored { get; set; }
 
         [NotMapped]
-        public string? WinPercentage { get; set; }
+        public double? WinPercentage { get; set; }
         [NotMapped]
         public string? Team { get; set; }
 
         [NotMapped]
-        public string? TotalGames { get; set; }
+        public int? TotalGames { get; set; }
         [NotMapped]
         public int? TotalWins { get; set; }
         [NotMapped]

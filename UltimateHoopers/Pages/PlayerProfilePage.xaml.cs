@@ -98,11 +98,11 @@ namespace UltimateHoopers.Pages
                     DisplayName = profile.UserName ?? "Unknown Player",
                     Position = profile.Position ?? "Unknown",
                     Location = profile.City ?? "Unknown Location",
-                    Rank = int.TryParse(profile.Ranking, out int rank) ? rank : 99,
-                    GamesPlayed = int.TryParse(profile.TotalGames, out int games) ? games : 0,
+                    Rank = profile.Ranking,
+                    GamesPlayed = profile.TotalGames,
                     Record = $"{profile.TotalWins ?? 0}-{profile.TotalLosses ?? 0}",
-                    WinPercentage = profile.WinPercentage ?? "0%",
-                    Rating = double.TryParse(profile.StarRating, out double rating) ? rating : 0.0,
+                    WinPercentage = profile.WinPercentage,
+                    Rating = profile.StarRating,
                     ProfileImage = profile.ImageURL,
                     Height = profile.Height,
                     Weight = profile.Weight,
@@ -142,7 +142,7 @@ namespace UltimateHoopers.Pages
             // Set stats
             GamesLabel.Text = hooper.GamesPlayed.ToString();
             RecordLabel.Text = hooper.Record;
-            WinPercentageLabel.Text = hooper.WinPercentage;
+            WinPercentageLabel.Text = hooper.WinPercentage.ToString();
             RatingLabel.Text = hooper.RatingDisplay;
 
 

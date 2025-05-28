@@ -813,7 +813,7 @@ namespace DataLayer.DAL.Repository
 
         public async Task<bool> UpdateLastRunDateAsync(
             string profileId,
-            string lastRunDate,
+            DateTime lastRunDate,
             CancellationToken cancellationToken = default)
         {
             try

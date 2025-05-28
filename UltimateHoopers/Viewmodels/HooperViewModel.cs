@@ -9,22 +9,22 @@ namespace UltimateHoopers.ViewModels
     public class HooperViewModel : BindableObject
     {
         // Base properties
-        public string ProfileId { get; set; }
-        public string Username { get; set; }
-        public string DisplayName { get; set; }
-        public string Position { get; set; }
-        public string Location { get; set; }
-        public int Rank { get; set; }
-        public int GamesPlayed { get; set; }
-        public string Record { get; set; }
-        public string WinPercentage { get; set; }
-        public double Rating { get; set; }
-        public string ProfileImage { get; set; }
-        public string Height { get; set; }
-        public string Weight { get; set; }
-        public string PlayerNumber { get; set; }
-        public string Bio { get; set; }
-        public string StyleOfPlay { get; set; }
+        public string? ProfileId { get; set; }
+        public string? Username { get; set; }
+        public string? DisplayName { get; set; }
+        public string? Position { get; set; }
+        public string? Location { get; set; }
+        public int? Rank { get; set; }
+        public int? GamesPlayed { get; set; }
+        public string? Record { get; set; }
+        public double? WinPercentage { get; set; }
+        public int? Rating { get; set; }
+        public string? ProfileImage { get; set; }
+        public string? Height { get; set; }
+        public string? Weight { get; set; }
+        public string? PlayerNumber { get; set; }
+        public string? Bio { get; set; }
+        public string? StyleOfPlay { get; set; }
 
         //public Profile Profile { get; set; }
         public SettingViewModelDto? Setting { get; set; }
@@ -34,9 +34,9 @@ namespace UltimateHoopers.ViewModels
         public string? FollowingCount { get; set; }
 
         // Computed properties
-        public string UsernameDisplay => $"@{Username}";
-        public string PositionLocation => $"{Position} • {Location}";
-        public string RatingDisplay => Rating.ToString("0.0");
+        public string? UsernameDisplay => $"@{Username}";
+        public string? PositionLocation => $"{Position} • {Location}";
+        public string? RatingDisplay => Rating.ToString();
 
         // Profile image handling
         public bool HasValidImage => !string.IsNullOrEmpty(ProfileImage) &&
@@ -44,7 +44,7 @@ namespace UltimateHoopers.ViewModels
                                       ProfileImage.StartsWith("https://"));
 
         // Placeholder coloring
-        public string Initials { get; private set; }
+        public string? Initials { get; private set; }
         public Color InitialsColor { get; private set; }
 
         public void InitProperties()

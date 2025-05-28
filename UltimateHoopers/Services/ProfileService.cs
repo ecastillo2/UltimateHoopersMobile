@@ -225,12 +225,12 @@ namespace UltimateHoopers.Services
                     City = "Chicago",
                     Height = "6'6\"",
                     ImageURL = "https://images.unsplash.com/photo-1566492031773-4f4e44671857",
-                    TotalGames = "82",
+                    TotalGames = 82,
                     //TotalWins = "72",
                     //TotalLosses = "10",
-                    WinPercentage = "87.8%",
-                    Ranking = "1",
-                    StarRating = "5.0"
+                   
+                    Ranking = 1,
+                    
                 },
                 new Profile
                 {
@@ -241,12 +241,12 @@ namespace UltimateHoopers.Services
                     City = "Los Angeles",
                     Height = "6'9\"",
                     ImageURL = "https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9",
-                    TotalGames = "78",
+                    
                     //TotalWins = "65",
                     //TotalLosses = "13",
-                    WinPercentage = "83.3%",
-                    Ranking = "2",
-                    StarRating = "4.9"
+               
+                    Ranking = 2,
+                   
                 },
                 new Profile
                 {
@@ -257,12 +257,12 @@ namespace UltimateHoopers.Services
                     City = "Los Angeles",
                     Height = "6'6\"",
                     ImageURL = "https://images.unsplash.com/photo-1494790108377-be9c29b29330",
-                    TotalGames = "80",
+                   
                     //TotalWins = "68",
                     //TotalLosses = "12",
-                    WinPercentage = "85.0%",
-                    Ranking = "3",
-                    StarRating = "4.8"
+                   
+                    Ranking = 3,
+                  
                 }
             };
         }

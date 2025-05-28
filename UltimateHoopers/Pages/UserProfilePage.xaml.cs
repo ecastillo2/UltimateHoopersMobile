@@ -91,8 +91,8 @@ namespace UltimateHoopers.Pages
                             PostsCountLabel.Text = profile.GameStatistics.TotalGames.ToString();
 
                             // Set followers/following if available
-                            FollowersCountLabel.Text = profile.FollowersCount ?? "0";
-                            FollowingCountLabel.Text = profile.FollowingCount ?? "0";
+                            FollowersCountLabel.Text = profile.FollowersCount.ToString();
+                            FollowingCountLabel.Text = profile.FollowingCount.ToString();
                         }
                     }
                 }
