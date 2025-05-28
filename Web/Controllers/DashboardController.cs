@@ -22,6 +22,10 @@ namespace Web.Controllers
         {
             // Pass user type to the view
             ViewData["UserType"] = _authenticationService.IsClient ? "Client" : "Admin";
+
+
+
+
             return View();
         }
 

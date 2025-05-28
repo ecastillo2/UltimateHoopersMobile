@@ -123,8 +123,8 @@
 
 <div class="dashboard-header">
     <div class="container">
-        <h1>Welcome to Your @userType Dashboard</h1>
-        <p class="lead">Track your progress, manage workouts, and connect with @(isClient ? "admins" : "clients")</p>
+        <h1>@userType Dashboard</h1>
+        @* <p class="lead">Track your progress, manage workouts, and connect with @(isClient ? "admins" : "clients")</p> *@
     </div>
 </div>
 
@@ -175,6 +175,12 @@
                         <a href="/Post/Post/" class="sidebar-link">
                             <i class="bi bi-file-post"></i> Posts
                         </a>
+                        <a href="/Product/Product/" class="sidebar-link">
+                            <i class="bi bi-file-post"></i> Products
+                        </a>
+                        <a href="/Video/Video/" class="sidebar-link">
+                            <i class="bi bi-file-post"></i> Videos
+                        </a>
                          <a href="/Report/Report/" class="sidebar-link">
                             <i class="bi bi-file-post"></i> Report
                         </a>
@@ -202,6 +208,7 @@
             <!-- Stats Row -->
             <div class="row g-4 mb-4">
                 <div class="col-md-4">
+                    <a href="/Run/Run/">
                     <div class="card stats-card">
                         <div class="card-body p-4">
                             <div class="stats-icon bg-orange-subtle text-orange">
@@ -211,8 +218,10 @@
                             <p class="text-muted mb-0">@(isClient ? "Runs" : "Runs")</p>
                         </div>
                     </div>
+                    </a>
                 </div>
                 <div class="col-md-4">
+                    <a href="/User/User/">
                     <div class="card stats-card">
                         <div class="card-body p-4">
                             <div class="stats-icon bg-navy-subtle text-navy">
@@ -222,8 +231,10 @@
                             <p class="text-muted mb-0">@(isClient ? "Goal Completion" : "Active Users")</p>
                         </div>
                     </div>
+                    </a>
                 </div>
                 <div class="col-md-4">
+                    <a href="/Client/Client/">
                     <div class="card stats-card">
                         <div class="card-body p-4">
                             <div class="stats-icon bg-success-subtle text-success">
@@ -233,6 +244,7 @@
                             <p class="text-muted mb-0">@(isClient ? "Shooting Improvement" : "Clients")</p>
                         </div>
                     </div>
+                    </a>
                 </div>
             </div>
 
@@ -359,7 +371,7 @@
                     <div class="col-md-8">
                         <div class="card mb-4">
                             <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                                <h5 class="card-title mb-0">My Clients</h5>
+                                <h5 class="card-title mb-0">Today's Runs</h5>
                                 <a href="#" class="text-navy text-decoration-none">View All</a>
                             </div>
                             <div class="card-body">
@@ -409,7 +421,7 @@
                     <div class="col-md-4">
                         <div class="card mb-4">
                             <div class="card-header bg-white">
-                                <h5 class="card-title mb-0">Upcoming Sessions</h5>
+                                <h5 class="card-title mb-0">Upcoming Events</h5>
                             </div>
                             <div class="card-body">
                                 <div class="upcoming-event">
@@ -445,18 +457,18 @@
                             </div>
                             <div class="card-body">
                                 <div class="d-grid gap-2">
-                                    <a href="#" class="btn btn-outline-navy">
+                                   @*  <a href="#" class="btn btn-outline-navy">
                                         <i class="bi bi-calendar-plus me-2"></i> Schedule Session
-                                    </a>
+                                    </a> *@
                                     <a href="#" class="btn btn-outline-navy">
-                                        <i class="bi bi-clipboard-plus me-2"></i> New Assessment
+                                        <i class="bi bi-clipboard-plus me-2"></i> New Run
                                     </a>
-                                    <a href="#" class="btn btn-outline-navy">
+                                   @*  <a href="#" class="btn btn-outline-navy">
                                         <i class="bi bi-people-fill me-2"></i> Add Client
-                                    </a>
-                                    <a href="#" class="btn btn-outline-navy">
+                                    </a> *@
+                                   @*  <a href="#" class="btn btn-outline-navy">
                                         <i class="bi bi-file-earmark-text me-2"></i> Generate Report
-                                    </a>
+                                    </a> *@
                                 </div>
                             </div>
                         </div>
