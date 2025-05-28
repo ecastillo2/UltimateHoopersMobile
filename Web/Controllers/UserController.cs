@@ -327,7 +327,9 @@ namespace Web.Controllers
                     zip = profileData.Zip,
                     height = profileData.Height,
                     status = "Active",
-                    
+                    wins = profileData.TotalWins,
+                    losses = profileData.TotalLosses,
+                    points = profileData.Points,
 
                     stats = new { runsJoined = 12 , runsHosted = 3 , achievements = 5 }
                 };
