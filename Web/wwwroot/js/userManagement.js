@@ -7,6 +7,17 @@
  * - Form validation and submission
  */
 
+// Define API URLs for user management (if not already defined in the page)
+if (!window.appUrls) {
+    window.appUrls = {
+        getUserData: '/User/GetUserData',
+        getUserProfileData: '/User/GetUserProfileData',
+        getUserActivity: '/User/GetUserActivity',
+        getScoutingReport: '/User/GetScoutingReport',
+        saveScoutingReport: '/User/UpdateScoutingReport'
+    };
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     // Initialize DataTable
     const usersTable = $('#usersTable').DataTable({
@@ -328,12 +339,83 @@ document.addEventListener('DOMContentLoaded', function () {
                 } else {
                     console.error('Error loading user data:', data.message);
                     showToast('Error', 'Failed to load user data. Please try again.', 'danger');
+
+                    // Fallback to using row data when API fails
+                    const row = findUserRowById(userId);
+                    if (row) {
+                        populateUserFormFromRow(row);
+                    }
                 }
             })
             .catch(error => {
                 console.error('Error fetching user data:', error);
                 showToast('Error', 'Failed to load user data. Please try again.', 'danger');
+
+                // Fallback to using row data when API fails
+                const row = findUserRowById(userId);
+                if (row) {
+                    populateUserFormFromRow(row);
+                }
             });
+    }
+
+    // Helper function to find user row by ID
+    function findUserRowById(userId) {
+        const table = $('#usersTable').DataTable();
+        const rows = table.rows().nodes();
+
+        for (let i = 0; i < rows.length; i++) {
+            const editButton = rows[i].querySelector(`button[data-user-id="${userId}"]`);
+            if (editButton) {
+                return rows[i];
+            }
+        }
+
+        return null;
+    }
+
+    // Helper function to populate user form from table row data
+    function populateUserFormFromRow(row) {
+        if (!row) return;
+
+        const userInfo = row.querySelector('.d-flex.align-items-center');
+        const nameEl = userInfo.querySelector('.fw-semibold');
+        const fullNameEl = userInfo.querySelector('.text-muted.small');
+
+        let firstName = '', lastName = '';
+        if (fullNameEl && fullNameEl.textContent) {
+            const fullName = fullNameEl.textContent.trim().split(' ');
+            firstName = fullName[0] || '';
+            lastName = fullName.slice(1).join(' ') || '';
+        }
+
+        document.getElementById('editFirstName').value = firstName;
+        document.getElementById('editLastName').value = lastName;
+
+        // Set role from the role column (column 3)
+        const role = row.cells[3].textContent.trim();
+        const userRoleSelect = document.getElementById('editUserRole');
+        if (userRoleSelect) {
+            for (let i = 0; i < userRoleSelect.options.length; i++) {
+                if (userRoleSelect.options[i].value === role) {
+                    userRoleSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+
+        // Set status from the status badge (column 2)
+        const statusBadge = row.cells[2].querySelector('.badge');
+        const status = statusBadge ? statusBadge.textContent.trim() : 'Active';
+        const statusSelect = document.getElementById('editUserStatus');
+        if (statusSelect) {
+            for (let i = 0; i < statusSelect.options.length; i++) {
+                if (statusSelect.options[i].value === status) {
+                    statusSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
     }
 
     // Function to load profile data
@@ -354,12 +436,54 @@ document.addEventListener('DOMContentLoaded', function () {
                 } else {
                     console.error('Error loading profile data:', data.message);
                     showToast('Error', 'Failed to load profile data. Please try again.', 'danger');
+
+                    // Create fallback profile from user info in the form
+                    const fallbackProfile = createFallbackProfile();
+                    updateProfileUI(fallbackProfile);
+
+                    // Show placeholder for timeline
+                    const timelineContainer = document.getElementById('profileTimeline');
+                    timelineContainer.innerHTML = `
+                        <div class="text-center py-4">
+                            <p class="text-muted mb-0">No activity data available.</p>
+                        </div>
+                    `;
                 }
             })
             .catch(error => {
                 console.error('Error fetching profile data:', error);
                 showToast('Error', 'Failed to load profile data. Please try again.', 'danger');
+
+                // Create fallback profile from user info in the form
+                const fallbackProfile = createFallbackProfile();
+                updateProfileUI(fallbackProfile);
+
+                // Show placeholder for timeline
+                const timelineContainer = document.getElementById('profileTimeline');
+                timelineContainer.innerHTML = `
+                    <div class="text-center py-4">
+                        <p class="text-muted mb-0">No activity data available.</p>
+                    </div>
+                `;
             });
+    }
+
+    // Create fallback profile from form data
+    function createFallbackProfile() {
+        return {
+            firstName: document.getElementById('editFirstName').value || '',
+            lastName: document.getElementById('editLastName').value || '',
+            email: document.getElementById('editEmail').value || '',
+            phoneNumber: document.getElementById('editPhoneNumber').value || '',
+            address: document.getElementById('editAddress').value || '',
+            city: document.getElementById('editCity').value || '',
+            state: document.getElementById('editState').value || '',
+            zip: document.getElementById('editZip').value || '',
+            accessLevel: document.getElementById('editUserRole').value || 'User',
+            status: document.getElementById('editUserStatus').value || 'Active',
+            signUpDate: new Date().toISOString(), // Placeholder
+            stats: { runsJoined: 0, runsHosted: 0, achievements: 0 }
+        };
     }
 
     // Function to update profile UI elements
@@ -597,6 +721,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 } else {
                     console.error('Error loading scouting report:', data.message);
+                    showToast('Error', 'Failed to load scouting report. Using default values.', 'warning');
                     // Reset form
                     document.getElementById('editScoutingForm').reset();
                     document.getElementById('evaluationMetadata').style.display = 'none';
@@ -604,6 +729,7 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .catch(error => {
                 console.error('Error fetching scouting report:', error);
+                showToast('Error', 'Failed to load scouting report. Using default values.', 'warning');
                 // Reset form
                 document.getElementById('editScoutingForm').reset();
                 document.getElementById('evaluationMetadata').style.display = 'none';
@@ -799,5 +925,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Form will be submitted normally after validation
         });
+    }
+
+    // Handle error cases where API URLs are not defined
+    if (!window.appUrls) {
+        console.error('API URLs not defined. User management functionality may not work properly.');
+        showToast('Warning', 'API configuration is missing. Some features may not work correctly.', 'warning');
     }
 });

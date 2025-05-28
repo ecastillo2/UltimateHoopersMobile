@@ -1,0 +1,263 @@
+﻿:root {
+    --primary-color: #FF6B00;
+    --secondary-color: #1C2C5B;
+    --accent-color: #3BACB6;
+    --light-color: #F8F9FA;
+    --dark-color: #212529;
+}
+
+.dashboard-header {
+    background: linear-gradient(135deg, var(--secondary-color) 0%, #0b1733 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+}
+
+.back-button {
+    margin-bottom: 20px;
+}
+
+.modal-content {
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.modal-header {
+    background-color: var(--secondary-color);
+    color: white;
+    border-bottom: none;
+}
+
+.modal-footer {
+    border-top: none;
+}
+
+.date-picker, .time-picker {
+    border-radius: 50px;
+    border: 1px solid #e9ecef;
+    padding: 0.375rem 1rem;
+}
+
+.badge-pill {
+    border-radius: 20px;
+    padding: 0.35em 0.65em;
+    font-size: 0.75em;
+    font-weight: 600;
+}
+
+.btn-orange {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+    .btn-orange:hover {
+        background-color: #e05e00;
+        color: white;
+    }
+
+.btn-navy {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+    .btn-navy:hover {
+        background-color: #162249;
+        color: white;
+    }
+
+/* DataTable Customization */
+.dataTables_wrapper .dataTables_filter input {
+    border-radius: 50px;
+    border: 1px solid #e9ecef;
+    padding: 0.375rem 1rem;
+    margin-left: 0.5em;
+}
+
+.dataTables_wrapper .dataTables_length select {
+    border-radius: 50px;
+    border: 1px solid #e9ecef;
+    padding: 0.375rem 1rem;
+}
+
+.dataTables_wrapper .dt-buttons .btn {
+    border-radius: 50px;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    border-radius: 50px;
+}
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background: var(--primary-color);
+        color: white !important;
+        border: 1px solid var(--primary-color);
+    }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+            background: #e05e00;
+            color: white !important;
+            border: 1px solid #e05e00;
+        }
+
+.table-actions {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+}
+
+.action-icon {
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+    .action-icon:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+
+.progress-sm {
+    height: 6px;
+    border-radius: 3px;
+}
+
+.host-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: var(--secondary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.7rem;
+    margin-right: 0.5rem;
+}
+
+.host-container {
+    display: flex;
+    align-items: center;
+}
+
+.capacity-container {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+
+.capacity-text {
+    font-size: 0.8rem;
+    margin-bottom: 3px;
+}
+
+table.dataTable {
+    border-collapse: collapse !important;
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) > * {
+    --bs-table-accent-bg: rgba(28, 44, 91, 0.03);
+}
+
+.no-users-message {
+    text-align: center;
+    padding: 3rem;
+    background-color: #f8f9fa;
+    border-radius: 15px;
+    margin: 2rem 0;
+}
+
+/* Scouting Report styles */
+.form-range::-webkit-slider-thumb {
+    background: var(--primary-color);
+}
+
+.form-range::-moz-range-thumb {
+    background: var(--primary-color);
+}
+
+.form-range::-ms-thumb {
+    background: var(--primary-color);
+}
+
+/* Toast container */
+.toast-container {
+    z-index: 9999;
+}
+
+/* Timeline styles */
+.timeline-icon {
+    position: relative;
+    z-index: 1;
+}
+
+.timeline-content {
+    position: relative;
+}
+
+.timeline-item:not(:last-child) .timeline-icon:after {
+    content: "";
+    position: absolute;
+    top: 36px;
+    left: 50%;
+    bottom: -36px;
+    width: 2px;
+    background-color: #e9ecef;
+    transform: translateX(-50%);
+    z-index: -1;
+}
+
+/* Skill rating styles */
+.skill-rating {
+    margin-bottom: 1rem;
+}
+
+.skill-rating-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.skill-rating-label {
+    font-weight: 500;
+}
+
+.skill-rating-value {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+/* Position tag styles */
+.position-tag {
+    display: inline-block;
+    padding: 0.35em 0.65em;
+    font-size: 0.75em;
+    font-weight: 600;
+    line-height: 1;
+    color: #fff;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 20px;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.tag-pg {
+    background-color: #0d6efd;
+}
+
+.tag-sg {
+    background-color: #6610f2;
+}
+
+.tag-sf {
+    background-color: #6f42c1;
+}
+
+.tag-pf {
+    background-color: #d63384;
+}
+
+.tag-c {
+    background-color: #dc3545;
+}
