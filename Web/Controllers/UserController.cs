@@ -296,13 +296,8 @@ namespace Web.Controllers
                     userId = client.UserId,
                     
                     FirestName = client.FirstName,
-                    address = client.Address,
-                    city = client.City,
-                    state = client.State,
-                    zip = client.Zip,
                     phoneNumber = client.PhoneNumber,
 
-                    
                     courtList = clientCourts.Select(c => new
                     {
                         courtId = c.CourtId,
