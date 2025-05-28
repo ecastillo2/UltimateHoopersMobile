@@ -35,7 +35,12 @@ namespace WebAPI.ApiClients
         /// </summary>
         Task<User> GetUserByIdAsync(string runId, string accessToken, CancellationToken cancellationToken = default);
 
-       
+        /// <summary>
+        /// Get Run by ID
+        /// </summary>
+        Task<Profile> GetProfileByUserId(string runId, string accessToken, CancellationToken cancellationToken = default);
+
+
         /// <summary>
         /// Create a new Run
         /// </summary>

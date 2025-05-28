@@ -301,7 +301,7 @@ namespace Web.Controllers
 
         // User data retrieval for profile tab
         [HttpGet]
-        public IActionResult GetUserProfileData(string id, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetUserProfileDataAsync(string id, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -313,25 +313,23 @@ namespace Web.Controllers
                 }
 
                 // In a real implementation, you would fetch this from your database
-                // For now, return mock data based on the ID to make it look different
-                var mockNumber = string.IsNullOrEmpty(id) ? 0 : int.Parse(id.Substring(0, 1));
+                var profileData = await _userApi.GetProfileByUserId(id, accessToken, cancellationToken);
+                //var mockNumber = string.IsNullOrEmpty(id) ? 0 : int.Parse(id.Substring(0, 1));
 
                 var profile = new
                 {
-                    firstName = "John",
-                    lastName = "Doe" + (mockNumber > 0 ? " " + mockNumber : ""),
-                    email = "john.doe" + mockNumber + "@example.com",
-                    phoneNumber = "(555) " + (123 + mockNumber) + "-4567",
-                    address = (123 + mockNumber) + " Main St",
-                    city = "Basketball City",
-                    state = "CA",
-                    zip = "9021" + mockNumber,
-                    accessLevel = mockNumber % 2 == 0 ? "Player" : "Coach",
+                    userName = profileData.UserName,
+                    position = profileData.Position,
+                    ranking = profileData.Ranking,
+                    starRating = profileData.StarRating,
+                    profileImage = profileData.ImageURL,
+                    playerNumber = profileData.PlayerNumber,
+                    zip = profileData.Zip,
+                    height = profileData.Height,
                     status = "Active",
-                    signUpDate = DateTime.UtcNow.AddMonths(-3 - mockNumber),
-                    lastLoginDate = DateTime.UtcNow.AddDays(-2 - mockNumber),
-                    usageStats = new { usagePercent = 75 - (mockNumber * 5) },
-                    stats = new { runsJoined = 12 - mockNumber, runsHosted = 3 + mockNumber, achievements = 5 }
+                    
+
+                    stats = new { runsJoined = 12 , runsHosted = 3 , achievements = 5 }
                 };
 
                 return Json(new { success = true, profile });

@@ -109,6 +109,31 @@ namespace WebAPI.Controllers
             }
         }
 
+
+        /// <summary>
+        /// Get User by ID
+        /// </summary>
+        [HttpGet("{id}/profile")]
+        [ProducesResponseType(typeof(Profile), 200)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> GetProfileByUserId(string id, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var user = await _repository.GetProfileByUserId(id, cancellationToken);
+
+                if (user == null)
+                    return NotFound();
+
+                return Ok(user);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving User {UserId}", id);
+                return StatusCode(500, "An error occurred while retrieving the User");
+            }
+        }
+
         /// <summary>
         /// Update User
         /// </summary>
