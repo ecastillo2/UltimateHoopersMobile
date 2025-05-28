@@ -252,6 +252,7 @@ namespace Web.Controllers
             }
         }
 
+        
         // Client data retrieval for AJAX requests
         [HttpGet]
         public async Task<IActionResult> GetUserData(string id, CancellationToken cancellationToken = default)
@@ -265,53 +266,37 @@ namespace Web.Controllers
                     return Json(new { success = false, message = "Authentication required" });
                 }
 
-                // Get client details
-                var client = await _userApi.GetUserByIdAsync(id, accessToken, cancellationToken);
-                if (client == null)
+                // Get user details
+                var user = await _userApi.GetUserByIdAsync(id, accessToken, cancellationToken);
+                if (user == null)
                 {
-                    return Json(new { success = false, message = "Client not found" });
+                    return Json(new { success = false, message = "User not found" });
                 }
 
-                // Get client courts (if available in your API)
-                var clientCourts = new List<Court>();
-                try
+                // Format the response with all needed user properties
+                var userData = new
                 {
-                    // If you have a method to get courts, use it here
-                    // clientCourts = await _userApi.GetUserCourtsAsync(id, accessToken, cancellationToken);
-
-                   
-                }
-                catch (Exception courtEx)
-                {
-                    _logger.LogError(courtEx, "Error retrieving courts for client: {ClientId}", id);
-                    // Continue with empty courts list
-                }
-
-
-
-
-                // Format the response
-                var clientData = new
-                {
-                    userId = client.UserId,
-                    
-                    FirestName = client.FirstName,
-                    phoneNumber = client.PhoneNumber,
-
-                    courtList = clientCourts.Select(c => new
+                    success = true,
+                    user = new
                     {
-                        courtId = c.CourtId,
-                        name = c.Name
-                    }).ToList(),
-                    success = true
+                        userId = user.UserId,
+                        firstName = user.FirstName,
+                        lastName = user.LastName,
+                        email = user.Email,
+                        phoneNumber = user.PhoneNumber,
+                        accessLevel = user.AccessLevel,
+                        status = user.Status ?? "Active",
+                        signUpDate = user.SignUpDate,
+                        profileId = user.ProfileId
+                    }
                 };
 
-                return Json(clientData);
+                return Json(userData);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving client data for ID: {ClientId}", id);
-                return Json(new { success = false, message = "Error retrieving client data" });
+                _logger.LogError(ex, "Error retrieving user data for ID: {UserId}", id);
+                return Json(new { success = false, message = "Error retrieving user data" });
             }
         }
     }

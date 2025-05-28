@@ -67,6 +67,57 @@
                 background-color: #e05e00;
                 color: white;
             }
+            
+            // Function to update profile UI elements
+            function updateProfileUI(profile) {
+                // Basic info
+                document.getElementById('profileInitials').textContent = getInitials(profile.firstName, profile.lastName);
+                document.getElementById('profileFullName').textContent = `${profile.firstName || ''} ${profile.lastName || ''}`.trim();
+                document.getElementById('profileRole').textContent = profile.accessLevel || 'User';
+                document.getElementById('profileStatus').textContent = profile.status || 'Active';
+                document.getElementById('profileMembership').textContent = `Member since ${formatDate(profile.signUpDate)}`;
+                
+                // Personal info
+                document.getElementById('profileEmail').textContent = profile.email || '--';
+                document.getElementById('profilePhone').textContent = profile.phoneNumber || '--';
+                
+                // Format address
+                let address = '';
+                if (profile.address) address += profile.address;
+                if (profile.city) address += (address ? ', ' : '') + profile.city;
+                if (profile.state) address += (address ? ', ' : '') + profile.state;
+                if (profile.zip) address += (address ? ' ' : '') + profile.zip;
+                document.getElementById('profileAddress').textContent = address || '--';
+                
+                // Dates
+                document.getElementById('profileJoined').textContent = formatDate(profile.signUpDate);
+                document.getElementById('profileLastLogin').textContent = formatDate(profile.lastLoginDate) || 'Never';
+                
+                // Statistics
+                const usagePercent = profile.usageStats?.usagePercent || Math.floor(Math.random() * 80) + 10; // Random number between 10-90% if not available
+                document.getElementById('profileUsagePercent').textContent = `${usagePercent}%`;
+                document.getElementById('profileUsageBar').style.width = `${usagePercent}%`;
+                document.getElementById('profileUsageBar').setAttribute('aria-valuenow', usagePercent);
+                
+                // Calculate profile completion percentage based on filled fields
+                const requiredFields = [
+                    'firstName', 'lastName', 'email', 'phoneNumber', 
+                    'address', 'city', 'state', 'zip'
+                ];
+                let filledFields = 0;
+                requiredFields.forEach(field => {
+                    if (profile[field]) filledFields++;
+                });
+                const completionPercent = Math.floor((filledFields / requiredFields.length) * 100);
+                document.getElementById('profileCompletionPercent').textContent = `${completionPercent}%`;
+                document.getElementById('profileCompletionBar').style.width = `${completionPercent}%`;
+                document.getElementById('profileCompletionBar').setAttribute('aria-valuenow', completionPercent);
+                
+                // Activity stats
+                document.getElementById('profileRunsJoined').textContent = profile.stats?.runsJoined || 0;
+                document.getElementById('profileRunsHosted').textContent = profile.stats?.runsHosted || 0;
+                document.getElementById('profileAchievements').textContent = profile.stats?.achievements || 0;
+            }
 
         .btn-navy {
             background-color: var(--secondary-color);
@@ -171,7 +222,7 @@
             --bs-table-accent-bg: rgba(28, 44, 91, 0.03);
         }
 
-        .no-runs-message {
+        .no-users-message {
             text-align: center;
             padding: 3rem;
             background-color: #f8f9fa;
@@ -217,6 +268,62 @@
             background-color: #e9ecef;
             transform: translateX(-50%);
             z-index: -1;
+        }
+
+        /* Skill rating styles */
+        .skill-rating {
+            margin-bottom: 1rem;
+        }
+
+        .skill-rating-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .skill-rating-label {
+            font-weight: 500;
+        }
+
+        .skill-rating-value {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        /* Position tag styles */
+        .position-tag {
+            display: inline-block;
+            padding: 0.35em 0.65em;
+            font-size: 0.75em;
+            font-weight: 600;
+            line-height: 1;
+            color: #fff;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 20px;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .tag-pg {
+            background-color: #0d6efd;
+        }
+
+        .tag-sg {
+            background-color: #6610f2;
+        }
+
+        .tag-sf {
+            background-color: #6f42c1;
+        }
+
+        .tag-pf {
+            background-color: #d63384;
+        }
+
+        .tag-c {
+            background-color: #dc3545;
         }
     </style>
 }
@@ -316,7 +423,7 @@
                     <tbody>
                         @foreach (var user in Model.Users)
                         {
-                            <tr data-status="active">
+                            <tr data-status="active" data-role="@(user.User.AccessLevel?.ToLower() ?? "user")" data-date="@(user.User.SignUpDate?.ToString("yyyy-MM-dd") ?? "")">
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <div class="rounded-circle bg-navy text-white d-flex align-items-center justify-content-center me-2" style="width: 36px; height: 36px;">
@@ -359,7 +466,7 @@
     }
     else
     {
-        <div class="no-runs-message">
+        <div class="no-users-message">
             <i class="bi bi-people" style="font-size: 3rem; color: var(--secondary-color);"></i>
             <h3 class="mt-3">No Users Found</h3>
             <p class="text-muted">There are no users available at the moment. Add a new user to get started!</p>
@@ -507,9 +614,27 @@
                                 </div>
                             </div>
 
-                           
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label for="editAddress" class="form-label">Address</label>
+                                    <input type="text" class="form-control" id="editAddress" name="Address">
+                                </div>
+                            </div>
 
-                           
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label for="editCity" class="form-label">City</label>
+                                    <input type="text" class="form-control" id="editCity" name="City">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="editState" class="form-label">State</label>
+                                    <input type="text" class="form-control" id="editState" name="State">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="editZip" class="form-label">Zip Code</label>
+                                    <input type="text" class="form-control" id="editZip" name="Zip">
+                                </div>
+                            </div>
 
                             <div class="row mb-3">
                                 <div class="col-md-6">
@@ -531,7 +656,12 @@
                                 </div>
                             </div>
 
-                            
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label for="editNotes" class="form-label">Notes</label>
+                                    <textarea class="form-control" id="editNotes" name="Notes" rows="3"></textarea>
+                                </div>
+                            </div>
 
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -602,9 +732,26 @@
                                             <h5 class="card-title mb-0">Account Statistics</h5>
                                         </div>
                                         <div class="card-body">
-                                         
-                                           
-                                            <div class="row text-center g-3 mt-3">
+                                            <div class="mb-4">
+                                                <div class="d-flex justify-content-between mb-1">
+                                                    <span>Profile Completion</span>
+                                                    <span class="text-orange" id="profileCompletionPercent">--</span>
+                                                </div>
+                                                <div class="progress progress-sm">
+                                                    <div class="progress-bar bg-orange" id="profileCompletionBar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                                </div>
+                                            </div>
+                                            <div class="mb-4">
+                                                <div class="d-flex justify-content-between mb-1">
+                                                    <span>Platform Usage</span>
+                                                    <span class="text-orange" id="profileUsagePercent">--</span>
+                                                </div>
+                                                <div class="progress progress-sm">
+                                                    <div class="progress-bar bg-orange" id="profileUsageBar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="row text-center g-3 mt-4">
                                                 <div class="col-4">
                                                     <div class="border rounded p-3">
                                                         <h3 class="mb-1 fs-5" id="profileRunsJoined">0</h3>
@@ -668,14 +815,178 @@
                                 <input type="hidden" id="scoutingUserId" name="UserId" value="" />
                                 <input type="hidden" id="scoutingReportId" name="ScoutingReportId" value="" />
 
-                
-                            
+                                <!-- Player Metrics -->
+                                <div class="row mb-4">
+                                    <div class="col-md-3 mb-3">
+                                        <label for="height" class="form-label">Height</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="height" name="Height" placeholder="6'2&quot;">
+                                            <span class="input-group-text">ft/in</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label for="weight" class="form-label">Weight</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="weight" name="Weight" placeholder="185">
+                                            <span class="input-group-text">lbs</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label for="wingspan" class="form-label">Wingspan</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="wingspan" name="Wingspan" placeholder="6'5&quot;">
+                                            <span class="input-group-text">ft/in</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label for="verticalJump" class="form-label">Vertical Jump</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="verticalJump" name="VerticalJump" placeholder="32">
+                                            <span class="input-group-text">in</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Player Position & Experience -->
+                                <div class="row mb-4">
+                                    <div class="col-md-3 mb-3">
+                                        <label for="primaryPosition" class="form-label">Primary Position</label>
+                                        <select class="form-select" id="primaryPosition" name="PrimaryPosition">
+                                            <option value="">Select position</option>
+                                            <option value="PG">Point Guard (PG)</option>
+                                            <option value="SG">Shooting Guard (SG)</option>
+                                            <option value="SF">Small Forward (SF)</option>
+                                            <option value="PF">Power Forward (PF)</option>
+                                            <option value="C">Center (C)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label for="secondaryPosition" class="form-label">Secondary Position</label>
+                                        <select class="form-select" id="secondaryPosition" name="SecondaryPosition">
+                                            <option value="">Select position</option>
+                                            <option value="PG">Point Guard (PG)</option>
+                                            <option value="SG">Shooting Guard (SG)</option>
+                                            <option value="SF">Small Forward (SF)</option>
+                                            <option value="PF">Power Forward (PF)</option>
+                                            <option value="C">Center (C)</option>
+                                            <option value="None">None</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label for="playingStyle" class="form-label">Playing Style</label>
+                                        <select class="form-select" id="playingStyle" name="PlayingStyle">
+                                            <option value="">Select style</option>
+                                            <option value="Shooter">Shooter</option>
+                                            <option value="Slasher">Slasher</option>
+                                            <option value="Playmaker">Playmaker</option>
+                                            <option value="Defender">Defender</option>
+                                            <option value="Post Player">Post Player</option>
+                                            <option value="All-Around">All-Around</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label for="experienceLevel" class="form-label">Experience Level</label>
+                                        <select class="form-select" id="experienceLevel" name="ExperienceLevel">
+                                            <option value="">Select level</option>
+                                            <option value="Beginner">Beginner</option>
+                                            <option value="Intermediate">Intermediate</option>
+                                            <option value="Advanced">Advanced</option>
+                                            <option value="Elite">Elite</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Skill Ratings -->
+                                <div class="card mb-4">
+                                    <div class="card-header bg-white">
+                                        <h6 class="mb-0">Skill Ratings</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <div class="skill-rating">
+                                                    <div class="skill-rating-header">
+                                                        <span class="skill-rating-label">Shooting</span>
+                                                        <span class="skill-rating-value" id="shootingValue">5</span>
+                                                    </div>
+                                                    <input type="range" class="form-range" min="1" max="10" step="1" id="shooting" name="Shooting" value="5">
+                                                    <div class="d-flex justify-content-between">
+                                                        <small>Poor</small>
+                                                        <small>Excellent</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <div class="skill-rating">
+                                                    <div class="skill-rating-header">
+                                                        <span class="skill-rating-label">Ball Handling</span>
+                                                        <span class="skill-rating-value" id="ballHandlingValue">5</span>
+                                                    </div>
+                                                    <input type="range" class="form-range" min="1" max="10" step="1" id="ballHandling" name="BallHandling" value="5">
+                                                    <div class="d-flex justify-content-between">
+                                                        <small>Poor</small>
+                                                        <small>Excellent</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <div class="skill-rating">
+                                                    <div class="skill-rating-header">
+                                                        <span class="skill-rating-label">Passing</span>
+                                                        <span class="skill-rating-value" id="passingValue">5</span>
+                                                    </div>
+                                                    <input type="range" class="form-range" min="1" max="10" step="1" id="passing" name="Passing" value="5">
+                                                    <div class="d-flex justify-content-between">
+                                                        <small>Poor</small>
+                                                        <small>Excellent</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <div class="skill-rating">
+                                                    <div class="skill-rating-header">
+                                                        <span class="skill-rating-label">Defense</span>
+                                                        <span class="skill-rating-value" id="defenseValue">5</span>
+                                                    </div>
+                                                    <input type="range" class="form-range" min="1" max="10" step="1" id="defense" name="Defense" value="5">
+                                                    <div class="d-flex justify-content-between">
+                                                        <small>Poor</small>
+                                                        <small>Excellent</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <div class="skill-rating">
+                                                    <div class="skill-rating-header">
+                                                        <span class="skill-rating-label">Rebounding</span>
+                                                        <span class="skill-rating-value" id="reboundingValue">5</span>
+                                                    </div>
+                                                    <input type="range" class="form-range" min="1" max="10" step="1" id="rebounding" name="Rebounding" value="5">
+                                                    <div class="d-flex justify-content-between">
+                                                        <small>Poor</small>
+                                                        <small>Excellent</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <div class="skill-rating">
+                                                    <div class="skill-rating-header">
+                                                        <span class="skill-rating-label">Athleticism</span>
+                                                        <span class="skill-rating-value" id="athleticismValue">5</span>
+                                                    </div>
+                                                    <input type="range" class="form-range" min="1" max="10" step="1" id="athleticism" name="Athleticism" value="5">
+                                                    <div class="d-flex justify-content-between">
+                                                        <small>Poor</small>
+                                                        <small>Excellent</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
                                 <!-- Scouting Report -->
                                 <div class="row mb-4">
-                                    <div class="col-md-12 mb-3">
-                                       
-                                    </div>
                                     <div class="col-md-12 mb-3">
                                         <label for="strengths" class="form-label">Strengths</label>
                                         <textarea class="form-control" id="strengths" name="Strengths" rows="3" placeholder="Player's key strengths and positive attributes..."></textarea>
@@ -774,7 +1085,7 @@
                     { className: "align-middle", targets: "_all" },
                     { orderable: false, targets: [4] } // Disable sorting on the Actions column
                 ],
-                order: [[1, 'asc']] // Sort by Sign Up Date column by default
+                order: [[1, 'desc']] // Sort by Sign Up Date column by default (newest first)
             });
 
             // Filter references
@@ -803,6 +1114,8 @@
                         return true;
                     }
 
+                    const row = $(usersTable.row(dataIndex).node());
+
                     // Status filtering (column 2 contains the status badge)
                     if (statusFilter.val() !== 'all') {
                         const status = data[2].toLowerCase();
@@ -815,18 +1128,36 @@
 
                     // Role filtering (column 3 contains the role)
                     if (roleFilter.val() !== 'all') {
-                        const role = data[3].toLowerCase();
+                        const role = row.data('role') || data[3].toLowerCase();
                         const roleValue = roleFilter.val().toLowerCase();
 
-                        if (!role.includes(roleValue)) {
+                        if (role !== roleValue) {
                             return false;
                         }
                     }
 
                     // Signup date filtering (column 1 contains the date)
                     if (signupDateFilter.val() !== 'all') {
-                        const dateString = data[1];
-                        const date = new Date(dateString);
+                        const dateString = row.data('date') || data[1];
+                        let date;
+                        
+                        try {
+                            // Try to parse the date from the data attribute first
+                            date = new Date(dateString);
+                            if (isNaN(date.getTime())) {
+                                // If invalid, try to parse from the displayed date format (MM/dd/yyyy)
+                                const parts = data[1].split('/');
+                                if (parts.length === 3) {
+                                    date = new Date(parts[2], parts[0] - 1, parts[1]);
+                                } else {
+                                    return false; // Invalid date format
+                                }
+                            }
+                        } catch (e) {
+                            console.error("Error parsing date:", e);
+                            return false;
+                        }
+                        
                         const today = new Date();
                         today.setHours(0, 0, 0, 0); // Set to start of today
 
@@ -838,7 +1169,7 @@
 
                         switch (signupDateFilter.val()) {
                             case 'today':
-                                if (date < today) {
+                                if (date < today || date >= new Date(today.getTime() + 86400000)) {
                                     return false;
                                 }
                                 break;
@@ -979,6 +1310,17 @@
                 });
             }
 
+            // Set up skill rating sliders
+            const skillSliders = document.querySelectorAll('.form-range');
+            skillSliders.forEach(slider => {
+                slider.addEventListener('input', function() {
+                    const valueDisplay = document.getElementById(`${this.id}Value`);
+                    if (valueDisplay) {
+                        valueDisplay.textContent = this.value;
+                    }
+                });
+            });
+
             // Handle delete user button
             const deleteUserBtn = document.getElementById('deleteUserBtn');
             if (deleteUserBtn) {
@@ -1038,7 +1380,9 @@
                             }
 
                             // Additional fields
-                            document.getElementById('editNotes').value = data.user.notes || '';
+                            if (document.getElementById('editNotes')) {
+                                document.getElementById('editNotes').value = data.user.notes || '';
+                            }
                         } else {
                             console.error('Error loading user data:', data.message);
                             showToast('Error', 'Failed to load user data. Please try again.', 'danger');
@@ -1072,391 +1416,6 @@
                         console.error('Error fetching profile data:', error);
                         showToast('Error', 'Failed to load profile data. Please try again.', 'danger');
                     });
-            }
-            
-            // Function to update profile UI elements
-            function updateProfileUI(profile) {
-                // Basic info
-                document.getElementById('profileInitials').textContent = getInitials(profile.firstName, profile.lastName);
-                document.getElementById('profileFullName').textContent = `${profile.firstName || ''} ${profile.lastName || ''}`.trim();
-                document.getElementById('profileRole').textContent = profile.accessLevel || 'User';
-                document.getElementById('profileStatus').textContent = profile.status || 'Active';
-                document.getElementById('profileMembership').textContent = `Member since ${formatDate(profile.signUpDate)}`;
-                
-                // Personal info
-                document.getElementById('profileEmail').textContent = profile.email || '--';
-                document.getElementById('profilePhone').textContent = profile.phoneNumber || '--';
-                
-                // Format address
-                let address = '';
-                if (profile.address) address += profile.address;
-                if (profile.city) address += (address ? ', ' : '') + profile.city;
-                if (profile.state) address += (address ? ', ' : '') + profile.state;
-                if (profile.zip) address += (address ? ' ' : '') + profile.zip;
-                document.getElementById('profileAddress').textContent = address || '--';
-                
-                // Dates
-                document.getElementById('profileJoined').textContent = formatDate(profile.signUpDate);
-                document.getElementById('profileLastLogin').textContent = formatDate(profile.lastLoginDate) || 'Never';
-                
-                // Statistics
-                const usagePercent = profile.usageStats?.usagePercent || Math.floor(Math.random() * 80) + 10; // Random number between 10-90% if not available
-                document.getElementById('profileUsagePercent').textContent = `${usagePercent}%`;
-                document.getElementById('profileUsageBar').style.width = `${usagePercent}%`;
-                document.getElementById('profileUsageBar').setAttribute('aria-valuenow', usagePercent);
-                
-                // Calculate profile completion percentage based on filled fields
-                const requiredFields = [
-                    'firstName', 'lastName', 'email', 'phoneNumber', 
-                    'address', 'city', 'state', 'zip'
-                ];
-                let filledFields = 0;
-                requiredFields.forEach(field => {
-                    if (profile[field]) filledFields++;
-                });
-                const completionPercent = Math.floor((filledFields / requiredFields.length) * 100);
-                document.getElementById('profileCompletionPercent').textContent = `${completionPercent}%`;
-                document.getElementById('profileCompletionBar').style.width = `${completionPercent}%`;
-                document.getElementById('profileCompletionBar').setAttribute('aria-valuenow', completionPercent);
-                
-               // Activity stats
-                document.getElementById('profileRunsJoined').textContent = profile.stats?.runsJoined || 0;
-                document.getElementById('profileRunsHosted').textContent = profile.stats?.runsHosted || 0;
-                document.getElementById('profileAchievements').textContent = profile.stats?.achievements || 0;
-            }
 
-            // Function to load profile timeline
-            function loadProfileTimeline(userId) {
-                fetch(`@Url.Action("GetUserActivity", "User")?id=${userId}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
+                        </script>
                         }
-                        return response.json();
-                    })
-                    .then(data => {
-                        const timelineContainer = document.getElementById('profileTimeline');
-                        
-                        if (!data.activities || data.activities.length === 0) {
-                            timelineContainer.innerHTML = `
-                                <div class="text-center py-4">
-                                    <p class="text-muted mb-0">No recent activity found.</p>
-                                </div>
-                            `;
-                            return;
-                        }
-                        
-                        let timelineHtml = '';
-                        data.activities.forEach((activity, index) => {
-                            let iconClass = 'bi-circle';
-                            let iconBg = 'bg-secondary';
-                            
-                            // Determine icon based on activity type
-                            switch (activity.type) {
-                                case 'login':
-                                    iconClass = 'bi-box-arrow-in-right';
-                                    iconBg = 'bg-success';
-                                    break;
-                                case 'join_run':
-                                    iconClass = 'bi-calendar-plus';
-                                    iconBg = 'bg-primary';
-                                    break;
-                                case 'create_run':
-                                    iconClass = 'bi-calendar-check';
-                                    iconBg = 'bg-orange';
-                                    break;
-                                case 'profile_update':
-                                    iconClass = 'bi-person-gear';
-                                    iconBg = 'bg-info';
-                                    break;
-                                case 'achievement':
-                                    iconClass = 'bi-trophy';
-                                    iconBg = 'bg-warning';
-                                    break;
-                            }
-                            
-                            const isLastItem = index === data.activities.length - 1;
-                            
-                            timelineHtml += `
-                                <div class="d-flex mb-3 position-relative timeline-item">
-                                    <div class="timeline-icon ${iconBg} text-white d-flex align-items-center justify-content-center rounded-circle me-3" style="width: 36px; height: 36px; flex-shrink: 0;">
-                                        <i class="bi ${iconClass}"></i>
-                                    </div>
-                                    <div class="timeline-content ${!isLastItem ? 'border-bottom' : ''} pb-3 w-100">
-                                        <h6 class="mb-1">${activity.title}</h6>
-                                        <p class="text-muted mb-0 small">${activity.description}</p>
-                                        <small class="text-muted">${formatDateTime(activity.timestamp)}</small>
-                                    </div>
-                                </div>
-                            `;
-                        });
-                        
-                        timelineContainer.innerHTML = timelineHtml;
-                    })
-                    .catch(error => {
-                        console.error('Error fetching activity data:', error);
-                        const timelineContainer = document.getElementById('profileTimeline');
-                        timelineContainer.innerHTML = `
-                            <div class="text-center py-4">
-                                <p class="text-danger mb-0">
-                                    <i class="bi bi-exclamation-triangle me-1"></i>
-                                    Error loading activity data. Please try again.
-                                </p>
-                            </div>
-                        `;
-                    });
-            }
-
-            // Function to load scouting report data
-            function loadScoutingReport(userId) {
-                fetch(`@Url.Action("GetScoutingReport", "User")?id=${userId}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.success) {
-                            const report = data.scoutingReport;
-
-                            // Set the scouting report ID if it exists
-                            document.getElementById('scoutingReportId').value = report.scoutingReportId || '';
-
-                            // Player Metrics
-                            document.getElementById('height').value = report.height || '';
-                            document.getElementById('weight').value = report.weight || '';
-                            document.getElementById('wingspan').value = report.wingspan || '';
-                            document.getElementById('verticalJump').value = report.verticalJump || '';
-
-                            // Skill Ratings
-                            const setSkillValue = (id, value) => {
-                                const slider = document.getElementById(id);
-                                const valueDisplay = document.getElementById(`${id}Value`);
-                                if (slider && valueDisplay) {
-                                    slider.value = value || 5;
-                                    valueDisplay.textContent = value || 5;
-                                }
-                            };
-
-                            setSkillValue('shooting', report.shooting);
-                            setSkillValue('ballHandling', report.ballHandling);
-                            setSkillValue('passing', report.passing);
-                            setSkillValue('defense', report.defense);
-                            setSkillValue('rebounding', report.rebounding);
-                            setSkillValue('athleticism', report.athleticism);
-
-                            // Player Profile
-                            const setSelectValue = (id, value) => {
-                                const select = document.getElementById(id);
-                                if (select && value) {
-                                    for (let i = 0; i < select.options.length; i++) {
-                                        if (select.options[i].value === value) {
-                                            select.selectedIndex = i;
-                                            break;
-                                        }
-                                    }
-                                }
-                            };
-
-                            setSelectValue('primaryPosition', report.primaryPosition);
-                            setSelectValue('secondaryPosition', report.secondaryPosition);
-                            setSelectValue('playingStyle', report.playingStyle);
-                            setSelectValue('experienceLevel', report.experienceLevel);
-
-                            // Scouting Notes
-                            document.getElementById('strengths').value = report.strengths || '';
-                            document.getElementById('weaknesses').value = report.weaknesses || '';
-                            document.getElementById('scoutingNotes').value = report.scoutingNotes || '';
-
-                            // Evaluation Metadata
-                            const metadataSection = document.getElementById('evaluationMetadata');
-                            if (report.scoutingReportId) {
-                                // Show metadata if report exists
-                                metadataSection.style.display = 'flex';
-
-                                // Format dates
-                                const formatDate = (dateString) => {
-                                    if (!dateString) return '-';
-                                    const date = new Date(dateString);
-                                    return date.toLocaleDateString('en-US', {
-                                        year: 'numeric',
-                                        month: 'short',
-                                        day: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                    });
-                                };
-
-                                document.getElementById('evaluatedBy').textContent = report.evaluatedBy || '-';
-                                document.getElementById('evaluationDate').textContent = formatDate(report.evaluationDate);
-                                document.getElementById('lastUpdated').textContent = formatDate(report.lastUpdated);
-                            } else {
-                                // Hide metadata for new reports
-                                metadataSection.style.display = 'none';
-                            }
-                        } else {
-                            console.error('Error loading scouting report:', data.message);
-                            // Reset form
-                            document.getElementById('editScoutingForm').reset();
-                            document.getElementById('evaluationMetadata').style.display = 'none';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error fetching scouting report:', error);
-                        // Reset form
-                        document.getElementById('editScoutingForm').reset();
-                        document.getElementById('evaluationMetadata').style.display = 'none';
-                    });
-            }
-
-            // Helper function to show toast notifications
-            function showToast(title, message, type = 'success') {
-                // Check if toast container exists, create if not
-                let toastContainer = document.querySelector('.toast-container');
-                if (!toastContainer) {
-                    toastContainer = document.createElement('div');
-                    toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
-                    document.body.appendChild(toastContainer);
-                }
-
-                // Create toast element
-                const toastId = 'toast-' + Date.now();
-                const toastHtml = `
-                    <div id="${toastId}" class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                        <div class="d-flex">
-                            <div class="toast-body">
-                                <strong>${title}</strong>: ${message}
-                            </div>
-                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                        </div>
-                    </div>
-                `;
-
-                // Add toast to container
-                toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-
-                // Initialize and show toast
-                const toastElement = document.getElementById(toastId);
-                const toast = new bootstrap.Toast(toastElement, { autohide: true, delay: 5000 });
-                toast.show();
-
-                // Remove toast after hiding
-                toastElement.addEventListener('hidden.bs.toast', function() {
-                    toastElement.remove();
-                });
-            }
-
-            // Helper function to get initials from name
-            function getInitials(firstName, lastName) {
-                let initials = '';
-                if (firstName && firstName.length > 0) {
-                    initials += firstName[0].toUpperCase();
-                }
-                if (lastName && lastName.length > 0) {
-                    initials += lastName[0].toUpperCase();
-                }
-                return initials || '--';
-            }
-
-            // Helper function to format date
-            function formatDate(dateString) {
-                if (!dateString) return '--';
-                const date = new Date(dateString);
-                return date.toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
-                });
-            }
-
-            // Helper function to format date with time
-            function formatDateTime(dateString) {
-                if (!dateString) return '--';
-                const date = new Date(dateString);
-                return date.toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-            }
-            
-            // Send message button handler
-            document.getElementById('sendMessageBtn').addEventListener('click', function() {
-                const userId = document.getElementById('editUserId').value;
-                const userName = document.getElementById('profileFullName').textContent;
-                
-                // Show an input modal or form to send a message
-                const message = prompt(`Send a message to ${userName}:`);
-                if (message) {
-                    // In a real application, you would send this message to the server
-                    // For now, just show a toast notification
-                    showToast('Success', `Message sent to ${userName}!`);
-                }
-            });
-
-            // AJAX form submission for the scouting report
-            document.getElementById('editScoutingForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-
-                // Get form data
-                const formData = new FormData(this);
-                const scoutingReport = {};
-
-                // Convert FormData to object
-                for (const [key, value] of formData.entries()) {
-                    scoutingReport[key] = value;
-                }
-
-                // Send AJAX request
-                fetch('@Url.Action("SaveScoutingReportAjax", "User")', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                    },
-                    body: JSON.stringify(scoutingReport)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Show success message
-                        showToast('Success', data.message);
-
-                        // Update the scouting report ID if it's a new report
-                        document.getElementById('scoutingReportId').value = data.scoutingReport.scoutingReportId;
-
-                        // Update metadata
-                        const metadataSection = document.getElementById('evaluationMetadata');
-                        metadataSection.style.display = 'flex';
-
-                        const formatDate = (dateString) => {
-                            if (!dateString) return '-';
-                            const date = new Date(dateString);
-                            return date.toLocaleDateString('en-US', {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            });
-                        };
-
-                        document.getElementById('evaluatedBy').textContent = data.scoutingReport.evaluatedBy || '-';
-                        document.getElementById('evaluationDate').textContent = formatDate(data.scoutingReport.evaluationDate);
-                        document.getElementById('lastUpdated').textContent = formatDate(data.scoutingReport.lastUpdated);
-                    } else {
-                        // Show error message
-                        showToast('Error', data.message, 'danger');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error saving scouting report:', error);
-                    showToast('Error', 'Failed to save scouting report. Please try again.', 'danger');
-                });
-            });
-        });
-    </script>
-}
