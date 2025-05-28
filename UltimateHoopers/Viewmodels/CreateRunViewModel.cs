@@ -374,7 +374,7 @@ namespace UltimateHoopers.ViewModels
                 {
                     RunId = Guid.NewGuid().ToString(),
                     CourtId = SelectedCourt.CourtId,
-                    ProfileId = App.User?.ProfileId,
+                    ProfileId = App.User.Profile?.ProfileId,
                     RunDate = RunDate.Add(StartTime),
                     Status = "Active",
                     Cost = HasCost ? Cost : 0,

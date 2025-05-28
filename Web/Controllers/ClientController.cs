@@ -305,6 +305,7 @@ namespace Web.Controllers
                     courtList = clientCourts.Select(c => new
                     {
                         courtId = c.CourtId,
+
                         name = c.Name
                     }).ToList(),
                     success = true

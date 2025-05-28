@@ -10,9 +10,9 @@ namespace Domain
     public class GameStatistics
     {
     
-        public int TotalGames { get; set; }
-        public double WinPercentage { get; set; }
-        public string TotalWins { get; set; }
-        public string TotalLosses { get; set; }
+        public int? TotalGames { get; set; }
+        public double? WinPercentage { get; set; }
+        public int? TotalWins { get; set; }
+        public int? TotalLosses { get; set; }
     }
 }

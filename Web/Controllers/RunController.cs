@@ -93,13 +93,34 @@ namespace Web.Controllers
 
                 // Get run details
                 var run = await _runApi.GetRunByIdAsync(id, accessToken, cancellationToken);
-                if (run == null)
+                // Format the response with all needed user properties
+                var runData = new
                 {
-                    TempData["Error"] = "Run not found.";
-                    return RedirectToAction("Index");
-                }
+                    success = true,
+                    run = new
+                    {
+                        CourtId = run.CourtId,
+                        ProfileId = run.ProfileId,
+                        ClientId = run.ClientId,
+                        Status = run.Status,
+                        RunDate = run.RunDate,
+                        Cost = run.Cost,
+                        Description = run.Description ?? "Active",
+                        CreatedDate = run.CreatedDate,
+                        Name = run.Name,
+                        StartTime = run.StartTime,
+                        EndTime = run.EndTime,
+                        Type = run.Type,
+                        RunNumber = run.RunNumber,
+                        SkillLevel = run.SkillLevel,
+                        PaymentMethod = run.PaymentMethod,
+                        PlayerLimit = run.PlayerLimit,
+                        TeamType = run.TeamType,
+                        IsPublic = run.IsPublic,
+                    }
+                };
 
-                return View(run);
+                return Json(runData);
             }
             catch (Exception ex)
             {

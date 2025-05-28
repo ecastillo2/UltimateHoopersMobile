@@ -9,181 +9,7 @@
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.bootstrap5.min.css">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.bootstrap5.min.css">
-
-    <style>
-        :root {
-            --primary-color: #FF6B00;
-            --secondary-color: #1C2C5B;
-            --accent-color: #3BACB6;
-            --light-color: #F8F9FA;
-            --dark-color: #212529;
-        }
-
-        .dashboard-header {
-            background: linear-gradient(135deg, var(--secondary-color) 0%, #0b1733 100%);
-            color: white;
-            padding: 2rem 0;
-            margin-bottom: 2rem;
-        }
-
-        .back-button {
-            margin-bottom: 20px;
-        }
-
-        .modal-content {
-            border-radius: 15px;
-            overflow: hidden;
-        }
-
-        .modal-header {
-            background-color: var(--secondary-color);
-            color: white;
-            border-bottom: none;
-        }
-
-        .modal-footer {
-            border-top: none;
-        }
-
-        .date-picker, .time-picker {
-            border-radius: 50px;
-            border: 1px solid #e9ecef;
-            padding: 0.375rem 1rem;
-        }
-
-        .participants-list {
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .badge-pill {
-            border-radius: 20px;
-            padding: 0.35em 0.65em;
-            font-size: 0.75em;
-            font-weight: 600;
-        }
-
-        .btn-orange {
-            background-color: var(--primary-color);
-            color: white;
-        }
-
-            .btn-orange:hover {
-                background-color: #e05e00;
-                color: white;
-            }
-
-        .btn-navy {
-            background-color: var(--secondary-color);
-            color: white;
-        }
-
-            .btn-navy:hover {
-                background-color: #162249;
-                color: white;
-            }
-
-        /* DataTable Customization */
-        .dataTables_wrapper .dataTables_filter input {
-            border-radius: 50px;
-            border: 1px solid #e9ecef;
-            padding: 0.375rem 1rem;
-            margin-left: 0.5em;
-        }
-
-        .dataTables_wrapper .dataTables_length select {
-            border-radius: 50px;
-            border: 1px solid #e9ecef;
-            padding: 0.375rem 1rem;
-        }
-
-        .dataTables_wrapper .dt-buttons .btn {
-            border-radius: 50px;
-        }
-
-        .dataTables_wrapper .dataTables_paginate .paginate_button {
-            border-radius: 50px;
-        }
-
-            .dataTables_wrapper .dataTables_paginate .paginate_button.current {
-                background: var(--primary-color);
-                color: white !important;
-                border: 1px solid var(--primary-color);
-            }
-
-                .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
-                    background: #e05e00;
-                    color: white !important;
-                    border: 1px solid #e05e00;
-                }
-
-        .table-actions {
-            display: flex;
-            gap: 5px;
-            justify-content: center;
-        }
-
-        .action-icon {
-            cursor: pointer;
-            padding: 5px;
-            border-radius: 5px;
-        }
-
-            .action-icon:hover {
-                background-color: rgba(0, 0, 0, 0.05);
-            }
-
-        .progress-sm {
-            height: 6px;
-            border-radius: 3px;
-        }
-
-        .host-avatar {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background-color: var(--secondary-color);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 0.7rem;
-            margin-right: 0.5rem;
-        }
-
-        .host-container {
-            display: flex;
-            align-items: center;
-        }
-
-        .capacity-container {
-            display: flex;
-            align-items: center;
-            flex-direction: column;
-        }
-
-        .capacity-text {
-            font-size: 0.8rem;
-            margin-bottom: 3px;
-        }
-
-        table.dataTable {
-            border-collapse: collapse !important;
-        }
-
-        .table-striped > tbody > tr:nth-of-type(odd) > * {
-            --bs-table-accent-bg: rgba(28, 44, 91, 0.03);
-        }
-
-        .no-runs-message {
-            text-align: center;
-            padding: 3rem;
-            background-color: #f8f9fa;
-            border-radius: 15px;
-            margin: 2rem 0;
-        }
-    </style>
+    <link rel="stylesheet" type="text/css" href="~/css/management.css">
 }
 
 <div class="dashboard-header">
@@ -515,32 +341,58 @@
 
                             <div class="row mb-3">
                                 <div class="col-md-12">
-                                    <label for="editRunTitle" class="form-label">Run Title</label>
+                                    <label for="editRunTitle" class="form-label">Name</label>
                                     <input type="text" class="form-control" id="editRunTitle" name="Name" required>
                                 </div>
                             </div>
 
                             <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="editRunDate" class="form-label">Date</label>
+                                <div class="col-md-12">
+                                    <label for="editRunTitle" class="form-label">Date</label>
                                     <input type="date" class="form-control date-picker" id="editRunDate" name="RunDate" required>
                                 </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                
                                 <div class="col-md-6">
-                                    <label for="editRunTime" class="form-label">Time</label>
+                                    <label for="editRunTime" class="form-label">Start Time</label>
                                     <input type="time" class="form-control time-picker" id="editRunTime" name="RunTime" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="editRunDate" class="form-label">End Time</label>
+                                    <input type="time" class="form-control time-picker" id="editEndTime" name="EndTime" required>
                                 </div>
                             </div>
 
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <label for="editCourtLocation" class="form-label">Court Location</label>
-                                    <select class="form-select" id="editCourtLocation" name="Address" required>
-                                        <option value="Main Street Courts">Main Street Courts</option>
-                                        <option value="City Gym">City Gym</option>
-                                        <option value="Westside Park Courts">Westside Park Courts</option>
-                                        <option value="Community Center">Community Center</option>
-                                        <option value="Youth Center">Youth Center</option>
-                                        <option value="Recreation Center">Recreation Center</option>
+                                    <label for="editAddress" class="form-label">Address</label>
+                                    <input type="text" class="form-control" id="editAddress" name="Address" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="editState" class="form-label">State</label>
+                                    <input type="text" class="form-control" id="editState" name="State" required>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="editCity" class="form-label">City</label>
+                                    <input type="text" class="form-control" id="editCity" name="Address" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="editZip" class="form-label">Zip</label>
+                                    <input type="text" class="form-control" id="editZip" name="Zip" required>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="editIsPublic" class="form-label">Public</label>
+                                    <select class="form-select" id="editIsPublic" name="IsPublic" required>
+                                        <option value="Public">Public</option>
+                                        <option value="Exclusive">Exclusive</option>
                                     </select>
                                 </div>
                                 <div class="col-md-6">
@@ -554,17 +406,34 @@
 
                             <div class="row mb-3">
                                 <div class="col-md-6">
+                                    <label for="editSkillLevel" class="form-label">Skill Level</label>
+                                    <select class="form-select" id="editSkillLevel" name="SkillLevel" required>
+                                        <option value="Casual">Casual</option>
+                                        <option value="Advanced">Advanced</option>
+                                        <option value="Competitive">Competitive</option>
+                                       
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="editTeamType" class="form-label">Team Type</label>
+                                    <select class="form-select" id="editTeamType" name="TeamType" required>
+                                        <option value="Individual">Individual</option>
+                                        <option value="Team">Team</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
                                     <label for="editMaxParticipants" class="form-label">Maximum Participants</label>
                                     <input type="number" class="form-control" id="editMaxParticipants" name="PlayerLimit" min="2" max="30" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="editRunType" class="form-label">Run Type</label>
-                                    <select class="form-select" id="editRunType" name="RunType" required>
-                                        <option value="Pickup">Pickup Games</option>
-                                        <option value="Training">Training Session</option>
-                                        <option value="Tournament">Tournament</option>
-                                        <option value="Youth">Youth Development</option>
-                                        <option value="Women">Women's Only</option>
+                                    <label for="editStatus" class="form-label">Status</label>
+                                    <select class="form-select" id="editStatus" name="Status" required>
+                                        <option value="Active">Active</option>
+                                        <option value="InActive">InActive</option>
+                                       
                                     </select>
                                 </div>
                             </div>

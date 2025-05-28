@@ -160,7 +160,7 @@ namespace DataLayer.DAL.Repository
             {
                 return await _context.User
                     .AsNoTracking()
-
+                    
                     .FirstOrDefaultAsync(p => p.UserId == runId, cancellationToken);
             }
             catch (Exception ex)

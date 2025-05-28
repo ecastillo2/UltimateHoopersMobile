@@ -269,7 +269,7 @@ namespace UltimateHoopers.ViewModels
                     Debug.WriteLine("Loading runs from API service...");
 
                     // Load from actual API service
-                    var serviceRuns = await profileService.GetUserJoinedRunsAsync(App.User?.ProfileId);
+                    var serviceRuns = await profileService.GetUserJoinedRunsAsync(App.User.Profile?.ProfileId);
 
                     if (serviceRuns != null && serviceRuns.Any())
                     {

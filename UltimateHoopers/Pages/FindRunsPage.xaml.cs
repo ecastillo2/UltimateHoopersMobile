@@ -617,7 +617,7 @@ namespace UltimateHoopers.Pages
                 Location = privateRun.Name ?? "Court",
                 Address = $"{privateRun.Court.Address ?? ""}, {privateRun.Court.City ?? ""}, {privateRun.Court.State ?? ""}, {privateRun.Court.Zip ?? ""}".Trim(',', ' '),
                 Date = privateRun.RunDate ?? DateTime.Now.AddDays(1),
-                Time = $"{(privateRun.StartTime.HasValue ? privateRun.StartTime.Value.ToString(@"h\:mm tt") : "6:00 PM")} - {(privateRun.EndTime.HasValue ? privateRun.EndTime.Value.ToString(@"h\:mm tt") : "8:00 PM")}",
+                Time = "test",
                 HostName = "Host",
                 HostId = privateRun.ProfileId ?? "",
                 SkillLevel = privateRun.SkillLevel ?? "All Levels",
@@ -900,7 +900,7 @@ namespace UltimateHoopers.Pages
 
                     var joinrun = new CreateJoinedRunDto
                     {
-                        ProfileId = App.User?.ProfileId,
+                        ProfileId = App.User.Profile?.ProfileId,
                         RunId = run.Id,
                         InvitedDate = DateTime.UtcNow.ToString(),
                         Present = false

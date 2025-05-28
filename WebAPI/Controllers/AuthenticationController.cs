@@ -5,7 +5,9 @@ using DataLayer.DAL.Interface;
 using DataLayer.DAL.Repository;
 using Domain;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using System.Threading;
 using System.Threading.Tasks;
 using WebAPI.Services;
 using static System.Runtime.InteropServices.JavaScript.JSType;
@@ -19,6 +21,7 @@ namespace WebAPI.Controllers
     [Route("api/[controller]")]
     public class AuthenticationController : ControllerBase
     {
+        private readonly ApplicationContext _context;
         private readonly IAuthService _authService;
         private IProfileRepository repository;
         private readonly IConfiguration _configuration;
@@ -27,8 +30,9 @@ namespace WebAPI.Controllers
         /// Initializes a new instance of the AuthenticationController
         /// </summary>
         /// <param name="authenticateService">Service for authentication operations</param>
-        public AuthenticationController(IAuthService authenticateService, ApplicationContext context, IConfiguration configuration)
+        public AuthenticationController(ApplicationContext appcontext, IAuthService authenticateService, ApplicationContext context, IConfiguration configuration)
         {
+            _context = appcontext ?? throw new ArgumentNullException(nameof(context));
             _authService = authenticateService ?? throw new ArgumentNullException(nameof(authenticateService));
             _configuration = configuration;
             this.repository = new ProfileRepository(context, _configuration);
@@ -70,13 +74,17 @@ namespace WebAPI.Controllers
                     return BadRequest(new { message = "Authentication failed. Invalid credentials." });
                 }
 
+                var authprofile = await _context.Profile
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(p => p.UserId == userResult.UserId);
+
                 // Get the user's profile if authentication was successful
-                if (!string.IsNullOrEmpty(userResult.ProfileId))
+                if (!string.IsNullOrEmpty(authprofile.ProfileId))
                 {
                     try
                     {
                         // Get the user's profile
-                        var profile = await repository.GetProfileByIdAsync(userResult.ProfileId);
+                        var profile = await repository.GetProfileByIdAsync(authprofile.ProfileId);
 
                         //Get Client info if part of a client
                         var client = await repository.GetClientByUserIdAsync(userResult.UserId);

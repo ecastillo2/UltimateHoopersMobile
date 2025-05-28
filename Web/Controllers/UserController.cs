@@ -281,12 +281,9 @@ namespace Web.Controllers
                         lastName = user.LastName,
                         email = user.Email,
                         phoneNumber = user.PhoneNumber,
-
                         accessLevel = user.AccessLevel,
                         status = user.Status ?? "Active",
                         signUpDate = user.SignUpDate,
-                        profileId = user.ProfileId,
-                    
                     }
                 };
 

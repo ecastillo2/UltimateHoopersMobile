@@ -1,709 +1,1112 @@
 ﻿using OpenCvSharp;
+using OpenCvSharp.Tracking;
 using System;
-using System.Diagnostics;
-using System.Threading.Tasks;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading;
-using System.IO;
+using System.Threading.Tasks;
 
-class Program
+// NuGet packages required:
+// - OpenCvSharp4
+// - OpenCvSharp4.runtime.win (or appropriate runtime for your OS)
+// - OpenCvSharp4.Extensions (for Bitmap conversions if needed)
+
+namespace BasketballGameAnalyzer
 {
-    // Configuration parameters
-    private static readonly int FRAME_PROCESSING_RATE = 15;      // Process every Nth frame
-    private static readonly bool USE_MULTITHREADING = true;      // Enable parallel processing
-    private static readonly bool DOWNSCALE_VIDEO = true;         // Reduce resolution for faster processing
-    private static readonly double DOWNSCALE_FACTOR = 0.5;       // Resize factor (0.5 = half size)
-    private static readonly bool DEBUG_MODE = true;              // Show detailed debugging info
-
-    // Team jersey colors - adjusted for better detection
-    private static readonly Scalar TEAM_A_LOWER = new Scalar(0, 0, 150);      // White team (TeamA)
-    private static readonly Scalar TEAM_A_UPPER = new Scalar(180, 70, 255);
-
-    private static readonly Scalar TEAM_B_LOWER = new Scalar(95, 100, 30);    // Dark blue team (TeamB)
-    private static readonly Scalar TEAM_B_UPPER = new Scalar(145, 255, 190);
-
-    // Ball detection - adjusted for orange basketball
-    private static readonly Scalar BALL_LOWER = new Scalar(0, 100, 100);      // Orange basketball (wider range)
-    private static readonly Scalar BALL_UPPER = new Scalar(30, 255, 255);
-
-    // Track game state
-    private static readonly int POINTS_PER_BASKET = 2;      // Regular basket is worth 2 points
-    private static readonly int MAX_TOTAL_SCORE = 30;       // Reasonable max for 10-minute game
-    private static readonly int EXPECTED_BASKETS_PER_MINUTE = 1; // Average pace of scoring
-
-    // Scoring detection sensitivity
-    private static readonly int SCORE_THRESHOLD = 3;         // Number of detections needed to confirm score
-    private static readonly int COOLDOWN_FRAMES = 60;        // Frames to skip after detecting a basket
-    private static readonly double TEAM_DETECTION_RATIO = 0.6; // Required majority for team detection
-    private static readonly TimeSpan MIN_TIME_BETWEEN_SCORES = TimeSpan.FromSeconds(7); // More realistic for pickup game
-
-    static void Main(string[] args)
+    class Program
     {
-        Console.WriteLine("🏀 Basketball Game Scoring Detection");
-        Console.WriteLine("-----------------------------------");
-
-        string videoPath = args.Length > 0 ? args[0] : @"C:\Videos\pickup_game.mp4";
-
-        if (!File.Exists(videoPath))
+        static async Task Main(string[] args)
         {
-            Console.WriteLine($"❌ Error: Video file not found at {videoPath}");
-            Console.WriteLine("Please provide a valid video file path as the first argument.");
-            return;
+            Console.WriteLine("🏀 Advanced Basketball Game Analyzer");
+            Console.WriteLine("=====================================");
+
+            string videoPath = args.Length > 0 ? args[0] : @"C:\Videos\pickup_game.mp4";
+
+            if (!File.Exists(videoPath))
+            {
+                Console.WriteLine($"❌ Error: Video file not found at {videoPath}");
+                Console.WriteLine("Usage: BasketballAnalyzer.exe <video_path>");
+                return;
+            }
+
+            var config = new AnalyzerConfig();
+            var analyzer = new GameAnalyzer(config);
+
+            try
+            {
+                var result = await analyzer.AnalyzeGameAsync(videoPath);
+                DisplayResults(result);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Fatal error: {ex.Message}");
+                if (config.DebugMode)
+                {
+                    Console.WriteLine(ex.StackTrace);
+                }
+            }
         }
 
-        string tempFramePath = Path.Combine(Path.GetDirectoryName(videoPath), "temp_frame.jpg");
+        static void DisplayResults(GameResult result)
+        {
+            Console.WriteLine("\n🏁 GAME ANALYSIS COMPLETE");
+            Console.WriteLine("=========================");
+            Console.WriteLine($"📊 Game Duration: {result.Duration:mm\\:ss}");
+            Console.WriteLine($"🎯 Total Baskets: {result.TotalBaskets}");
+            Console.WriteLine($"⚡ Scoring Pace: {result.ScoringPace:F1} baskets/min");
+            Console.WriteLine($"🎮 Ball Possession: Team A {result.TeamAPossession:F0}% - Team B {result.TeamBPossession:F0}%");
 
-        try
-        {
-            ProcessVideo(videoPath, tempFramePath);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"❌ Fatal error: {ex.Message}");
-            Console.WriteLine(ex.StackTrace);
+            Console.WriteLine("\n📈 FINAL SCORE:");
+            Console.WriteLine($"   Team A (White): {result.TeamAScore}");
+            Console.WriteLine($"   Team B (Blue):  {result.TeamBScore}");
+
+            if (result.TeamAScore > result.TeamBScore)
+                Console.WriteLine("\n🏆 TEAM A (WHITE) WINS!");
+            else if (result.TeamBScore > result.TeamAScore)
+                Console.WriteLine("\n🏆 TEAM B (BLUE) WINS!");
+            else
+                Console.WriteLine("\n🤝 IT'S A TIE!");
+
+            Console.WriteLine("\n🎬 KEY MOMENTS:");
+            foreach (var moment in result.KeyMoments.Take(10))
+            {
+                Console.WriteLine($"   {moment.GameTime:mm\\:ss} - {moment.Description}");
+            }
+
+            Console.WriteLine($"\n⚙️ Processing Stats:");
+            Console.WriteLine($"   Total Frames: {result.TotalFramesProcessed:N0}");
+            Console.WriteLine($"   Processing Time: {result.ProcessingTime:mm\\:ss}");
+            Console.WriteLine($"   FPS: {result.ProcessingFPS:F1}");
+            Console.WriteLine($"   Confidence Score: {result.ConfidenceScore:F1}%");
         }
     }
 
-    static void ProcessVideo(string videoPath, string tempFramePath)
+    public class AnalyzerConfig
     {
-        Stopwatch totalTime = Stopwatch.StartNew();
+        // Performance settings
+        public int FrameSkip { get; set; } = 15;
+        public bool UseMultithreading { get; set; } = true;
+        public int MaxThreads { get; set; } = Environment.ProcessorCount;
+        public bool EnableGpuAcceleration { get; set; } = false;
 
-        // Team scores
-        int teamAScore = 0;  // White team
-        int teamBScore = 0;  // Dark blue team
+        // Video processing
+        public bool DownscaleVideo { get; set; } = true;
+        public double DownscaleFactor { get; set; } = 0.5;
+        public int BufferSize { get; set; } = 100;
 
-        // Scoring detection variables
-        Queue<string> recentDetections = new Queue<string>();
-        bool potentialScoringEvent = false;
-        int framesSincePotential = 0;
-        int scoringCooldown = 0;
-        DateTime lastScoringTime = DateTime.MinValue;
-        HashSet<int> detectedBasketFrames = new HashSet<int>();
+        // Detection parameters
+        public int ScoreConfirmationThreshold { get; set; } = 3;
+        public int CooldownFrames { get; set; } = 60;
+        public double TeamDetectionRatio { get; set; } = 0.6;
+        public TimeSpan MinTimeBetweenScores { get; set; } = TimeSpan.FromSeconds(5);
 
-        // Game timing variables
-        double totalGameSeconds = 10 * 60; // 10 minutes
-        double currentGameTime = 0;
-        int totalBaskets = 0;
+        // Game rules
+        public int PointsPerBasket { get; set; } = 2;
+        public int PointsPerThreePointer { get; set; } = 3;
+        public int MaxExpectedScore { get; set; } = 50;
+        public double ExpectedBasketsPerMinute { get; set; } = 2.0;
 
-        // Set up video capture
-        using var capture = new VideoCapture(videoPath);
-        if (!capture.IsOpened())
+        // Debug settings
+        public bool DebugMode { get; set; } = false;
+        public bool SaveDebugFrames { get; set; } = false;
+        public string DebugOutputPath { get; set; } = "./debug";
+
+        // Color detection ranges (HSV)
+        public ColorRange TeamAColors { get; set; } = new ColorRange
         {
-            Console.WriteLine("❌ Unable to open video file.");
-            return;
+            Lower = new Scalar(0, 0, 150),    // White
+            Upper = new Scalar(180, 70, 255)
+        };
+
+        public ColorRange TeamBColors { get; set; } = new ColorRange
+        {
+            Lower = new Scalar(95, 100, 30),   // Dark Blue
+            Upper = new Scalar(145, 255, 190)
+        };
+
+        public ColorRange BallColors { get; set; } = new ColorRange
+        {
+            Lower = new Scalar(0, 100, 100),   // Orange
+            Upper = new Scalar(30, 255, 255)
+        };
+    }
+
+    public class ColorRange
+    {
+        public Scalar Lower { get; set; }
+        public Scalar Upper { get; set; }
+    }
+
+    public class GameAnalyzer
+    {
+        private readonly AnalyzerConfig config;
+        private readonly BallTracker ballTracker;
+        private readonly PlayerTracker playerTracker;
+        private readonly ScoringDetector scoringDetector;
+        private readonly CourtAnalyzer courtAnalyzer;
+        private readonly PerformanceMonitor perfMonitor;
+
+        public GameAnalyzer(AnalyzerConfig config)
+        {
+            this.config = config;
+            this.ballTracker = new BallTracker(config);
+            this.playerTracker = new PlayerTracker(config);
+            this.scoringDetector = new ScoringDetector(config);
+            this.courtAnalyzer = new CourtAnalyzer(config);
+            this.perfMonitor = new PerformanceMonitor();
         }
 
-        // Get video properties
-        double fps = capture.Get(VideoCaptureProperties.Fps);
-        int totalFrames = (int)capture.Get(VideoCaptureProperties.FrameCount);
-        int frameSkip = Math.Max(1, (int)(fps / FRAME_PROCESSING_RATE));
-        int width = (int)capture.Get(VideoCaptureProperties.FrameWidth);
-        int height = (int)capture.Get(VideoCaptureProperties.FrameHeight);
-
-        // Calculate new dimensions if downscaling
-        int newWidth = DOWNSCALE_VIDEO ? (int)(width * DOWNSCALE_FACTOR) : width;
-        int newHeight = DOWNSCALE_VIDEO ? (int)(height * DOWNSCALE_FACTOR) : height;
-
-        Console.WriteLine($"🎥 Video stats: {width}x{height}, {fps} FPS, {totalFrames} frames");
-        Console.WriteLine($"⚙️ Processing every {frameSkip}th frame, resolution: {newWidth}x{newHeight}");
-        Console.WriteLine($"⏱️ Estimated completion time: {EstimateCompletionTime(totalFrames, frameSkip, fps)} minutes");
-
-        // Court regions
-        Rect topBasketRegion = new Rect();
-        Rect bottomBasketRegion = new Rect();
-        Dictionary<string, Mat> masks = new Dictionary<string, Mat>();
-        bool regionsInitialized = false;
-
-        Console.WriteLine("🏀 Processing video...");
-
-        // Manually manage frame object to reduce memory allocations
-        using var frame = new Mat();
-        int frameCount = 0;
-        Mat previousFrame = null;
-
-        // Process frame counter (actual frames we analyze)
-        int processedFrameCount = 0;
-
-        // Start processing frames
-        while (true)
+        public async Task<GameResult> AnalyzeGameAsync(string videoPath)
         {
-            // Read next frame
-            capture.Read(frame);
-            if (frame.Empty()) break;
+            var stopwatch = Stopwatch.StartNew();
+            var result = new GameResult();
 
-            frameCount++;
-
-            // Update game time with this frame
-            currentGameTime = (double)frameCount / fps;
-
-            // Skip frames for performance
-            if (frameCount % frameSkip != 0) continue;
-
-            processedFrameCount++;
-
-            // Status update every 1000 processed frames
-            if (processedFrameCount % 1000 == 0)
+            using var capture = new VideoCapture(videoPath);
+            if (!capture.IsOpened())
             {
-                double progress = (double)frameCount / totalFrames * 100;
-                long memoryUsage = Process.GetCurrentProcess().WorkingSet64 / (1024 * 1024);
-
-                // Update game time based on frame count and FPS
-                currentGameTime = (double)frameCount / fps;
-                double gameProgress = Math.Min(100, (currentGameTime / totalGameSeconds) * 100);
-
-                Console.WriteLine($"📊 Progress: {progress:F1}% ({frameCount}/{totalFrames} frames)");
-                Console.WriteLine($"⏱️ Game time: {TimeSpan.FromSeconds(currentGameTime):mm\\:ss} / 10:00 ({gameProgress:F1}%)");
-                Console.WriteLine($"🏀 Current score: White {teamAScore} - {teamBScore} Blue (Baskets: {totalBaskets})");
-                Console.WriteLine($"💾 Memory usage: {memoryUsage} MB");
-
-                // Force garbage collection occasionally to keep memory usage down
-                GC.Collect();
+                throw new Exception($"Cannot open video file: {videoPath}");
             }
 
-            // Use a single resized frame to save memory
+            // Get video properties
+            var videoInfo = GetVideoInfo(capture);
+            result.Duration = videoInfo.Duration;
+
+            Console.WriteLine($"🎥 Video: {videoInfo.Width}x{videoInfo.Height}, {videoInfo.Fps:F1} FPS, {videoInfo.TotalFrames:N0} frames");
+            Console.WriteLine($"⏱️  Duration: {videoInfo.Duration:mm\\:ss}");
+
+            // Initialize court detection
+            courtAnalyzer.Initialize(videoInfo.Width, videoInfo.Height);
+
+            // Process video
+            if (config.UseMultithreading)
+            {
+                await ProcessVideoParallelAsync(capture, videoInfo, result);
+            }
+            else
+            {
+                await ProcessVideoSequentialAsync(capture, videoInfo, result);
+            }
+
+            // Calculate final statistics
+            stopwatch.Stop();
+            result.ProcessingTime = stopwatch.Elapsed;
+            result.ProcessingFPS = result.TotalFramesProcessed / stopwatch.Elapsed.TotalSeconds;
+            result.ScoringPace = result.TotalBaskets / (result.Duration.TotalMinutes);
+            result.ConfidenceScore = CalculateConfidenceScore(result);
+
+            return result;
+        }
+
+        private async Task ProcessVideoParallelAsync(VideoCapture capture, VideoInfo videoInfo, GameResult result)
+        {
+            var frameBuffer = new BlockingCollection<FrameData>(config.BufferSize);
+            var cancellationToken = new CancellationTokenSource();
+
+            // Start frame reader task
+            var readerTask = Task.Run(() => ReadFrames(capture, videoInfo, frameBuffer, cancellationToken.Token));
+
+            // Start processing tasks
+            var processingTasks = new Task[config.MaxThreads];
+            for (int i = 0; i < config.MaxThreads; i++)
+            {
+                processingTasks[i] = Task.Run(() => ProcessFrames(frameBuffer, videoInfo, result, cancellationToken.Token));
+            }
+
+            // Wait for completion
+            await readerTask;
+            frameBuffer.CompleteAdding();
+            await Task.WhenAll(processingTasks);
+        }
+
+        private void ReadFrames(VideoCapture capture, VideoInfo videoInfo, BlockingCollection<FrameData> buffer, CancellationToken token)
+        {
+            int frameNumber = 0;
+
+            while (!token.IsCancellationRequested && capture.IsOpened())
+            {
+                var frame = capture.RetrieveMat();
+                if (frame == null || frame.Empty()) break;
+
+                frameNumber++;
+
+                // Skip frames based on config
+                if (frameNumber % config.FrameSkip != 0)
+                {
+                    frame.Dispose();
+                    continue;
+                }
+
+                var frameData = new FrameData
+                {
+                    Frame = frame.Clone(),
+                    FrameNumber = frameNumber,
+                    GameTime = TimeSpan.FromSeconds(frameNumber / videoInfo.Fps)
+                };
+
+                frame.Dispose();
+
+                buffer.TryAdd(frameData, 100, token);
+
+                // Progress update
+                if (frameNumber % 1000 == 0)
+                {
+                    var progress = (double)frameNumber / videoInfo.TotalFrames * 100;
+                    Console.WriteLine($"📊 Reading: {progress:F1}% ({frameNumber:N0}/{videoInfo.TotalFrames:N0})");
+                }
+            }
+        }
+
+        private void ProcessFrames(BlockingCollection<FrameData> buffer, VideoInfo videoInfo, GameResult result, CancellationToken token)
+        {
+            var localBallPositions = new List<BallPosition>();
+            var localPlayerData = new List<PlayerData>();
+            var localScoringEvents = new List<ScoringEvent>();
+
+            foreach (var frameData in buffer.GetConsumingEnumerable(token))
+            {
+                try
+                {
+                    ProcessSingleFrame(frameData, videoInfo, localBallPositions, localPlayerData, localScoringEvents);
+
+                    Interlocked.Increment(ref result.TotalFramesProcessed);
+
+                    // Periodic sync
+                    if (result.TotalFramesProcessed % 100 == 0)
+                    {
+                        SyncResults(result, localBallPositions, localPlayerData, localScoringEvents);
+                        localBallPositions.Clear();
+                        localPlayerData.Clear();
+                        localScoringEvents.Clear();
+                    }
+                }
+                finally
+                {
+                    frameData.Frame?.Dispose();
+                }
+            }
+
+            // Final sync
+            SyncResults(result, localBallPositions, localPlayerData, localScoringEvents);
+        }
+
+        private async Task ProcessVideoSequentialAsync(VideoCapture capture, VideoInfo videoInfo, GameResult result)
+        {
+            int frameNumber = 0;
+
+            var ballPositions = new List<BallPosition>();
+            var playerData = new List<PlayerData>();
+            var scoringEvents = new List<ScoringEvent>();
+
+            while (capture.IsOpened())
+            {
+                var frame = capture.RetrieveMat();
+                if (frame == null || frame.Empty()) break;
+
+                frameNumber++;
+
+                // Skip frames
+                if (frameNumber % config.FrameSkip != 0)
+                {
+                    frame.Dispose();
+                    continue;
+                }
+
+                var frameData = new FrameData
+                {
+                    Frame = frame.Clone(),
+                    FrameNumber = frameNumber,
+                    GameTime = TimeSpan.FromSeconds(frameNumber / videoInfo.Fps)
+                };
+
+                ProcessSingleFrame(frameData, videoInfo, ballPositions, playerData, scoringEvents);
+
+                result.TotalFramesProcessed++;
+
+                // Progress update
+                if (frameNumber % 1000 == 0)
+                {
+                    var progress = (double)frameNumber / videoInfo.TotalFrames * 100;
+                    var gameTime = frameData.GameTime;
+                    Console.WriteLine($"📊 Progress: {progress:F1}% | Game Time: {gameTime:mm\\:ss} | Score: A {result.TeamAScore} - {result.TeamBScore} B");
+
+                    // Sync results
+                    SyncResults(result, ballPositions, playerData, scoringEvents);
+                    ballPositions.Clear();
+                    playerData.Clear();
+                    scoringEvents.Clear();
+                }
+
+                frame.Dispose();
+                frameData.Frame.Dispose();
+            }
+
+            // Final sync
+            SyncResults(result, ballPositions, playerData, scoringEvents);
+        }
+
+        private void ProcessSingleFrame(FrameData frameData, VideoInfo videoInfo,
+            List<BallPosition> ballPositions, List<PlayerData> playerData, List<ScoringEvent> scoringEvents)
+        {
             Mat processedFrame = null;
 
             try
             {
-                // Resize for performance if enabled
-                if (DOWNSCALE_VIDEO)
+                // Resize if needed
+                if (config.DownscaleVideo)
                 {
                     processedFrame = new Mat();
-                    Cv2.Resize(frame, processedFrame, new Size(newWidth, newHeight));
+                    var newSize = new OpenCvSharp.Size(
+                        (int)(frameData.Frame.Width * config.DownscaleFactor),
+                        (int)(frameData.Frame.Height * config.DownscaleFactor)
+                    );
+                    Cv2.Resize(frameData.Frame, processedFrame, newSize);
                 }
                 else
                 {
-                    processedFrame = frame.Clone();
+                    processedFrame = frameData.Frame.Clone();
                 }
 
-                // Initialize basket regions on first processed frame
-                if (!regionsInitialized)
+                // Detect ball
+                var ballPos = ballTracker.DetectBall(processedFrame, frameData.GameTime);
+                if (ballPos != null)
                 {
-                    InitializeCourtRegions(processedFrame, out topBasketRegion, out bottomBasketRegion, ref masks);
-                    regionsInitialized = true;
+                    ballPositions.Add(ballPos);
                 }
 
-                // Store current frame for motion comparison, release previous if exists
-                if (previousFrame != null)
+                // Detect players
+                var players = playerTracker.DetectPlayers(processedFrame, frameData.GameTime);
+                playerData.AddRange(players);
+
+                // Check for scoring
+                var scoringEvent = scoringDetector.CheckForScore(processedFrame, ballPos, players,
+                    courtAnalyzer.TopBasketRegion, courtAnalyzer.BottomBasketRegion, frameData.GameTime);
+
+                if (scoringEvent != null)
                 {
-                    previousFrame.Dispose();
+                    scoringEvents.Add(scoringEvent);
                 }
-                previousFrame = processedFrame.Clone();
 
-                // Process scoring with cooldown mechanism
-                ProcessScoring(
-                    processedFrame, frame, tempFramePath, frameCount,
-                    topBasketRegion, bottomBasketRegion, masks,
-                    ref teamAScore, ref teamBScore,
-                    ref potentialScoringEvent, ref framesSincePotential,
-                    ref scoringCooldown, ref lastScoringTime,
-                    recentDetections, detectedBasketFrames,
-                    ref totalBaskets, currentGameTime
-                );
+                // Performance monitoring
+                perfMonitor.RecordFrame();
             }
             finally
             {
-                // Make sure to release processedFrame if it was created
-                if (processedFrame != null && processedFrame != frame)
+                if (processedFrame != null && processedFrame != frameData.Frame)
                 {
                     processedFrame.Dispose();
                 }
             }
         }
 
-        // Clean up remaining resources
-        if (previousFrame != null)
+        private void SyncResults(GameResult result, List<BallPosition> ballPositions,
+            List<PlayerData> playerData, List<ScoringEvent> scoringEvents)
         {
-            previousFrame.Dispose();
-        }
-
-        // Dispose all masks
-        foreach (var mask in masks)
-        {
-            mask.Value.Dispose();
-        }
-
-        totalTime.Stop();
-
-        Console.WriteLine("\n🏁 Game Summary:");
-        Console.WriteLine($"Game duration: {TimeSpan.FromSeconds(currentGameTime):mm\\:ss} minutes");
-        Console.WriteLine($"Total baskets: {totalBaskets}");
-        Console.WriteLine($"Scoring pace: {totalBaskets / (currentGameTime / 60):F1} baskets per minute");
-        Console.WriteLine("\n✅ Final Score:");
-        Console.WriteLine($"White team (A): {teamAScore}");
-        Console.WriteLine($"Dark blue team (B): {teamBScore}");
-        Console.WriteLine(teamAScore > teamBScore ? "🏆 White team Wins!" :
-                          teamBScore > teamAScore ? "🏆 Dark blue team Wins!" : "🤝 It's a Tie!");
-        Console.WriteLine($"\n⏱️ Total processing time: {totalTime.Elapsed.TotalMinutes:F1} minutes");
-    }
-
-    static void ProcessScoring(
-        Mat processedFrame, Mat originalFrame, string tempFramePath, int frameCount,
-        Rect topBasketRegion, Rect bottomBasketRegion, Dictionary<string, Mat> masks,
-        ref int teamAScore, ref int teamBScore,
-        ref bool potentialScoringEvent, ref int framesSincePotential,
-        ref int scoringCooldown, ref DateTime lastScoringTime,
-        Queue<string> recentDetections, HashSet<int> detectedBasketFrames,
-        ref int totalBaskets, double currentGameTime)
-    {
-        // Only process scoring if not in cooldown
-        if (scoringCooldown > 0)
-        {
-            scoringCooldown--;
-            if (DEBUG_MODE && scoringCooldown % 10 == 0)
+            lock (result)
             {
-                Console.WriteLine($"Cooling down: {scoringCooldown} frames left");
-            }
-            return;
-        }
-
-        // FAST PATH: Enhanced ball detection near baskets
-        bool ballNearBasket = false;
-        bool ballInTopBasket = false;
-        bool ballInBottomBasket = false;
-
-        using (var topRegion = new Mat(processedFrame, topBasketRegion))
-        using (var bottomRegion = new Mat(processedFrame, bottomBasketRegion))
-        {
-            ballInTopBasket = IsBasketballInRegion(topRegion);
-            ballInBottomBasket = IsBasketballInRegion(bottomRegion);
-            ballNearBasket = ballInTopBasket || ballInBottomBasket;
-
-            // Save which basket the ball is near for scoring direction
-            if (ballNearBasket && DEBUG_MODE)
-            {
-                Console.WriteLine($"Ball detected near: {(ballInTopBasket ? "TOP" : "BOTTOM")} basket");
-            }
-        }
-
-        // Only proceed with detailed analysis if ball is near basket
-        if (ballNearBasket)
-        {
-            potentialScoringEvent = true;
-            framesSincePotential = 0;
-        }
-
-        // Process potential scoring events with strict validation
-        if (potentialScoringEvent)
-        {
-            framesSincePotential++;
-
-            // Only add frame to detection list if not already present
-            if (!detectedBasketFrames.Contains(frameCount))
-            {
-                detectedBasketFrames.Add(frameCount);
-            }
-
-            // Store which basket the ball was detected in
-            string basketLocation = ballInTopBasket ? "TopBasket" : "BottomBasket";
-
-            // Wait a few frames to see if the ball goes through the hoop
-            if (framesSincePotential >= 3 && framesSincePotential <= 10)
-            {
-                string result = "Unknown";
-
-                // For the middle frame in the sequence, use Python for advanced detection
-                if (framesSincePotential == 5)
+                // Update ball tracking data
+                foreach (var pos in ballPositions)
                 {
-                    // Save full resolution frame for Python processing
-                    Cv2.ImWrite(tempFramePath, originalFrame);
-                    result = RunPythonScoreDetection(tempFramePath);
-                    if (DEBUG_MODE) Console.WriteLine($"Python detection result: {result}");
+                    result.BallTrajectory.Add(pos);
                 }
 
-                // If Python is uncertain, use jersey detection
-                if (result != "TeamA" && result != "TeamB")
+                // Update player tracking
+                foreach (var player in playerData)
                 {
-                    result = OptimizedJerseyDetection(processedFrame, masks);
-                }
-
-                // Add basket location to help determine who scored
-                if (result != "Unknown")
-                {
-                    string detection = $"{result}_{basketLocation}";
-                    recentDetections.Enqueue(detection);
-                    if (DEBUG_MODE) Console.WriteLine($"Added detection: {detection}");
-                }
-
-                // Keep queue at reasonable size
-                while (recentDetections.Count > SCORE_THRESHOLD)
-                    recentDetections.Dequeue();
-
-                // Group detections by team to handle mixed signals
-                int teamACount = recentDetections.Count(d => d.StartsWith("TeamA"));
-                int teamBCount = recentDetections.Count(d => d.StartsWith("TeamB"));
-
-                if (DEBUG_MODE && (teamACount > 0 || teamBCount > 0))
-                {
-                    Console.WriteLine($"Current detection counts - TeamA: {teamACount}, TeamB: {teamBCount}");
-                }
-
-                // Check if we have enough evidence of one team scoring AND enough time has passed since last score
-                TimeSpan timeSinceLastScore = DateTime.Now - lastScoringTime;
-                bool enoughTimePassed = timeSinceLastScore >= MIN_TIME_BETWEEN_SCORES;
-
-                if (recentDetections.Count >= SCORE_THRESHOLD && enoughTimePassed)
-                {
-                    // Team A scoring detection
-                    if (teamACount >= SCORE_THRESHOLD * TEAM_DETECTION_RATIO && teamACount > teamBCount)
+                    if (!result.PlayerTracking.ContainsKey(player.PlayerId))
                     {
-                        // Check if we're within realistic scoring pace for a 10-minute game
-                        double minutesElapsed = currentGameTime / 60.0;
-                        double currentPace = (totalBaskets + 1) / Math.Max(1, minutesElapsed);
-                        bool paceIsRealistic = currentPace <= (EXPECTED_BASKETS_PER_MINUTE * 2); // Allow 2x average pace
-
-                        // Check if total score would exceed maximum safeguard
-                        if (teamAScore + teamBScore + POINTS_PER_BASKET <= MAX_TOTAL_SCORE && paceIsRealistic)
-                        {
-                            teamAScore += POINTS_PER_BASKET;
-                            totalBaskets++;
-                            Console.WriteLine($"🎯 White team (A) scores! Total: {teamAScore}");
-                            Console.WriteLine($"   Game time: {TimeSpan.FromSeconds(currentGameTime):mm\\:ss}, Basket #{totalBaskets}");
-
-                            // Update last scoring time and activate cooldown
-                            lastScoringTime = DateTime.Now;
-                            scoringCooldown = COOLDOWN_FRAMES;
-
-                            // Reset after scoring
-                            potentialScoringEvent = false;
-                            recentDetections.Clear();
-                        }
-                        else if (!paceIsRealistic)
-                        {
-                            Console.WriteLine($"⚠️ Scoring pace too high ({currentPace:F1}/min) - ignoring potential basket");
-                        }
-                        else
-                        {
-                            Console.WriteLine("⚠️ Maximum expected score reached - ignoring potential basket");
-                        }
+                        result.PlayerTracking[player.PlayerId] = new List<PlayerData>();
                     }
-                    // Team B scoring detection
-                    else if (teamBCount >= SCORE_THRESHOLD * TEAM_DETECTION_RATIO && teamBCount > teamACount)
-                    {
-                        // Check if we're within realistic scoring pace for a 10-minute game
-                        double minutesElapsed = currentGameTime / 60.0;
-                        double currentPace = (totalBaskets + 1) / Math.Max(1, minutesElapsed);
-                        bool paceIsRealistic = currentPace <= (EXPECTED_BASKETS_PER_MINUTE * 2); // Allow 2x average pace
-
-                        // Check if total score would exceed maximum safeguard
-                        if (teamBScore + teamAScore + POINTS_PER_BASKET <= MAX_TOTAL_SCORE && paceIsRealistic)
-                        {
-                            teamBScore += POINTS_PER_BASKET;
-                            totalBaskets++;
-                            Console.WriteLine($"🎯 Dark blue team (B) scores! Total: {teamBScore}");
-                            Console.WriteLine($"   Game time: {TimeSpan.FromSeconds(currentGameTime):mm\\:ss}, Basket #{totalBaskets}");
-
-                            // Update last scoring time and activate cooldown
-                            lastScoringTime = DateTime.Now;
-                            scoringCooldown = COOLDOWN_FRAMES;
-
-                            // Reset after scoring
-                            potentialScoringEvent = false;
-                            recentDetections.Clear();
-                        }
-                        else if (!paceIsRealistic)
-                        {
-                            Console.WriteLine($"⚠️ Scoring pace too high ({currentPace:F1}/min) - ignoring potential basket");
-                        }
-                        else
-                        {
-                            Console.WriteLine("⚠️ Maximum expected score reached - ignoring potential basket");
-                        }
-                    }
+                    result.PlayerTracking[player.PlayerId].Add(player);
                 }
-            }
 
-            // Reset if no score detected after certain frames
-            if (framesSincePotential > 15)
-            {
-                if (DEBUG_MODE) Console.WriteLine("Resetting potential scoring event");
-                potentialScoringEvent = false;
-                recentDetections.Clear();
+                // Process scoring events
+                foreach (var evt in scoringEvents)
+                {
+                    if (evt.Team == "TeamA")
+                    {
+                        result.TeamAScore += evt.Points;
+                    }
+                    else if (evt.Team == "TeamB")
+                    {
+                        result.TeamBScore += evt.Points;
+                    }
+
+                    result.TotalBaskets++;
+                    result.KeyMoments.Add(new KeyMoment
+                    {
+                        GameTime = evt.GameTime,
+                        Description = $"{evt.Team} scores {evt.Points} points",
+                        Type = "Score"
+                    });
+                }
+
+                // Calculate possession
+                UpdatePossessionStats(result, playerData);
             }
         }
-    }
 
-    static void InitializeCourtRegions(Mat frame, out Rect topBasket, out Rect bottomBasket, ref Dictionary<string, Mat> masks)
-    {
-        int w = frame.Width;
-        int h = frame.Height;
-
-        // Define basket regions - made slightly larger to ensure detection
-        topBasket = new Rect(
-            (int)(w * 0.35),   // Move left edge further left
-            (int)(h * 0.05),
-            (int)(w * 0.3),    // Make wider
-            (int)(h * 0.25)
-        );
-
-        bottomBasket = new Rect(
-            (int)(w * 0.35),   // Move left edge further left
-            (int)(h * 0.7),
-            (int)(w * 0.3),    // Make wider
-            (int)(h * 0.25)
-        );
-
-        // Create court masks for optimization
-        masks = new Dictionary<string, Mat>();
-
-        // Create mask for court
-        Mat courtMask = new Mat(h, w, MatType.CV_8UC1, new Scalar(0));
-
-        // Draw filled rectangle covering the main court area
-        Rect courtRect = new Rect(
-            (int)(w * 0.1),
-            (int)(h * 0.1),
-            (int)(w * 0.8),
-            (int)(h * 0.8)
-        );
-
-        Cv2.Rectangle(courtMask, courtRect, new Scalar(255), -1);
-        masks["court"] = courtMask;
-
-        // Create separate team areas if needed for better scoring detection
-        Mat teamAAreaMask = new Mat(h, w, MatType.CV_8UC1, new Scalar(0));
-        Rect teamARect = new Rect(
-            (int)(w * 0.1),
-            (int)(h * 0.1),
-            (int)(w * 0.4),
-            (int)(h * 0.8)
-        );
-        Cv2.Rectangle(teamAAreaMask, teamARect, new Scalar(255), -1);
-        masks["teamA_area"] = teamAAreaMask;
-
-        Mat teamBAreaMask = new Mat(h, w, MatType.CV_8UC1, new Scalar(0));
-        Rect teamBRect = new Rect(
-            (int)(w * 0.5),
-            (int)(h * 0.1),
-            (int)(w * 0.4),
-            (int)(h * 0.8)
-        );
-        Cv2.Rectangle(teamBAreaMask, teamBRect, new Scalar(255), -1);
-        masks["teamB_area"] = teamBAreaMask;
-
-        Console.WriteLine("🏀 Court regions initialized");
-        Console.WriteLine($"Top basket region: {topBasket}");
-        Console.WriteLine($"Bottom basket region: {bottomBasket}");
-    }
-
-    static bool IsBasketballInRegion(Mat region)
-    {
-        // Local copies of the static fields for use in this method
-        Scalar ballLower = BALL_LOWER;
-        Scalar ballUpper = BALL_UPPER;
-        bool debugMode = DEBUG_MODE;
-
-        // More restrictive ball detection with strict size and shape constraints
-        using (var hsv = new Mat())
+        private void UpdatePossessionStats(GameResult result, List<PlayerData> playerData)
         {
-            Cv2.CvtColor(region, hsv, ColorConversionCodes.BGR2HSV);
+            var teamACounts = playerData.Count(p => p.Team == "TeamA");
+            var teamBCounts = playerData.Count(p => p.Team == "TeamB");
+            var total = teamACounts + teamBCounts;
 
-            using (var ballMask = new Mat())
+            if (total > 0)
             {
-                Cv2.InRange(hsv, ballLower, ballUpper, ballMask);
+                var currentAPossession = (double)teamACounts / total * 100;
+                var currentBPossession = (double)teamBCounts / total * 100;
 
-                // Apply morphological operations to clean up noise
-                using (var kernel = Cv2.GetStructuringElement(MorphShapes.Ellipse, new Size(3, 3)))
-                {
-                    Cv2.MorphologyEx(ballMask, ballMask, MorphTypes.Open, kernel);
-                }
-
-                // Find contours of potential ball
-                Point[][] contours;
-                HierarchyIndex[] hierarchy;
-                Cv2.FindContours(ballMask, out contours, out hierarchy, RetrievalModes.External, ContourApproximationModes.ApproxSimple);
-
-                // Look for circular-ish objects of appropriate size
-                foreach (var contour in contours)
-                {
-                    double area = Cv2.ContourArea(contour);
-
-                    // Stricter size constraints for basketball
-                    if (area > 50 && area < 400) // Adjusted size range
-                    {
-                        // Check circularity - basketballs are very circular
-                        double perimeter = Cv2.ArcLength(contour, true);
-                        double circularity = 4 * Math.PI * area / (perimeter * perimeter);
-
-                        // More strict circularity requirement
-                        if (circularity > 0.7) // Higher threshold for circularity
-                        {
-                            // Additional validation: Get bounding box and check aspect ratio
-                            Rect boundingBox = Cv2.BoundingRect(contour);
-                            double aspectRatio = (double)boundingBox.Width / boundingBox.Height;
-
-                            // A perfect circle has aspect ratio of 1.0
-                            if (aspectRatio > 0.8 && aspectRatio < 1.2)
-                            {
-                                if (debugMode)
-                                {
-                                    Console.WriteLine($"Ball detected: Area={area:F1}, Circularity={circularity:F2}, Aspect={aspectRatio:F2}");
-                                }
-                                return true;
-                            }
-                        }
-                    }
-                }
-
-                return false;
+                // Running average
+                result.TeamAPossession = (result.TeamAPossession * 0.95) + (currentAPossession * 0.05);
+                result.TeamBPossession = (result.TeamBPossession * 0.95) + (currentBPossession * 0.05);
             }
         }
-    }
 
-    static string RunPythonScoreDetection(string framePath)
-    {
-        // Local copy of DEBUG_MODE
-        bool debugMode = DEBUG_MODE;
-
-        try
+        private VideoInfo GetVideoInfo(VideoCapture capture)
         {
-            var psi = new ProcessStartInfo
+            return new VideoInfo
             {
-                FileName = "python",
-                Arguments = $"score_detect.py \"{framePath}\"",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
+                Width = (int)capture.Get(VideoCaptureProperties.FrameWidth),
+                Height = (int)capture.Get(VideoCaptureProperties.FrameHeight),
+                Fps = capture.Get(VideoCaptureProperties.Fps),
+                TotalFrames = (int)capture.Get(VideoCaptureProperties.FrameCount),
+                Duration = TimeSpan.FromSeconds(capture.Get(VideoCaptureProperties.FrameCount) / capture.Get(VideoCaptureProperties.Fps))
             };
-
-            using var process = Process.Start(psi);
-
-            // Set timeout to prevent long-running Python script
-            if (!process.WaitForExit(1500)) // Increased timeout to 1.5 seconds
-            {
-                try { process.Kill(); } catch { }
-                Console.WriteLine("⚠️ Python detection timed out");
-                return "Unknown";
-            }
-
-            string output = process.StandardOutput.ReadToEnd().Trim();
-            string error = process.StandardError.ReadToEnd().Trim();
-
-            if (!string.IsNullOrEmpty(error))
-            {
-                Console.WriteLine($"⚠️ Python error: {error}");
-                return "Unknown";
-            }
-
-            if (output == "TeamA" || output == "TeamB")
-            {
-                Console.WriteLine($"✅ Python detected: {output}");
-            }
-
-            return output;
         }
-        catch (Exception ex)
+
+        private double CalculateConfidenceScore(GameResult result)
         {
-            Console.WriteLine($"⚠️ Error running Python script: {ex.Message}");
-            return "Unknown";
+            double confidence = 100.0;
+
+            // Reduce confidence for unusual scoring patterns
+            if (result.ScoringPace > config.ExpectedBasketsPerMinute * 3)
+                confidence -= 20;
+
+            if (result.TeamAScore + result.TeamBScore > config.MaxExpectedScore)
+                confidence -= 15;
+
+            // Increase confidence for consistent detection
+            if (result.BallTrajectory.Count > 1000)
+                confidence += 10;
+
+            return Math.Max(0, Math.Min(100, confidence));
         }
     }
 
-    static string OptimizedJerseyDetection(Mat frame, Dictionary<string, Mat> masks)
+    // Supporting classes
+    public class BallTracker
     {
-        // Local copies of static fields for use in this method
-        Scalar teamALower = TEAM_A_LOWER;
-        Scalar teamAUpper = TEAM_A_UPPER;
-        Scalar teamBLower = TEAM_B_LOWER;
-        Scalar teamBUpper = TEAM_B_UPPER;
-        bool debugMode = DEBUG_MODE;
+        private readonly AnalyzerConfig config;
+        private readonly KalmanFilter kalmanFilter;
+        private Point2f lastPosition;
+        private bool isTracking;
 
-        using (var courtOnly = new Mat())
-        using (var hsv = new Mat())
-        using (var whiteMask = new Mat())
-        using (var blueMask = new Mat())
+        public BallTracker(AnalyzerConfig config)
         {
-            // Apply court mask to eliminate background
-            frame.CopyTo(courtOnly, masks["court"]);
+            this.config = config;
+            this.kalmanFilter = CreateKalmanFilter();
+        }
 
-            // Convert to HSV for color detection
-            Cv2.CvtColor(courtOnly, hsv, ColorConversionCodes.BGR2HSV);
+        private KalmanFilter CreateKalmanFilter()
+        {
+            var kf = new KalmanFilter(4, 2, 0);
 
-            // Detect white jerseys (Team A) - adjusted thresholds
-            Cv2.InRange(hsv, teamALower, teamAUpper, whiteMask);
+            // State transition matrix - predicts next position based on current position and velocity
+            // [x, y, vx, vy]
+            kf.TransitionMatrix.SetIdentity();
+            kf.TransitionMatrix.At<float>(0, 2) = 1;  // x += vx
+            kf.TransitionMatrix.At<float>(1, 3) = 1;  // y += vy
 
-            // Detect dark blue jerseys (Team B) - adjusted thresholds
-            Cv2.InRange(hsv, teamBLower, teamBUpper, blueMask);
+            // Measurement matrix - we only measure x and y
+            kf.MeasurementMatrix.SetTo(0);
+            kf.MeasurementMatrix.At<float>(0, 0) = 1;
+            kf.MeasurementMatrix.At<float>(1, 1) = 1;
 
-            // Use better kernel for morphological operations
-            using (var kernel = Cv2.GetStructuringElement(MorphShapes.Ellipse, new Size(5, 5)))
+            // Process noise
+            kf.ProcessNoiseCov.SetIdentity(new Scalar(1e-4));
+
+            // Measurement noise
+            kf.MeasurementNoiseCov.SetIdentity(new Scalar(1e-1));
+
+            // Error covariance
+            kf.ErrorCovPost.SetIdentity();
+
+            return kf;
+        }
+
+        public BallPosition DetectBall(Mat frame, TimeSpan gameTime)
+        {
+            using var hsv = new Mat();
+            using var mask = new Mat();
+
+            Cv2.CvtColor(frame, hsv, ColorConversionCodes.BGR2HSV);
+            Cv2.InRange(hsv, config.BallColors.Lower, config.BallColors.Upper, mask);
+
+            // Noise reduction
+            using var kernel = Cv2.GetStructuringElement(MorphShapes.Ellipse, new OpenCvSharp.Size(5, 5));
+            Cv2.MorphologyEx(mask, mask, MorphTypes.Open, kernel);
+            Cv2.MorphologyEx(mask, mask, MorphTypes.Close, kernel);
+
+            // Find contours
+            using var contourOutput = mask.Clone();
+            Cv2.FindContours(contourOutput, out Point[][] contours, out HierarchyIndex[] hierarchy,
+                RetrievalModes.External, ContourApproximationModes.ApproxSimple);
+
+            Point2f? detectedPosition = null;
+            double maxScore = 0;
+
+            foreach (var contour in contours)
             {
-                // Apply more aggressive morphological operations
-                Cv2.MorphologyEx(whiteMask, whiteMask, MorphTypes.Open, kernel);
-                Cv2.MorphologyEx(blueMask, blueMask, MorphTypes.Open, kernel);
+                var area = Cv2.ContourArea(contour);
+                if (area < 50 || area > 500) continue;
 
-                // Dilate to connect jersey parts
-                Cv2.Dilate(whiteMask, whiteMask, kernel);
-                Cv2.Dilate(blueMask, blueMask, kernel);
-            }
+                // Calculate circularity
+                var perimeter = Cv2.ArcLength(contour, true);
+                var circularity = 4 * Math.PI * area / (perimeter * perimeter);
 
-            // Find contours to count actual players rather than just pixels
-            Point[][] whiteContours, blueContours;
-            HierarchyIndex[] whiteHierarchy, blueHierarchy;
+                if (circularity < 0.7) continue;
 
-            Cv2.FindContours(whiteMask, out whiteContours, out whiteHierarchy,
-                             RetrievalModes.External, ContourApproximationModes.ApproxSimple);
-            Cv2.FindContours(blueMask, out blueContours, out blueHierarchy,
-                             RetrievalModes.External, ContourApproximationModes.ApproxSimple);
+                // Get center
+                var moments = Cv2.Moments(contour);
+                if (moments.M00 == 0) continue;
 
-            // Count large contours (likely to be players)
-            int whitePlayerCount = 0;
-            int bluePlayerCount = 0;
+                var center = new Point2f(
+                    (float)(moments.M10 / moments.M00),
+                    (float)(moments.M01 / moments.M00)
+                );
 
-            foreach (var contour in whiteContours)
-            {
-                double area = Cv2.ContourArea(contour);
-                if (area > 500) // Minimum area to be considered a player
+                // Score based on circularity and area
+                var score = circularity * Math.Sqrt(area);
+
+                if (score > maxScore)
                 {
-                    whitePlayerCount++;
+                    maxScore = score;
+                    detectedPosition = center;
                 }
             }
 
-            foreach (var contour in blueContours)
+            // Update Kalman filter
+            if (detectedPosition.HasValue)
             {
-                double area = Cv2.ContourArea(contour);
-                if (area > 500) // Minimum area to be considered a player
+                if (!isTracking)
                 {
-                    bluePlayerCount++;
+                    // Initialize Kalman filter
+                    var initialState = new Mat(4, 1, MatType.CV_32F);
+                    initialState.At<float>(0, 0) = detectedPosition.Value.X;
+                    initialState.At<float>(1, 0) = detectedPosition.Value.Y;
+                    initialState.At<float>(2, 0) = 0;
+                    initialState.At<float>(3, 0) = 0;
+                    kalmanFilter.StatePost = initialState;
+                    isTracking = true;
                 }
+
+                // Predict and update
+                var prediction = kalmanFilter.Predict();
+                var measurement = new Mat(2, 1, MatType.CV_32F);
+                measurement.At<float>(0, 0) = detectedPosition.Value.X;
+                measurement.At<float>(1, 0) = detectedPosition.Value.Y;
+
+                kalmanFilter.Correct(measurement);
+
+                lastPosition = new Point2f(
+                    kalmanFilter.StatePost.At<float>(0),
+                    kalmanFilter.StatePost.At<float>(1)
+                );
+
+                return new BallPosition
+                {
+                    Position = lastPosition,
+                    GameTime = gameTime,
+                    Confidence = maxScore / 100.0,
+                    Velocity = new Point2f(
+                        kalmanFilter.StatePost.At<float>(2),
+                        kalmanFilter.StatePost.At<float>(3)
+                    )
+                };
             }
-
-            // Also count total pixels as a fallback
-            int whitePixels = Cv2.CountNonZero(whiteMask);
-            int bluePixels = Cv2.CountNonZero(blueMask);
-
-            if (debugMode)
+            else if (isTracking)
             {
-                Console.WriteLine($"🔍 White players: {whitePlayerCount}, Blue players: {bluePlayerCount}");
-                Console.WriteLine($"🔍 White pixels: {whitePixels}, Blue pixels: {bluePixels}");
+                // Use prediction when detection fails
+                var prediction = kalmanFilter.Predict();
+                lastPosition = new Point2f(
+                    prediction.At<float>(0),
+                    prediction.At<float>(1)
+                );
+
+                return new BallPosition
+                {
+                    Position = lastPosition,
+                    GameTime = gameTime,
+                    Confidence = 0.5,
+                    IsPredicted = true
+                };
             }
 
-            // Decision logic - prioritize player count, fall back to pixel count
-            // First check if we have meaningful player detection
-            if (whitePlayerCount > 2 && whitePlayerCount > bluePlayerCount * 1.5)
-                return "TeamA"; // White team
-            else if (bluePlayerCount > 2 && bluePlayerCount > whitePlayerCount * 1.5)
-                return "TeamB"; // Dark blue team
-
-            // Fall back to pixel-based detection with more aggressive thresholds
-            if (whitePixels > bluePixels * 3 && whitePixels > 2000)
-                return "TeamA"; // White team
-            else if (bluePixels > whitePixels * 3 && bluePixels > 2000)
-                return "TeamB"; // Dark blue team
-
-            return "Unknown";
+            return null;
         }
     }
 
-    static string EstimateCompletionTime(int totalFrames, int frameSkip, double fps)
+    public class PlayerTracker
     {
-        // Estimate based on typical processing speeds
-        double framesPerSecond = 10; // Typical processing speed on mid-range hardware
-        double totalProcessedFrames = totalFrames / frameSkip;
-        double estimatedSeconds = totalProcessedFrames / framesPerSecond;
+        private readonly AnalyzerConfig config;
+        private readonly BackgroundSubtractorMOG2 bgSubtractor;
+        private readonly Dictionary<int, TrackedPlayer> trackedPlayers;
+        private int nextPlayerId;
 
-        return (estimatedSeconds / 60).ToString("F1");
+        public PlayerTracker(AnalyzerConfig config)
+        {
+            this.config = config;
+            this.bgSubtractor = BackgroundSubtractorMOG2.Create();
+            this.trackedPlayers = new Dictionary<int, TrackedPlayer>();
+            this.nextPlayerId = 1;
+        }
+
+        public List<PlayerData> DetectPlayers(Mat frame, TimeSpan gameTime)
+        {
+            var players = new List<PlayerData>();
+
+            using var fgMask = new Mat();
+            bgSubtractor.Apply(frame, fgMask);
+
+            // Clean up the mask
+            using var kernel = Cv2.GetStructuringElement(MorphShapes.Ellipse, new OpenCvSharp.Size(5, 5));
+            Cv2.MorphologyEx(fgMask, fgMask, MorphTypes.Open, kernel);
+            Cv2.MorphologyEx(fgMask, fgMask, MorphTypes.Close, kernel);
+
+            // Find contours
+            using var contourOutput = fgMask.Clone();
+            Cv2.FindContours(contourOutput, out Point[][] contours, out HierarchyIndex[] hierarchy,
+                RetrievalModes.External, ContourApproximationModes.ApproxSimple);
+
+            var detectedPlayers = new List<DetectedPlayer>();
+
+            foreach (var contour in contours)
+            {
+                var area = Cv2.ContourArea(contour);
+                if (area < 1000 || area > 10000) continue;
+
+                var rect = Cv2.BoundingRect(contour);
+                var aspectRatio = (double)rect.Height / rect.Width;
+
+                // Filter by aspect ratio (humans are taller than wide)
+                if (aspectRatio < 1.5 || aspectRatio > 4.0) continue;
+
+                // Detect team by jersey color
+                var team = DetectTeam(frame, rect);
+
+                detectedPlayers.Add(new DetectedPlayer
+                {
+                    BoundingBox = rect,
+                    Team = team,
+                    Center = new OpenCvSharp.Point(rect.X + rect.Width / 2, rect.Y + rect.Height / 2)
+                });
+            }
+
+            // Match with tracked players
+            UpdateTracking(detectedPlayers, gameTime);
+
+            // Convert to PlayerData
+            foreach (var tracked in trackedPlayers.Values.Where(t => t.IsActive))
+            {
+                players.Add(new PlayerData
+                {
+                    PlayerId = tracked.Id,
+                    Team = tracked.Team,
+                    Position = tracked.CurrentPosition,
+                    GameTime = gameTime,
+                    Velocity = tracked.Velocity,
+                    BoundingBox = tracked.BoundingBox
+                });
+            }
+
+            return players;
+        }
+
+        private string DetectTeam(Mat frame, OpenCvSharp.Rect playerRect)
+        {
+            // Extract player region
+            using var playerRegion = new Mat(frame, playerRect);
+            using var hsv = new Mat();
+
+            Cv2.CvtColor(playerRegion, hsv, ColorConversionCodes.BGR2HSV);
+
+            // Create masks for both teams
+            using var teamAMask = new Mat();
+            using var teamBMask = new Mat();
+
+            Cv2.InRange(hsv, config.TeamAColors.Lower, config.TeamAColors.Upper, teamAMask);
+            Cv2.InRange(hsv, config.TeamBColors.Lower, config.TeamBColors.Upper, teamBMask);
+
+            // Count pixels
+            var teamAPixels = Cv2.CountNonZero(teamAMask);
+            var teamBPixels = Cv2.CountNonZero(teamBMask);
+
+            if (teamAPixels > teamBPixels * 2)
+                return "TeamA";
+            else if (teamBPixels > teamAPixels * 2)
+                return "TeamB";
+            else
+                return "Unknown";
+        }
+
+        private void UpdateTracking(List<DetectedPlayer> detectedPlayers, TimeSpan gameTime)
+        {
+            // Simple nearest neighbor tracking
+            var matched = new HashSet<int>();
+
+            foreach (var detected in detectedPlayers)
+            {
+                TrackedPlayer bestMatch = null;
+                double minDistance = double.MaxValue;
+
+                foreach (var tracked in trackedPlayers.Values.Where(t => !matched.Contains(t.Id)))
+                {
+                    var distance = Math.Sqrt(
+                        Math.Pow(detected.Center.X - tracked.CurrentPosition.X, 2) +
+                        Math.Pow(detected.Center.Y - tracked.CurrentPosition.Y, 2)
+                    );
+
+                    if (distance < minDistance && distance < 100) // Max distance threshold
+                    {
+                        minDistance = distance;
+                        bestMatch = tracked;
+                    }
+                }
+
+                if (bestMatch != null)
+                {
+                    // Update existing player
+                    matched.Add(bestMatch.Id);
+                    bestMatch.Update(detected.Center, detected.BoundingBox, detected.Team, gameTime);
+                }
+                else
+                {
+                    // Create new player
+                    var newPlayer = new TrackedPlayer
+                    {
+                        Id = nextPlayerId++,
+                        Team = detected.Team,
+                        CurrentPosition = detected.Center,
+                        BoundingBox = detected.BoundingBox,
+                        LastSeen = gameTime,
+                        IsActive = true
+                    };
+                    trackedPlayers[newPlayer.Id] = newPlayer;
+                }
+            }
+
+            // Mark unmatched players as inactive
+            foreach (var tracked in trackedPlayers.Values)
+            {
+                if (!matched.Contains(tracked.Id))
+                {
+                    tracked.IsActive = false;
+                }
+            }
+
+            // Remove players not seen for a while
+            var toRemove = trackedPlayers
+                .Where(kvp => (gameTime - kvp.Value.LastSeen).TotalSeconds > 2)
+                .Select(kvp => kvp.Key)
+                .ToList();
+
+            foreach (var id in toRemove)
+            {
+                trackedPlayers.Remove(id);
+            }
+        }
+    }
+
+    public class ScoringDetector
+    {
+        private readonly AnalyzerConfig config;
+        private readonly Queue<ScoringCandidate> candidates;
+        private TimeSpan lastScoringTime;
+        private int cooldownCounter;
+
+        public ScoringDetector(AnalyzerConfig config)
+        {
+            this.config = config;
+            this.candidates = new Queue<ScoringCandidate>();
+            this.lastScoringTime = TimeSpan.Zero;
+        }
+
+        public ScoringEvent CheckForScore(Mat frame, BallPosition ballPos, List<PlayerData> players,
+            Rect topBasket, Rect bottomBasket, TimeSpan gameTime)
+        {
+            // Check cooldown
+            if (cooldownCounter > 0)
+            {
+                cooldownCounter--;
+                return null;
+            }
+
+            if (ballPos == null) return null;
+
+            // Check if ball is in basket region
+            bool inTopBasket = topBasket.Contains(new Point((int)ballPos.Position.X, (int)ballPos.Position.Y));
+            bool inBottomBasket = bottomBasket.Contains(new Point((int)ballPos.Position.X, (int)ballPos.Position.Y));
+
+            if (!inTopBasket && !inBottomBasket) return null;
+
+            // Determine which team likely scored based on player positions
+            var nearbyPlayers = players
+                .Where(p => Distance(p.Position, new Point((int)ballPos.Position.X, (int)ballPos.Position.Y)) < 200)
+                .ToList();
+
+            if (nearbyPlayers.Count == 0) return null;
+
+            var teamACounts = nearbyPlayers.Count(p => p.Team == "TeamA");
+            var teamBCounts = nearbyPlayers.Count(p => p.Team == "TeamB");
+
+            string scoringTeam = null;
+            if (teamACounts > teamBCounts * config.TeamDetectionRatio)
+                scoringTeam = "TeamA";
+            else if (teamBCounts > teamACounts * config.TeamDetectionRatio)
+                scoringTeam = "TeamB";
+
+            if (scoringTeam == null) return null;
+
+            // Add to candidates
+            candidates.Enqueue(new ScoringCandidate
+            {
+                Team = scoringTeam,
+                GameTime = gameTime,
+                Basket = inTopBasket ? "Top" : "Bottom",
+                Confidence = (double)Math.Max(teamACounts, teamBCounts) / nearbyPlayers.Count
+            });
+
+            // Keep queue size manageable
+            while (candidates.Count > config.ScoreConfirmationThreshold * 2)
+                candidates.Dequeue();
+
+            // Check if we have enough consistent detections
+            var recentCandidates = candidates.Where(c => (gameTime - c.GameTime).TotalSeconds < 1).ToList();
+
+            if (recentCandidates.Count >= config.ScoreConfirmationThreshold)
+            {
+                var teamVotes = recentCandidates.GroupBy(c => c.Team)
+                    .Select(g => new { Team = g.Key, Count = g.Count() })
+                    .OrderByDescending(x => x.Count)
+                    .First();
+
+                if (teamVotes.Count >= config.ScoreConfirmationThreshold * config.TeamDetectionRatio)
+                {
+                    // Check minimum time between scores
+                    if (gameTime - lastScoringTime >= config.MinTimeBetweenScores)
+                    {
+                        lastScoringTime = gameTime;
+                        cooldownCounter = config.CooldownFrames;
+                        candidates.Clear();
+
+                        // Determine points (could check for 3-pointer based on position)
+                        int points = config.PointsPerBasket;
+
+                        return new ScoringEvent
+                        {
+                            Team = teamVotes.Team,
+                            Points = points,
+                            GameTime = gameTime,
+                            Basket = recentCandidates.First().Basket,
+                            Confidence = recentCandidates.Average(c => c.Confidence)
+                        };
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        private double Distance(OpenCvSharp.Point p1, OpenCvSharp.Point p2)
+        {
+            return Math.Sqrt(Math.Pow(p1.X - p2.X, 2) + Math.Pow(p1.Y - p2.Y, 2));
+        }
+    }
+
+    public class CourtAnalyzer
+    {
+        private readonly AnalyzerConfig config;
+        public Rect TopBasketRegion { get; private set; }
+        public Rect BottomBasketRegion { get; private set; }
+        public Rect CourtBounds { get; private set; }
+
+        public CourtAnalyzer(AnalyzerConfig config)
+        {
+            this.config = config;
+        }
+
+        public void Initialize(int frameWidth, int frameHeight)
+        {
+            // Define basket regions
+            TopBasketRegion = new Rect(
+                (int)(frameWidth * 0.35),
+                (int)(frameHeight * 0.05),
+                (int)(frameWidth * 0.3),
+                (int)(frameHeight * 0.20)
+            );
+
+            BottomBasketRegion = new Rect(
+                (int)(frameWidth * 0.35),
+                (int)(frameHeight * 0.75),
+                (int)(frameWidth * 0.3),
+                (int)(frameHeight * 0.20)
+            );
+
+            // Define court bounds
+            CourtBounds = new Rect(
+                (int)(frameWidth * 0.1),
+                (int)(frameHeight * 0.1),
+                (int)(frameWidth * 0.8),
+                (int)(frameHeight * 0.8)
+            );
+
+            Console.WriteLine($"🏀 Court initialized: {frameWidth}x{frameHeight}");
+        }
+    }
+
+    public class PerformanceMonitor
+    {
+        private readonly Stopwatch stopwatch;
+        private long frameCount;
+        private long totalProcessingTime;
+
+        public PerformanceMonitor()
+        {
+            stopwatch = new Stopwatch();
+        }
+
+        public void RecordFrame()
+        {
+            frameCount++;
+        }
+
+        public double GetFPS()
+        {
+            return frameCount / stopwatch.Elapsed.TotalSeconds;
+        }
+
+        public long GetMemoryUsage()
+        {
+            return GC.GetTotalMemory(false) / (1024 * 1024);
+        }
+    }
+
+    // Data classes
+    public class VideoInfo
+    {
+        public int Width { get; set; }
+        public int Height { get; set; }
+        public double Fps { get; set; }
+        public int TotalFrames { get; set; }
+        public TimeSpan Duration { get; set; }
+    }
+
+    public class FrameData
+    {
+        public Mat Frame { get; set; }
+        public int FrameNumber { get; set; }
+        public TimeSpan GameTime { get; set; }
+    }
+
+    public class BallPosition
+    {
+        public Point2f Position { get; set; }
+        public Point2f Velocity { get; set; }
+        public TimeSpan GameTime { get; set; }
+        public double Confidence { get; set; }
+        public bool IsPredicted { get; set; }
+    }
+
+    public class PlayerData
+    {
+        public int PlayerId { get; set; }
+        public string Team { get; set; }
+        public OpenCvSharp.Point Position { get; set; }
+        public Point2f Velocity { get; set; }
+        public TimeSpan GameTime { get; set; }
+        public OpenCvSharp.Rect BoundingBox { get; set; }
+    }
+
+    public class ScoringEvent
+    {
+        public string Team { get; set; }
+        public int Points { get; set; }
+        public TimeSpan GameTime { get; set; }
+        public string Basket { get; set; }
+        public double Confidence { get; set; }
+    }
+
+    public class GameResult
+    {
+        public int TeamAScore { get; set; }
+        public int TeamBScore { get; set; }
+        public int TotalBaskets { get; set; }
+        public TimeSpan Duration { get; set; }
+        public TimeSpan ProcessingTime { get; set; }
+        public int TotalFramesProcessed { get; set; }
+        public double ProcessingFPS { get; set; }
+        public double ScoringPace { get; set; }
+        public double TeamAPossession { get; set; }
+        public double TeamBPossession { get; set; }
+        public double ConfidenceScore { get; set; }
+        public List<KeyMoment> KeyMoments { get; set; } = new List<KeyMoment>();
+        public List<BallPosition> BallTrajectory { get; set; } = new List<BallPosition>();
+        public Dictionary<int, List<PlayerData>> PlayerTracking { get; set; } = new Dictionary<int, List<PlayerData>>();
+    }
+
+    public class KeyMoment
+    {
+        public TimeSpan GameTime { get; set; }
+        public string Description { get; set; }
+        public string Type { get; set; }
+    }
+
+    // Helper classes
+    public class DetectedPlayer
+    {
+        public OpenCvSharp.Rect BoundingBox { get; set; }
+        public string Team { get; set; }
+        public OpenCvSharp.Point Center { get; set; }
+    }
+
+    public class TrackedPlayer
+    {
+        public int Id { get; set; }
+        public string Team { get; set; }
+        public Point CurrentPosition { get; set; }
+        public Point2f Velocity { get; set; }
+        public Rect BoundingBox { get; set; }
+        public TimeSpan LastSeen { get; set; }
+        public bool IsActive { get; set; }
+
+        public void Update(Point newPosition, Rect boundingBox, string team, TimeSpan gameTime)
+        {
+            // Calculate velocity
+            var timeDelta = (gameTime - LastSeen).TotalSeconds;
+            if (timeDelta > 0)
+            {
+                Velocity = new Point2f(
+                    (float)((newPosition.X - CurrentPosition.X) / timeDelta),
+                    (float)((newPosition.Y - CurrentPosition.Y) / timeDelta)
+                );
+            }
+
+            CurrentPosition = newPosition;
+            BoundingBox = boundingBox;
+            Team = team;
+            LastSeen = gameTime;
+            IsActive = true;
+        }
+    }
+
+    public class ScoringCandidate
+    {
+        public string Team { get; set; }
+        public TimeSpan GameTime { get; set; }
+        public string Basket { get; set; }
+        public double Confidence { get; set; }
     }
 }

@@ -29,7 +29,7 @@ namespace Website.Services
                 session.SetString("UserName", $"{user.FirstName} {user.LastName}");
                 session.SetString("UserRole", user.AccessLevel);
                 session.SetString("UserId", user.UserId);
-                session.SetString("ProfileId", user.ProfileId);
+                session.SetString("ProfileId", user.Profile.ProfileId);
 
                 // Store additional user info as needed
                 if (!string.IsNullOrEmpty(user.ClientId))

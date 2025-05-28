@@ -197,7 +197,7 @@ namespace WebAPI.Services
                         new Claim(ClaimTypes.NameIdentifier, user.UserId),
                         new Claim(ClaimTypes.Email, user.Email),
                         new Claim(ClaimTypes.Role, user.AccessLevel ?? "Standard"),
-                        new Claim("ProfileId", user.ProfileId ?? string.Empty)
+                        
                     }),
                     Expires = DateTime.UtcNow.AddHours(expirationHours),
                     SigningCredentials = new SigningCredentials(

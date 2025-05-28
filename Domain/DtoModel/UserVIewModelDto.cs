@@ -21,8 +21,7 @@ namespace Domain.DtoModel
         public UserViewModelDto(User privateRun)
         {
             UserId = privateRun.UserId;
-            ClientId = privateRun.ClientId;
-            ProfileId = privateRun.ProfileId;
+            ClientId = privateRun.ClientId;           
             Email = privateRun.Email;
             PhoneNumber = privateRun.PhoneNumber;
             LockoutEnd = privateRun.LockoutEnd;
@@ -42,7 +41,6 @@ namespace Domain.DtoModel
 
         public string? UserId { get; set; }
         public string? ClientId { get; set; }
-        public string? ProfileId { get; set; }
         public string? Token { get; set; }
         public string? Email { get; set; }
         public string? PasswordHash { get; set; }

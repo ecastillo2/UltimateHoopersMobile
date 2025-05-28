@@ -650,8 +650,8 @@ namespace DataLayer.DAL.Repository
                 {
                     TotalGames = totalGames,
                     WinPercentage = winPercentage,
-                    TotalWins = wins.ToString(),
-                    TotalLosses = losses.ToString()
+                    TotalWins = wins,
+                    TotalLosses = losses
                 };
             }
             catch (Exception ex)
