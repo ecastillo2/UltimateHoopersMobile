@@ -8,29 +8,37 @@ namespace Domain.DtoModel
 {
     public class ScoutingReportUpdateModelDto
     {
-        public string PlayStyle { get; set; }
-        public string StrengthOne { get; set; }
-        public string StrengthTwo { get; set; }
-        public string WeaknessOne { get; set; }
-        public string WeaknessTwo { get; set; }
-        public string PlayStyleImpactOne { get; set; }
-        public string PlayStyleImpactTwo { get; set; }
-        public string Comparison { get; set; }
-        public string Conclusion { get; set; }
-        public string IdealRole { get; set; }
+        public string? ScoutingReportId { get; set; }
+        public string? ProfileId { get; set; }
+        public string? PrimaryPosition { get; set; }
+        public string? SecondaryPosition { get; set; }
+        public string? PlayingStyle { get; set; }
+        public int? Shooting { get; set; }
+        public int? BallHandling { get; set; }
+        public int? Passing { get; set; }
+        public int? Defense { get; set; }
+        public int? Redounding { get; set; }
+        public int? Athleticism { get; set; }
+        public string? Strengths { get; set; }
+        public string? AreasforImprovement { get; set; }
+        public string? AdditionalNotes { get; set; }
+        public DateTime? LastUpdated { get; set; }
 
         public void UpdateScoutingReport(ScoutingReport report)
         {
-            report.PlayStyle = PlayStyle;
-            report.StrengthOne = StrengthOne;
-            report.StrengthTwo = StrengthTwo;
-            report.WeaknessOne = WeaknessOne;
-            report.WeaknessTwo = WeaknessTwo;
-            report.PlayStyleImpactOne = PlayStyleImpactOne;
-            report.PlayStyleImpactTwo = PlayStyleImpactTwo;
-            report.Comparison = Comparison;
-            report.Conclusion = Conclusion;
-            report.IdealRole = IdealRole;
+            report.PrimaryPosition = PrimaryPosition;
+            report.SecondaryPosition = SecondaryPosition;
+            report.PlayingStyle = PlayingStyle;
+            report.Shooting = Shooting;
+            report.BallHandling = BallHandling;
+            report.Passing = Passing;
+            report.Defense = Defense;
+            report.Redounding = Redounding;
+            report.Athleticism = Athleticism;
+            report.Strengths = Strengths;
+            report.AreasforImprovement = AreasforImprovement;
+            report.AdditionalNotes = AdditionalNotes;
+            report.LastUpdated = LastUpdated;
         }
     }
 }

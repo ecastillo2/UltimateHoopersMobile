@@ -840,23 +840,24 @@ namespace DataLayer.DAL.Repository
                 if (existingReport != null)
                 {
                     // Update existing report
-                    existingReport.PlayStyle = scoutingReport.PlayStyle;
-                    existingReport.StrengthOne = scoutingReport.StrengthOne;
-                    existingReport.StrengthTwo = scoutingReport.StrengthTwo;
-                    existingReport.WeaknessOne = scoutingReport.WeaknessOne;
-                    existingReport.WeaknessTwo = scoutingReport.WeaknessTwo;
-                    existingReport.PlayStyleImpactOne = scoutingReport.PlayStyleImpactOne;
-                    existingReport.PlayStyleImpactTwo = scoutingReport.PlayStyleImpactTwo;
-                    existingReport.Comparison = scoutingReport.Comparison;
-                    existingReport.Conclusion = scoutingReport.Conclusion;
-                    existingReport.IdealRole = scoutingReport.IdealRole;
-                    existingReport.Status = scoutingReport.Status;
+                    existingReport.PrimaryPosition = scoutingReport.PrimaryPosition;
+                    existingReport.SecondaryPosition = scoutingReport.SecondaryPosition;
+                    existingReport.PlayingStyle = scoutingReport.PlayingStyle;
+                    existingReport.Shooting = scoutingReport.Shooting;
+                    existingReport.BallHandling = scoutingReport.BallHandling;
+                    existingReport.Passing = scoutingReport.Passing;
+                    existingReport.Defense = scoutingReport.Defense;
+                    existingReport.Redounding = scoutingReport.Redounding;
+                    existingReport.Athleticism = scoutingReport.Athleticism;
+                    existingReport.Strengths = scoutingReport.Strengths;
+                    existingReport.AreasforImprovement = scoutingReport.AreasforImprovement;
+                    existingReport.AdditionalNotes = scoutingReport.AdditionalNotes;
                     existingReport.LastUpdated = DateTime.UtcNow;
                 }
                 else
                 {
                     // Add new report
-                    scoutingReport.CreatedDate = DateTime.UtcNow;
+              
                     scoutingReport.LastUpdated = DateTime.UtcNow;
                     await _context.ScoutingReport.AddAsync(scoutingReport, cancellationToken);
                 }

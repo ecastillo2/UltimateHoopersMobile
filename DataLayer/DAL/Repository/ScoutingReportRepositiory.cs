@@ -59,17 +59,18 @@ namespace DataLayer.DAL.Repository
 
                 if (existingItem != null)
                 {
-                    existingItem.PlayStyle = model.PlayStyle;
-                    existingItem.StrengthOne = model.StrengthOne;
-                    existingItem.StrengthTwo = model.StrengthTwo;
-                    existingItem.WeaknessOne = model.WeaknessOne;
-                    existingItem.WeaknessTwo = model.WeaknessTwo;
-                    existingItem.PlayStyleImpactOne = model.PlayStyleImpactOne;
-                    existingItem.PlayStyleImpactTwo = model.PlayStyleImpactTwo;
-                    existingItem.Comparison = model.Comparison;
-                    existingItem.Conclusion = model.Conclusion;
-                    existingItem.Status = model.Status;
-                    existingItem.IdealRole = model.IdealRole;
+                    existingItem.PrimaryPosition = model.PrimaryPosition;
+                    existingItem.SecondaryPosition = model.SecondaryPosition;
+                    existingItem.PlayingStyle = model.PlayingStyle;
+                    existingItem.Shooting = model.Shooting;
+                    existingItem.BallHandling = model.BallHandling;
+                    existingItem.Passing = model.Passing;
+                    existingItem.Defense = model.Defense;
+                    existingItem.Redounding = model.Redounding;
+                    existingItem.Athleticism = model.Athleticism;
+                    existingItem.Strengths = model.Strengths;
+                    existingItem.AreasforImprovement = model.AreasforImprovement;
+                    existingItem.AdditionalNotes = model.AdditionalNotes;
                     existingItem.LastUpdated = DateTime.Now;
                    
 

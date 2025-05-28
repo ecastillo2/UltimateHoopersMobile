@@ -551,7 +551,7 @@ namespace WebAPI.Controllers
                     {
                         ScoutingReportId = Guid.NewGuid().ToString(),
                         ProfileId = id,
-                        Status = "Active"
+                       
                     };
                 }
 

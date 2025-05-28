@@ -323,13 +323,12 @@ namespace Web.Controllers
                     ranking = profileData.Ranking,
                     starRating = profileData.StarRating,
                     profileImage = profileData.ImageURL,
-                    playerNumber = profileData.PlayerNumber,
+                    playerNumber ="#"+ profileData.PlayerNumber,
                     zip = profileData.Zip,
                     height = profileData.Height,
                     status = "Active",
-                    wins = profileData.TotalWins,
-                    losses = profileData.TotalLosses,
-                    points = profileData.Points,
+                    record = profileData.TotalWins +"-"+ profileData.TotalLosses,
+                    
 
                     stats = new { runsJoined = 12 , runsHosted = 3 , achievements = 5 }
                 };

@@ -567,6 +567,20 @@ document.addEventListener('DOMContentLoaded', function () {
         if (profile.zip) address += (address ? ' ' : '') + profile.zip;
         safeUpdateElement('profileAddress', address || '--');
 
+        // Update profile information section values
+        safeUpdateElement('profileHeight', profile.height || '--');
+        safeUpdateElement('profilePosition', profile.position || '--');
+        safeUpdateElement('profileRanking', profile.ranking || '--');
+        safeUpdateElement('profileStarRating', profile.starRating || '--');
+        safeUpdateElement('profileZip', profile.zip || '--');
+        safeUpdateElement('profileRecord', profile.record || '--');
+        safeUpdateElement('profileNumber', profile.playerNumber || '--');
+
+        // Win/Loss/Points stats
+        safeUpdateElement('profileWins', profile.totalWins || '0');
+        safeUpdateElement('profileLosses', profile.totalLosses || '0');
+        safeUpdateElement('profilePoints', profile.points || '0');
+
         // Dates
         safeUpdateElement('profileJoined', formatDate(profile.signUpDate));
         safeUpdateElement('profileLastLogin', formatDate(profile.lastLoginDate) || 'Never');
