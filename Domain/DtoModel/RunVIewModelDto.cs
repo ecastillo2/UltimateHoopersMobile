@@ -21,6 +21,7 @@ namespace Domain.DtoModel
         {
             RunId = privateRun.RunId;
             CourtId = privateRun.CourtId;
+            ClientId = privateRun.ClientId;
             Name = privateRun.Name;
             ProfileId = privateRun.ProfileId;
             Status = privateRun.Status;
@@ -42,6 +43,7 @@ namespace Domain.DtoModel
 
         public string? RunId { get; set; }
         public string? CourtId { get; set; }
+        public string? ClientId { get; set; }
         public string? ProfileId { get; set; }
         public string? Status { get; set; }
         public DateTime? RunDate { get; set; }

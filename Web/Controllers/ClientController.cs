@@ -287,8 +287,6 @@ namespace Web.Controllers
                 }
 
 
-
-
                 // Format the response
                 var clientData = new
                 {

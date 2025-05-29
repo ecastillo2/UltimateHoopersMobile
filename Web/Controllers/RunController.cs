@@ -13,14 +13,17 @@ namespace Web.Controllers
     public class RunController : Controller
     {
         private readonly IRunApi _runApi;
+        private readonly IClientApi _clientApi;
         private readonly IJoinedRunApi _joinedRunApi;
         private readonly ILogger<RunController> _logger;
 
         public RunController(
             IRunApi runApi,
+            IClientApi clientApi,
             IJoinedRunApi joinedRunApi,
             ILogger<RunController> logger)
         {
+            _clientApi = clientApi ?? throw new ArgumentNullException(nameof(clientApi));
             _joinedRunApi = joinedRunApi ?? throw new ArgumentNullException(nameof(joinedRunApi));
             _runApi = runApi ?? throw new ArgumentNullException(nameof(runApi));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -76,7 +79,7 @@ namespace Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetRunData(string id, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetRunData(string id, string clientId,  CancellationToken cancellationToken = default)
         {
             try
             {
@@ -92,18 +95,21 @@ namespace Web.Controllers
                     return Json(new { success = false, message = "Run not found" });
                 }
 
+                var clientCourtList =  await _clientApi.GetClientCourtsAsync(clientId, accessToken, cancellationToken);
+
                 // Transform the data to match what the view expects
                 var runData = new
                 {
                     runId = run.RunId,
+                    clientId = run.ClientId,
                     name = run.Name,
                     runDate = run.RunDate?.ToString("yyyy-MM-dd"),
                     startTime = run.StartTime.HasValue ? run.StartTime.Value.ToString(@"hh\:mm\:ss") : "", // Fallback to RunDate if StartTime is null
                     endTime = run.EndTime.HasValue ? run.EndTime.Value.ToString(@"hh\:mm\:ss") : "", // Default 2 hours if not specified
                     address = "Location not specified",
-                    city =  "t",
-                    state =  "t",
-                    zip =  "t",
+                    city = "t",
+                    state = "t",
+                    zip = "t",
                     playerLimit = run.PlayerLimit,
                     playerCount = run.PlayerCount ?? 0,
                     skillLevel = run.SkillLevel ?? "Intermediate",
@@ -111,7 +117,14 @@ namespace Web.Controllers
                     type = run.Type ?? "Pickup",
                     status = run.Status ?? "Active",
                     isPublic = run.IsPublic ?? true,
-                    teamType = run.TeamType ?? "Individual"
+                    teamType = run.TeamType ?? "Individual",
+                    courtList = clientCourtList.Select(c => new
+                    {
+                        courtId = c.CourtId,
+                        name = c.Name
+                    }).ToList(),
+
+                    success = true
                 };
 
                 return Json(runData);

@@ -77,7 +77,7 @@ namespace DataLayer.DAL
         /// <summary>
         /// Gets the product repository
         /// </summary>
-        public IProductRepository Product => _productRepository ??= new ProductRepository(_context);
+        public IProductRepository Product => _productRepository ??= new ProductRepository(_context, null);
 
         /// <summary>
         /// Gets the order repository

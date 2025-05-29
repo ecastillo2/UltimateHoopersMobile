@@ -48,7 +48,7 @@ namespace DataLayer.DAL
         public IGameRepository Game => _gameRepository ??= new GameRepository(_context);
         public INotificationRepository Notification => _notificationRepository ??= new NotificationRepository(_context);
         public ICourtRepository Court => _courtRepository ??= new CourtRepository(_context, null);
-        public IProductRepository Product => _productRepository ??= new ProductRepository(_context);
+        public IProductRepository Product => _productRepository ??= new ProductRepository(_context, null);
         public IOrderRepository Order => _orderRepository ??= new OrderRepository(_context);
         public IRunRepository Run => _runRepository ??= new RunRepository(_context, null);
         public IJoinedRunRepository JoinedRun => _joinedRunRepository ??= new JoinedRunRepository(_context);

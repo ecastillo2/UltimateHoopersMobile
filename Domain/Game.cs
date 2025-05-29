@@ -9,6 +9,7 @@ namespace Domain
         public string? GameId { get; set; }
         public string? CourtId { get; set; }
         public string? RunId { get; set; }
+        public string? ClientId { get; set; }
         public DateTime? CreatedDate { get; set; }
         public string? RunNumber { get; set; }
         public string? GameNumber { get; set; }

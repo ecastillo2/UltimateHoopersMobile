@@ -14,15 +14,15 @@ namespace WebAPI.ApiClients
     /// <summary>
     /// Interface for Run API operations
     /// </summary>
-    public interface IClientApi
+    public interface IProductApi
     {
         /// <summary>
         /// Get all Runs
         /// </summary>
-        Task<List<Client>> GetClientsAsync(string accessToken, CancellationToken cancellationToken = default);
+        Task<List<Product>> GetProductsAsync(string accessToken, CancellationToken cancellationToken = default);
 
        
-        Task<CursorPaginatedResultDto<ClientDetailViewModelDto>> GetClientsWithCursorAsync(
+        Task<CursorPaginatedResultDto<IList<Product>>> GetProductsWithCursorAsync(
             string cursor = null,
             int limit = 20,
             string direction = "next",
@@ -31,23 +31,15 @@ namespace WebAPI.ApiClients
             CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Get Client By Id Async
+        /// Get Product By Id Async
         /// </summary>
         /// <param name="runId"></param>
         /// <param name="accessToken"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<Client> GetClientByIdAsync(string runId, string accessToken, CancellationToken cancellationToken = default);
+        Task<Product> GetProductByIdAsync(string runId, string accessToken, CancellationToken cancellationToken = default);
 
-        /// <summary>
-        /// Get Client Courts Async
-        /// </summary>
-        /// <param name="clientId"></param>
-        /// <param name="accessToken"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        Task<List<Court>> GetClientCourtsAsync(string clientId, string accessToken, CancellationToken cancellationToken = default);
-
+      
         /// <summary>
         /// Create Client Async
         /// </summary>
@@ -55,7 +47,7 @@ namespace WebAPI.ApiClients
         /// <param name="accessToken"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<Client> CreateClientAsync(Client run, string accessToken, CancellationToken cancellationToken = default);
+        Task<Product> CreateProductAsync(Product product, string accessToken, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Update Client Async
@@ -64,16 +56,16 @@ namespace WebAPI.ApiClients
         /// <param name="accessToken"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<bool> UpdateClientAsync(Client run, string accessToken, CancellationToken cancellationToken = default);
+        Task<bool> UpdateProductAsync(Product product, string accessToken, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Delete Client Async
+        /// Delete Product Async
         /// </summary>
         /// <param name="runId"></param>
         /// <param name="accessToken"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<bool> DeleteClientAsync(string runId, string accessToken, CancellationToken cancellationToken = default);
+        Task<bool> DeleteProductAsync(string productId, string accessToken, CancellationToken cancellationToken = default);
 
         
     }

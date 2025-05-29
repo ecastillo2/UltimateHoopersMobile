@@ -1,229 +1,159 @@
-﻿using Newtonsoft.Json;
-using Domain;
+﻿using Domain;
+using Domain.DtoModel;
+using Microsoft.Extensions.Configuration;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
 
-namespace ApiClient
+namespace WebAPI.ApiClients
 {
-    public static class ProductApi
+    /// <summary>
+    /// Implementation of Product API client
+    /// </summary>
+    public class ProductApi : IProductApi
     {
-        static WebApi _api = new WebApi();
+        private readonly HttpClient _httpClient;
+        private readonly string _baseUrl;
+        private readonly JsonSerializerOptions _jsonOptions;
+
 
         /// <summary>
-        /// Fetches the list of products from the API.
+        /// Product Api Constructor
         /// </summary>
-        /// <param name="token">The authentication token used for API authorization.</param>
-        /// <returns>A list of products or an empty list if an error occurs.</returns>
-        public static async Task<List<Product>> GetProducts(string token)
+        /// <param name="httpClient"></param>
+        /// <param name="configuration"></param>
+        /// <exception cref="ArgumentNullException"></exception>
+        public ProductApi(HttpClient httpClient, IConfiguration configuration)
         {
-            WebApi _api = new WebApi(); // Initialize the API instance.
-            List<Product> modelList = new List<Product>(); // Initialize an empty list for products.
+            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+            _baseUrl = configuration["ApiSettings:BaseUrl"] ?? "https://ultimatehoopersapi.azurewebsites.net";
 
-            var clientBaseAddress = _api.Intial(); // Get the base address for the API.
-
-            using (var client = new HttpClient())
+            _jsonOptions = new JsonSerializerOptions
             {
-                // Set up the HTTP client with the necessary headers.
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token); // Add the Bearer token for authentication.
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json")); // Accept JSON response.
-
-                try
-                {
-                    // Make the GET request to fetch products.
-                    var response = await client.GetAsync("api/Product/GetProducts/");
-
-                    // Read the response content as a string.
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        // If the request is successful, deserialize the response into a list of products.
-                        modelList = JsonConvert.DeserializeObject<List<Product>>(responseString);
-                    }
-                    else
-                    {
-                        // If the response status code indicates failure, log the response code and message.
-                        // You can replace this with logging or other error handling mechanisms.
-                        Console.WriteLine($"Error: {response.StatusCode} - {response.ReasonPhrase}");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    // Log the exception for debugging purposes.
-                    // You can replace this with your preferred logging mechanism.
-                    Console.WriteLine($"Exception: {ex.Message} - {ex.StackTrace}");
-                }
-            }
-
-            // Return the list of products (empty if no products were fetched or if an error occurred).
-            return modelList;
+                PropertyNameCaseInsensitive = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
         }
 
         /// <summary>
-        /// Create SavedPost
+        /// Get all Products
         /// </summary>
-        /// <param name="obj"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task<bool> CreateProduct(Product obj, string token)
+        public async Task<List<Product>> GetProductsAsync(string accessToken, CancellationToken cancellationToken = default)
         {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            var userJsonString = JsonConvert.SerializeObject(obj);
-            var clientBaseAddress = _api.Intial();
+            var response = await _httpClient.GetAsync($"{_baseUrl}/api/Product/GetProducts", cancellationToken);
+            response.EnsureSuccessStatusCode();
 
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer" + token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                HttpContent content = new StringContent(userJsonString, Encoding.UTF8, "application/json");
-               
-                try
-                {
-                    var response = await client.PostAsync("api/Product/CreateProduct/", content);
-
-                }
-
-                catch (Exception ex)
-                {
-                    var x = ex;
-
-                }
-
-            }
-            return true;
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            return JsonSerializer.Deserialize<List<Product>>(content, _jsonOptions);
         }
 
         /// <summary>
-        /// Get SavedPost By Id
+        /// Get Product by ID
         /// </summary>
-        /// <param name="postId"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task<Product> GetProductById(string productId, string token)
+        public async Task<Product> GetProductByIdAsync(string productId, string accessToken, CancellationToken cancellationToken = default)
         {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            Product obj = new Product();
-            string urlParameters = "?productId=" + productId;
+            // Use the correct route format that matches the [HttpGet("{id}")] attribute
+            var response = await _httpClient.GetAsync($"{_baseUrl}/api/Product/{productId}", cancellationToken);
 
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
-            {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer "+ token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-               
-                try
-                {
-                    var response = await client.GetAsync("api/Product/GetProductById" + urlParameters);
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                    if (response.IsSuccessStatusCode)
-                    {
-
-                        obj = JsonConvert.DeserializeObject<Product>(responseString);
-
-
-                    }
-                }
-
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.ToString());
-
-                }
-
-            }
-            return obj;
+            response.EnsureSuccessStatusCode();
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            return JsonSerializer.Deserialize<Product>(content, _jsonOptions);
         }
 
 
 
         /// <summary>
-        /// Update SavedPost
+        /// Create a new Product
         /// </summary>
-        /// <param name="obj"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task<bool> UpdateProduct(Product obj, string token)
+        public async Task<Product> CreateProductAsync(Product model, string accessToken, CancellationToken cancellationToken = default)
         {
-            
-            var userJsonString = JsonConvert.SerializeObject(obj);
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
-            {
+            var jsonContent = new StringContent(
+                JsonSerializer.Serialize(model, _jsonOptions),
+                Encoding.UTF8,
+                "application/json");
 
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer "+ token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                HttpContent content = new StringContent(userJsonString, Encoding.UTF8, "application/json");
-                try
-                {
-                    var response = await client.PostAsync("api/Product/UpdateProduct", content);
-                    var responseString = await response.Content.ReadAsStringAsync();
+            var response = await _httpClient.PostAsync($"{_baseUrl}/api/Product/CreateProduct", jsonContent, cancellationToken);
+            response.EnsureSuccessStatusCode();
 
-                }
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            return JsonSerializer.Deserialize<Product>(content, _jsonOptions);
+        }
 
-                catch (Exception ex)
-                {
-                    var x = ex;
+        /// <summary>
+        /// Update an existing Product
+        /// </summary>
+        public async Task<bool> UpdateProductAsync(Product model, string accessToken, CancellationToken cancellationToken = default)
+        {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-                }
+            var jsonContent = new StringContent(
+                JsonSerializer.Serialize(model, _jsonOptions),
+                Encoding.UTF8,
+                "application/json");
 
-                return true;
-            }
+            var response = await _httpClient.PostAsync($"{_baseUrl}/api/Product/UpdateProduct", jsonContent, cancellationToken);
+            return response.IsSuccessStatusCode;
+        }
 
+        /// <summary>
+        /// Delete a Run
+        /// </summary>
+        public async Task<bool> DeleteProductAsync(string productId, string accessToken, CancellationToken cancellationToken = default)
+        {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            var response = await _httpClient.DeleteAsync($"{_baseUrl}/api/Product/DeleteProduct?productId={productId}", cancellationToken);
+            return response.IsSuccessStatusCode;
         }
 
 
-        /// <summary>
-        /// Delete SavedPost
-        /// </summary>
-        /// <param name="postId"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static async Task DeleteProduct(string productId, string token)
+        public async Task<CursorPaginatedResultDto<IList<Product>>> GetProductsWithCursorAsync(string cursor = null, int limit = 20, string direction = "next", string sortBy = "Points", string accessToken = null, CancellationToken cancellationToken = default)
         {
-            WebApi _api = new WebApi();
-            
-            string urlParameters = "?productId=" + productId;
-
-            var clientBaseAddress = _api.Intial();
-            using (var client = new HttpClient())
+            try
             {
-
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.BaseAddress = clientBaseAddress.BaseAddress;
-                client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                try
+                // Set authentication header if token is provided
+                if (!string.IsNullOrEmpty(accessToken))
                 {
-                    var response = await client.DeleteAsync("api/Product/DeleteProduct" + urlParameters);
-                    var responseString = await response.Content.ReadAsStringAsync();
-
-                    if (response.IsSuccessStatusCode)
-                    {
-
-                    }
+                    _httpClient.DefaultRequestHeaders.Authorization =
+                        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
                 }
 
-                catch (Exception ex)
-                {
-                    var x = ex;
+                // Build query string
+                var queryParams = new List<string>();
+                if (!string.IsNullOrEmpty(cursor))
+                    queryParams.Add($"cursor={Uri.EscapeDataString(cursor)}");
 
-                }
+                queryParams.Add($"limit={limit}");
+                queryParams.Add($"direction={Uri.EscapeDataString(direction)}");
+                queryParams.Add($"sortBy={Uri.EscapeDataString(sortBy)}");
 
+                var queryString = string.Join("&", queryParams);
+                var requestUrl = $"{_baseUrl}/api/Product/cursor{(queryParams.Any() ? "?" + queryString : "")}";
+
+                // Make the request
+                var response = await _httpClient.GetAsync(requestUrl, cancellationToken);
+                response.EnsureSuccessStatusCode();
+
+                // Deserialize the response
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+                return JsonSerializer.Deserialize<CursorPaginatedResultDto<IList<Product>>>(content, _jsonOptions);
             }
-          
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"API request error: {ex.Message}");
+                throw;
+            }
+            catch (JsonException ex)
+            {
+                Console.WriteLine($"JSON parsing error: {ex.Message}");
+                throw;
+            }
         }
 
        

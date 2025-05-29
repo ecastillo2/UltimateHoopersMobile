@@ -1,158 +1,156 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using DataLayer.DAL;
+﻿using DataLayer.DAL.Interface;
 using Domain;
+using Domain.DtoModel;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.CodeAnalysis;
-using System.Net;
-using DataLayer.DAL.Context;
-using DataLayer.Context;
-using DataLayer.DAL.Interface;
-using DataLayer.DAL.Repository;
+using Microsoft.AspNetCore.Mvc;
 
 namespace WebAPI.Controllers
 {
-    /// <summary>
-    /// Product Controller
-    /// </summary>
+    [ApiController]
     [Route("api/[controller]")]
-    
-    public class ProductController : Controller
+    public class ProductController : ControllerBase
     {
-        HttpResponseMessage returnMessage = new HttpResponseMessage();
-        private IProductRepository repository;        
-        private readonly IConfiguration _configuration;
+        private readonly IProductRepository _repository;
+        private readonly ILogger<ProductController> _logger;
 
-        /// <summary>
-        /// Product Controller
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="configuration"></param>
-        public ProductController(ApplicationContext context, IConfiguration configuration)
+        public ProductController(IProductRepository repository, ILogger<ProductController> logger)
         {
-           
-            this._configuration = configuration;
-            this.repository = new ProductRepository(context);
-
+            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         /// <summary>
-        /// Retrieves a list of products from the repository.
+        /// Get Products
         /// </summary>
-        /// <returns>A list of <see cref="Product"/> objects.</returns>
-        [HttpGet("GetProducts")]
-        // Uncomment the line below to enable authorization for this endpoint
-        // [Authorize]
-        public async Task<IActionResult> GetProducts()
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        [HttpGet]
+        //[ProducesResponseType(typeof(IEnumerable<RunViewModelDto>), 200)]
+        public async Task<IActionResult> GetProducts(CancellationToken cancellationToken)
         {
             try
             {
-                // Fetch the list of products from the repository
-                var products = await repository.GetProducts();
+                var products = await _repository.GetProductsAsync(cancellationToken);
+               
 
-                // Return the products with an OK status code
                 return Ok(products);
             }
             catch (Exception ex)
             {
-                // Log the exception (replace with your preferred logging mechanism)
-                // Example: _logger.LogError(ex, "An error occurred while retrieving products.");
+                _logger.LogError(ex, "Error retrieving PrivateRuns");
+                return StatusCode(500, "An error occurred while retrieving PrivateRuns");
+            }
+        }
 
-                // Return a generic error message with a 500 status code
-                return StatusCode(StatusCodes.Status500InternalServerError, new
+
+
+
+        /// <summary>
+        /// Get productss with cursor-based pagination for efficient scrolling
+        /// </summary>
+        [HttpGet("cursor")]
+        [ProducesResponseType(typeof(CursorPaginatedResultDto<IList<Product>>), 200)]
+        public async Task<IActionResult> GetProductsWithCursor(
+            [FromQuery] string cursor = null,
+            [FromQuery] int limit = 20,
+            [FromQuery] string direction = "next",
+            [FromQuery] string sortBy = "Points",
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var (products, nextCursor) = await _repository
+                    .GetProductsWithCursorAsync(cursor, limit, direction, sortBy, cancellationToken);
+
+                // Enrich each products with additional data
+                foreach (var item in products)
                 {
-                    Message = "An error occurred while retrieving the products. Please try again later.",
-                    Error = ex.Message // Consider removing this in production for security
-                });
+                    // Get additional products data using the products's ID
+                    var privateRun = item;
+                    
+                }
+
+
+                return Ok(products);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving cursor-based PrivateRuns");
+                return StatusCode(500, "An error occurred while retrieving cursor-based PrivateRuns");
             }
         }
 
-
         /// <summary>
-        /// Get Product By Id
+        /// Get products By Id
         /// </summary>
-        /// <param name="productId"></param>
+        /// <param name="id"></param>
+        /// <param name="cancellationToken"></param>
         /// <returns></returns>
-      
-        [HttpGet("GetProductById")]
-        public async Task<Product> GetProductById(string productId)
+        [HttpGet("{id}")]
+        [ProducesResponseType(typeof(IList<Product>), 200)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> GetProductById(string id, CancellationToken cancellationToken)
         {
             try
             {
-                return await repository.GetProductById(productId);
-            }
-            catch(Exception ex)
-            {
-                throw ex;
-            }
+                var product = await _repository.GetProductByIdAsync(id, cancellationToken);
 
+                if (product == null)
+                    return NotFound();
+
+                return Ok(product);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving Product {ProductId}", id);
+                return StatusCode(500, "An error occurred while retrieving the Product");
+            }
         }
 
+
         /// <summary>
-        /// Create Product
+        /// Update products
         /// </summary>
-        /// <param name="product"></param>
+        /// <param name="id"></param>
+        /// <param name="model"></param>
+        /// <param name="cancellationToken"></param>
         /// <returns></returns>
-         [Authorize]
-        [HttpPost("CreateProduct")]
-        public async Task CreateProduct([FromBody] Product product)
+        [HttpPut("{id}")]
+        [Authorize]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> UpdateProduct(string id, Product model, CancellationToken cancellationToken)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (id != model.ProductId)
+                return BadRequest("products ID mismatch");
+
+            try
+            {
+                var products = await _repository.GetProductByIdAsync(id, cancellationToken);
+
+                if (products == null)
+                    return NotFound($"products with ID {id} not found");
+
             
-            try
-            {
-                  await  repository.InsertProduct(product);
+
+                var success = await _repository.UpdateProductAsync(model, cancellationToken);
+
+                if (!success)
+                    return StatusCode(500, "Failed to update products");
+
+                return NoContent();
             }
             catch (Exception ex)
             {
-                var x = ex;
+                _logger.LogError(ex, "Error updating profile {ProfileId}", id);
+                return StatusCode(500, "An error occurred while updating the profile");
             }
-
         }
 
-
-        /// <summary>
-        /// Update Product
-        /// </summary>
-        /// <param name="product"></param>
-        /// <returns></returns>
-        [HttpPost("UpdateProduct")]
-        [Authorize]
-        public async Task UpdateProduct([FromBody] Product product)
-        {
-
-            try
-            {
-                await repository.UpdateProduct(product);
-
-            }
-            catch
-            {
-                var message = new HttpResponseMessage(HttpStatusCode.BadRequest);
-            }
-
-        }
-
-        /// <summary>
-        /// Delete Product
-        /// </summary>
-        /// <param name="productId"></param>
-        /// <returns></returns>
-        [HttpDelete("DeleteProduct")]
-        [Authorize]
-        public async Task<HttpResponseMessage> DeleteProduct(string productId)
-        {
-            try
-            {
-                await repository.DeleteProduct(productId);
-
-                returnMessage.RequestMessage = new HttpRequestMessage(HttpMethod.Post, "DeleteProduct");
-
-                return await Task.FromResult(returnMessage);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-            }
-            return await Task.FromResult(returnMessage);
-        }
     }
 }
+
