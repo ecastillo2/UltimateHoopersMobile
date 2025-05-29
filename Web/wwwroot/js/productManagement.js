@@ -337,41 +337,60 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
+        console.log("Loading product data for ID:", productId);
+
         // Show loading indicator in the form
         showFormLoadingState(true);
 
         // Always try to populate from table row data first for immediate feedback
         const row = findProductRowById(productId);
         if (row) {
+            console.log("Found table row, populating from table data");
             populateProductFormFromRow(row);
+        } else {
+            console.warn("No table row found for product ID:", productId);
         }
 
         // Then try to load from API if available for more complete data
         if (window.appUrls?.getProductData) {
             const url = `${window.appUrls.getProductData}?id=${productId}`;
+            console.log("Making API request to:", url);
 
             fetch(url)
                 .then(response => {
+                    console.log("API response status:", response.status);
                     if (!response.ok) {
-                        throw new Error('Network response was not ok');
+                        throw new Error(`Network response was not ok: ${response.status}`);
                     }
                     return response.json();
                 })
                 .then(data => {
                     showFormLoadingState(false);
+                    console.log("API response data:", data);
 
                     if (data.success) {
+                        console.log("API data received successfully, populating form fields");
+
                         // Populate form fields with API data - this will override table data with more complete info
-                        safeSetValue('editTitle', data.Title);
-                        safeSetValue('editDescription', data.Description);
+                        if (data.Title) {
+                            safeSetValue('editTitle', data.Title);
+                            console.log("Set title from API:", data.Title);
+                        }
+
+                        if (data.Description) {
+                            safeSetValue('editDescription', data.Description);
+                            console.log("Set description from API:", data.Description);
+                        }
 
                         // Handle price as decimal with proper formatting
                         if (data.Price !== null && data.Price !== undefined) {
                             var price = parseFloat(data.Price);
                             if (!isNaN(price)) {
                                 safeSetValue('editPrice', price.toFixed(2));
+                                console.log("Set price from API:", price.toFixed(2));
                             } else {
                                 safeSetValue('editPrice', '0.00');
+                                console.warn("Invalid price from API:", data.Price);
                             }
                         }
 
@@ -380,21 +399,44 @@ document.addEventListener('DOMContentLoaded', function () {
                             var points = parseInt(data.Points, 10);
                             if (!isNaN(points)) {
                                 safeSetValue('editPoints', points.toString());
+                                console.log("Set points from API:", points);
                             } else {
                                 safeSetValue('editPoints', '0');
+                                console.warn("Invalid points from API:", data.Points);
                             }
                         }
 
-                        safeSetValue('editProductNumber', data.ProductNumber);
-                        safeSetValue('editTag', data.Tag);
-                        safeSetValue('editImageURL', data.ImageURL);
+                        if (data.ProductNumber) {
+                            safeSetValue('editProductNumber', data.ProductNumber);
+                            console.log("Set product number from API:", data.ProductNumber);
+                        }
+
+                        if (data.Tag) {
+                            safeSetValue('editTag', data.Tag);
+                            console.log("Set tag from API:", data.Tag);
+                        }
+
+                        if (data.ImageURL) {
+                            safeSetValue('editImageURL', data.ImageURL);
+                            console.log("Set image URL from API:", data.ImageURL);
+                        }
 
                         // Select values - check if elements exist
-                        safeSetSelect('editType', data.Type);
-                        safeSetSelect('editCategory', data.Category);
+                        if (data.Type) {
+                            safeSetSelect('editType', data.Type);
+                            console.log("Set type from API:", data.Type);
+                        }
+
+                        if (data.Category) {
+                            safeSetSelect('editCategory', data.Category);
+                            console.log("Set category from API:", data.Category);
+                        }
+
                         safeSetSelect('editStatus', data.Status || 'Active');
+                        console.log("Set status from API:", data.Status || 'Active');
 
                         console.log('Product data loaded successfully from API');
+                        showToast('Success', 'Product data loaded from API', 'success');
                     } else {
                         console.error('Error loading product data from API:', data.message);
                         showToast('Warning', 'Using table data. Some details may be limited.', 'warning');
@@ -409,6 +451,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // No API available, just use table data
             showFormLoadingState(false);
             console.log('No API URL configured, using table data only');
+            showToast('Info', 'Using table data only - no API configured', 'info');
         }
     }
 
@@ -516,1435 +559,536 @@ document.addEventListener('DOMContentLoaded', function () {
     function populateProductFormFromRow(row) {
         if (!row) return;
 
-        console.log('Populating form from table row data');
+        console.log('Populating form from table row data', row);
 
-        const productInfo = row.querySelector('.d-flex.align-items-center');
-        if (!productInfo) return;
+        // Try multiple approaches to extract data since table structure may vary
 
-        const titleEl = productInfo.querySelector('.fw-semibold');
-        const productNumberEl = productInfo.querySelector('.text-muted.small');
-
-        // Extract title
-        if (titleEl) {
-            const title = titleEl.textContent.trim();
-            safeSetValue('editTitle', title);
-            console.log('Set title:', title);
-        }
-
-        // Extract product number/SKU
-        if (productNumberEl) {
-            const productNumber = productNumberEl.textContent.trim();
-            safeSetValue('editProductNumber', productNumber);
-            console.log('Set product number:', productNumber);
-        }
-
-        // Extract data from table cells
+        // Method 1: Try to extract from the first cell (product name/title column)
         if (row.cells && row.cells.length > 0) {
-            // Price from column 1 (remove $ symbol)
+            const firstCell = row.cells[0];
+            console.log('First cell content:', firstCell.innerHTML);
+
+            // Look for title in various possible locations
+            let titleEl = firstCell.querySelector('.fw-semibold') ||
+                firstCell.querySelector('.fw-bold') ||
+                firstCell.querySelector('strong') ||
+                firstCell.querySelector('.product-title') ||
+                firstCell.querySelector('a');
+
+            // If no specific element found, try to get the main text content
+            if (!titleEl) {
+                // Get all text nodes and find the longest one (likely the title)
+                const textContent = firstCell.textContent.trim();
+                const lines = textContent.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+                if (lines.length > 0) {
+                    safeSetValue('editTitle', lines[0]);
+                    console.log('Set title from text content:', lines[0]);
+
+                    // Second line might be product number
+                    if (lines.length > 1) {
+                        safeSetValue('editProductNumber', lines[1]);
+                        console.log('Set product number from text content:', lines[1]);
+                    }
+                }
+            } else {
+                const title = titleEl.textContent.trim();
+                safeSetValue('editTitle', title);
+                console.log('Set title from element:', title);
+            }
+
+            // Look for product number/SKU in various possible locations
+            let productNumberEl = firstCell.querySelector('.text-muted.small') ||
+                firstCell.querySelector('.text-muted') ||
+                firstCell.querySelector('.small') ||
+                firstCell.querySelector('.product-number') ||
+                firstCell.querySelector('.sku');
+
+            if (productNumberEl) {
+                const productNumber = productNumberEl.textContent.trim();
+                safeSetValue('editProductNumber', productNumber);
+                console.log('Set product number from element:', productNumber);
+            }
+
+            // Extract price from column 1 (remove $ symbol and any extra characters)
             if (row.cells.length > 1) {
-                const priceText = row.cells[1].textContent.trim().replace('
+                const priceText = row.cells[1].textContent.trim().replace(/[$,]/g, '');
+                const price = parseFloat(priceText) || 0;
+                safeSetValue('editPrice', price.toString());
+                console.log('Set price:', price);
+            }
+
+            // Extract points from column 2
+            if (row.cells.length > 2) {
+                const pointsText = row.cells[2].textContent.trim().replace(/[^0-9]/g, '');
+                const points = parseInt(pointsText) || 0;
+                safeSetValue('editPoints', points.toString());
+                console.log('Set points:', points);
+            }
+
+            // Extract status from column 3 (look for badge or text)
+            if (row.cells.length > 3) {
+                const statusCell = row.cells[3];
+                const statusBadge = statusCell.querySelector('.badge') ||
+                    statusCell.querySelector('.label') ||
+                    statusCell.querySelector('.status');
+
+                if (statusBadge) {
+                    const status = statusBadge.textContent.trim();
+                    safeSetSelect('editStatus', status);
+                    console.log('Set status from badge:', status);
+                } else {
+                    const status = statusCell.textContent.trim();
+                    if (status && status !== 'N/A') {
+                        safeSetSelect('editStatus', status);
+                        console.log('Set status from text:', status);
+                    }
+                }
+            }
+
+            // Extract category from column 4
+            if (row.cells.length > 4) {
+                const category = row.cells[4].textContent.trim();
+                if (category && category !== 'N/A' && category !== '') {
+                    safeSetSelect('editCategory', category);
+                    console.log('Set category:', category);
+                }
+            }
+        }
+
+        // Method 2: Try to extract from data attributes (more reliable if available)
+        const dataAttributes = {
+            title: row.getAttribute('data-title') || row.getAttribute('data-product-title'),
+            productNumber: row.getAttribute('data-product-number') || row.getAttribute('data-sku'),
+            description: row.getAttribute('data-description'),
+            status: row.getAttribute('data-status'),
+            category: row.getAttribute('data-category'),
+            type: row.getAttribute('data-type'),
+            price: row.getAttribute('data-price'),
+            points: row.getAttribute('data-points')
+        };
+
+        console.log('Data attributes found:', dataAttributes);
+
+        // Override with data attributes if they exist
+        if (dataAttributes.title) {
+            safeSetValue('editTitle', dataAttributes.title);
+            console.log('Set title from data attribute:', dataAttributes.title);
+        }
+
+        if (dataAttributes.productNumber) {
+            safeSetValue('editProductNumber', dataAttributes.productNumber);
+            console.log('Set product number from data attribute:', dataAttributes.productNumber);
+        }
+
+        if (dataAttributes.description) {
+            safeSetValue('editDescription', dataAttributes.description);
+            console.log('Set description from data attribute:', dataAttributes.description);
+        }
+
+        if (dataAttributes.status) {
+            safeSetSelect('editStatus', capitalizeFirst(dataAttributes.status));
+            console.log('Set status from data attribute:', dataAttributes.status);
+        }
+
+        if (dataAttributes.category) {
+            safeSetSelect('editCategory', capitalizeFirst(dataAttributes.category));
+            console.log('Set category from data attribute:', dataAttributes.category);
+        }
+
+        if (dataAttributes.type) {
+            safeSetSelect('editType', capitalizeFirst(dataAttributes.type));
+            console.log('Set type from data attribute:', dataAttributes.type);
+        }
+
+        if (dataAttributes.price) {
+            safeSetValue('editPrice', dataAttributes.price);
+            console.log('Set price from data attribute:', dataAttributes.price);
+        }
+
+        if (dataAttributes.points) {
+            safeSetValue('editPoints', dataAttributes.points);
+            console.log('Set points from data attribute:', dataAttributes.points);
+        }
+
+        // Set placeholder description if not found anywhere
+        const descriptionField = document.getElementById('editDescription');
+        if (descriptionField && !descriptionField.value) {
+            safeSetValue('editDescription', 'Product description will be loaded from API or can be edited here.');
+        }
+
+        showToast('Info', 'Product details loaded from table. Edit as needed.', 'info');
+    }
+
+    // Helper function to capitalize first letter
+    function capitalizeFirst(str) {
+        if (!str) return str;
+        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    }
 
     // Function to load product info
     function loadProductInfo(productId) {
-                        if (!productId || !window.appUrls?.getProductData) {
-                            console.log("Missing productId or API URL for loadProductInfo");
-                            return;
-                        }
+        if (!productId || !window.appUrls?.getProductData) {
+            console.log("Missing productId or API URL for loadProductInfo");
+            return;
+        }
 
-                        const url = `${window.appUrls.getProductData}?id=${productId}`;
+        const url = `${window.appUrls.getProductData}?id=${productId}`;
 
-                        fetch(url)
-                            .then(response => {
-                                if (!response.ok) {
-                                    throw new Error('Network response was not ok');
-                                }
-                                return response.json();
-                            })
-                            .then(data => {
-                                if (data.success) {
-                                    updateProductInfoUI(data);
-                                } else {
-                                    console.error('Error loading product info:', data.message);
-                                    showToast('Error', 'Failed to load product info. Please try again.', 'danger');
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    updateProductInfoUI(data);
+                } else {
+                    console.error('Error loading product info:', data.message);
+                    showToast('Error', 'Failed to load product info. Please try again.', 'danger');
 
-                                    // Create fallback product info from form data
-                                    const fallbackProduct = createFallbackProductInfo();
-                                    updateProductInfoUI(fallbackProduct);
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Error fetching product info:', error);
-                                showToast('Error', 'Failed to load product info. Please try again.', 'danger');
+                    // Create fallback product info from form data
+                    const fallbackProduct = createFallbackProductInfo();
+                    updateProductInfoUI(fallbackProduct);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching product info:', error);
+                showToast('Error', 'Failed to load product info. Please try again.', 'danger');
 
-                                // Create fallback product info from form data
-                                const fallbackProduct = createFallbackProductInfo();
-                                updateProductInfoUI(fallbackProduct);
-                            });
-                    }
+                // Create fallback product info from form data
+                const fallbackProduct = createFallbackProductInfo();
+                updateProductInfoUI(fallbackProduct);
+            });
+    }
 
     // Create fallback product info from form data
     function createFallbackProductInfo() {
-                        // Safely get values, defaulting to empty strings if elements don't exist
-                        const getValueOrEmpty = (id) => {
-                            const el = document.getElementById(id);
-                            return el ? el.value || '' : '';
-                        };
+        // Safely get values, defaulting to empty strings if elements don't exist
+        const getValueOrEmpty = (id) => {
+            const el = document.getElementById(id);
+            return el ? el.value || '' : '';
+        };
 
-                        return {
-                            Title: getValueOrEmpty('editTitle'),
-                            Description: getValueOrEmpty('editDescription'),
-                            Price: getValueOrEmpty('editPrice'),
-                            Points: getValueOrEmpty('editPoints'),
-                            ProductNumber: getValueOrEmpty('editProductNumber'),
-                            Tag: getValueOrEmpty('editTag'),
-                            Type: document.getElementById('editType')?.value || '',
-                            Category: document.getElementById('editCategory')?.value || '',
-                            Status: document.getElementById('editStatus')?.value || 'Active',
-                            ImageURL: getValueOrEmpty('editImageURL'),
-                            stats: { sales: 0, views: 0, rating: 0 }
-                        };
-                    }
+        return {
+            Title: getValueOrEmpty('editTitle'),
+            Description: getValueOrEmpty('editDescription'),
+            Price: getValueOrEmpty('editPrice'),
+            Points: getValueOrEmpty('editPoints'),
+            ProductNumber: getValueOrEmpty('editProductNumber'),
+            Tag: getValueOrEmpty('editTag'),
+            Type: document.getElementById('editType')?.value || '',
+            Category: document.getElementById('editCategory')?.value || '',
+            Status: document.getElementById('editStatus')?.value || 'Active',
+            ImageURL: getValueOrEmpty('editImageURL'),
+            stats: { sales: 0, views: 0, rating: 0 }
+        };
+    }
 
     // Function to update product info UI elements
     function updateProductInfoUI(product) {
-                        if (!product) {
-                            console.error("No product data provided to updateProductInfoUI");
-                            return;
+        if (!product) {
+            console.error("No product data provided to updateProductInfoUI");
+            return;
+        }
+
+        // Safely update UI elements - only update if element exists
+        safeUpdateElement('productInfoInitials', getInitials(product.Title));
+        safeUpdateElement('productInfoTitle', product.Title || 'Product');
+        safeUpdateElement('productInfoNumber', product.ProductNumber || 'No SKU');
+        safeUpdateElement('productInfoStatus', product.Status || 'Active');
+        safeUpdateElement('productInfoCategory', product.Category || 'No Category');
+
+        // Product info details
+        safeUpdateElement('productInfoTitleDetail', product.Title || '--');
+
+        // Format price as currency with 2 decimal places
+        var priceDisplay = '--';
+        if (product.Price !== null && product.Price !== undefined) {
+            var price = parseFloat(product.Price);
+            if (!isNaN(price)) {
+                priceDisplay = '$' + price.toFixed(2);
+            }
+        }
+        safeUpdateElement('productInfoPrice', priceDisplay);
+
+        // Format points as integer
+        var pointsDisplay = '--';
+        if (product.Points !== null && product.Points !== undefined) {
+            var points = parseInt(product.Points, 10);
+            if (!isNaN(points)) {
+                pointsDisplay = points.toString();
+            }
+        }
+        safeUpdateElement('productInfoPoints', pointsDisplay);
+
+        safeUpdateElement('productInfoType', product.Type || '--');
+        safeUpdateElement('productInfoTag', product.Tag || '--');
+
+        // Statistics - use mock data or actual stats if available
+        safeUpdateElement('productInfoSales', product.stats?.sales || Math.floor(Math.random() * 100));
+        safeUpdateElement('productInfoViews', product.stats?.views || Math.floor(Math.random() * 1000));
+        safeUpdateElement('productInfoRating', product.stats?.rating || (Math.random() * 5).toFixed(1));
+    }
+
+    // Function to load inventory data
+    function loadInventoryData(productId) {
+        if (!productId) {
+            console.log("Missing productId for loadInventoryData");
+            return;
+        }
+
+        // For now, we'll populate with mock data since there's no inventory API endpoint yet
+        // In a real application, you would fetch this from an inventory API
+
+        // Set mock inventory data
+        safeSetValue('stockQuantity', Math.floor(Math.random() * 100));
+        safeSetValue('lowStockThreshold', 5);
+        safeSetValue('reorderLevel', 10);
+        safeSetValue('supplier', 'Sports Equipment Co.');
+        safeSetValue('sku', `SKU-${productId}-001`);
+        safeSetValue('location', 'Warehouse A - Section 3');
+        safeSetValue('lastRestocked', new Date().toISOString().split('T')[0]);
+        safeSetValue('inventoryNotes', 'Standard storage conditions required.');
+
+        // Show metadata
+        const metadataSection = document.getElementById('inventoryMetadata');
+        if (metadataSection) {
+            metadataSection.style.display = 'flex';
+            safeUpdateElement('inventoryLastUpdated', formatDateTime(new Date()));
+        }
+    }
+
+    // Helper function to safely update element text content
+    function safeUpdateElement(elementId, value) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.textContent = value;
+        }
+    }
+
+    // Helper function to show toast notifications
+    function showToast(title, message, type = 'success') {
+        // Check if toast container exists, create if not
+        let toastContainer = document.querySelector('.toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+            toastContainer.style.zIndex = '9999';
+            document.body.appendChild(toastContainer);
+        }
+
+        // Create toast element
+        const toastId = 'toast-' + Date.now();
+        const iconClass = {
+            'success': 'bi-check-circle',
+            'danger': 'bi-exclamation-triangle',
+            'warning': 'bi-exclamation-triangle',
+            'info': 'bi-info-circle'
+        }[type] || 'bi-info-circle';
+
+        const toastHtml = '<div id="' + toastId + '" class="toast align-items-center text-white bg-' + type + ' border-0" role="alert" aria-live="assertive" aria-atomic="true">' +
+            '<div class="d-flex">' +
+            '<div class="toast-body">' +
+            '<i class="bi ' + iconClass + ' me-2"></i>' +
+            '<strong>' + title + ':</strong> ' + message +
+            '</div>' +
+            '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>' +
+            '</div>' +
+            '</div>';
+
+        // Add toast to container
+        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+
+        // Initialize and show toast
+        const toastElement = document.getElementById(toastId);
+        if (toastElement && typeof bootstrap !== 'undefined' && bootstrap.Toast) {
+            const toast = new bootstrap.Toast(toastElement, {
+                autohide: type !== 'danger', // Keep error toasts visible until manually closed
+                delay: type === 'info' ? 3000 : 5000
+            });
+            toast.show();
+
+            // Remove toast after hiding
+            toastElement.addEventListener('hidden.bs.toast', function () {
+                toastElement.remove();
+            });
+        }
+    }
+
+    // Helper function to get initials from product title
+    function getInitials(title) {
+        if (!title || title.length === 0) return 'P';
+
+        const words = title.split(' ');
+        if (words.length >= 2) {
+            return (words[0][0] + words[1][0]).toUpperCase();
+        } else {
+            return title[0].toUpperCase();
+        }
+    }
+
+    // Helper function to format date with time
+    function formatDateTime(dateString) {
+        if (!dateString) return '--';
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return '--';
+
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch (e) {
+            console.error("Error formatting date time:", e);
+            return '--';
+        }
+    }
+
+    // View product button handler
+    const viewProductBtn = document.getElementById('viewProductBtn');
+    if (viewProductBtn) {
+        viewProductBtn.addEventListener('click', function () {
+            const productId = document.getElementById('editProductId')?.value;
+            if (productId) {
+                // Navigate to product details page
+                window.location.href = `/Product/Details/${productId}`;
+            }
+        });
+    }
+
+    // AJAX form submission for the inventory form
+    const editInventoryForm = document.getElementById('editInventoryForm');
+    if (editInventoryForm) {
+        editInventoryForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            // Get form data
+            const formData = new FormData(this);
+            const inventoryData = {};
+
+            // Convert FormData to object
+            for (const [key, value] of formData.entries()) {
+                inventoryData[key] = value;
+            }
+
+            // Check if the updateInventory API URL exists
+            if (!window.appUrls?.updateInventory) {
+                console.error("Missing API URL for updateInventory");
+                showToast('Error', 'API configuration is missing. Cannot save inventory data.', 'danger');
+                return;
+            }
+
+            // Get anti-forgery token
+            const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
+            if (!tokenElement) {
+                console.error("Anti-forgery token not found");
+                showToast('Error', 'Security token is missing. Cannot save inventory data.', 'danger');
+                return;
+            }
+
+            // Send AJAX request
+            fetch(window.appUrls.updateInventory, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': tokenElement.value
+                },
+                body: JSON.stringify(inventoryData)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Show success message
+                        showToast('Success', data.message || 'Inventory updated successfully');
+
+                        // Update metadata
+                        const metadataSection = document.getElementById('inventoryMetadata');
+                        if (metadataSection) {
+                            metadataSection.style.display = 'flex';
+                            safeUpdateElement('inventoryLastUpdated', formatDateTime(new Date()));
                         }
-
-                        // Safely update UI elements - only update if element exists
-                        safeUpdateElement('productInfoInitials', getInitials(product.Title));
-                        safeUpdateElement('productInfoTitle', product.Title || 'Product');
-                        safeUpdateElement('productInfoNumber', product.ProductNumber || 'No SKU');
-                        safeUpdateElement('productInfoStatus', product.Status || 'Active');
-                        safeUpdateElement('productInfoCategory', product.Category || 'No Category');
-
-                        // Product info details
-                        safeUpdateElement('productInfoTitleDetail', product.Title || '--');
-
-                        // Format price as currency with 2 decimal places
-                        var priceDisplay = '--';
-                        if (product.Price !== null && product.Price !== undefined) {
-                            var price = parseFloat(product.Price);
-                            if (!isNaN(price)) {
-                                priceDisplay = '
-
-                                // Statistics - use mock data or actual stats if available
-                                safeUpdateElement('productInfoSales', product.stats?.sales || Math.floor(Math.random() * 100));
-                                safeUpdateElement('productInfoViews', product.stats?.views || Math.floor(Math.random() * 1000));
-                                safeUpdateElement('productInfoRating', product.stats?.rating || (Math.random() * 5).toFixed(1));
-                            }
-
-                            // Function to load inventory data
-                            function loadInventoryData(productId) {
-                                if (!productId) {
-                                    console.log("Missing productId for loadInventoryData");
-                                    return;
-                                }
-
-                                // For now, we'll populate with mock data since there's no inventory API endpoint yet
-                                // In a real application, you would fetch this from an inventory API
-
-                                // Set mock inventory data
-                                safeSetValue('stockQuantity', Math.floor(Math.random() * 100));
-                                safeSetValue('lowStockThreshold', 5);
-                                safeSetValue('reorderLevel', 10);
-                                safeSetValue('supplier', 'Sports Equipment Co.');
-                                safeSetValue('sku', `SKU-${productId}-001`);
-                                safeSetValue('location', 'Warehouse A - Section 3');
-                                safeSetValue('lastRestocked', new Date().toISOString().split('T')[0]);
-                                safeSetValue('inventoryNotes', 'Standard storage conditions required.');
-
-                                // Show metadata
-                                const metadataSection = document.getElementById('inventoryMetadata');
-                                if (metadataSection) {
-                                    metadataSection.style.display = 'flex';
-                                    safeUpdateElement('inventoryLastUpdated', formatDateTime(new Date()));
-                                }
-                            }
-
-                            // Helper function to safely update element text content
-                            function safeUpdateElement(elementId, value) {
-                                const element = document.getElementById(elementId);
-                                if (element) {
-                                    element.textContent = value;
-                                }
-                            }
-
-                            // Helper function to show toast notifications
-                            function showToast(title, message, type = 'success') {
-                                // Check if toast container exists, create if not
-                                let toastContainer = document.querySelector('.toast-container');
-                                if (!toastContainer) {
-                                    toastContainer = document.createElement('div');
-                                    toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
-                                    toastContainer.style.zIndex = '9999';
-                                    document.body.appendChild(toastContainer);
-                                }
-
-                                // Create toast element
-                                const toastId = 'toast-' + Date.now();
-                                const iconClass = {
-                                    'success': 'bi-check-circle',
-                                    'danger': 'bi-exclamation-triangle',
-                                    'warning': 'bi-exclamation-triangle',
-                                    'info': 'bi-info-circle'
-                                }[type] || 'bi-info-circle';
-
-                                const toastHtml = '<div id="' + toastId + '" class="toast align-items-center text-white bg-' + type + ' border-0" role="alert" aria-live="assertive" aria-atomic="true">' +
-                                    '<div class="d-flex">' +
-                                    '<div class="toast-body">' +
-                                    '<i class="bi ' + iconClass + ' me-2"></i>' +
-                                    '<strong>' + title + ':</strong> ' + message +
-                                    '</div>' +
-                                    '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>' +
-                                    '</div>' +
-                                    '</div>';
-
-                                // Add toast to container
-                                toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-
-                                // Initialize and show toast
-                                const toastElement = document.getElementById(toastId);
-                                if (toastElement && typeof bootstrap !== 'undefined' && bootstrap.Toast) {
-                                    const toast = new bootstrap.Toast(toastElement, {
-                                        autohide: type !== 'danger', // Keep error toasts visible until manually closed
-                                        delay: type === 'info' ? 3000 : 5000
-                                    });
-                                    toast.show();
-
-                                    // Remove toast after hiding
-                                    toastElement.addEventListener('hidden.bs.toast', function () {
-                                        toastElement.remove();
-                                    });
-                                }
-                            }
-
-                            // Helper function to get initials from product title
-                            function getInitials(title) {
-                                if (!title || title.length === 0) return 'P';
-
-                                const words = title.split(' ');
-                                if (words.length >= 2) {
-                                    return (words[0][0] + words[1][0]).toUpperCase();
-                                } else {
-                                    return title[0].toUpperCase();
-                                }
-                            }
-
-                            // Helper function to format date with time
-                            function formatDateTime(dateString) {
-                                if (!dateString) return '--';
-                                try {
-                                    const date = new Date(dateString);
-                                    if (isNaN(date.getTime())) return '--';
-
-                                    return date.toLocaleDateString('en-US', {
-                                        year: 'numeric',
-                                        month: 'short',
-                                        day: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                    });
-                                } catch (e) {
-                                    console.error("Error formatting date time:", e);
-                                    return '--';
-                                }
-                            }
-
-                            // View product button handler
-                            const viewProductBtn = document.getElementById('viewProductBtn');
-                            if (viewProductBtn) {
-                                viewProductBtn.addEventListener('click', function () {
-                                    const productId = document.getElementById('editProductId')?.value;
-                                    if (productId) {
-                                        // Navigate to product details page
-                                        window.location.href = `/Product/Details/${productId}`;
-                                    }
-                                });
-                            }
-
-                            // AJAX form submission for the inventory form
-                            const editInventoryForm = document.getElementById('editInventoryForm');
-                            if (editInventoryForm) {
-                                editInventoryForm.addEventListener('submit', function (e) {
-                                    e.preventDefault();
-
-                                    // Get form data
-                                    const formData = new FormData(this);
-                                    const inventoryData = {};
-
-                                    // Convert FormData to object
-                                    for (const [key, value] of formData.entries()) {
-                                        inventoryData[key] = value;
-                                    }
-
-                                    // Check if the updateInventory API URL exists
-                                    if (!window.appUrls?.updateInventory) {
-                                        console.error("Missing API URL for updateInventory");
-                                        showToast('Error', 'API configuration is missing. Cannot save inventory data.', 'danger');
-                                        return;
-                                    }
-
-                                    // Get anti-forgery token
-                                    const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
-                                    if (!tokenElement) {
-                                        console.error("Anti-forgery token not found");
-                                        showToast('Error', 'Security token is missing. Cannot save inventory data.', 'danger');
-                                        return;
-                                    }
-
-                                    // Send AJAX request
-                                    fetch(window.appUrls.updateInventory, {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                            'RequestVerificationToken': tokenElement.value
-                                        },
-                                        body: JSON.stringify(inventoryData)
-                                    })
-                                        .then(response => response.json())
-                                        .then(data => {
-                                            if (data.success) {
-                                                // Show success message
-                                                showToast('Success', data.message || 'Inventory updated successfully');
-
-                                                // Update metadata
-                                                const metadataSection = document.getElementById('inventoryMetadata');
-                                                if (metadataSection) {
-                                                    metadataSection.style.display = 'flex';
-                                                    safeUpdateElement('inventoryLastUpdated', formatDateTime(new Date()));
-                                                }
-                                            } else {
-                                                // Show error message
-                                                showToast('Error', data.message || 'Failed to update inventory', 'danger');
-                                            }
-                                        })
-                                        .catch(error => {
-                                            console.error('Error saving inventory data:', error);
-                                            showToast('Error', 'Failed to save inventory data. Please try again.', 'danger');
-                                        });
-                                });
-                            }
-
-                            // Add form validation for the add product form
-                            var addProductForm = document.getElementById('addProductForm');
-                            if (addProductForm) {
-                                addProductForm.addEventListener('submit', function (e) {
-                                    var priceField = document.getElementById('addPrice');
-                                    var pointsField = document.getElementById('addPoints');
-                                    var hasErrors = false;
-
-                                    if (priceField) {
-                                        var price = parseFloat(priceField.value);
-                                        if (isNaN(price) || price < 0) {
-                                            e.preventDefault();
-                                            showToast('Error', 'Price must be a valid decimal number (0.00 or greater).', 'danger');
-                                            hasErrors = true;
-                                        } else {
-                                            priceField.value = price.toFixed(2);
-                                        }
-                                    }
-
-                                    if (pointsField && pointsField.value) {
-                                        var points = parseInt(pointsField.value, 10);
-                                        if (isNaN(points) || points < 0) {
-                                            e.preventDefault();
-                                            showToast('Error', 'Points must be a valid whole number (0 or greater).', 'danger');
-                                            hasErrors = true;
-                                        } else {
-                                            pointsField.value = points.toString();
-                                        }
-                                    }
-
-                                    if (hasErrors) {
-                                        return;
-                                    }
-
-                                    // Show loading indicator
-                                    var submitBtn = this.querySelector('button[type="submit"]');
-                                    if (submitBtn) {
-                                        var originalText = submitBtn.innerHTML;
-                                        submitBtn.disabled = true;
-                                        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...';
-                                    }
-
-                                    // Form will be submitted normally after validation
-                                });
-                            }
-
-                            // Add validation for edit product form
-                            const editProductForm = document.getElementById('editProductForm');
-                            if (editProductForm) {
-                                editProductForm.addEventListener('submit', function (e) {
-                                    // Show loading indicator
-                                    const submitBtn = this.querySelector('button[type="submit"]');
-                                    if (submitBtn) {
-                                        const originalText = submitBtn.innerHTML;
-                                        submitBtn.disabled = true;
-                                        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
-                                    }
-
-                                    // Form will be submitted normally after validation
-                                });
-                            }
-
-                            // Handle error cases where API URLs are not defined
-                            if (!window.appUrls) {
-                                console.error('API URLs not defined. Product management functionality may not work properly.');
-                                showToast('Warning', 'API configuration is missing. Some features may not work correctly.', 'warning');
-                            }
-                        });, '');
-const price = parseFloat(priceText) || 0;
-safeSetValue('editPrice', price.toString());
-console.log('Set price:', price);
-            }
-
-// Points from column 2
-if (row.cells.length > 2) {
-    const pointsText = row.cells[2].textContent.trim();
-    const points = parseInt(pointsText) || 0;
-    safeSetValue('editPoints', points.toString());
-    console.log('Set points:', points);
-}
-
-// Status from column 3 (extract from badge)
-if (row.cells.length > 3) {
-    const statusBadge = row.cells[3].querySelector('.badge');
-    if (statusBadge) {
-        const status = statusBadge.textContent.trim();
-        safeSetSelect('editStatus', status);
-        console.log('Set status:', status);
-    }
-}
-
-// Category from column 4
-if (row.cells.length > 4) {
-    const category = row.cells[4].textContent.trim();
-    if (category && category !== 'N/A') {
-        safeSetSelect('editCategory', category);
-        console.log('Set category:', category);
-    }
-}
-        }
-
-// Extract data attributes for more precise filtering
-const status = row.getAttribute('data-status');
-const category = row.getAttribute('data-category');
-const type = row.getAttribute('data-type');
-const price = row.getAttribute('data-price');
-
-if (status) {
-    safeSetSelect('editStatus', capitalizeFirst(status));
-    console.log('Set status from data attribute:', status);
-}
-
-if (category) {
-    safeSetSelect('editCategory', capitalizeFirst(category));
-    console.log('Set category from data attribute:', category);
-}
-
-if (type) {
-    safeSetSelect('editType', capitalizeFirst(type));
-    console.log('Set type from data attribute:', type);
-}
-
-if (price) {
-    safeSetValue('editPrice', price);
-    console.log('Set price from data attribute:', price);
-}
-
-// Set some default values for fields not available in table
-const descriptionField = document.getElementById('editDescription');
-if (descriptionField && !descriptionField.value) {
-    safeSetValue('editDescription', 'Product description will be loaded from API or can be edited here.');
-}
-
-showToast('Info', 'Product details loaded. Edit as needed.', 'info');
-    }
-
-// Helper function to capitalize first letter
-function capitalizeFirst(str) {
-    if (!str) return str;
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-}
-
-// Function to load product info
-function loadProductInfo(productId) {
-    if (!productId || !window.appUrls?.getProductData) {
-        console.log("Missing productId or API URL for loadProductInfo");
-        return;
-    }
-
-    const url = `${window.appUrls.getProductData}?id=${productId}`;
-
-    fetch(url)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                updateProductInfoUI(data);
-            } else {
-                console.error('Error loading product info:', data.message);
-                showToast('Error', 'Failed to load product info. Please try again.', 'danger');
-
-                // Create fallback product info from form data
-                const fallbackProduct = createFallbackProductInfo();
-                updateProductInfoUI(fallbackProduct);
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching product info:', error);
-            showToast('Error', 'Failed to load product info. Please try again.', 'danger');
-
-            // Create fallback product info from form data
-            const fallbackProduct = createFallbackProductInfo();
-            updateProductInfoUI(fallbackProduct);
-        });
-}
-
-// Create fallback product info from form data
-function createFallbackProductInfo() {
-    // Safely get values, defaulting to empty strings if elements don't exist
-    const getValueOrEmpty = (id) => {
-        const el = document.getElementById(id);
-        return el ? el.value || '' : '';
-    };
-
-    return {
-        Title: getValueOrEmpty('editTitle'),
-        Description: getValueOrEmpty('editDescription'),
-        Price: getValueOrEmpty('editPrice'),
-        Points: getValueOrEmpty('editPoints'),
-        ProductNumber: getValueOrEmpty('editProductNumber'),
-        Tag: getValueOrEmpty('editTag'),
-        Type: document.getElementById('editType')?.value || '',
-        Category: document.getElementById('editCategory')?.value || '',
-        Status: document.getElementById('editStatus')?.value || 'Active',
-        ImageURL: getValueOrEmpty('editImageURL'),
-        stats: { sales: 0, views: 0, rating: 0 }
-    };
-}
-
-// Function to update product info UI elements
-function updateProductInfoUI(product) {
-    if (!product) {
-        console.error("No product data provided to updateProductInfoUI");
-        return;
-    }
-
-    // Safely update UI elements - only update if element exists
-    safeUpdateElement('productInfoInitials', getInitials(product.Title));
-    safeUpdateElement('productInfoTitle', product.Title || 'Product');
-    safeUpdateElement('productInfoNumber', product.ProductNumber || 'No SKU');
-    safeUpdateElement('productInfoStatus', product.Status || 'Active');
-    safeUpdateElement('productInfoCategory', product.Category || 'No Category');
-
-    // Product info details
-    safeUpdateElement('productInfoTitleDetail', product.Title || '--');
-    safeUpdateElement('productInfoPrice', product.Price ? `$${parseFloat(product.Price).toFixed(2)}` : '--');
-    safeUpdateElement('productInfoPoints', product.Points || '--');
-    safeUpdateElement('productInfoType', product.Type || '--');
-    safeUpdateElement('productInfoTag', product.Tag || '--');
-
-    // Statistics - use mock data or actual stats if available
-    safeUpdateElement('productInfoSales', product.stats?.sales || Math.floor(Math.random() * 100));
-    safeUpdateElement('productInfoViews', product.stats?.views || Math.floor(Math.random() * 1000));
-    safeUpdateElement('productInfoRating', product.stats?.rating || (Math.random() * 5).toFixed(1));
-}
-
-// Function to load inventory data
-function loadInventoryData(productId) {
-    if (!productId) {
-        console.log("Missing productId for loadInventoryData");
-        return;
-    }
-
-    // For now, we'll populate with mock data since there's no inventory API endpoint yet
-    // In a real application, you would fetch this from an inventory API
-
-    // Set mock inventory data
-    safeSetValue('stockQuantity', Math.floor(Math.random() * 100));
-    safeSetValue('lowStockThreshold', 5);
-    safeSetValue('reorderLevel', 10);
-    safeSetValue('supplier', 'Sports Equipment Co.');
-    safeSetValue('sku', `SKU-${productId}-001`);
-    safeSetValue('location', 'Warehouse A - Section 3');
-    safeSetValue('lastRestocked', new Date().toISOString().split('T')[0]);
-    safeSetValue('inventoryNotes', 'Standard storage conditions required.');
-
-    // Show metadata
-    const metadataSection = document.getElementById('inventoryMetadata');
-    if (metadataSection) {
-        metadataSection.style.display = 'flex';
-        safeUpdateElement('inventoryLastUpdated', formatDateTime(new Date()));
-    }
-}
-
-// Helper function to safely update element text content
-function safeUpdateElement(elementId, value) {
-    const element = document.getElementById(elementId);
-    if (element) {
-        element.textContent = value;
-    }
-}
-
-// Helper function to show toast notifications
-function showToast(title, message, type = 'success') {
-    // Check if toast container exists, create if not
-    let toastContainer = document.querySelector('.toast-container');
-    if (!toastContainer) {
-        toastContainer = document.createElement('div');
-        toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
-        document.body.appendChild(toastContainer);
-    }
-
-    // Create toast element
-    const toastId = 'toast-' + Date.now();
-    const toastHtml = `
-            <div id="${toastId}" class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="d-flex">
-                    <div class="toast-body">
-                        <strong>${title}</strong>: ${message}
-                    </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-            </div>
-        `;
-
-    // Add toast to container
-    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-
-    // Initialize and show toast
-    const toastElement = document.getElementById(toastId);
-    if (toastElement && typeof bootstrap !== 'undefined' && bootstrap.Toast) {
-        const toast = new bootstrap.Toast(toastElement, { autohide: true, delay: 5000 });
-        toast.show();
-
-        // Remove toast after hiding
-        toastElement.addEventListener('hidden.bs.toast', function () {
-            toastElement.remove();
-        });
-    }
-}
-
-// Helper function to get initials from product title
-function getInitials(title) {
-    if (!title || title.length === 0) return 'P';
-
-    const words = title.split(' ');
-    if (words.length >= 2) {
-        return (words[0][0] + words[1][0]).toUpperCase();
-    } else {
-        return title[0].toUpperCase();
-    }
-}
-
-// Helper function to format date with time
-function formatDateTime(dateString) {
-    if (!dateString) return '--';
-    try {
-        const date = new Date(dateString);
-        if (isNaN(date.getTime())) return '--';
-
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    } catch (e) {
-        console.error("Error formatting date time:", e);
-        return '--';
-    }
-}
-
-// View product button handler
-const viewProductBtn = document.getElementById('viewProductBtn');
-if (viewProductBtn) {
-    viewProductBtn.addEventListener('click', function () {
-        const productId = document.getElementById('editProductId')?.value;
-        if (productId) {
-            // Navigate to product details page
-            window.location.href = `/Product/Details/${productId}`;
-        }
-    });
-}
-
-// AJAX form submission for the inventory form
-const editInventoryForm = document.getElementById('editInventoryForm');
-if (editInventoryForm) {
-    editInventoryForm.addEventListener('submit', function (e) {
-        e.preventDefault();
-
-        // Get form data
-        const formData = new FormData(this);
-        const inventoryData = {};
-
-        // Convert FormData to object
-        for (const [key, value] of formData.entries()) {
-            inventoryData[key] = value;
-        }
-
-        // Check if the updateInventory API URL exists
-        if (!window.appUrls?.updateInventory) {
-            console.error("Missing API URL for updateInventory");
-            showToast('Error', 'API configuration is missing. Cannot save inventory data.', 'danger');
-            return;
-        }
-
-        // Get anti-forgery token
-        const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
-        if (!tokenElement) {
-            console.error("Anti-forgery token not found");
-            showToast('Error', 'Security token is missing. Cannot save inventory data.', 'danger');
-            return;
-        }
-
-        // Send AJAX request
-        fetch(window.appUrls.updateInventory, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': tokenElement.value
-            },
-            body: JSON.stringify(inventoryData)
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Show success message
-                    showToast('Success', data.message || 'Inventory updated successfully');
-
-                    // Update metadata
-                    const metadataSection = document.getElementById('inventoryMetadata');
-                    if (metadataSection) {
-                        metadataSection.style.display = 'flex';
-                        safeUpdateElement('inventoryLastUpdated', formatDateTime(new Date()));
+                    } else {
+                        // Show error message
+                        showToast('Error', data.message || 'Failed to update inventory', 'danger');
                     }
+                })
+                .catch(error => {
+                    console.error('Error saving inventory data:', error);
+                    showToast('Error', 'Failed to save inventory data. Please try again.', 'danger');
+                });
+        });
+    }
+
+    // Add form validation for the add product form
+    const addProductForm = document.getElementById('addProductForm');
+    if (addProductForm) {
+        addProductForm.addEventListener('submit', function (e) {
+            const priceField = document.getElementById('addPrice');
+            const pointsField = document.getElementById('addPoints');
+            let hasErrors = false;
+
+            if (priceField) {
+                const price = parseFloat(priceField.value);
+                if (isNaN(price) || price < 0) {
+                    e.preventDefault();
+                    showToast('Error', 'Price must be a valid decimal number (0.00 or greater).', 'danger');
+                    hasErrors = true;
                 } else {
-                    // Show error message
-                    showToast('Error', data.message || 'Failed to update inventory', 'danger');
+                    priceField.value = price.toFixed(2);
                 }
-            })
-            .catch(error => {
-                console.error('Error saving inventory data:', error);
-                showToast('Error', 'Failed to save inventory data. Please try again.', 'danger');
-            });
-    });
-}
-
-// Add form validation for the add product form
-const addProductForm = document.getElementById('addProductForm');
-if (addProductForm) {
-    addProductForm.addEventListener('submit', function (e) {
-        const priceField = document.getElementById('addPrice');
-        if (!priceField) return;
-
-        const price = parseFloat(priceField.value);
-
-        // Simple price validation
-        if (price < 0) {
-            e.preventDefault();
-            showToast('Error', 'Price cannot be negative.', 'danger');
-            return;
-        }
-
-        // Show loading indicator
-        const submitBtn = this.querySelector('button[type="submit"]');
-        if (submitBtn) {
-            const originalText = submitBtn.innerHTML;
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...';
-        }
-
-        // Form will be submitted normally after validation
-    });
-}
-
-// Add validation for edit product form
-const editProductForm = document.getElementById('editProductForm');
-if (editProductForm) {
-    editProductForm.addEventListener('submit', function (e) {
-        // Show loading indicator
-        const submitBtn = this.querySelector('button[type="submit"]');
-        if (submitBtn) {
-            const originalText = submitBtn.innerHTML;
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
-        }
-
-        // Form will be submitted normally after validation
-    });
-}
-
-// Handle error cases where API URLs are not defined
-if (!window.appUrls) {
-    console.error('API URLs not defined. Product management functionality may not work properly.');
-    showToast('Warning', 'API configuration is missing. Some features may not work correctly.', 'warning');
-}
-}); + price.toFixed(2);
             }
-        }
-safeUpdateElement('productInfoPrice', priceDisplay);
 
-// Format points as integer
-var pointsDisplay = '--';
-if (product.Points !== null && product.Points !== undefined) {
-    var points = parseInt(product.Points, 10);
-    if (!isNaN(points)) {
-        pointsDisplay = points.toString();
-    }
-}
-safeUpdateElement('productInfoPoints', pointsDisplay);
-
-safeUpdateElement('productInfoType', product.Type || '--');
-safeUpdateElement('productInfoTag', product.Tag || '--');
-
-// Statistics - use mock data or actual stats if available
-safeUpdateElement('productInfoSales', product.stats?.sales || Math.floor(Math.random() * 100));
-safeUpdateElement('productInfoViews', product.stats?.views || Math.floor(Math.random() * 1000));
-safeUpdateElement('productInfoRating', product.stats?.rating || (Math.random() * 5).toFixed(1));
-    }
-
-// Function to load inventory data
-function loadInventoryData(productId) {
-    if (!productId) {
-        console.log("Missing productId for loadInventoryData");
-        return;
-    }
-
-    // For now, we'll populate with mock data since there's no inventory API endpoint yet
-    // In a real application, you would fetch this from an inventory API
-
-    // Set mock inventory data
-    safeSetValue('stockQuantity', Math.floor(Math.random() * 100));
-    safeSetValue('lowStockThreshold', 5);
-    safeSetValue('reorderLevel', 10);
-    safeSetValue('supplier', 'Sports Equipment Co.');
-    safeSetValue('sku', `SKU-${productId}-001`);
-    safeSetValue('location', 'Warehouse A - Section 3');
-    safeSetValue('lastRestocked', new Date().toISOString().split('T')[0]);
-    safeSetValue('inventoryNotes', 'Standard storage conditions required.');
-
-    // Show metadata
-    const metadataSection = document.getElementById('inventoryMetadata');
-    if (metadataSection) {
-        metadataSection.style.display = 'flex';
-        safeUpdateElement('inventoryLastUpdated', formatDateTime(new Date()));
-    }
-}
-
-// Helper function to safely update element text content
-function safeUpdateElement(elementId, value) {
-    const element = document.getElementById(elementId);
-    if (element) {
-        element.textContent = value;
-    }
-}
-
-// Helper function to show toast notifications
-function showToast(title, message, type = 'success') {
-    // Check if toast container exists, create if not
-    let toastContainer = document.querySelector('.toast-container');
-    if (!toastContainer) {
-        toastContainer = document.createElement('div');
-        toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
-        toastContainer.style.zIndex = '9999';
-        document.body.appendChild(toastContainer);
-    }
-
-    // Create toast element
-    const toastId = 'toast-' + Date.now();
-    const iconClass = {
-        'success': 'bi-check-circle',
-        'danger': 'bi-exclamation-triangle',
-        'warning': 'bi-exclamation-triangle',
-        'info': 'bi-info-circle'
-    }[type] || 'bi-info-circle';
-
-    const toastHtml = '<div id="' + toastId + '" class="toast align-items-center text-white bg-' + type + ' border-0" role="alert" aria-live="assertive" aria-atomic="true">' +
-        '<div class="d-flex">' +
-        '<div class="toast-body">' +
-        '<i class="bi ' + iconClass + ' me-2"></i>' +
-        '<strong>' + title + ':</strong> ' + message +
-        '</div>' +
-        '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>' +
-        '</div>' +
-        '</div>';
-
-    // Add toast to container
-    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-
-    // Initialize and show toast
-    const toastElement = document.getElementById(toastId);
-    if (toastElement && typeof bootstrap !== 'undefined' && bootstrap.Toast) {
-        const toast = new bootstrap.Toast(toastElement, {
-            autohide: type !== 'danger', // Keep error toasts visible until manually closed
-            delay: type === 'info' ? 3000 : 5000
-        });
-        toast.show();
-
-        // Remove toast after hiding
-        toastElement.addEventListener('hidden.bs.toast', function () {
-            toastElement.remove();
-        });
-    }
-}
-
-// Helper function to get initials from product title
-function getInitials(title) {
-    if (!title || title.length === 0) return 'P';
-
-    const words = title.split(' ');
-    if (words.length >= 2) {
-        return (words[0][0] + words[1][0]).toUpperCase();
-    } else {
-        return title[0].toUpperCase();
-    }
-}
-
-// Helper function to format date with time
-function formatDateTime(dateString) {
-    if (!dateString) return '--';
-    try {
-        const date = new Date(dateString);
-        if (isNaN(date.getTime())) return '--';
-
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    } catch (e) {
-        console.error("Error formatting date time:", e);
-        return '--';
-    }
-}
-
-// View product button handler
-const viewProductBtn = document.getElementById('viewProductBtn');
-if (viewProductBtn) {
-    viewProductBtn.addEventListener('click', function () {
-        const productId = document.getElementById('editProductId')?.value;
-        if (productId) {
-            // Navigate to product details page
-            window.location.href = `/Product/Details/${productId}`;
-        }
-    });
-}
-
-// AJAX form submission for the inventory form
-const editInventoryForm = document.getElementById('editInventoryForm');
-if (editInventoryForm) {
-    editInventoryForm.addEventListener('submit', function (e) {
-        e.preventDefault();
-
-        // Get form data
-        const formData = new FormData(this);
-        const inventoryData = {};
-
-        // Convert FormData to object
-        for (const [key, value] of formData.entries()) {
-            inventoryData[key] = value;
-        }
-
-        // Check if the updateInventory API URL exists
-        if (!window.appUrls?.updateInventory) {
-            console.error("Missing API URL for updateInventory");
-            showToast('Error', 'API configuration is missing. Cannot save inventory data.', 'danger');
-            return;
-        }
-
-        // Get anti-forgery token
-        const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
-        if (!tokenElement) {
-            console.error("Anti-forgery token not found");
-            showToast('Error', 'Security token is missing. Cannot save inventory data.', 'danger');
-            return;
-        }
-
-        // Send AJAX request
-        fetch(window.appUrls.updateInventory, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': tokenElement.value
-            },
-            body: JSON.stringify(inventoryData)
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Show success message
-                    showToast('Success', data.message || 'Inventory updated successfully');
-
-                    // Update metadata
-                    const metadataSection = document.getElementById('inventoryMetadata');
-                    if (metadataSection) {
-                        metadataSection.style.display = 'flex';
-                        safeUpdateElement('inventoryLastUpdated', formatDateTime(new Date()));
-                    }
+            if (pointsField && pointsField.value) {
+                const points = parseInt(pointsField.value, 10);
+                if (isNaN(points) || points < 0) {
+                    e.preventDefault();
+                    showToast('Error', 'Points must be a valid whole number (0 or greater).', 'danger');
+                    hasErrors = true;
                 } else {
-                    // Show error message
-                    showToast('Error', data.message || 'Failed to update inventory', 'danger');
+                    pointsField.value = points.toString();
                 }
-            })
-            .catch(error => {
-                console.error('Error saving inventory data:', error);
-                showToast('Error', 'Failed to save inventory data. Please try again.', 'danger');
-            });
-    });
-}
-
-// Add form validation for the add product form
-const addProductForm = document.getElementById('addProductForm');
-if (addProductForm) {
-    addProductForm.addEventListener('submit', function (e) {
-        const priceField = document.getElementById('addPrice');
-        if (!priceField) return;
-
-        const price = parseFloat(priceField.value);
-
-        // Simple price validation
-        if (price < 0) {
-            e.preventDefault();
-            showToast('Error', 'Price cannot be negative.', 'danger');
-            return;
-        }
-
-        // Show loading indicator
-        const submitBtn = this.querySelector('button[type="submit"]');
-        if (submitBtn) {
-            const originalText = submitBtn.innerHTML;
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...';
-        }
-
-        // Form will be submitted normally after validation
-    });
-}
-
-// Add validation for edit product form
-const editProductForm = document.getElementById('editProductForm');
-if (editProductForm) {
-    editProductForm.addEventListener('submit', function (e) {
-        // Show loading indicator
-        const submitBtn = this.querySelector('button[type="submit"]');
-        if (submitBtn) {
-            const originalText = submitBtn.innerHTML;
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
-        }
-
-        // Form will be submitted normally after validation
-    });
-}
-
-// Handle error cases where API URLs are not defined
-if (!window.appUrls) {
-    console.error('API URLs not defined. Product management functionality may not work properly.');
-    showToast('Warning', 'API configuration is missing. Some features may not work correctly.', 'warning');
-}
-});, '');
-const price = parseFloat(priceText) || 0;
-safeSetValue('editPrice', price.toString());
-console.log('Set price:', price);
             }
 
-// Points from column 2
-if (row.cells.length > 2) {
-    const pointsText = row.cells[2].textContent.trim();
-    const points = parseInt(pointsText) || 0;
-    safeSetValue('editPoints', points.toString());
-    console.log('Set points:', points);
-}
-
-// Status from column 3 (extract from badge)
-if (row.cells.length > 3) {
-    const statusBadge = row.cells[3].querySelector('.badge');
-    if (statusBadge) {
-        const status = statusBadge.textContent.trim();
-        safeSetSelect('editStatus', status);
-        console.log('Set status:', status);
-    }
-}
-
-// Category from column 4
-if (row.cells.length > 4) {
-    const category = row.cells[4].textContent.trim();
-    if (category && category !== 'N/A') {
-        safeSetSelect('editCategory', category);
-        console.log('Set category:', category);
-    }
-}
-        }
-
-// Extract data attributes for more precise filtering
-const status = row.getAttribute('data-status');
-const category = row.getAttribute('data-category');
-const type = row.getAttribute('data-type');
-const price = row.getAttribute('data-price');
-
-if (status) {
-    safeSetSelect('editStatus', capitalizeFirst(status));
-    console.log('Set status from data attribute:', status);
-}
-
-if (category) {
-    safeSetSelect('editCategory', capitalizeFirst(category));
-    console.log('Set category from data attribute:', category);
-}
-
-if (type) {
-    safeSetSelect('editType', capitalizeFirst(type));
-    console.log('Set type from data attribute:', type);
-}
-
-if (price) {
-    safeSetValue('editPrice', price);
-    console.log('Set price from data attribute:', price);
-}
-
-// Set some default values for fields not available in table
-const descriptionField = document.getElementById('editDescription');
-if (descriptionField && !descriptionField.value) {
-    safeSetValue('editDescription', 'Product description will be loaded from API or can be edited here.');
-}
-
-showToast('Info', 'Product details loaded. Edit as needed.', 'info');
-    }
-
-// Helper function to capitalize first letter
-function capitalizeFirst(str) {
-    if (!str) return str;
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-}
-
-// Function to load product info
-function loadProductInfo(productId) {
-    if (!productId || !window.appUrls?.getProductData) {
-        console.log("Missing productId or API URL for loadProductInfo");
-        return;
-    }
-
-    const url = `${window.appUrls.getProductData}?id=${productId}`;
-
-    fetch(url)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
+            if (hasErrors) {
+                return;
             }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                updateProductInfoUI(data);
-            } else {
-                console.error('Error loading product info:', data.message);
-                showToast('Error', 'Failed to load product info. Please try again.', 'danger');
 
-                // Create fallback product info from form data
-                const fallbackProduct = createFallbackProductInfo();
-                updateProductInfoUI(fallbackProduct);
+            // Show loading indicator
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                const originalText = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...';
             }
-        })
-        .catch(error => {
-            console.error('Error fetching product info:', error);
-            showToast('Error', 'Failed to load product info. Please try again.', 'danger');
 
-            // Create fallback product info from form data
-            const fallbackProduct = createFallbackProductInfo();
-            updateProductInfoUI(fallbackProduct);
-        });
-}
-
-// Create fallback product info from form data
-function createFallbackProductInfo() {
-    // Safely get values, defaulting to empty strings if elements don't exist
-    const getValueOrEmpty = (id) => {
-        const el = document.getElementById(id);
-        return el ? el.value || '' : '';
-    };
-
-    return {
-        Title: getValueOrEmpty('editTitle'),
-        Description: getValueOrEmpty('editDescription'),
-        Price: getValueOrEmpty('editPrice'),
-        Points: getValueOrEmpty('editPoints'),
-        ProductNumber: getValueOrEmpty('editProductNumber'),
-        Tag: getValueOrEmpty('editTag'),
-        Type: document.getElementById('editType')?.value || '',
-        Category: document.getElementById('editCategory')?.value || '',
-        Status: document.getElementById('editStatus')?.value || 'Active',
-        ImageURL: getValueOrEmpty('editImageURL'),
-        stats: { sales: 0, views: 0, rating: 0 }
-    };
-}
-
-// Function to update product info UI elements
-function updateProductInfoUI(product) {
-    if (!product) {
-        console.error("No product data provided to updateProductInfoUI");
-        return;
-    }
-
-    // Safely update UI elements - only update if element exists
-    safeUpdateElement('productInfoInitials', getInitials(product.Title));
-    safeUpdateElement('productInfoTitle', product.Title || 'Product');
-    safeUpdateElement('productInfoNumber', product.ProductNumber || 'No SKU');
-    safeUpdateElement('productInfoStatus', product.Status || 'Active');
-    safeUpdateElement('productInfoCategory', product.Category || 'No Category');
-
-    // Product info details
-    safeUpdateElement('productInfoTitleDetail', product.Title || '--');
-    safeUpdateElement('productInfoPrice', product.Price ? `$${parseFloat(product.Price).toFixed(2)}` : '--');
-    safeUpdateElement('productInfoPoints', product.Points || '--');
-    safeUpdateElement('productInfoType', product.Type || '--');
-    safeUpdateElement('productInfoTag', product.Tag || '--');
-
-    // Statistics - use mock data or actual stats if available
-    safeUpdateElement('productInfoSales', product.stats?.sales || Math.floor(Math.random() * 100));
-    safeUpdateElement('productInfoViews', product.stats?.views || Math.floor(Math.random() * 1000));
-    safeUpdateElement('productInfoRating', product.stats?.rating || (Math.random() * 5).toFixed(1));
-}
-
-// Function to load inventory data
-function loadInventoryData(productId) {
-    if (!productId) {
-        console.log("Missing productId for loadInventoryData");
-        return;
-    }
-
-    // For now, we'll populate with mock data since there's no inventory API endpoint yet
-    // In a real application, you would fetch this from an inventory API
-
-    // Set mock inventory data
-    safeSetValue('stockQuantity', Math.floor(Math.random() * 100));
-    safeSetValue('lowStockThreshold', 5);
-    safeSetValue('reorderLevel', 10);
-    safeSetValue('supplier', 'Sports Equipment Co.');
-    safeSetValue('sku', `SKU-${productId}-001`);
-    safeSetValue('location', 'Warehouse A - Section 3');
-    safeSetValue('lastRestocked', new Date().toISOString().split('T')[0]);
-    safeSetValue('inventoryNotes', 'Standard storage conditions required.');
-
-    // Show metadata
-    const metadataSection = document.getElementById('inventoryMetadata');
-    if (metadataSection) {
-        metadataSection.style.display = 'flex';
-        safeUpdateElement('inventoryLastUpdated', formatDateTime(new Date()));
-    }
-}
-
-// Helper function to safely update element text content
-function safeUpdateElement(elementId, value) {
-    const element = document.getElementById(elementId);
-    if (element) {
-        element.textContent = value;
-    }
-}
-
-// Helper function to show toast notifications
-function showToast(title, message, type = 'success') {
-    // Check if toast container exists, create if not
-    let toastContainer = document.querySelector('.toast-container');
-    if (!toastContainer) {
-        toastContainer = document.createElement('div');
-        toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
-        document.body.appendChild(toastContainer);
-    }
-
-    // Create toast element
-    const toastId = 'toast-' + Date.now();
-    const toastHtml = `
-            <div id="${toastId}" class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="d-flex">
-                    <div class="toast-body">
-                        <strong>${title}</strong>: ${message}
-                    </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-            </div>
-        `;
-
-    // Add toast to container
-    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-
-    // Initialize and show toast
-    const toastElement = document.getElementById(toastId);
-    if (toastElement && typeof bootstrap !== 'undefined' && bootstrap.Toast) {
-        const toast = new bootstrap.Toast(toastElement, { autohide: true, delay: 5000 });
-        toast.show();
-
-        // Remove toast after hiding
-        toastElement.addEventListener('hidden.bs.toast', function () {
-            toastElement.remove();
+            // Form will be submitted normally after validation
         });
     }
-}
 
-// Helper function to get initials from product title
-function getInitials(title) {
-    if (!title || title.length === 0) return 'P';
+    // Add validation for edit product form
+    const editProductForm = document.getElementById('editProductForm');
+    if (editProductForm) {
+        editProductForm.addEventListener('submit', function (e) {
+            // Show loading indicator
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                const originalText = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+            }
 
-    const words = title.split(' ');
-    if (words.length >= 2) {
-        return (words[0][0] + words[1][0]).toUpperCase();
-    } else {
-        return title[0].toUpperCase();
-    }
-}
-
-// Helper function to format date with time
-function formatDateTime(dateString) {
-    if (!dateString) return '--';
-    try {
-        const date = new Date(dateString);
-        if (isNaN(date.getTime())) return '--';
-
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+            // Form will be submitted normally after validation
         });
-    } catch (e) {
-        console.error("Error formatting date time:", e);
-        return '--';
     }
-}
 
-// View product button handler
-const viewProductBtn = document.getElementById('viewProductBtn');
-if (viewProductBtn) {
-    viewProductBtn.addEventListener('click', function () {
-        const productId = document.getElementById('editProductId')?.value;
-        if (productId) {
-            // Navigate to product details page
-            window.location.href = `/Product/Details/${productId}`;
-        }
-    });
-}
-
-// AJAX form submission for the inventory form
-const editInventoryForm = document.getElementById('editInventoryForm');
-if (editInventoryForm) {
-    editInventoryForm.addEventListener('submit', function (e) {
-        e.preventDefault();
-
-        // Get form data
-        const formData = new FormData(this);
-        const inventoryData = {};
-
-        // Convert FormData to object
-        for (const [key, value] of formData.entries()) {
-            inventoryData[key] = value;
-        }
-
-        // Check if the updateInventory API URL exists
-        if (!window.appUrls?.updateInventory) {
-            console.error("Missing API URL for updateInventory");
-            showToast('Error', 'API configuration is missing. Cannot save inventory data.', 'danger');
-            return;
-        }
-
-        // Get anti-forgery token
-        const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
-        if (!tokenElement) {
-            console.error("Anti-forgery token not found");
-            showToast('Error', 'Security token is missing. Cannot save inventory data.', 'danger');
-            return;
-        }
-
-        // Send AJAX request
-        fetch(window.appUrls.updateInventory, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': tokenElement.value
-            },
-            body: JSON.stringify(inventoryData)
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Show success message
-                    showToast('Success', data.message || 'Inventory updated successfully');
-
-                    // Update metadata
-                    const metadataSection = document.getElementById('inventoryMetadata');
-                    if (metadataSection) {
-                        metadataSection.style.display = 'flex';
-                        safeUpdateElement('inventoryLastUpdated', formatDateTime(new Date()));
-                    }
-                } else {
-                    // Show error message
-                    showToast('Error', data.message || 'Failed to update inventory', 'danger');
-                }
-            })
-            .catch(error => {
-                console.error('Error saving inventory data:', error);
-                showToast('Error', 'Failed to save inventory data. Please try again.', 'danger');
-            });
-    });
-}
-
-// Add form validation for the add product form
-const addProductForm = document.getElementById('addProductForm');
-if (addProductForm) {
-    addProductForm.addEventListener('submit', function (e) {
-        const priceField = document.getElementById('addPrice');
-        if (!priceField) return;
-
-        const price = parseFloat(priceField.value);
-
-        // Simple price validation
-        if (price < 0) {
-            e.preventDefault();
-            showToast('Error', 'Price cannot be negative.', 'danger');
-            return;
-        }
-
-        // Show loading indicator
-        const submitBtn = this.querySelector('button[type="submit"]');
-        if (submitBtn) {
-            const originalText = submitBtn.innerHTML;
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...';
-        }
-
-        // Form will be submitted normally after validation
-    });
-}
-
-// Add validation for edit product form
-const editProductForm = document.getElementById('editProductForm');
-if (editProductForm) {
-    editProductForm.addEventListener('submit', function (e) {
-        // Show loading indicator
-        const submitBtn = this.querySelector('button[type="submit"]');
-        if (submitBtn) {
-            const originalText = submitBtn.innerHTML;
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
-        }
-
-        // Form will be submitted normally after validation
-    });
-}
-
-// Handle error cases where API URLs are not defined
-if (!window.appUrls) {
-    console.error('API URLs not defined. Product management functionality may not work properly.');
-    showToast('Warning', 'API configuration is missing. Some features may not work correctly.', 'warning');
-}
+    // Handle error cases where API URLs are not defined
+    if (!window.appUrls) {
+        console.error('API URLs not defined. Product management functionality may not work properly.');
+        showToast('Warning', 'API configuration is missing. Some features may not work correctly.', 'warning');
+    }
 });

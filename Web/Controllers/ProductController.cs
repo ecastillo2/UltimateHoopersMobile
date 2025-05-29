@@ -331,30 +331,30 @@ namespace Web.Controllers
                 // Apply client-side filtering if needed
                 var filteredProducts = result.Items.AsEnumerable();
 
-                //if (!string.IsNullOrEmpty(search))
-                //{
-                //    filteredProducts = filteredProducts.Where(p =>
-                //        (p.Title?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                //        (p.Description?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false));
-                //}
+                if (!string.IsNullOrEmpty(search))
+                {
+                    filteredProducts = filteredProducts.Where(p =>
+                        (p.Title?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                        (p.Description?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false));
+                }
 
-                //if (status != "all")
-                //{
-                //    filteredProducts = filteredProducts.Where(p =>
-                //        string.Equals(p.Status, status, StringComparison.OrdinalIgnoreCase));
-                //}
+                if (status != "all")
+                {
+                    filteredProducts = filteredProducts.Where(p =>
+                        string.Equals(p.Status, status, StringComparison.OrdinalIgnoreCase));
+                }
 
-                //if (category != "all")
-                //{
-                //    filteredProducts = filteredProducts.Where(p =>
-                //        string.Equals(p.Category, category, StringComparison.OrdinalIgnoreCase));
-                //}
+                if (category != "all")
+                {
+                    filteredProducts = filteredProducts.Where(p =>
+                        string.Equals(p.Category, category, StringComparison.OrdinalIgnoreCase));
+                }
 
-                //if (type != "all")
-                //{
-                //    filteredProducts = filteredProducts.Where(p =>
-                //        string.Equals(p.Type, type, StringComparison.OrdinalIgnoreCase));
-                //}
+                if (type != "all")
+                {
+                    filteredProducts = filteredProducts.Where(p =>
+                        string.Equals(p.Type, type, StringComparison.OrdinalIgnoreCase));
+                }
 
                 var paginatedProducts = filteredProducts
                     .Skip((page - 1) * pageSize)
