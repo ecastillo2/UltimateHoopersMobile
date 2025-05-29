@@ -102,8 +102,6 @@ namespace WebAPI.Controllers
                     {
                         Client = item,
                         CourtList = court,
-
-
                     };
 
                     // Add to our list
