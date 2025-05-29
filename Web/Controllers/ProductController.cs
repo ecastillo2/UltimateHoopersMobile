@@ -4,6 +4,7 @@ using WebAPI.ApiClients;
 using Website.ViewModels;
 using Microsoft.AspNetCore.Http;
 using System.IO;
+using Website.Models;
 
 namespace Web.Controllers
 {
@@ -130,7 +131,7 @@ namespace Web.Controllers
                 if (product == null)
                 {
                     TempData["Error"] = "Product not found.";
-                    return RedirectToAction("Index");
+                    return RedirectToAction("Product");
                 }
 
                 return View(product);
@@ -139,7 +140,7 @@ namespace Web.Controllers
             {
                 _logger.LogError(ex, "Error retrieving Product details for ID: {ProductId}", id);
                 TempData["Error"] = "An error occurred while retrieving Product details. Please try again later.";
-                return RedirectToAction("Index");
+                return RedirectToAction("Product");
             }
         }
 
@@ -157,9 +158,8 @@ namespace Web.Controllers
             return View(new Product());
         }
 
-        [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Product product, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Create(Product product, IFormFile ImageFile, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -175,6 +175,21 @@ namespace Web.Controllers
                 {
                     return View(product);
                 }
+
+                //// Handle image upload if provided
+                //if (ImageFile != null && ImageFile.Length > 0)
+                //{
+                //    var imageResult = await ProcessImageUpload(ImageFile);
+                //    if (imageResult.Success)
+                //    {
+                //        product.ImageURL = imageResult.ImageUrl;
+                //    }
+                //    else
+                //    {
+                //        TempData["Error"] = imageResult.ErrorMessage;
+                //        return View(product);
+                //    }
+                //}
 
                 // Set default values
                 product.Status = product.Status ?? "Active";
