@@ -16,5 +16,6 @@ namespace Domain
         public string? Tag { get; set; }
         public int? Points { get; set; }
         public decimal? Price { get; set; }
+        public decimal? DiscountPrice { get; set; }
     }
 }
