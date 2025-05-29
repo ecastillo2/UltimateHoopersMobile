@@ -29,6 +29,13 @@ namespace DataLayer.DAL.Interface
         /// </summary>
         /// <param name="profileId">Profile ID</param>
         /// <returns>List of joined runs for the specified profile</returns>
+        Task<List<Profile>> GetJoinedRunProfilesByRunIdAsync(string runId);
+
+        /// <summary>
+        /// Get joined runs by profile ID
+        /// </summary>
+        /// <param name="profileId">Profile ID</param>
+        /// <returns>List of joined runs for the specified profile</returns>
         Task<Run> GetRunById(string runId);
 
         /// <summary>
@@ -43,7 +50,7 @@ namespace DataLayer.DAL.Interface
         /// </summary>
         /// <param name="model">Joined run model to insert</param>
         /// <returns>Task representing the asynchronous operation</returns>
-        Task InsertJoinedRun(CreateJoinedRunDto model);
+        Task AddProfileToJoinedRunAsync(string profileId, string runId);
 
         /// <summary>
         /// Update player joined run status
@@ -69,7 +76,7 @@ namespace DataLayer.DAL.Interface
         /// <param name="profileId">Profile ID</param>
         /// <param name="runId">Run ID</param>
         /// <returns>True if profile was successfully removed, false otherwise</returns>
-        Task<bool> RemoveProfileFromRun(string profileId, string runId);
+        Task<bool> RemoveProfileJoinRunAsync(string profileId, string runId);
 
         /// <summary>
         /// Delete a joined run

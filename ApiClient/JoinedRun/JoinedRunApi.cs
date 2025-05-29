@@ -56,18 +56,44 @@ namespace WebAPI.ApiClients
             }
         }
 
-       
-        /// Delete a Run
-        /// </summary>
-        public async Task<bool> RemoveUserJoinRunAsync(string profileId, string runId, string accessToken, CancellationToken cancellationToken = default)
+        public async Task<List<Profile>> GetJoinedRunProfilesByRunIdAsync(string runId, string accessToken, CancellationToken cancellationToken = default)
         {
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            try
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            var response = await _httpClient.DeleteAsync($"{_baseUrl}/api/JoinedRun/RemoveUserJoinRunAsync?profileId={profileId}&runId={runId}", cancellationToken);
-            return response.IsSuccessStatusCode;
+                var response = await _httpClient.GetAsync($"{_baseUrl}/api/JoinedRun/{runId}/run", cancellationToken);
+                response.EnsureSuccessStatusCode();
+
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+                return JsonSerializer.Deserialize<List<Profile>>(content, _jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
         }
 
 
-       
+        /// Delete a Run
+        /// </summary>
+        public async Task<bool> RemoveProfileJoinRunAsync(string profileId, string runId, string accessToken, CancellationToken cancellationToken = default)
+        {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            var response = await _httpClient.DeleteAsync($"{_baseUrl}/api/JoinedRun/RemoveProfileJoinRunAsync?profileId={profileId}&runId={runId}", cancellationToken);
+            return response.IsSuccessStatusCode;
+        }
+
+        /// Delete a Run
+        /// </summary>
+        public async Task<bool> AddProfileToJoinedRunAsync(string profileId, string runId, string accessToken, CancellationToken cancellationToken = default)
+        {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            var response = await _httpClient.DeleteAsync($"{_baseUrl}/api/JoinedRun/AddProfileToJoinedRunAsync?profileId={profileId}&runId={runId}", cancellationToken);
+            return response.IsSuccessStatusCode;
+        }
+
     }
 }

@@ -55,7 +55,7 @@ namespace WebAPI.ApiClients
         {
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            var response = await _httpClient.GetAsync($"{_baseUrl}/api/Run/GetRunById?runId={runId}", cancellationToken);
+            var response = await _httpClient.GetAsync($"{_baseUrl}/api/Run/GetRunById/{runId}", cancellationToken);
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -86,14 +86,22 @@ namespace WebAPI.ApiClients
         /// </summary>
         public async Task<bool> UpdateRunAsync(Run run, string accessToken, CancellationToken cancellationToken = default)
         {
+            // Clear any existing authorization headers
+            _httpClient.DefaultRequestHeaders.Authorization = null;
+
+            // Set the authorization header
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            // Add additional headers that might be required
+            _httpClient.DefaultRequestHeaders.Accept.Clear();
+            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
             var jsonContent = new StringContent(
                 JsonSerializer.Serialize(run, _jsonOptions),
                 Encoding.UTF8,
                 "application/json");
 
-            var response = await _httpClient.PostAsync($"{_baseUrl}/api/Run/UpdateRun", jsonContent, cancellationToken);
+            var response = await _httpClient.PutAsync($"{_baseUrl}/api/Run/UpdateRun", jsonContent, cancellationToken);
             return response.IsSuccessStatusCode;
         }
 

@@ -1,16 +1,8 @@
-﻿using DataLayer.DAL;
-using DataLayer.DAL.Interface;
-using DataLayer.DAL.Repository;
+﻿using DataLayer.DAL.Interface;
 using Domain;
 using Domain.DtoModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-
 
 namespace WebAPI.Controllers
 {
@@ -149,8 +141,8 @@ namespace WebAPI.Controllers
         /// <summary>
         /// Get PrivateRun by ID
         /// </summary>
-        [HttpGet("{id}")]
-        [ProducesResponseType(typeof(RunDetailViewModelDto), 200)]
+        [HttpGet("GetRunById/{id}")]
+        [ProducesResponseType(typeof(Run), 200)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> GetRunById(string id, CancellationToken cancellationToken)
         {
@@ -170,36 +162,30 @@ namespace WebAPI.Controllers
             }
         }
 
-
-
-
         /// <summary>
         /// Update PrivateRun
         /// </summary>
-        [HttpPut("{id}")]
-        [Authorize]
+        [HttpPut("UpdateRun")]
+        //[Authorize]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> UpdateRun(string id, RunUpdateModelDto model, CancellationToken cancellationToken)
+        public async Task<IActionResult> UpdateRun([FromBody] Run run, CancellationToken cancellationToken)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+           
 
-            if (id != model.CourtId)
-                return BadRequest("Run ID mismatch");
+           
 
             try
             {
-                var privateRun = await _runRepository.GetRunByIdAsync(id, cancellationToken);
+                var privateRun = await _runRepository.GetRunByIdAsync(run.RunId, cancellationToken);
 
                 if (privateRun == null)
-                    return NotFound($"PrivateRun with ID {id} not found");
+                    return NotFound($"PrivateRun with ID {run.RunId} not found");
 
-                // Update PrivateRun properties from model
-                model.UpdateRun(privateRun);
+                
 
-                var success = await _runRepository.UpdateRunAsync(privateRun, cancellationToken);
+                var success = await _runRepository.UpdateRunAsync(run, cancellationToken);
 
                 if (!success)
                     return StatusCode(500, "Failed to update PrivateRun");
@@ -208,7 +194,7 @@ namespace WebAPI.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating profile {ProfileId}", id);
+                _logger.LogError(ex, "Error updating profile {ProfileId}", run.RunId);
                 return StatusCode(500, "An error occurred while updating the profile");
             }
         }

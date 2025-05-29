@@ -29,7 +29,6 @@ namespace DataLayer.Context
         public virtual DbSet<PostComment> PostComment { get; set; }
         public virtual DbSet<Run> Run { get; set; }
         public virtual DbSet<JoinedRun> JoinedRun { get; set; }
-        public virtual DbSet<ErrorException> ErrorException { get; set; }
         public virtual DbSet<Profile> Profile { get; set; }
         public virtual DbSet<Tag> Tag { get; set; }
         public virtual DbSet<Rating> Rating { get; set; }

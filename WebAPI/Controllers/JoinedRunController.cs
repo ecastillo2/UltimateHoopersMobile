@@ -94,6 +94,102 @@ namespace WebAPI.Controllers
         }
 
         /// <summary>
+        /// Get a joined run by ID
+        /// </summary>
+        /// <param name="joinedRunId">The ID of the joined run to retrieve</param>
+        /// <returns>The joined run with the specified ID</returns>
+        /// <response code="200">Returns the joined run</response>
+        /// <response code="404">If the joined run was not found</response>
+        /// <response code="500">If there was an internal server error</response>
+        [HttpGet("{runId}/run")]
+        //[Authorize]
+       
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetJoinedRunProfilesByRunIdAsync(string runId)
+        {
+            try
+            {
+                var joinedRun = await _repository.GetJoinedRunProfilesByRunIdAsync(runId);
+
+                if (joinedRun == null)
+                {
+                    return NotFound(new { message = $"Joined run with ID {runId} not found" });
+                }
+
+                return Ok(joinedRun);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving joined run {JoinedRunId}", runId);
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while retrieving the joined run" });
+            }
+        }
+
+
+        /// <summary>
+        /// Get a joined run by ID
+        /// </summary>
+        /// <param name="joinedRunId">The ID of the joined run to retrieve</param>
+        /// <returns>The joined run with the specified ID</returns>
+        /// <response code="200">Returns the joined run</response>
+        /// <response code="404">If the joined run was not found</response>
+        /// <response code="500">If there was an internal server error</response>
+        [HttpGet("{profileId}/{runId}/run")]
+        //[Authorize]
+
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> RemoveProfileJoinRunAsync(string profile, string runId)
+        {
+            try
+            {
+                var joinedRun = await _repository.RemoveProfileJoinRunAsync(profile, runId);
+
+                if (joinedRun == null)
+                {
+                    return NotFound(new { message = $"Joined run with ID {runId} not found" });
+                }
+
+                return Ok(joinedRun);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving joined run {JoinedRunId}", runId);
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while retrieving the joined run" });
+            }
+        }
+
+        /// <summary>
+        /// Get a joined run by ID
+        /// </summary>
+        /// <param name="joinedRunId">The ID of the joined run to retrieve</param>
+        /// <returns>The joined run with the specified ID</returns>
+        /// <response code="200">Returns the joined run</response>
+        /// <response code="404">If the joined run was not found</response>
+        /// <response code="500">If there was an internal server error</response>
+        [HttpGet("{profileId}/{runId}/joinedrun")]
+        //[Authorize]
+
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> AddProfileToJoinedRunAsync(string profile, string runId)
+        {
+            try
+            {
+                await _repository.AddProfileToJoinedRunAsync(profile, runId);
+
+               
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving joined run {JoinedRunId}", runId);
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while retrieving the joined run" });
+            }
+        }
+
+        /// <summary>
         /// Get joined runs by profile ID
         /// </summary>
         /// <param name="profileId">The ID of the profile</param>
@@ -178,55 +274,6 @@ namespace WebAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while checking if the profile is already invited to the run" });
             }
         }
-
-
-
-
-
-        /// <summary>
-        /// Remove a profile from a run
-        /// </summary>
-        /// <param name="profileId">The ID of the profile</param>
-        /// <param name="runId">The ID of the run</param>
-        /// <returns>Success or failure response</returns>
-        /// <response code="200">If the profile was successfully removed</response>
-        /// <response code="400">If the parameters are invalid</response>
-        /// <response code="404">If the profile was not found in the run</response>
-        /// <response code="500">If there was an internal server error</response>
-        [HttpDelete("RemoveUserJoinRunAsync")]
-        [Authorize]
-        [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> RemoveUserJoinRunAsync(string profileId, string runId)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(profileId) || string.IsNullOrEmpty(runId))
-                {
-                    return BadRequest(new { success = false, message = "Profile ID and Run ID are required" });
-                }
-
-                var result = await _repository.RemoveProfileFromRun(profileId, runId);
-
-                if (result)
-                {
-                    return Ok(new { success = true, message = "Profile successfully removed from run" });
-                }
-
-                return NotFound(new { success = false, message = "Profile not found in run" });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error removing profile {ProfileId} from run {RunId}", profileId, runId);
-                return StatusCode(StatusCodes.Status500InternalServerError, new { success = false, message = "An error occurred while removing the profile from the run" });
-            }
-        }
-
-
-
-
 
         /// <summary>
         /// Clear all joined runs for a specific run

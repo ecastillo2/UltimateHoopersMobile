@@ -46,7 +46,7 @@ namespace Domain.DtoModel
         /// <summary>
         /// Gets or sets the date when the player was invited
         /// </summary>
-        public string? InvitedDate { get; set; }
+        public DateTime? InvitedDate { get; set; }
 
         /// <summary>
         /// Gets or sets the acceptance status of the invite

@@ -1,35 +1,52 @@
 ﻿using Domain;
 using Domain.DtoModel;
-using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Text;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
-using UltimateHoopers.Models;
 
 namespace WebAPI.ApiClients
 {
     /// <summary>
-    /// Interface for Run API operations
+    /// IJoinedRunApi
     /// </summary>
     public interface IJoinedRunApi
     {
 
-
         /// <summary>
-        /// Get Run by ID
+        /// GetUserJoinedRunsAsync
         /// </summary>
+        /// <param name="profileId"></param>
+        /// <param name="accessToken"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         Task<List<JoinedRunDetailViewModelDto>> GetUserJoinedRunsAsync(string profileId, string accessToken, CancellationToken cancellationToken = default);
 
- 
+        /// <summary>
+        /// GetJoinedRunProfilesByRunIdAsync
+        /// </summary>
+        /// <param name="runId"></param>
+        /// <param name="accessToken"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        Task<List<Profile>> GetJoinedRunProfilesByRunIdAsync(string runId, string accessToken, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Delete a Run
+        /// RemoveProfileJoinRunAsync
         /// </summary>
-        Task<bool> RemoveUserJoinRunAsync(string profileId, string runId, string accessToken, CancellationToken cancellationToken = default);
+        /// <param name="profileId"></param>
+        /// <param name="runId"></param>
+        /// <param name="accessToken"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        Task<bool> RemoveProfileJoinRunAsync(string profileId, string runId, string accessToken, CancellationToken cancellationToken = default);
 
-        
+        /// <summary>
+        /// AddProfileToJoinedRunAsync
+        /// </summary>
+        /// <param name="profileId"></param>
+        /// <param name="runId"></param>
+        /// <param name="accessToken"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        Task<bool> AddProfileToJoinedRunAsync(string profileId, string runId, string accessToken, CancellationToken cancellationToken = default);
+
+
     }
 }

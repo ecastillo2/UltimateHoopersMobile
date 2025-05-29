@@ -902,7 +902,7 @@ namespace UltimateHoopers.Pages
                     {
                         ProfileId = App.User.Profile?.ProfileId,
                         RunId = run.Id,
-                        InvitedDate = DateTime.UtcNow.ToString(),
+                        InvitedDate = DateTime.UtcNow,
                         Present = false
                     };
 

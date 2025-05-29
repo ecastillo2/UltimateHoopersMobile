@@ -11,7 +11,7 @@ namespace Domain.DtoModel
         public string? JoinedRunId { get; set; }
         public string? ProfileId { get; set; }
         public string? RunId { get; set; }
-        public string? InvitedDate { get; set; }
+        public DateTime? InvitedDate { get; set; }
         public string? AcceptedInvite { get; set; }
         public string? Type { get; set; }
         public bool? Present { get; set; }

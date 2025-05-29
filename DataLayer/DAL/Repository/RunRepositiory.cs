@@ -244,17 +244,17 @@ namespace DataLayer.DAL.Repository
         }
 
         public async Task<bool> UpdateRunAsync(
-            Run privateRun,
+            Run run,
             CancellationToken cancellationToken = default)
         {
             try
             {
-                _context.Entry(privateRun).State = EntityState.Modified;
+                _context.Entry(run).State = EntityState.Modified;
                 return await SaveChangesAsync(cancellationToken) > 0;
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Error updating PrivateRun {PrivateRunId}", privateRun.RunId);
+                _logger?.LogError(ex, "Error updating PrivateRun {PrivateRunId}", run.RunId);
                 throw;
             }
         }

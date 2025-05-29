@@ -5,10 +5,6 @@ using Domain.DtoModel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace DataLayer.DAL.Repository
 {
@@ -33,8 +29,9 @@ namespace DataLayer.DAL.Repository
         }
 
         /// <summary>
-        /// Get all joined runs
+        /// GetJoinedRuns
         /// </summary>
+        /// <returns></returns>
         public async Task<List<JoinedRun>> GetJoinedRuns()
         {
             try
@@ -69,8 +66,10 @@ namespace DataLayer.DAL.Repository
         }
 
         /// <summary>
-        /// Get joined runs by profile ID
+        /// GetJoinedRunsByProfileId
         /// </summary>
+        /// <param name="profileId"></param>
+        /// <returns></returns>
         public async Task<List<JoinedRun>> GetJoinedRunsByProfileId(string profileId)
         {
             try
@@ -108,8 +107,32 @@ namespace DataLayer.DAL.Repository
             }
         }
 
+        /// <summary>
+        /// GetJoinedRunProfilesByRunIdAsync
+        /// </summary>
+        /// <param name="runId"></param>
+        /// <returns></returns>
+        public async Task<List<Profile>> GetJoinedRunProfilesByRunIdAsync(string runId)
+        {
+            try
+            {
+                var profiles = await _context.JoinedRun
+                    .AsNoTracking()
+                    .Where(jr => jr.RunId == runId)
+                    .Join(_context.Profile,
+                          jr => jr.ProfileId,
+                          p => p.ProfileId,
+                          (jr, p) => p)
+                    .ToListAsync();
 
-
+                return profiles;
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error retrieving joined profiles for RunId {RunId}", runId);
+                throw;
+            }
+        }
 
         /// <summary>
         /// Check if profile is already invited to run
@@ -180,8 +203,12 @@ namespace DataLayer.DAL.Repository
         }
 
         /// <summary>
-        /// Update player present status in a joined run
+        /// UpdatePlayerPresentJoinedRun
         /// </summary>
+        /// <param name="profileId"></param>
+        /// <param name="joinedRunId"></param>
+        /// <param name="present"></param>
+        /// <returns></returns>
         public async Task UpdatePlayerPresentJoinedRun(string profileId, string joinedRunId, bool present)
         {
             try
@@ -207,42 +234,27 @@ namespace DataLayer.DAL.Repository
         }
 
         /// <summary>
-        /// Insert a new joined run
+        /// AddProfileToJoinedRunAsync
         /// </summary>
-        public async Task InsertJoinedRun(CreateJoinedRunDto dto)
+        /// <param name="profileId"></param>
+        /// <param name="runId"></param>
+        /// <returns></returns>
+        public async Task AddProfileToJoinedRunAsync(string profileId, string runId)
         {
             try
             {
-                // Validate input
-                if (dto == null)
-                {
-                    throw new ArgumentNullException(nameof(dto), "CreateJoinedRunDto cannot be null");
-                }
 
-                // Validate required fields
-                if (string.IsNullOrEmpty(dto.ProfileId))
-                {
-                    throw new ArgumentException("ProfileId is required", nameof(dto.ProfileId));
-                }
-
-                if (string.IsNullOrEmpty(dto.RunId))
-                {
-                    throw new ArgumentException("RunId is required", nameof(dto.RunId));
-                }
-
-                // Convert DTO to entity
-                var joinedRun = dto.ToJoinedRun();
-
-                // Generate a new ID if not provided
-                if (string.IsNullOrEmpty(joinedRun.JoinedRunId))
-                {
-                    joinedRun.JoinedRunId = Guid.NewGuid().ToString();
-                }
-
-                // Set default values
-                joinedRun.InvitedDate = DateTime.Now.ToString();
-                joinedRun.Present = false;
-
+                JoinedRun joinedRun = new JoinedRun { 
+                
+                JoinedRunId = Guid.NewGuid().ToString(),
+                    ProfileId = profileId,
+                    RunId = runId,
+                    AcceptedInvite = "Joined",
+                    Present = false,
+                    InvitedDate = DateTime.UtcNow,
+                };
+              
+              
                 // Add to context and save
                 await _context.JoinedRun.AddAsync(joinedRun);
                 await Save();
@@ -251,17 +263,14 @@ namespace DataLayer.DAL.Repository
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Error inserting joined run from DTO for ProfileId: {ProfileId}, RunId: {RunId}",
-                    dto?.ProfileId, dto?.RunId);
-                throw;
+                
             }
         }
-
 
         /// <summary>
         /// Remove a profile from a run
         /// </summary>
-        public async Task<bool> RemoveProfileFromRun(string profileId, string runId)
+        public async Task<bool> RemoveProfileJoinRunAsync(string profileId, string runId)
         {
             try
             {
@@ -419,6 +428,11 @@ namespace DataLayer.DAL.Repository
             GC.SuppressFinalize(this);
         }
 
+        /// <summary>
+        /// GetRunById
+        /// </summary>
+        /// <param name="runId"></param>
+        /// <returns></returns>
         public async Task<Run> GetRunById(string runId)
         {
             try
@@ -435,7 +449,7 @@ namespace DataLayer.DAL.Repository
         }
     }
 
-    /// <summary>
+        /// <summary>
     /// Helper class for cursor-based pagination
     /// </summary>
     internal class JoinedRunCursorData
