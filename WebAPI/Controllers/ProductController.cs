@@ -49,7 +49,7 @@ namespace WebAPI.Controllers
         /// Get productss with cursor-based pagination for efficient scrolling
         /// </summary>
         [HttpGet("cursor")]
-        [ProducesResponseType(typeof(CursorPaginatedResultDto<IList<Product>>), 200)]
+        [ProducesResponseType(typeof(CursorPaginatedResultDto<ProductViewModelDto>), 200)]
         public async Task<IActionResult> GetProductsWithCursor(
             [FromQuery] string cursor = null,
             [FromQuery] int limit = 20,
@@ -59,19 +59,45 @@ namespace WebAPI.Controllers
         {
             try
             {
-                var (products, nextCursor) = await _repository
+                var (privateRuns, nextCursor) = await _repository
                     .GetProductsWithCursorAsync(cursor, limit, direction, sortBy, cancellationToken);
 
-                // Enrich each products with additional data
-                foreach (var item in products)
+                // Create a list to hold our detailed profile view models
+                var detailedViewModels = new List<ProductDetailViewModelDto>();
+
+
+                // Enrich each profile with additional data
+                foreach (var item in privateRuns)
                 {
-                    // Get additional products data using the products's ID
+                    // Get additional profile data using the profile's ID
                     var privateRun = item;
-                    
+                   
+
+
+
+                    // Create a detailed view model with all the additional data
+                    var detailedViewModel = new ProductDetailViewModelDto()
+                    {
+                        Product = item,
+                        
+                    };
+
+                    // Add to our list
+                    detailedViewModels.Add(detailedViewModel);
                 }
 
 
-                return Ok(products);
+
+                var result = new CursorPaginatedResultDto<ProductDetailViewModelDto>
+                {
+                    Items = detailedViewModels,
+                    NextCursor = nextCursor,
+                    HasMore = !string.IsNullOrEmpty(nextCursor),
+                    Direction = direction,
+                    SortBy = sortBy
+                };
+
+                return Ok(result);
             }
             catch (Exception ex)
             {

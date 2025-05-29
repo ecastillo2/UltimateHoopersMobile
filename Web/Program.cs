@@ -46,6 +46,11 @@ builder.Services.AddHttpClient<IJoinedRunApi, JoinedRunApi>(client =>
 
 });
 
+builder.Services.AddHttpClient<IProductApi, ProductApi>(client =>
+{
+
+});
+
 //builder.Services.AddHttpClient<IUserApi, UserApi>(user =>
 //{
 

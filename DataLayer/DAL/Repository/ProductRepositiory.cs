@@ -91,11 +91,11 @@ namespace DataLayer.DAL.Repository
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         public async Task<(List<Product> Products, string NextCursor)> GetProductsWithCursorAsync(
-            string cursor = null,
-            int limit = 20,
-            string direction = "next",
-            string sortBy = "Points",
-            CancellationToken cancellationToken = default)
+             string cursor = null,
+             int limit = 20,
+             string direction = "next",
+             string sortBy = "Points",
+             CancellationToken cancellationToken = default)
         {
             try
             {

@@ -21,8 +21,17 @@ namespace WebAPI.ApiClients
         /// </summary>
         Task<List<Product>> GetProductsAsync(string accessToken, CancellationToken cancellationToken = default);
 
-       
-        Task<CursorPaginatedResultDto<IList<Product>>> GetProductsWithCursorAsync(
+        /// <summary>
+        /// Product DetailViewModelDto
+        /// </summary>
+        /// <param name="cursor"></param>
+        /// <param name="limit"></param>
+        /// <param name="direction"></param>
+        /// <param name="sortBy"></param>
+        /// <param name="accessToken"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        Task<CursorPaginatedResultDto<ProductDetailViewModelDto>> GetProductsWithCursorAsync(
             string cursor = null,
             int limit = 20,
             string direction = "next",

@@ -113,7 +113,7 @@ namespace WebAPI.ApiClients
         }
 
 
-        public async Task<CursorPaginatedResultDto<IList<Product>>> GetProductsWithCursorAsync(string cursor = null, int limit = 20, string direction = "next", string sortBy = "Points", string accessToken = null, CancellationToken cancellationToken = default)
+        public async Task<CursorPaginatedResultDto<ProductDetailViewModelDto>> GetProductsWithCursorAsync(string cursor = null, int limit = 20, string direction = "next", string sortBy = "Points", string accessToken = null, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -142,7 +142,7 @@ namespace WebAPI.ApiClients
 
                 // Deserialize the response
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
-                return JsonSerializer.Deserialize<CursorPaginatedResultDto<IList<Product>>>(content, _jsonOptions);
+                return JsonSerializer.Deserialize<CursorPaginatedResultDto<ProductDetailViewModelDto>>(content, _jsonOptions);
             }
             catch (HttpRequestException ex)
             {

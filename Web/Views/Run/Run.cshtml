@@ -1,7 +1,7 @@
-﻿@model Website.ViewModels.RunsViewModel
+﻿@model Website.ViewModels.ProductsViewModel
 
 @{
-    ViewData["Title"] = "Run Management";
+    ViewData["Title"] = "Products";
     var userType = ViewData["UserType"]?.ToString() ?? "Coach";
 }
 
@@ -11,60 +11,97 @@
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.bootstrap5.min.css">
     <link rel="stylesheet" type="text/css" href="~/css/management.css">
     <style>
-        .loading-spinner {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 9999;
-        }
-
-        .loading-spinner.active {
-            display: block;
-        }
-
-        .participant-avatar {
-            width: 40px;
-            height: 40px;
-            background-color: var(--secondary-color);
-            color: white;
+        .product-image {
+            width: 36px;
+            height: 36px;
+            object-fit: cover;
             border-radius: 50%;
+        }
+        .product-initials {
+            width: 36px;
+            height: 36px;
             display: flex;
             align-items: center;
             justify-content: center;
+            background-color: var(--bs-primary);
+            color: white;
+            border-radius: 50%;
             font-weight: bold;
+            font-size: 14px;
+        }
+        .table-actions {
+            white-space: nowrap;
+        }
+        .action-icon {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 2px;
+        }
+        .no-products-message {
+            text-align: center;
+            padding: 3rem 1rem;
+        }
+        .filter-badge {
+            display: inline-block;
+            margin: 2px;
+        }
+        .skill-rating-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .skill-rating-label {
+            font-weight: 500;
+        }
+        .skill-rating-value {
+            background: var(--bs-primary);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .price-display {
+            font-weight: 600;
+            color: var(--bs-success);
+        }
+        .points-badge {
+            background: var(--bs-warning);
+            color: var(--bs-dark);
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
         }
     </style>
 }
 
-<div class="loading-spinner">
-    <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading...</span>
-    </div>
-</div>
-
 <div class="dashboard-header">
     <div class="container">
-        <h1>Run Management</h1>
-        <p class="lead">Create and manage basketball runs, track participants, and schedule sessions</p>
+        <h1>Products</h1>
+        <p class="lead">Manage products, view details, and inventory</p>
     </div>
 </div>
 
 <div class="container">
     <!-- Back button to dashboard -->
-    <div class="back-button mb-4">
+    <div class="back-button mb-3">
         <a href="@Url.Action("Dashboard", "Dashboard")" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
         </a>
     </div>
 
-    <!-- Run Filters -->
+    <!-- Product Filters -->
     <div class="mb-4">
         <div class="card shadow-sm">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="mb-0">Filter Runs</h5>
+                    <h5 class="mb-0">Filter Products</h5>
                     <button class="btn btn-sm btn-outline-secondary" id="resetFilters">
                         <i class="bi bi-arrow-counterclockwise me-1"></i>
                         Reset Filters
@@ -76,46 +113,49 @@
                         <label for="statusFilter" class="form-label">Status</label>
                         <select class="form-select" id="statusFilter">
                             <option value="all" selected>All Statuses</option>
-                            <option value="upcoming">Upcoming</option>
-                            <option value="almost-full">Almost Full</option>
-                            <option value="past">Past</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="discontinued">Discontinued</option>
                         </select>
                     </div>
 
                     <div class="col-md-3">
-                        <label for="dateFilter" class="form-label">Date</label>
-                        <select class="form-select" id="dateFilter">
-                            <option value="all" selected>All Dates</option>
-                            <option value="today">Today</option>
-                            <option value="this-week">This Week</option>
-                            <option value="upcoming">Upcoming</option>
-                            <option value="past">Past</option>
+                        <label for="categoryFilter" class="form-label">Category</label>
+                        <select class="form-select" id="categoryFilter">
+                            <option value="all" selected>All Categories</option>
+                            <option value="clothing">Clothing</option>
+                            <option value="equipment">Equipment</option>
+                            <option value="accessories">Accessories</option>
+                            <option value="footwear">Footwear</option>
                         </select>
                     </div>
 
                     <div class="col-md-3">
-                        <label for="locationFilter" class="form-label">Location</label>
-                        <select class="form-select" id="locationFilter">
-                            <option value="all" selected>All Locations</option>
-                            <option value="Main Street Courts">Main Street Courts</option>
-                            <option value="City Gym">City Gym</option>
-                            <option value="Westside Park Courts">Westside Park Courts</option>
-                            <option value="Community Center">Community Center</option>
-                            <option value="Youth Center">Youth Center</option>
-                            <option value="Recreation Center">Recreation Center</option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-3">
-                        <label for="typeFilter" class="form-label">Run Type</label>
+                        <label for="typeFilter" class="form-label">Type</label>
                         <select class="form-select" id="typeFilter">
                             <option value="all" selected>All Types</option>
-                            <option value="pickup">Pickup</option>
-                            <option value="training">Training</option>
-                            <option value="tournament">Tournament</option>
-                            <option value="youth">Youth</option>
-                            <option value="women">Women</option>
+                            <option value="clothing">Clothing</option>
+                            <option value="equipment">Equipment</option>
+                            <option value="accessories">Accessories</option>
                         </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label for="priceRangeFilter" class="form-label">Price Range</label>
+                        <select class="form-select" id="priceRangeFilter">
+                            <option value="all" selected>All Prices</option>
+                            <option value="0-25">$0 - $25</option>
+                            <option value="25-50">$25 - $50</option>
+                            <option value="50-100">$50 - $100</option>
+                            <option value="100+">$100+</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <label for="searchFilter" class="form-label">Search</label>
+                        <input type="text" class="form-control" id="searchFilter" placeholder="Search by title, description, or product number...">
                     </div>
                 </div>
 
@@ -127,95 +167,123 @@
         </div>
     </div>
 
+    <!-- Action Buttons -->
     <div class="row mb-4">
-        <div class="col-12 text-end">
-            <button type="button" class="btn btn-orange" data-bs-toggle="modal" data-bs-target="#addRunModal">
-                <i class="bi bi-plus-circle me-2"></i>Create Run
+        <div class="col-md-6">
+            <div class="d-flex align-items-center">
+                <span class="text-muted me-2">Total Products:</span>
+                <span class="badge bg-info" id="totalProductsCount">
+                    @(Model?.ProductList?.Count ?? 0)
+                </span>
+            </div>
+        </div>
+        <div class="col-md-6 text-end">
+            <button type="button" class="btn btn-outline-primary me-2" id="exportBtn">
+                <i class="bi bi-download me-2"></i>Export
+            </button>
+            <button type="button" class="btn btn-orange" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                <i class="bi bi-plus-circle me-2"></i>Add Product
             </button>
         </div>
     </div>
 
     <!-- DataTable -->
-    @if (Model?.Runs != null && Model.Runs.Any())
+    @if (Model?.ProductList != null && Model.ProductList.Any())
     {
         <div class="card shadow-sm">
             <div class="card-body">
-                <table id="runsTable" class="table table-striped table-hover w-100">
+                <table id="productsTable" class="table table-striped table-hover w-100">
                     <thead>
                         <tr>
-                            <th>Client Name</th>
-                            <th>Date & Time</th>
-                            <th>Court</th>
-                            <th>Location</th>
-                            <th>Host</th>
+                            <th>Product</th>
+                            <th>Price</th>
+                            <th>Points</th>
                             <th>Status</th>
+                            <th>Category</th>
+                            <th>Type</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var run in Model.Runs)
+                        @foreach (var product in Model.ProductList)
                         {
-                            // Determine run status badge
-                            string badgeClass = "bg-success";
-                            string badgeText = "Upcoming";
-
-                            if (run.PlayerCount > 0 && run.PlayerLimit > 0 &&
-                            (float)run.PlayerCount / run.PlayerLimit >= 0.85)
-                            {
-                                badgeClass = "bg-warning";
-                                badgeText = "Almost Full";
-                            }
-                            else if (run.RunDate < DateTime.Now)
-                            {
-                                badgeClass = "bg-secondary";
-                                badgeText = "Past";
-                            }
-
-                            // Get host initials
-                            string hostInitials = "NA";
-                            if (!string.IsNullOrEmpty(run.ProfileId))
-                            {
-                                var names = run.ProfileId.Split(' ');
-                                if (names.Length >= 2)
-                                {
-                                    hostInitials = $"{names[0][0]}{names[1][0]}";
-                                }
-                                else if (names.Length == 1 && names[0].Length > 0)
-                                {
-                                    hostInitials = names[0][0].ToString();
-                                }
-                            }
-
-                            <tr data-run-type="@(run.Type?.ToLower() ?? "pickup")"
-                                data-capacity-current="@run.PlayerCount"
-                                data-capacity-max="@run.PlayerLimit">
-                                <td>@run.Name</td>
-                                <td>@run.RunDate?.ToString("MM/dd/yyyy") @run.StartTime?.ToString(@"hh\:mm")</td>
-                                <td>@run.Court.Name</td>
-                                <td>@run.Address</td>
+                            <tr data-status="@(product.Product.Status?.ToLower() ?? "active")" 
+                                data-category="@(product.Product.Category?.ToLower() ?? "")" 
+                                data-type="@(product.Product.Type?.ToLower() ?? "")"
+                                data-price="@(product.Product.Price ?? 0)">
                                 <td>
-                                    <div class="host-container">
-                                        <div class="host-avatar">@hostInitials</div>
-                                        <span>@run.ProfileId</span>
+                                    <div class="d-flex align-items-center">
+                                        @if (!string.IsNullOrEmpty(product.Product.ImageURL))
+                                        {
+                                            <img src="@product.Product.ImageURL" alt="@product.Title" class="product-image me-2" 
+                                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                            <div class="product-initials me-2" style="display: none;">
+                                                <span>@(product.Product.Title?.Substring(0, 1).ToUpper() ?? "P")</span>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="product-initials me-2">
+                                                <span>@(product.Product.Title?.Substring(0, 1).ToUpper() ?? "P")</span>
+                                            </div>
+                                        }
+                                        <div>
+                                            <div class="fw-bold">@(product.Product.Title ?? "Untitled Product")</div>
+                                            <small class="text-muted">
+                                                @if (!string.IsNullOrEmpty(product.Product.ProductNumber))
+                                                {
+                                                    <span>SKU: @product.Product.ProductNumber</span>
+                                                }
+                                                @if (!string.IsNullOrEmpty(product.Product.Tag))
+                                                {
+                                                    <span class="ms-2 badge bg-light text-dark">@product.Tag</span>
+                                                }
+                                            </small>
+                                        </div>
                                     </div>
                                 </td>
-                                <td><span class="badge @badgeClass badge-pill">@badgeText</span></td>
+                                <td>
+                                    <span class="price-display">$@(product.Product.Price?.ToString("F2") ?? "0.00")</span>
+                                </td>
+                                <td>
+                                    @if (product.Points.HasValue && product.Product.Points.Value > 0)
+                                    {
+                                        <span class="points-badge">@product.Product.Points pts</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @{
+                                        var statusClass = (product.Status?.ToLower()) switch
+                                        {
+                                            "active" => "bg-success",
+                                            "inactive" => "bg-warning",
+                                            "discontinued" => "bg-danger",
+                                            _ => "bg-secondary"
+                                        };
+                                    }
+                                    <span class="badge @statusClass">@(product.Product.Status ?? "Active")</span>
+                                </td>
+                                <td>@(product.Product.Category ?? "N/A")</td>
+                                <td>@(product.Product.Type ?? "N/A")</td>
                                 <td>
                                     <div class="table-actions">
-                                        <button type="button" 
-                                                class="btn btn-sm btn-outline-primary action-icon edit-run-btn" 
-                                                data-bs-toggle="modal" 
-                                                data-bs-target="#editRunModal" 
-                                                data-run-id="@run.RunId" 
-                                                data-client-id="@run.ClientId" 
-                                                title="Edit">
+                                        <button type="button" class="btn btn-sm btn-outline-primary action-icon" 
+                                                data-bs-toggle="modal" data-bs-target="#editProductModal" 
+                                                data-product-id="@product.Product.ProductId" title="Edit Product">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                        <a href="@Url.Action("Details", "Run", new { id = run.RunId, clientId = run.ClientId })" 
-                                           class="btn btn-sm btn-primary action-icon" 
-                                           title="View">
+                                        <a href="@Url.Action("Details", "Product", new { id = product.Product.ProductId })" 
+                                           class="btn btn-sm btn-primary action-icon" title="View Details">
                                             <i class="bi bi-eye"></i>
                                         </a>
+                                        <button type="button" class="btn btn-sm btn-outline-info action-icon" 
+                                                onclick="duplicateProduct('@product.Product.ProductId')" title="Duplicate">
+                                            <i class="bi bi-files"></i>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -227,293 +295,300 @@
     }
     else
     {
-        <div class="no-runs-message text-center">
-            <i class="bi bi-calendar-x" style="font-size: 3rem; color: var(--secondary-color);"></i>
-            <h3 class="mt-3">No Runs Found</h3>
-            <p class="text-muted">There are no runs available at the moment. Create a new run to get started!</p>
-            <button type="button" class="btn btn-orange mt-3" data-bs-toggle="modal" data-bs-target="#addRunModal">
-                <i class="bi bi-plus-circle me-2"></i>Create Run
+        <div class="no-products-message">
+            <i class="bi bi-box" style="font-size: 4rem; color: var(--bs-secondary);"></i>
+            <h3 class="mt-3 mb-2">No Products Found</h3>
+            <p class="text-muted mb-4">There are no products available at the moment. Add a new product to get started!</p>
+            <button type="button" class="btn btn-orange btn-lg" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                <i class="bi bi-plus-circle me-2"></i>Add Your First Product
             </button>
         </div>
     }
 </div>
 
-<!-- Add Run Modal -->
-<div class="modal fade" id="addRunModal" tabindex="-1" aria-labelledby="addRunModalLabel" aria-hidden="true">
+<!-- Add Product Modal -->
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addRunModalLabel">Create New Run</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="addProductModalLabel">
+                    <i class="bi bi-plus-circle me-2"></i>Add New Product
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="addRunForm" method="post" action="@Url.Action("Create", "Run")">
+            <form id="addProductForm" method="post" action="@Url.Action("Create", "Product")" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
                 <div class="modal-body">
                     <div class="row mb-3">
-                        <div class="col-md-12">
-                            <label for="runTitle" class="form-label">Run Title</label>
-                            <input type="text" class="form-control" id="runTitle" name="Name" placeholder="e.g. Weeknight Run, Sunday Morning Basketball" required>
+                        <div class="col-md-8">
+                            <label for="addTitle" class="form-label">Product Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="addTitle" name="Title" required 
+                                   placeholder="Enter product title">
                         </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="runDate" class="form-label">Date</label>
-                            <input type="date" class="form-control date-picker" id="runDate" name="RunDate" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="runTime" class="form-label">Start Time</label>
-                            <input type="time" class="form-control time-picker" id="runTime" name="StartTime" required>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="courtType" class="form-label">Court Type</label>
-                            <select class="form-select" id="courtType" name="IsOutdoor" required>
-                                <option value="false" selected>Indoor</option>
-                                <option value="true">Outdoor</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="maxParticipants" class="form-label">Maximum Participants</label>
-                            <input type="number" class="form-control" id="maxParticipants" name="PlayerLimit" min="2" max="30" value="10" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="skillLevel" class="form-label">Skill Level</label>
-                            <select class="form-select" id="skillLevel" name="SkillLevel" required>
-                                <option value="Beginner">Beginner</option>
-                                <option value="Intermediate" selected>Intermediate</option>
-                                <option value="Advanced">Advanced</option>
-                                <option value="All Levels">All Levels</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="runType" class="form-label">Run Type</label>
-                            <select class="form-select" id="runType" name="Type" required>
-                                <option value="Pickup" selected>Pickup Games</option>
-                                <option value="Training">Training Session</option>
-                                <option value="Tournament">Tournament</option>
-                                <option value="Youth">Youth Development</option>
-                                <option value="Women">Women's Only</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="isPublic" class="form-label">Visibility</label>
-                            <select class="form-select" id="isPublic" name="IsPublic" required>
-                                <option value="true" selected>Public</option>
-                                <option value="false">Private</option>
-                            </select>
+                        <div class="col-md-4">
+                            <label for="addProductNumber" class="form-label">SKU/Product Number</label>
+                            <input type="text" class="form-control" id="addProductNumber" name="ProductNumber" 
+                                   placeholder="SKU123">
                         </div>
                     </div>
 
                     <div class="row mb-3">
                         <div class="col-md-12">
-                            <label for="runDescription" class="form-label">Description</label>
-                            <textarea class="form-control" id="runDescription" name="Description" rows="3" placeholder="Describe the run, what to expect, what to bring, etc." required></textarea>
+                            <label for="addDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="addDescription" name="Description" rows="3" 
+                                      placeholder="Enter product description..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="addPrice" class="form-label">Price <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" step="0.01" min="0" class="form-control" id="addPrice" 
+                                       name="Price" required placeholder="0.00">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="addPoints" class="form-label">Reward Points</label>
+                            <input type="number" min="0" class="form-control" id="addPoints" name="Points" 
+                                   placeholder="0">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="addTag" class="form-label">Tag</label>
+                            <input type="text" class="form-control" id="addTag" name="Tag" 
+                                   placeholder="NEW, SALE, etc.">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="addType" class="form-label">Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="addType" name="Type" required>
+                                <option value="">Select Type</option>
+                                <option value="Clothing">Clothing</option>
+                                <option value="Equipment">Equipment</option>
+                                <option value="Accessories">Accessories</option>
+                                <option value="Footwear">Footwear</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="addCategory" class="form-label">Category <span class="text-danger">*</span></label>
+                            <select class="form-select" id="addCategory" name="Category" required>
+                                <option value="">Select Category</option>
+                                <option value="Clothing">Clothing</option>
+                                <option value="Equipment">Equipment</option>
+                                <option value="Accessories">Accessories</option>
+                                <option value="Footwear">Footwear</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="addImageURL" class="form-label">Image URL</label>
+                            <input type="url" class="form-control" id="addImageURL" name="ImageURL" 
+                                   placeholder="https://example.com/image.jpg">
+                            <div class="form-text">Provide a direct link to the product image</div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="addFeatured" name="Featured">
+                                <label class="form-check-label" for="addFeatured">
+                                    Featured Product
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-orange">Create Run</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-orange">
+                        <i class="bi bi-check-circle me-1"></i>Add Product
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Edit Run Modal -->
-<div class="modal fade" id="editRunModal" tabindex="-1" aria-labelledby="editRunModalLabel" aria-hidden="true">
+<!-- Edit Product Modal -->
+<div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editRunModalLabel">Edit Run</h5>
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="editProductModalLabel">
+                    <i class="bi bi-pencil-square me-2"></i>Edit Product
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <ul class="nav nav-tabs" id="editRunTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="details-tab" data-bs-toggle="tab" data-bs-target="#details-tab-pane" type="button" role="tab" aria-controls="details-tab-pane" aria-selected="true">Details</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="participants-tab" data-bs-toggle="tab" data-bs-target="#participants-tab-pane" type="button" role="tab" aria-controls="participants-tab-pane" aria-selected="false">Participants</button>
-                    </li>
-                </ul>
-                <div class="tab-content" id="editRunTabContent">
-                    <div class="tab-pane fade show active" id="details-tab-pane" role="tabpanel" aria-labelledby="details-tab" tabindex="0">
-                        <form id="editRunForm" method="post" action="@Url.Action("Edit", "Run")" class="mt-4">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" id="editRunId" name="RunId" value="" />
-
-                            <div class="row mb-3">
-                                <div class="col-md-12">
-                                    <label for="editRunTitle" class="form-label">Name</label>
-                                    <input type="text" class="form-control" id="editRunTitle" name="Name" required>
-                                </div>
-                            </div>
-
-                            <div class="row mb-3">
-                                <div class="col-md-12">
-                                    <label for="editRunDate" class="form-label">Date</label>
-                                    <input type="date" class="form-control date-picker" id="editRunDate" name="RunDate" required>
-                                </div>
-                            </div>
-
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="editRunTime" class="form-label">Start Time</label>
-                                    <input type="time" class="form-control time-picker" id="editRunTime" name="StartTime" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="editEndTime" class="form-label">End Time</label>
-                                    <input type="time" class="form-control time-picker" id="editEndTime" name="EndTime" required>
-                                </div>
-                            </div>
-
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="editCourtType" class="form-label">Choose Court</label>
-                                    <select class="form-select" id="editCourtList" name="CourtId" required>
-                                        <option value="">Select a court...</option>
-                                    </select>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label for="editCourtType" class="form-label">Court Type</label>
-                                    <select class="form-select" id="editCourtType" name="IsOutdoor" required>
-                                        <option value="false">Indoor</option>
-                                        <option value="true">Outdoor</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="editIsPublic" class="form-label">Visibility</label>
-                                    <select class="form-select" id="editIsPublic" name="IsPublic" required>
-                                        <option value="true">Public</option>
-                                        <option value="false">Private</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="editSkillLevel" class="form-label">Skill Level</label>
-                                    <select class="form-select" id="editSkillLevel" name="SkillLevel" required>
-                                        <option value="Beginner">Beginner</option>
-                                        <option value="Intermediate">Intermediate</option>
-                                        <option value="Advanced">Advanced</option>
-                                        <option value="All Levels">All Levels</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="editMaxParticipants" class="form-label">Maximum Participants</label>
-                                    <input type="number" class="form-control" id="editMaxParticipants" name="PlayerLimit" min="2" max="30" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="editStatus" class="form-label">Status</label>
-                                    <select class="form-select" id="editStatus" name="Status" required>
-                                        <option value="Active">Active</option>
-                                        <option value="Inactive">Inactive</option>
-                                        <option value="Cancelled">Cancelled</option>
-                                        <option value="Completed">Completed</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="editRunType" class="form-label">Run Type</label>
-                                    <select class="form-select" id="editRunType" name="Type" required>
-                                        <option value="Pickup">Pickup Games</option>
-                                        <option value="Training">Training Session</option>
-                                        <option value="Tournament">Tournament</option>
-                                        <option value="Youth">Youth Development</option>
-                                        <option value="Women">Women's Only</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="editTeamType" class="form-label">Team Type</label>
-                                    <select class="form-select" id="editTeamType" name="TeamType" required>
-                                        <option value="Individual">Individual</option>
-                                        <option value="Team">Team</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="row mb-3">
-                                <div class="col-md-12">
-                                    <label for="editRunDescription" class="form-label">Description</label>
-                                    <textarea class="form-control" id="editRunDescription" name="Description" rows="3" required></textarea>
-                                </div>
-                            </div>
-
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-danger me-auto" id="deleteRunBtn">Delete Run</button>
-                                <button type="submit" class="btn btn-orange">Save Changes</button>
-                            </div>
-                        </form>
+            <form id="editProductForm" method="post" action="@Url.Action("Edit", "Product")">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <input type="hidden" id="editProductId" name="ProductId" value="" />
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label for="editTitle" class="form-label">Product Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="editTitle" name="Title" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="editProductNumber" class="form-label">SKU/Product Number</label>
+                            <input type="text" class="form-control" id="editProductNumber" name="ProductNumber">
+                        </div>
                     </div>
-                    <div class="tab-pane fade" id="participants-tab-pane" role="tabpanel" aria-labelledby="participants-tab" tabindex="0">
-                        <div class="mt-4">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="mb-0">Current Participants (<span id="currentParticipantsCount">0</span>/<span id="maxParticipantsCount">0</span>)</h6>
-                                <button class="btn btn-sm btn-outline-primary" id="addParticipantBtn">
-                                    <i class="bi bi-person-plus me-1"></i>Add Participant
-                                </button>
-                            </div>
-                            <div class="participants-list" id="participantsList">
-                                <div class="text-center py-4 text-muted">
-                                    <i class="bi bi-people"></i> Loading participants...
-                                </div>
-                            </div>
 
-                            <div class="mt-4">
-                                <h6 class="mb-3">Waitlist</h6>
-                                <div id="waitlistContainer">
-                                    <p class="text-muted small">No players on the waitlist</p>
-                                </div>
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="editDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="editDescription" name="Description" rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="editPrice" class="form-label">Price <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" step="0.01" min="0" class="form-control" id="editPrice" name="Price" required>
                             </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="editPoints" class="form-label">Reward Points</label>
+                            <input type="number" min="0" class="form-control" id="editPoints" name="Points">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="editTag" class="form-label">Tag</label>
+                            <input type="text" class="form-control" id="editTag" name="Tag">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="editType" class="form-label">Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="editType" name="Type" required>
+                                <option value="">Select Type</option>
+                                <option value="Clothing">Clothing</option>
+                                <option value="Equipment">Equipment</option>
+                                <option value="Accessories">Accessories</option>
+                                <option value="Footwear">Footwear</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="editCategory" class="form-label">Category <span class="text-danger">*</span></label>
+                            <select class="form-select" id="editCategory" name="Category" required>
+                                <option value="">Select Category</option>
+                                <option value="Clothing">Clothing</option>
+                                <option value="Equipment">Equipment</option>
+                                <option value="Accessories">Accessories</option>
+                                <option value="Footwear">Footwear</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="editStatus" class="form-label">Status</label>
+                            <select class="form-select" id="editStatus" name="Status">
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                                <option value="Discontinued">Discontinued</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="editImageURL" class="form-label">Image URL</label>
+                            <input type="url" class="form-control" id="editImageURL" name="ImageURL">
+                            <div class="form-text">Provide a direct link to the product image</div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="editFeatured" name="Featured">
+                                <label class="form-check-label" for="editFeatured">
+                                    Featured Product
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <small class="text-muted">
+                                Product ID: <span id="displayProductId">-</span>
+                            </small>
                         </div>
                     </div>
                 </div>
-            </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger me-auto" id="deleteProductBtn">
+                        <i class="bi bi-trash me-1"></i>Delete Product
+                    </button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-check-circle me-1"></i>Save Changes
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
-<!-- Delete Run Confirmation Modal -->
-<div class="modal fade" id="deleteRunModal" tabindex="-1" aria-hidden="true">
+<!-- Delete Product Confirmation Modal -->
+<div class="modal fade" id="deleteProductModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Confirm Deletion</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>Are you sure you want to delete this run? This action cannot be undone.</p>
-                <p class="text-danger"><strong>Note:</strong> All participants will be notified that this run has been cancelled.</p>
+                <div class="text-center mb-3">
+                    <i class="bi bi-trash" style="font-size: 3rem; color: var(--bs-danger);"></i>
+                </div>
+                <p class="text-center"><strong>Are you sure you want to delete this product?</strong></p>
+                <p class="text-center text-muted">This action cannot be undone.</p>
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-circle me-2"></i>
+                    <strong>Warning:</strong> All related data for this product will be permanently deleted.
+                </div>
+                <div class="product-info bg-light p-3 rounded">
+                    <div class="d-flex align-items-center">
+                        <div class="product-initials me-3" id="deleteProductImage">
+                            <span id="deleteProductInitials">P</span>
+                        </div>
+                        <div>
+                            <div class="fw-bold" id="deleteProductTitle">Product Title</div>
+                            <small class="text-muted" id="deleteProductNumber">SKU123</small>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form id="deleteRunForm" method="post" action="@Url.Action("Delete", "Run")">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>Cancel
+                </button>
+                <form id="deleteProductForm" method="post" action="@Url.Action("Delete", "Product")" class="d-inline">
                     @Html.AntiForgeryToken()
-                    <input type="hidden" id="deleteRunId" name="id" value="" />
-                    <button type="submit" class="btn btn-danger">Delete Run</button>
+                    <input type="hidden" id="deleteProductId" name="id" value="" />
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-1"></i>Delete Product
+                    </button>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Toast Container for Notifications -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer"></div>
 
 @section Scripts {
     <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
@@ -523,432 +598,398 @@
     <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
     <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.bootstrap5.min.js"></script>
     <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
-
     <script>
-        console.log('🚀 Script loading...');
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('📄 DOM Content Loaded');
-            
-            // Helper functions
-            function getAntiForgeryToken() {
-                return document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
-            }
+        // Global variables
+        window.appUrls = {
+            getProductData: '@Url.Action("GetProductData", "Product")',
+            editProduct: '@Url.Action("Edit", "Product")',
+            deleteProduct: '@Url.Action("Delete", "Product")',
+            duplicateProduct: '@Url.Action("Duplicate", "Product")',
+            exportProducts: '@Url.Action("Export", "Product")'
+        };
 
-            function showLoading() {
-                const spinner = document.querySelector('.loading-spinner');
-                if (spinner) spinner.classList.add('active');
-            }
+        let productsTable;
+        let currentFilters = {
+            status: 'all',
+            category: 'all',
+            type: 'all',
+            priceRange: 'all',
+            search: ''
+        };
 
-            function hideLoading() {
-                const spinner = document.querySelector('.loading-spinner');
-                if (spinner) spinner.classList.remove('active');
-            }
+        $(document).ready(function() {
+            initializeDataTable();
+            initializeFilters();
+            initializeModals();
+            initializeEventHandlers();
+        });
 
-            function showToast(message, type = 'success') {
-                console.log(`${type}: ${message}`);
-            }
-
-            // Initialize DataTable only if table exists
-            let runsTable = null;
-            const tableElement = document.getElementById('runsTable');
-            
-            if (tableElement && tableElement.querySelector('tbody tr')) {
-                console.log('📊 Initializing DataTable...');
-                runsTable = $('#runsTable').DataTable({
-                    responsive: true,
-                    lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
-                    dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip',
-                    language: {
-                        search: "_INPUT_",
-                        searchPlaceholder: "Search runs...",
-                        lengthMenu: "Show _MENU_ runs per page",
-                        info: "Showing _START_ to _END_ of _TOTAL_ runs",
-                        infoEmpty: "Showing 0 to 0 of 0 runs",
-                        infoFiltered: "(filtered from _MAX_ total runs)"
-                    },
-                    columnDefs: [
-                        { className: "align-middle", targets: "_all" },
-                        { orderable: false, targets: [5] }
-                    ],
-                    order: [[1, 'asc']]
-                });
-                console.log('✅ DataTable initialized');
-
-                // Filter functionality and other DataTable-related code...
-                // (keeping your existing filter code for brevity)
-            }
-
-            // Set minimum date for date pickers
-            const today = new Date().toISOString().split('T')[0];
-            const dateInputs = document.querySelectorAll('input[type="date"]');
-            dateInputs.forEach(input => {
-                input.min = today;
+        function initializeDataTable() {
+            productsTable = $('#productsTable').DataTable({
+                responsive: true,
+                pageLength: 25,
+                order: [[0, 'asc']],
+                columnDefs: [
+                    { orderable: false, targets: [6] }, // Actions column
+                    { responsivePriority: 1, targets: [0, 6] }, // Product name and actions always visible
+                    { responsivePriority: 2, targets: [1, 3] } // Price and status high priority
+                ],
+                dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip',
+                language: {
+                    search: "Search products:",
+                    lengthMenu: "Show _MENU_ products per page",
+                    info: "Showing _START_ to _END_ of _TOTAL_ products",
+                    infoEmpty: "No products found",
+                    infoFiltered: "(filtered from _MAX_ total products)"
+                },
+                buttons: [
+                    {
+                        extend: 'csv',
+                        text: '<i class="bi bi-download me-1"></i>Export CSV',
+                        className: 'btn btn-outline-success btn-sm'
+                    }
+                ]
             });
 
-            // DEBUGGING: Check if edit buttons exist
-            const editButtons = document.querySelectorAll('.edit-run-btn');
-            console.log(`🔍 Found ${editButtons.length} edit buttons`);
+            // Add export button to our custom location
+            productsTable.buttons().container().appendTo('#exportBtn').hide();
+        }
 
-            // Method 1: Using Bootstrap 5 modal event listeners
-            const editRunModal = document.getElementById('editRunModal');
-            if (editRunModal) {
-                console.log('📱 Edit modal found, adding event listener');
+        function initializeFilters() {
+            // Status filter
+            $('#statusFilter').on('change', function() {
+                currentFilters.status = $(this).val();
+                applyFilters();
+            });
+
+            // Category filter
+            $('#categoryFilter').on('change', function() {
+                currentFilters.category = $(this).val();
+                applyFilters();
+            });
+
+            // Type filter
+            $('#typeFilter').on('change', function() {
+                currentFilters.type = $(this).val();
+                applyFilters();
+            });
+
+            // Price range filter
+            $('#priceRangeFilter').on('change', function() {
+                currentFilters.priceRange = $(this).val();
+                applyFilters();
+            });
+
+            // Search filter
+            $('#searchFilter').on('input', debounce(function() {
+                currentFilters.search = $(this).val();
+                applyFilters();
+            }, 300));
+
+            // Reset filters
+            $('#resetFilters').on('click', function() {
+                $('#statusFilter, #categoryFilter, #typeFilter, #priceRangeFilter').val('all');
+                $('#searchFilter').val('');
+                currentFilters = {
+                    status: 'all',
+                    category: 'all',
+                    type: 'all',
+                    priceRange: 'all',
+                    search: ''
+                };
+                applyFilters();
+            });
+        }
+
+        function applyFilters() {
+            // Apply custom filters to DataTable
+            $.fn.dataTable.ext.search.pop(); // Remove previous custom filter
+            
+            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                const row = $(productsTable.row(dataIndex).node());
                 
-                editRunModal.addEventListener('show.bs.modal', function(event) {
-                    console.log('🎯 Modal show event triggered');
-                    console.log('Event object:', event);
-                    console.log('Related target:', event.relatedTarget);
-
-                    const button = event.relatedTarget;
-                    
-                    if (!button) {
-                        console.error('❌ No button found in event.relatedTarget');
-                        return;
-                    }
-
-                    const runId = button.getAttribute('data-run-id');
-                    const clientId = button.getAttribute('data-client-id');
-                    
-                    console.log(`📝 RunId: ${runId}`);
-                    console.log(`🏢 ClientId: ${clientId}`);
-                    console.log('Button attributes:', Array.from(button.attributes).map(attr => `${attr.name}="${attr.value}"`));
-
-                    if (!runId) {
-                        console.error('❌ No run ID found');
-                        alert('Error: No run ID found. Please try again.');
-                        return;
-                    }
-
-                    if (!clientId) {
-                        console.error('❌ No client ID found');
-                        alert('Error: No client ID found. Please try again.');
-                        return;
-                    }
-
-                    const editRunIdField = document.getElementById('editRunId');
-                    if (editRunIdField) {
-                        editRunIdField.value = runId;
-                        console.log('✅ Set edit run ID field');
-                    }
-                    
-                    showLoading();
-                    console.log('📡 Making API call to GetRunData...');
-
-                    // Load run data with clientId
-                    const apiUrl = `/Run/GetRunData?id=${encodeURIComponent(runId)}&clientId=${encodeURIComponent(clientId)}`;
-                    console.log(`🌐 API URL: ${apiUrl}`);
-
-                    fetch(apiUrl)
-                        .then(response => {
-                            console.log('📡 Response received:', response);
-                            if (!response.ok) {
-                                throw new Error(`Network response was not ok: ${response.status} ${response.statusText}`);
-                            }
-                            return response.json();
-                        })
-                        .then(data => {
-                            console.log('📦 Data received:', data);
-                            hideLoading();
-
-                            if (data.success === false) {
-                                throw new Error(data.message || 'Failed to load run data');
-                            }
-
-                            // Populate form fields with null checks
-                            const setFieldValue = (fieldId, value) => {
-                                const field = document.getElementById(fieldId);
-                                if (field && value !== null && value !== undefined) {
-                                    field.value = value;
-                                    console.log(`✅ Set ${fieldId} = ${value}`);
-                                } else {
-                                    console.log(`⚠️ Field ${fieldId} not found or value is null/undefined`);
-                                }
-                            };
-
-                            // Set all the form values
-                            setFieldValue('editRunTitle', data.name);
-                            setFieldValue('editRunDate', data.runDate);
-                            setFieldValue('editRunTime', data.startTime);
-                            setFieldValue('editEndTime', data.endTime);
-                            setFieldValue('editCourtType', data.isOutdoor ? 'true' : 'false');
-                            setFieldValue('editMaxParticipants', data.playerLimit);
-                            setFieldValue('editSkillLevel', data.skillLevel);
-                            setFieldValue('editRunDescription', data.description);
-                            setFieldValue('editIsPublic', data.isPublic ? 'true' : 'false');
-                            setFieldValue('editStatus', data.status);
-                            setFieldValue('editRunType', data.type);
-                            setFieldValue('editTeamType', data.teamType);
-
-                            // Handle court dropdown separately
-                            console.log('🏀 Processing court list...');
-                            if (data.courtList && Array.isArray(data.courtList)) {
-                                console.log(`📋 Court list has ${data.courtList.length} courts:`, data.courtList);
-                                populateCourtDropdown(data.courtList);
-                                
-                                // Set the selected court if the run has a court ID
-                                if (data.courtId) {
-                                    console.log(`🎯 Setting selected court: ${data.courtId}`);
-                                    setFieldValue('editCourtList', data.courtId);
-                                } else {
-                                    console.log('⚠️ No courtId in data');
-                                }
-                            } else {
-                                console.log('⚠️ No court list in data or not an array');
-                            }
-
-                            // Update participant counts
-                            const currentCount = document.getElementById('currentParticipantsCount');
-                            const maxCount = document.getElementById('maxParticipantsCount');
-                            if (currentCount) currentCount.textContent = data.playerCount || 0;
-                            if (maxCount) maxCount.textContent = data.playerLimit || 0;
-
-                            // Set delete button run ID
-                            const deleteIdField = document.getElementById('deleteRunId');
-                            if (deleteIdField) deleteIdField.value = data.runId || runId;
-
-                            // Load participants
-                            loadParticipants(data.runId || runId);
-                            console.log('✅ Modal population complete');
-                        })
-                        .catch(error => {
-                            hideLoading();
-                            console.error('❌ Error loading run data:', error);
-                            alert(`Error loading run data: ${error.message}. Please check the console for details.`);
-                        });
-                });
-            } else {
-                console.error('❌ Edit run modal not found!');
-            }
-
-            // Method 2: Direct button click handlers (backup method)
-            editButtons.forEach((button, index) => {
-                console.log(`🔗 Adding click handler to button ${index}`);
-                button.addEventListener('click', function(e) {
-                    console.log(`🖱️ Button ${index} clicked directly`);
-                    const runId = this.getAttribute('data-run-id');
-                    const clientId = this.getAttribute('data-client-id');
-                    console.log(`Direct click - RunId: ${runId}, ClientId: ${clientId}`);
-                });
-            });
-
-            function populateCourtDropdown(courtList) {
-                console.log('🏀 Populating court dropdown...');
-                const courtSelect = document.getElementById('editCourtList');
-
-                if (!courtSelect) {
-                    console.error('❌ Court select element not found');
-                    return;
+                // Status filter
+                if (currentFilters.status !== 'all') {
+                    const status = row.data('status');
+                    if (status !== currentFilters.status) return false;
                 }
 
-                // Clear existing options except the first one
-                courtSelect.innerHTML = '<option value="">Select a court...</option>';
+                // Category filter
+                if (currentFilters.category !== 'all') {
+                    const category = row.data('category');
+                    if (category !== currentFilters.category) return false;
+                }
 
-                // Add courts from the data
-                courtList.forEach((court, index) => {
-                    console.log(`📍 Adding court ${index}: ${court.name} (ID: ${court.courtId})`);
-                    const option = document.createElement('option');
-                    option.value = court.courtId;
-                    option.textContent = court.name;
-                    courtSelect.appendChild(option);
-                });
+                // Type filter
+                if (currentFilters.type !== 'all') {
+                    const type = row.data('type');
+                    if (type !== currentFilters.type) return false;
+                }
 
-                console.log(`✅ Court dropdown populated with ${courtList.length} courts`);
-            }
-
-            // Handle delete run button
-            const deleteRunBtn = document.getElementById('deleteRunBtn');
-            if (deleteRunBtn) {
-                deleteRunBtn.addEventListener('click', function() {
-                    const runId = document.getElementById('editRunId').value;
-                    const deleteIdField = document.getElementById('deleteRunId');
-                    if (deleteIdField) deleteIdField.value = runId;
-
-                    const editModal = bootstrap.Modal.getInstance(document.getElementById('editRunModal'));
-                    if (editModal) editModal.hide();
-
-                    const deleteModal = new bootstrap.Modal(document.getElementById('deleteRunModal'));
-                    deleteModal.show();
-                });
-            }
-
-            // Function to load participants
-            function loadParticipants(runId) {
-                const participantsList = document.getElementById('participantsList');
-                if (!participantsList) return;
-
-                participantsList.innerHTML = '<div class="text-center py-4 text-muted"><i class="bi bi-people"></i> Loading participants...</div>';
-
-                fetch(`/Run/GetRunParticipants?runId=${runId}`)
-                    .then(response => {
-                        if (!response.ok) throw new Error('Network response was not ok');
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (!Array.isArray(data) || data.length === 0) {
-                            participantsList.innerHTML = `
-                                <div class="text-center py-4 text-muted">
-                                    <p>No participants have joined this run yet.</p>
-                                </div>`;
-                            return;
-                        }
-
-                        let html = '';
-                        data.forEach(participant => {
-                            const userName = participant.userName || 'Unknown Player';
-                            const initials = userName
-                                .split(' ')
-                                .map(n => n[0] || '')
-                                .join('')
-                                .substring(0, 2)
-                                .toUpperCase() || 'UP';
-
-                            html += `
-                                <div class="d-flex align-items-center p-2 border-bottom">
-                                    <div class="participant-avatar flex-shrink-0 me-3">
-                                        ${initials}
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <h6 class="mb-0">${userName}</h6>
-                                        <span class="text-muted small">Status: ${participant.status || 'Active'}</span>
-                                    </div>
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="bi bi-three-dots-vertical"></i>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end">
-                                            <li><a class="dropdown-item" href="#"><i class="bi bi-envelope me-2"></i>Message</a></li>
-                                            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>View Profile</a></li>
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li><a class="dropdown-item text-danger remove-participant" data-participant-id="${participant.profileId}" href="#"><i class="bi bi-person-x me-2"></i>Remove</a></li>
-                                        </ul>
-                                    </div>
-                                </div>`;
-                        });
-
-                        participantsList.innerHTML = html;
-
-                        // Add event listeners to remove buttons
-                        document.querySelectorAll('.remove-participant').forEach(button => {
-                            button.addEventListener('click', function(e) {
-                                e.preventDefault();
-                                const participantId = this.getAttribute('data-participant-id');
-
-                                if (confirm('Are you sure you want to remove this participant?')) {
-                                    removeParticipant(runId, participantId);
-                                }
-                            });
-                        });
-                    })
-                    .catch(error => {
-                        console.error('Error loading participants:', error);
-                        participantsList.innerHTML = `
-                            <div class="text-center py-4 text-danger">
-                                <p>Error loading participants. Please try again.</p>
-                            </div>`;
-                    });
-            }
-
-            // Function to remove participant
-            function removeParticipant(runId, participantId) {
-                showLoading();
-
-                fetch('/Run/RemoveParticipant', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': getAntiForgeryToken()
-                    },
-                    body: JSON.stringify(participantId)
-                })
-                .then(response => {
-                    if (!response.ok) throw new Error('Network response was not ok');
-                    return response.json();
-                })
-                .then(data => {
-                    hideLoading();
-                    if (data.success) {
-                        loadParticipants(runId);
-                        const currentCount = document.getElementById('currentParticipantsCount');
-                        if (currentCount) {
-                            const count = parseInt(currentCount.textContent);
-                            currentCount.textContent = Math.max(0, count - 1);
-                        }
-                        showToast('Participant removed successfully');
+                // Price range filter
+                if (currentFilters.priceRange !== 'all') {
+                    const price = parseFloat(row.data('price')) || 0;
+                    const [min, max] = currentFilters.priceRange.split('-').map(p => p.replace('+', ''));
+                    
+                    if (max) {
+                        if (price < parseFloat(min) || price > parseFloat(max)) return false;
                     } else {
-                        alert('Error removing participant: ' + (data.message || 'Unknown error'));
+                        if (price < parseFloat(min)) return false;
+                    }
+                }
+
+                // Search filter
+                if (currentFilters.search) {
+                    const searchTerm = currentFilters.search.toLowerCase();
+                    const title = data[0].toLowerCase();
+                    const category = data[4].toLowerCase();
+                    const type = data[5].toLowerCase();
+                    
+                    if (!title.includes(searchTerm) && 
+                        !category.includes(searchTerm) && 
+                        !type.includes(searchTerm)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+
+            productsTable.draw();
+            updateActiveFilters();
+            updateProductCount();
+        }
+
+        function updateActiveFilters() {
+            const activeFiltersContainer = $('#activeFilters');
+            const filters = [];
+
+            if (currentFilters.status !== 'all') {
+                filters.push(`<span class="badge bg-primary filter-badge">Status: ${currentFilters.status}</span>`);
+            }
+            if (currentFilters.category !== 'all') {
+                filters.push(`<span class="badge bg-success filter-badge">Category: ${currentFilters.category}</span>`);
+            }
+            if (currentFilters.type !== 'all') {
+                filters.push(`<span class="badge bg-info filter-badge">Type: ${currentFilters.type}</span>`);
+            }
+            if (currentFilters.priceRange !== 'all') {
+                filters.push(`<span class="badge bg-warning filter-badge">Price: $${currentFilters.priceRange}</span>`);
+            }
+            if (currentFilters.search) {
+                filters.push(`<span class="badge bg-secondary filter-badge">Search: "${currentFilters.search}"</span>`);
+            }
+
+            if (filters.length > 0) {
+                activeFiltersContainer.html(`
+                    <span class="badge bg-secondary me-2">Active Filters:</span>
+                    ${filters.join('')}
+                `);
+            } else {
+                activeFiltersContainer.html(`
+                    <span class="badge bg-secondary me-2">Active Filters:</span>
+                    <span class="text-muted filter-none">None</span>
+                `);
+            }
+        }
+
+        function updateProductCount() {
+            const info = productsTable.page.info();
+            $('#totalProductsCount').text(info.recordsDisplay);
+        }
+
+        function initializeModals() {
+            // Edit product modal
+            $('#editProductModal').on('show.bs.modal', function (event) {
+                const button = $(event.relatedTarget);
+                const productId = button.data('product-id');
+                
+                if (productId) {
+                    loadProductData(productId);
+                }
+            });
+
+            // Clear forms when modals are hidden
+            $('#addProductModal, #editProductModal').on('hidden.bs.modal', function() {
+                $(this).find('form')[0].reset();
+                $(this).find('.is-invalid').removeClass('is-invalid');
+                $(this).find('.invalid-feedback').remove();
+            });
+        }
+
+        function loadProductData(productId) {
+            // Show loading state
+            $('#editProductModal .modal-body').prepend(`
+                <div class="loading-overlay text-center p-3" id="loadingOverlay">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <div class="mt-2">Loading product data...</div>
+                </div>
+            `);
+
+            $.get(window.appUrls.getProductData, { id: productId })
+                .done(function(data) {
+                    $('#loadingOverlay').remove();
+                    
+                    if (data.success) {
+                        populateEditForm(data);
+                    } else {
+                        showToast('Error', data.message || 'Error loading product data', 'error');
+                        $('#editProductModal').modal('hide');
                     }
                 })
-                .catch(error => {
-                    hideLoading();
-                    console.error('Error removing participant:', error);
-                    alert('Error removing participant. Please try again.');
+                .fail(function(xhr) {
+                    $('#loadingOverlay').remove();
+                    showToast('Error', 'Failed to load product data', 'error');
+                    $('#editProductModal').modal('hide');
                 });
-            }
+        }
 
-            // Add participant button
-            const addParticipantBtn = document.getElementById('addParticipantBtn');
-            if (addParticipantBtn) {
-                addParticipantBtn.addEventListener('click', function() {
-                    const runId = document.getElementById('editRunId').value;
-                    const currentCountEl = document.getElementById('currentParticipantsCount');
-                    const maxCountEl = document.getElementById('maxParticipantsCount');
-                    
-                    if (!currentCountEl || !maxCountEl) {
-                        alert('Unable to determine current capacity. Please refresh and try again.');
-                        return;
-                    }
-                    
-                    const currentCount = parseInt(currentCountEl.textContent);
-                    const maxCount = parseInt(maxCountEl.textContent);
+        function populateEditForm(data) {
+            $('#editProductId').val(data.productId);
+            $('#editTitle').val(data.Title || '');
+            $('#editDescription').val(data.Description || '');
+            $('#editPrice').val(data.Price || '');
+            $('#editPoints').val(data.Points || '');
+            $('#editType').val(data.Type || '');
+            $('#editCategory').val(data.Category || '');
+            $('#editStatus').val(data.Status || 'Active');
+            $('#editImageURL').val(data.ImageURL || '');
+            $('#editProductNumber').val(data.ProductNumber || '');
+            $('#editTag').val(data.Tag || '');
+            $('#editFeatured').prop('checked', data.Featured || false);
+            $('#displayProductId').text(data.productId);
+        }
 
-                    if (currentCount >= maxCount) {
-                        alert('This run is already at maximum capacity. Cannot add more participants.');
-                        return;
-                    }
+        function initializeEventHandlers() {
+            // Delete product button
+            $('#deleteProductBtn').on('click', function() {
+                const productId = $('#editProductId').val();
+                const title = $('#editTitle').val();
+                const productNumber = $('#editProductNumber').val();
+                
+                $('#deleteProductId').val(productId);
+                $('#deleteProductTitle').text(title || 'Unnamed Product');
+                $('#deleteProductNumber').text(productNumber || 'No SKU');
+                $('#deleteProductInitials').text((title || 'P').substring(0, 1).toUpperCase());
+                
+                $('#editProductModal').modal('hide');
+                $('#deleteProductModal').modal('show');
+            });
 
-                    const profileId = prompt('Enter participant profile ID:');
-                    if (!profileId) return;
+            // Export button
+            $('#exportBtn').on('click', function() {
+                productsTable.button(0).trigger();
+            });
 
-                    showLoading();
+            // Form validation
+            $('form').on('submit', function(e) {
+                const form = this;
+                if (!form.checkValidity()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    addFormValidationClasses(form);
+                }
+                form.classList.add('was-validated');
+            });
+        }
 
-                    const requestData = {
-                        RunId: runId,
-                        ProfileId: profileId
-                    };
-
-                    fetch(`/Run/AddParticipant?runId=${runId}&profileId=${profileId}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'RequestVerificationToken': getAntiForgeryToken()
-                        },
-                        body: JSON.stringify(requestData)
-                    })
-                    .then(response => {
-                        if (!response.ok) throw new Error('Network response was not ok');
-                        return response.json();
-                    })
-                    .then(data => {
-                        hideLoading();
-                        if (data.success) {
-                            loadParticipants(runId);
-                            const currentCount = parseInt(currentCountEl.textContent);
-                            currentCountEl.textContent = currentCount + 1;
-                            showToast('Participant added successfully');
+        function duplicateProduct(productId) {
+            if (confirm('Are you sure you want to duplicate this product?')) {
+                $.post(window.appUrls.duplicateProduct, { id: productId })
+                    .done(function(response) {
+                        if (response.success) {
+                            showToast('Success', 'Product duplicated successfully', 'success');
+                            location.reload();
                         } else {
-                            alert('Error adding participant: ' + (data.message || 'Unknown error'));
+                            showToast('Error', response.message || 'Failed to duplicate product', 'error');
                         }
                     })
-                    .catch(error => {
-                        hideLoading();
-                        console.error('Error adding participant:', error);
-                        alert('Error adding participant. Please try again.');
+                    .fail(function() {
+                        showToast('Error', 'Failed to duplicate product', 'error');
                     });
-                });
             }
+        }
 
-            console.log('✅ All event handlers set up');
-        });
+        function addFormValidationClasses(form) {
+            $(form).find('input[required], select[required], textarea[required]').each(function() {
+                if (!this.checkValidity()) {
+                    $(this).addClass('is-invalid');
+                    if (!$(this).next('.invalid-feedback').length) {
+                        $(this).after('<div class="invalid-feedback">' + this.validationMessage + '</div>');
+                    }
+                } else {
+                    $(this).removeClass('is-invalid').addClass('is-valid');
+                }
+            });
+        }
+
+        function showToast(title, message, type = 'info') {
+            const toastId = 'toast_' + Date.now();
+            const typeClass = {
+                'success': 'bg-success text-white',
+                'error': 'bg-danger text-white',
+                'warning': 'bg-warning text-dark',
+                'info': 'bg-info text-white'
+            }[type] || 'bg-info text-white';
+
+            const toastHtml = `
+                <div class="toast ${typeClass}" id="${toastId}" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-header">
+                        <strong class="me-auto">${title}</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                </div>
+            `;
+
+            $('#toastContainer').append(toastHtml);
+            
+            const toast = new bootstrap.Toast(document.getElementById(toastId), {
+                autohide: true,
+                delay: 5000
+            });
+            
+            toast.show();
+            
+            // Remove toast element after it's hidden
+            document.getElementById(toastId).addEventListener('hidden.bs.toast', function() {
+                this.remove();
+            });
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Handle TempData messages
+        @if (TempData["Success"] != null)
+        {
+            <text>
+            $(document).ready(function() {
+                showToast('Success', '@TempData["Success"]', 'success');
+            });
+            </text>
+        }
+
+        @if (TempData["Error"] != null)
+        {
+            <text>
+            $(document).ready(function() {
+                showToast('Error', '@TempData["Error"]', 'error');
+            });
+            </text>
+        }
     </script>
 }
