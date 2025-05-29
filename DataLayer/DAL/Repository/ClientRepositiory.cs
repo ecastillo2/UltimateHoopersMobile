@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Runtime.CompilerServices;
 using DataLayer.Context;
-using DataLayer.DAL.Context;
 using DataLayer.DAL.Interface;
 using Domain;
 using Microsoft.EntityFrameworkCore;
@@ -31,6 +25,11 @@ namespace DataLayer.DAL.Repository
             _logger = logger;
         }
 
+        /// <summary>
+        /// Get Clients Async
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task<List<Client>> GetClientsAsync(CancellationToken cancellationToken = default)
         {
             try
@@ -46,6 +45,13 @@ namespace DataLayer.DAL.Repository
             }
         }
 
+        /// <summary>
+        /// Get Clients Paginated Async
+        /// </summary>
+        /// <param name="page"></param>
+        /// <param name="pageSize"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task<(List<Client> Clients, int TotalCount, int TotalPages)> GetClientsPaginatedAsync(
             int page = 1,
             int pageSize = 20,
@@ -75,6 +81,15 @@ namespace DataLayer.DAL.Repository
             }
         }
 
+        /// <summary>
+        /// Get Clients With CursorAsync
+        /// </summary>
+        /// <param name="cursor"></param>
+        /// <param name="limit"></param>
+        /// <param name="direction"></param>
+        /// <param name="sortBy"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task<(List<Client> Clients, string NextCursor)> GetClientsWithCursorAsync(
             string cursor = null,
             int limit = 20,
@@ -145,6 +160,11 @@ namespace DataLayer.DAL.Repository
             }
         }
 
+        /// <summary>
+        /// Stream All Clients Async
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async IAsyncEnumerable<Client> StreamAllClientsAsync(
     [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
@@ -183,7 +203,12 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-
+        /// <summary>
+        /// Get Client By Id Async
+        /// </summary>
+        /// <param name="runId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task<Client> GetClientByIdAsync(
             string runId,
             CancellationToken cancellationToken = default)
@@ -202,8 +227,13 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-    
 
+        /// <summary>
+        /// Get Court By Client Id Async
+        /// </summary>
+        /// <param name="clientId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task<List<Court>> GetCourtByClientIdAsync(
      string clientId,
      CancellationToken cancellationToken = default)
@@ -242,7 +272,12 @@ namespace DataLayer.DAL.Repository
 
 
 
-
+        /// <summary>
+        /// Update Client Async
+        /// </summary>
+        /// <param name="privateRun"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task<bool> UpdateClientAsync(
             Client privateRun,
             CancellationToken cancellationToken = default)
@@ -260,7 +295,11 @@ namespace DataLayer.DAL.Repository
         }
 
 
-
+        /// <summary>
+        /// Save Changes Async
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             try
@@ -315,8 +354,6 @@ namespace DataLayer.DAL.Repository
         {
             throw new NotImplementedException();
         }
-
- 
 
         public Task<int> BatchUpdateClientsAsync(IEnumerable<Client> PrivateRuns, CancellationToken cancellationToken = default)
         {
