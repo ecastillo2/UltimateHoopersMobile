@@ -186,9 +186,9 @@ namespace DataLayer.DAL.Repository
         }
 
 
-      
 
-      
+
+
 
 
         /// <summary>
@@ -198,12 +198,34 @@ namespace DataLayer.DAL.Repository
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         public async Task<bool> UpdateProductAsync(
-            Product product,
-            CancellationToken cancellationToken = default)
+    Product product,
+    CancellationToken cancellationToken = default)
         {
             try
             {
-                _context.Entry(product).State = EntityState.Modified;
+                // Retrieve the existing product from database
+                var existingProduct = await _context.Product
+                    .FirstOrDefaultAsync(p => p.ProductId == product.ProductId, cancellationToken);
+
+                if (existingProduct == null)
+                {
+                    return false;
+                }
+
+                // Update only the fields you want to allow updates for
+                existingProduct.Title = product.Title;
+                existingProduct.Description = product.Description;
+                existingProduct.Price = product.Price;
+                existingProduct.Points = product.Points;
+                existingProduct.Type = product.Type;
+                existingProduct.Category = product.Category;
+                existingProduct.Status = product.Status;
+                existingProduct.ProductNumber = product.ProductNumber;
+                existingProduct.Tag = product.Tag;
+
+                // Don't update sensitive fields like CreatedDate, CreatedBy, etc.
+                // existingProduct.CreatedDate = product.CreatedDate; // DON'T update
+
                 return await SaveChangesAsync(cancellationToken) > 0;
             }
             catch (Exception ex)

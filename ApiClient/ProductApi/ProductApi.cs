@@ -97,7 +97,7 @@ namespace WebAPI.ApiClients
                 Encoding.UTF8,
                 "application/json");
 
-            var response = await _httpClient.PostAsync($"{_baseUrl}/api/Product/UpdateProduct", jsonContent, cancellationToken);
+            var response = await _httpClient.PutAsync($"{_baseUrl}/api/Product/UpdateProduct", jsonContent, cancellationToken);
             return response.IsSuccessStatusCode;
         }
 

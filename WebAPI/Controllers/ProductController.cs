@@ -141,25 +141,25 @@ namespace WebAPI.Controllers
         /// <param name="model"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        [HttpPut("{id}")]
-        [Authorize]
+        [HttpPut("UpdateProduct")]
+        //[Authorize]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> UpdateProduct(string id, Product model, CancellationToken cancellationToken)
+        public async Task<IActionResult> UpdateProduct(Product model, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (id != model.ProductId)
+            if (model.ProductId != model.ProductId)
                 return BadRequest("products ID mismatch");
 
             try
             {
-                var products = await _repository.GetProductByIdAsync(id, cancellationToken);
+                var products = await _repository.GetProductByIdAsync(model.ProductId, cancellationToken);
 
                 if (products == null)
-                    return NotFound($"products with ID {id} not found");
+                    return NotFound($"products with ID {model.ProductId} not found");
 
             
 
@@ -172,7 +172,7 @@ namespace WebAPI.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating profile {ProfileId}", id);
+                _logger.LogError(ex, "Error updating profile {ProfileId}", model.ProductId);
                 return StatusCode(500, "An error occurred while updating the profile");
             }
         }

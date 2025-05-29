@@ -271,7 +271,7 @@ namespace BasketballGameAnalyzer
                 {
                     ProcessSingleFrame(frameData, videoInfo, localBallPositions, localPlayerData, localScoringEvents);
 
-                    Interlocked.Increment(ref result.TotalFramesProcessed);
+                    //Interlocked.Increment(ref result.TotalFramesProcessed);
 
                     // Periodic sync
                     if (result.TotalFramesProcessed % 100 == 0)

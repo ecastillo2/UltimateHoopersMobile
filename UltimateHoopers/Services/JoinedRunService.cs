@@ -162,7 +162,7 @@ namespace UltimateHoopers.Services
                     ProfileId = profileId,
                     RunId = "run1",
                     AcceptedInvite = "Accepted",
-                    InvitedDate = DateTime.Now.AddDays(-2).ToString(),
+                    InvitedDate = DateTime.Now,
                     Run = new Run
                     {
                         RunId = "run1",
@@ -191,7 +191,7 @@ namespace UltimateHoopers.Services
                     ProfileId = profileId,
                     RunId = "run2",
                     AcceptedInvite = "Accepted",
-                    InvitedDate = DateTime.Now.AddDays(-1).ToString(),
+                    InvitedDate = DateTime.Now,
                     Run = new Run
                     {
                         RunId = "run2",
