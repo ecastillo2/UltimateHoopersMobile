@@ -10,7 +10,150 @@
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.bootstrap5.min.css">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.bootstrap5.min.css">
     <link rel="stylesheet" type="text/css" href="~/css/management.css">
-    <link rel="stylesheet" type="text/css" href="~/css/product-image-upload.css">
+    <style>
+        /* Enhanced Image Upload Styles */
+        .image-preview-container {
+            position: relative;
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .image-preview-container:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(255, 107, 0, 0.05);
+        }
+
+        .image-preview-container.has-image {
+            border: 2px solid var(--primary-color);
+            background-color: rgba(255, 107, 0, 0.1);
+        }
+
+        .current-image-preview img,
+        .new-image-preview img {
+            max-width: 100%;
+            max-height: 180px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .upload-option {
+            border-radius: 8px;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            margin-bottom: 1rem;
+        }
+
+        .upload-option:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(255, 107, 0, 0.05);
+        }
+
+        .image-actions .btn {
+            border-radius: 20px;
+        }
+
+        .new-image-preview {
+            border: 2px solid var(--primary-color);
+            background-color: rgba(40, 167, 69, 0.1);
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(255, 107, 0, 0.25);
+        }
+
+        .btn-group .btn {
+            margin: 0 2px;
+        }
+
+        .product-image-cell {
+            width: 60px;
+        }
+
+        .product-image {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+        }
+
+        .product-initials {
+            width: 40px;
+            height: 40px;
+            background-color: var(--secondary-color);
+            color: white;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .table-actions {
+            white-space: nowrap;
+        }
+
+        .action-icon {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 2px;
+        }
+
+        .no-products-message {
+            text-align: center;
+            padding: 3rem 1rem;
+        }
+
+        .filter-badge {
+            display: inline-block;
+            margin: 2px;
+        }
+
+        .price-display {
+            font-weight: 600;
+            color: var(--bs-success);
+        }
+
+        .points-badge {
+            background: var(--bs-warning);
+            color: var(--bs-dark);
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* Image upload drag and drop styles */
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            text-align: center;
+            padding: 2rem;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(255, 107, 0, 0.05);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--primary-color);
+            background-color: rgba(255, 107, 0, 0.1);
+        }
+    </style>
 }
 
 <div class="dashboard-header">
@@ -122,24 +265,27 @@
                             <tr data-status="@(product.Product.Status?.ToLower() ?? "active")" 
                                 data-category="@(product.Product.Category?.ToLower() ?? "")" 
                                 data-type="@(product.Product.Type?.ToLower() ?? "")"
-                                data-price="@(product.Product.Price ?? 0)">
+                                data-price="@(product.Product.Price ?? 0)"
+                                data-image-url="@product.Product.ImageURL">
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        @if (!string.IsNullOrEmpty(product.Product.ImageURL))
-                                        {
-                                            <img src="@product.Product.ImageURL" alt="@product.Product.Title" class="product-image me-2" 
-                                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-                                                 style="width: 36px; height: 36px; object-fit: cover; border-radius: 4px;">
-                                            <div class="product-initials me-2" style="display: none; width: 36px; height: 36px; background-color: var(--secondary-color); color: white; border-radius: 4px; font-weight: bold; font-size: 14px; justify-content: center; align-items: center;">
-                                                <span>@(product.Product.Title?.Substring(0, 1).ToUpper() ?? "P")</span>
-                                            </div>
-                                        }
-                                        else
-                                        {
-                                            <div class="product-initials me-2" style="width: 36px; height: 36px; background-color: var(--secondary-color); color: white; border-radius: 4px; font-weight: bold; font-size: 14px; display: flex; justify-content: center; align-items: center;">
-                                                <span>@(product.Product.Title?.Substring(0, 1).ToUpper() ?? "P")</span>
-                                            </div>
-                                        }
+                                        <div class="product-image-cell me-3">
+                                            @if (!string.IsNullOrEmpty(product.Product.ImageURL))
+                                            {
+                                                <img src="@product.Product.ImageURL" alt="@product.Product.Title" class="product-image" 
+                                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                                                     loading="lazy">
+                                                <div class="product-initials" style="display: none;">
+                                                    <span>@(product.Product.Title?.Substring(0, 1).ToUpper() ?? "P")</span>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="product-initials">
+                                                    <span>@(product.Product.Title?.Substring(0, 1).ToUpper() ?? "P")</span>
+                                                </div>
+                                            }
+                                        </div>
                                         <div>
                                             <div class="fw-semibold">@product.Product.Title</div>
                                             <div class="text-muted small">@(product.Product.ProductNumber)</div>
@@ -196,7 +342,7 @@
                     <!-- Product Image Section -->
                     <div class="row mb-4">
                         <div class="col-md-12">
-                            <label class="form-label">Product Image</label>
+                            <label class="form-label fw-bold">Product Image</label>
                             <div class="row">
                                 <div class="col-md-4">
                                     <div class="image-preview-container mb-3">
@@ -205,19 +351,24 @@
                                             <div id="addImagePlaceholder" class="d-flex flex-column align-items-center justify-content-center h-100">
                                                 <i class="bi bi-image text-muted" style="font-size: 2.5rem;"></i>
                                                 <p class="text-muted mt-2 mb-0">Image Preview</p>
+                                                <small class="text-muted">Upload or enter URL</small>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-md-8">
-                                    <div class="upload-option mb-3">
-                                        <label for="addImageFile" class="form-label">Upload Image</label>
+                                    <div class="upload-option">
+                                        <label for="addImageFile" class="form-label mb-2">
+                                            <i class="bi bi-cloud-upload me-2"></i>Upload Image File
+                                        </label>
                                         <input type="file" class="form-control" id="addImageFile" name="ImageFile" accept="image/*">
                                         <div class="form-text">Supported formats: JPG, PNG, GIF. Max size: 5MB</div>
                                     </div>
                                     
-                                    <div class="upload-option mb-3">
-                                        <label for="addImageURL" class="form-label">Or Image URL</label>
+                                    <div class="upload-option">
+                                        <label for="addImageURL" class="form-label mb-2">
+                                            <i class="bi bi-link-45deg me-2"></i>Or Image URL
+                                        </label>
                                         <div class="input-group">
                                             <input type="url" class="form-control" id="addImageURL" name="ImageURL" placeholder="https://example.com/image.jpg">
                                             <button type="button" class="btn btn-outline-secondary" id="addPreviewUrlBtn">
@@ -233,7 +384,7 @@
 
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="addTitle" class="form-label">Title</label>
+                            <label for="addTitle" class="form-label">Title <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="addTitle" name="Title" required>
                         </div>
                         <div class="col-md-6">
@@ -251,7 +402,7 @@
 
                     <div class="row mb-3">
                         <div class="col-md-4">
-                            <label for="addPrice" class="form-label">Price</label>
+                            <label for="addPrice" class="form-label">Price <span class="text-danger">*</span></label>
                             <input type="number" step="0.01" min="0" class="form-control" id="addPrice" name="Price" required>
                         </div>
                         <div class="col-md-4">
@@ -266,7 +417,7 @@
 
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="addType" class="form-label">Type</label>
+                            <label for="addType" class="form-label">Type <span class="text-danger">*</span></label>
                             <select class="form-select" id="addType" name="Type" required>
                                 <option value="">Select Type</option>
                                 <option value="Clothing">Clothing</option>
@@ -276,7 +427,7 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label for="addCategory" class="form-label">Category</label>
+                            <label for="addCategory" class="form-label">Category <span class="text-danger">*</span></label>
                             <select class="form-select" id="addCategory" name="Category" required>
                                 <option value="">Select Category</option>
                                 <option value="Clothing">Clothing</option>
@@ -323,10 +474,10 @@
                             @Html.AntiForgeryToken()
                             <input type="hidden" id="editProductId" name="ProductId" value="" />
                             
-                            <!-- Product Image Section -->
+                            <!-- Enhanced Product Image Section -->
                             <div class="row mb-4">
                                 <div class="col-md-12">
-                                    <label class="form-label">Product Image</label>
+                                    <label class="form-label fw-bold">Product Image</label>
                                     <div class="row">
                                         <div class="col-md-4">
                                             <div class="image-preview-container mb-3">
@@ -335,6 +486,7 @@
                                                     <div id="currentImagePlaceholder" class="d-flex flex-column align-items-center justify-content-center h-100">
                                                         <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
                                                         <p class="text-muted mt-2 mb-0">Current Image</p>
+                                                        <small class="text-muted">No image uploaded</small>
                                                     </div>
                                                 </div>
                                             </div>
@@ -343,14 +495,18 @@
                                             <div class="image-upload-options">
                                                 <!-- File Upload Option -->
                                                 <div class="upload-option mb-3">
-                                                    <label for="editImageFile" class="form-label">Upload New Image</label>
+                                                    <label for="editImageFile" class="form-label mb-2">
+                                                        <i class="bi bi-cloud-upload me-2"></i>Upload New Image
+                                                    </label>
                                                     <input type="file" class="form-control" id="editImageFile" name="ImageFile" accept="image/*">
                                                     <div class="form-text">Supported formats: JPG, PNG, GIF. Max size: 5MB</div>
                                                 </div>
                                                 
                                                 <!-- URL Option -->
                                                 <div class="upload-option mb-3">
-                                                    <label for="editImageURL" class="form-label">Or Image URL</label>
+                                                    <label for="editImageURL" class="form-label mb-2">
+                                                        <i class="bi bi-link-45deg me-2"></i>Or Image URL
+                                                    </label>
                                                     <div class="input-group">
                                                         <input type="url" class="form-control" id="editImageURL" name="ImageURL" placeholder="https://example.com/image.jpg">
                                                         <button type="button" class="btn btn-outline-secondary" id="previewUrlBtn">
@@ -388,7 +544,7 @@
                             <!-- Basic Product Information -->
                             <div class="row mb-3">
                                 <div class="col-md-8">
-                                    <label for="editTitle" class="form-label">Product Title</label>
+                                    <label for="editTitle" class="form-label">Product Title <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="editTitle" name="Title" required>
                                 </div>
                                 <div class="col-md-4">
@@ -406,7 +562,7 @@
 
                             <div class="row mb-3">
                                 <div class="col-md-4">
-                                    <label for="editPrice" class="form-label">Price</label>
+                                    <label for="editPrice" class="form-label">Price <span class="text-danger">*</span></label>
                                     <input type="number" step="0.01" min="0" class="form-control" id="editPrice" name="Price" required>
                                 </div>
                                 <div class="col-md-4">
@@ -421,7 +577,7 @@
 
                             <div class="row mb-3">
                                 <div class="col-md-4">
-                                    <label for="editType" class="form-label">Type</label>
+                                    <label for="editType" class="form-label">Type <span class="text-danger">*</span></label>
                                     <select class="form-select" id="editType" name="Type" required>
                                         <option value="">Select Type</option>
                                         <option value="Clothing">Clothing</option>
@@ -431,7 +587,7 @@
                                     </select>
                                 </div>
                                 <div class="col-md-4">
-                                    <label for="editCategory" class="form-label">Category</label>
+                                    <label for="editCategory" class="form-label">Category <span class="text-danger">*</span></label>
                                     <select class="form-select" id="editCategory" name="Category" required>
                                         <option value="">Select Category</option>
                                         <option value="Clothing">Clothing</option>
