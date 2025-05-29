@@ -90,7 +90,7 @@ namespace Web.Controllers
                     productId = product.ProductId,
                     Title = product.Title,
                     Description = product.Description,
-                    Price = "$"+product.Price,
+                    Price = product.Price,
                     Points = product.Points,
                     Type = product.Type,
                     Category = product.Category,
