@@ -120,8 +120,11 @@ namespace WebAPI.Controllers
         }
 
         /// <summary>
-        /// Get profile by ID
+        /// Get Court By Id
         /// </summary>
+        /// <param name="id"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(CourtDetailViewModelDto), 200)]
         [ProducesResponseType(404)]
@@ -142,8 +145,6 @@ namespace WebAPI.Controllers
                 return StatusCode(500, "An error occurred while retrieving the profile");
             }
         }
-
-     
 
 
         /// <summary>
@@ -185,10 +186,6 @@ namespace WebAPI.Controllers
                 return StatusCode(500, "An error occurred while updating the profile");
             }
         }
-
-       
-
-      
 
     }
 }

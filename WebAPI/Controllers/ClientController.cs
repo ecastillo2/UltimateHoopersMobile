@@ -1,16 +1,8 @@
-﻿using DataLayer.DAL;
-using DataLayer.DAL.Interface;
-using DataLayer.DAL.Repository;
+﻿using DataLayer.DAL.Interface;
 using Domain;
 using Domain.DtoModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-
 
 namespace WebAPI.Controllers
 {
@@ -139,8 +131,11 @@ namespace WebAPI.Controllers
         }
 
         /// <summary>
-        /// Get PrivateRun by ID
+        /// Get Client By Id
         /// </summary>
+        /// <param name="id"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(ClientDetailViewModelDto), 200)]
         [ProducesResponseType(404)]
@@ -163,10 +158,13 @@ namespace WebAPI.Controllers
         }
 
 
-
         /// <summary>
-        /// Update PrivateRun
+        /// Update Client
         /// </summary>
+        /// <param name="id"></param>
+        /// <param name="model"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpPut("{id}")]
         [Authorize]
         [ProducesResponseType(204)]
@@ -203,10 +201,6 @@ namespace WebAPI.Controllers
                 return StatusCode(500, "An error occurred while updating the profile");
             }
         }
-
-
-
-
 
     }
 }
