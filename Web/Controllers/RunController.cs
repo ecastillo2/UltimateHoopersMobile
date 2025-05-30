@@ -79,7 +79,7 @@ namespace Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetRunData(string id, string clientId,  CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetRunData(string id,  CancellationToken cancellationToken = default)
         {
             try
             {
@@ -95,7 +95,7 @@ namespace Web.Controllers
                     return Json(new { success = false, message = "Run not found" });
                 }
 
-                var clientCourtList =  await _clientApi.GetClientCourtsAsync(clientId, accessToken, cancellationToken);
+                var clientCourtList =  await _clientApi.GetClientCourtsAsync(id, accessToken, cancellationToken);
 
                 // Transform the data to match what the view expects
                 var runData = new
