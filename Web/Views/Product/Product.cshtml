@@ -256,14 +256,13 @@
                 @Html.AntiForgeryToken()
                 <div class="modal-body">
                     <div class="row mb-3">
-                        <div class="col-md-6">
+
+                        <div class="col-md-12">
                             <label for="addTitle" class="form-label">Title <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="addTitle" name="Title" required>
                         </div>
-                        <div class="col-md-6">
-                            <label for="addProductNumber" class="form-label">Product Number</label>
-                            <input type="text" class="form-control" id="addProductNumber" name="ProductNumber">
-                        </div>
+                       
+
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-12">
@@ -385,7 +384,7 @@
                                 </div>
                                 <div class="col-md-4">
                                     <label for="editProductNumber" class="form-label">Product Number</label>
-                                    <input type="text" class="form-control" id="editProductNumber" name="ProductNumber">
+                                    <input type="text" class="form-control bg-light text-muted" id="editProductNumber" name="ProductNumber"  readonly tabindex="-1" onfocus="this.blur()">
                                 </div>
                             </div>
 
