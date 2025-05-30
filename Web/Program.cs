@@ -50,6 +50,10 @@ builder.Services.AddHttpClient<IProductApi, ProductApi>(client =>
 {
 
 });
+builder.Services.AddHttpClient<IProfileApi, ProfileApi>(client =>
+{
+
+});
 
 builder.Services.AddHttpClient<IStorageApi, StorageApi>(client =>
 {

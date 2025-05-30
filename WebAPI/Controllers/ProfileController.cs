@@ -220,6 +220,46 @@ namespace WebAPI.Controllers
         }
 
         /// <summary>
+        /// Update ScoutingReport
+        /// </summary>
+        /// <param name="model"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        [HttpPut("UpdateScoutingReport")]
+        [ProducesResponseType(typeof(ScoutingReport), 200)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> UpdateScoutingReport([FromBody] ScoutingReport model, CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (model.ProfileId != model.ProfileId)
+                return BadRequest("products ID mismatch");
+
+            try
+            {
+                var products = await _profileRepository.GetScoutingReportAsync(model.ScoutingReportId, cancellationToken);
+
+                if (products == null)
+                    return NotFound($"products with ID {model.ScoutingReportId} not found");
+
+
+
+                var success = await _profileRepository.UpdateScoutingReportAsync(model, cancellationToken);
+
+                if (!success)
+                    return StatusCode(500, "Failed to update products");
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating profile {ProfileId}", model.ScoutingReportId);
+                return StatusCode(500, "An error occurred while updating the profile");
+            }
+        }
+
+        /// <summary>
         /// Get following profiles for a profile
         /// </summary>
         [HttpGet("{id}/following")]
@@ -431,8 +471,12 @@ namespace WebAPI.Controllers
         }
 
         /// <summary>
-        /// Update username
+        /// Update Username
         /// </summary>
+        /// <param name="id"></param>
+        /// <param name="model"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpPut("{id}/username")]
         [Authorize]
         [ProducesResponseType(204)]
@@ -521,56 +565,7 @@ namespace WebAPI.Controllers
             }
         }
 
-        /// <summary>
-        /// Update or create scouting report
-        /// </summary>
-        [HttpPut("{id}/scouting-report")]
-        [Authorize]
-        [ProducesResponseType(204)]
-        [ProducesResponseType(400)]
-        [ProducesResponseType(404)]
-        public async Task<IActionResult> UpsertScoutingReport(string id, [FromBody] ScoutingReportUpdateModelDto model, CancellationToken cancellationToken)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            try
-            {
-                // Verify the profile exists
-                var profile = await _profileRepository.GetProfileByIdAsync(id, cancellationToken);
-
-                if (profile == null)
-                    return NotFound($"Profile with ID {id} not found");
-
-                var scoutingReport = await _profileRepository.GetScoutingReportAsync(id, cancellationToken);
-
-                if (scoutingReport == null)
-                {
-                    // Create new scouting report if none exists
-                    scoutingReport = new ScoutingReport
-                    {
-                        ScoutingReportId = Guid.NewGuid().ToString(),
-                        ProfileId = id,
-                       
-                    };
-                }
-
-                // Update scouting report from model
-                model.UpdateScoutingReport(scoutingReport);
-
-                var success = await _profileRepository.UpsertScoutingReportAsync(scoutingReport, cancellationToken);
-
-                if (!success)
-                    return StatusCode(500, "Failed to update scouting report");
-
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error updating scouting report for {ProfileId}", id);
-                return StatusCode(500, "An error occurred while updating the scouting report");
-            }
-        }
+        
 
         /// <summary>
         /// Check if username is available

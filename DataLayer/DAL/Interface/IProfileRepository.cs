@@ -154,6 +154,13 @@ namespace DataLayer.DAL.Interface
             CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Update a profile
+        /// </summary>
+        Task<bool> UpdateScoutingReportAsync(
+            ScoutingReport scoutingReport,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Batch update multiple profiles at once
         /// </summary>
         Task<int> BatchUpdateProfilesAsync(

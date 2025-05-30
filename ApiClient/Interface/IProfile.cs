@@ -33,6 +33,15 @@ namespace WebAPI.ApiClients
         Task<bool> UpdateProfileAsync(Profile profile, string accessToken, CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Updates a profile
+        /// </summary>
+        /// <param name="profile">The profile with updated information</param>
+        /// <param name="accessToken">Authorization token</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>True if update was successful, false otherwise</returns>
+        Task<bool> UpdateScoutingReportAsync(ScoutingReport scoutingReport, string accessToken, CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Gets a list of all profiles
         /// </summary>
         /// <param name="accessToken">Authorization token</param>

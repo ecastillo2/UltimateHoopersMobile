@@ -17,12 +17,15 @@ namespace Web.Controllers
     public class UserController : Controller
     {
         private readonly IUserApi _userApi;
+        private readonly IProfileApi _profileApi;
         private readonly ILogger<UserController> _logger;
 
         public UserController(
+            IProfileApi profileApi,
             IUserApi userApi,
             ILogger<UserController> logger)
         {
+            _profileApi = profileApi ?? throw new ArgumentNullException(nameof(profileApi));
             _userApi = userApi ?? throw new ArgumentNullException(nameof(userApi));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
@@ -455,7 +458,7 @@ namespace Web.Controllers
         // Update scouting report
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult UpdateScoutingReport([FromBody] ScoutingReport model, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> UpdateScoutingReportAsync([FromBody] ScoutingReport model, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -477,7 +480,7 @@ namespace Web.Controllers
                 };
 
                 // Update product
-                await _userApi.UpdateScoutingReport(model, accessToken, cancellationToken);
+                await _profileApi.UpdateScoutingReportAsync(model, accessToken, cancellationToken);
 
                 return Json(new { success = true, message = "Scouting report saved successfully", scoutingReport });
             }

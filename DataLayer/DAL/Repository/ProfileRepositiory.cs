@@ -677,6 +677,54 @@ namespace DataLayer.DAL.Repository
             }
         }
 
+        /// <summary>
+        /// Update Client Async
+        /// </summary>
+        /// <param name="privateRun"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<bool> UpdateScoutingReportAsync(
+    ScoutingReport model,
+    CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                // Retrieve the existing product from database
+                var existingProduct = await _context.ScoutingReport
+                    .FirstOrDefaultAsync(p => p.ScoutingReportId == model.ScoutingReportId, cancellationToken);
+
+                if (existingProduct == null)
+                {
+                    return false;
+                }
+
+                // Update only the fields you want to allow updates for
+                existingProduct.PrimaryPosition = model.PrimaryPosition;
+                existingProduct.SecondaryPosition = model.SecondaryPosition;
+                existingProduct.PlayingStyle = model.PlayingStyle;
+                existingProduct.Shooting = model.Shooting;
+                existingProduct.BallHandling = model.BallHandling;
+                existingProduct.Passing = model.Passing;
+                existingProduct.Defense = model.Defense;
+                existingProduct.Redounding = model.Redounding;
+                existingProduct.Athleticism = model.Athleticism;
+                existingProduct.Strengths = model.Strengths;
+                existingProduct.AreasforImprovement = model.AreasforImprovement;
+                existingProduct.AdditionalNotes = model.AdditionalNotes;
+                existingProduct.LastUpdated = DateTime.UtcNow;
+
+                // Don't update sensitive fields like CreatedDate, CreatedBy, etc.
+                // existingProduct.CreatedDate = product.CreatedDate; // DON'T update
+
+                return await SaveChangesAsync(cancellationToken) > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error updating Product {ScoutingReportId}", model.ScoutingReportId);
+                throw;
+            }
+        }
+
         public async Task<Squad> GetProfileSquadAsync(
             string profileId,
             CancellationToken cancellationToken = default)
