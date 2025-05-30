@@ -455,7 +455,7 @@ namespace Web.Controllers
         // Update scouting report
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult UpdateScoutingReport([FromBody] object scoutingReportData, CancellationToken cancellationToken = default)
+        public IActionResult UpdateScoutingReport([FromBody] ScoutingReport model, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -475,6 +475,9 @@ namespace Web.Controllers
                     evaluationDate = DateTime.UtcNow,
                     lastUpdated = DateTime.UtcNow
                 };
+
+                // Update product
+                await _userApi.UpdateScoutingReport(model, accessToken, cancellationToken);
 
                 return Json(new { success = true, message = "Scouting report saved successfully", scoutingReport });
             }
