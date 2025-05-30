@@ -11,75 +11,17 @@
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.bootstrap5.min.css">
     <link rel="stylesheet" type="text/css" href="~/css/management.css">
     <style>
-        /* Enhanced Image Upload Styles */
-        .image-preview-container {
-            position: relative;
-            border: 2px dashed #dee2e6;
-            border-radius: 10px;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .image-preview-container:hover {
-            border-color: var(--primary-color);
-            background-color: rgba(255, 107, 0, 0.05);
-        }
-
-        .image-preview-container.has-image {
-            border: 2px solid var(--primary-color);
-            background-color: rgba(255, 107, 0, 0.1);
-        }
-
-        .image-preview-container.dragover {
-            border-color: var(--primary-color);
-            background-color: rgba(255, 107, 0, 0.15);
-            transform: scale(1.02);
-        }
-
-        .current-image-preview img,
-        .new-image-preview img {
-            max-width: 100%;
-            max-height: 180px;
-            object-fit: cover;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .upload-option {
-            border-radius: 8px;
-            padding: 1rem;
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            margin-bottom: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .upload-option:hover {
-            border-color: var(--primary-color);
-            background-color: rgba(255, 107, 0, 0.05);
-        }
-
-        .image-actions .btn {
-            border-radius: 20px;
-        }
-
-        .new-image-preview {
-            border: 2px solid var(--primary-color);
-            background-color: rgba(40, 167, 69, 0.1);
-        }
-
-        .form-control:focus,
-        .form-select:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(255, 107, 0, 0.25);
-        }
-
-        .btn-group .btn {
-            margin: 0 2px;
-        }
-
-        .product-image-cell {
-            width: 60px;
+        .modal-loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1060;
         }
 
         .product-image {
@@ -103,83 +45,21 @@
             align-items: center;
         }
 
-        .table-actions {
-            white-space: nowrap;
-        }
-
-        .action-icon {
-            width: 32px;
-            height: 32px;
-            padding: 0;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 2px;
-        }
-
-        .no-products-message {
-            text-align: center;
-            padding: 3rem 1rem;
-        }
-
-        .filter-badge {
-            display: inline-block;
-            margin: 2px;
-        }
-
-        .price-display {
-            font-weight: 600;
-            color: var(--bs-success);
-        }
-
-        .points-badge {
-            background: var(--bs-warning);
-            color: var(--bs-dark);
-            padding: 2px 6px;
-            border-radius: 8px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        /* Enhanced drag and drop styling */
-        .upload-area {
-            border: 2px dashed #ccc;
+        .image-preview-container {
+            border: 2px dashed #dee2e6;
             border-radius: 10px;
-            text-align: center;
-            padding: 2rem;
-            margin: 1rem 0;
             transition: all 0.3s ease;
-            cursor: pointer;
         }
 
-        .upload-area:hover {
-            border-color: var(--primary-color);
-            background-color: rgba(255, 107, 0, 0.05);
-        }
+            .image-preview-container.has-image {
+                border: 2px solid var(--primary-color);
+            }
 
-        .upload-area.dragover {
-            border-color: var(--primary-color);
-            background-color: rgba(255, 107, 0, 0.1);
-            transform: scale(1.02);
-        }
-
-        .image-upload-success {
-            border-color: #28a745 !important;
-            background-color: rgba(40, 167, 69, 0.1) !important;
-        }
-
-        .loading-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.9);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        #currentImage, #newImage {
+            max-width: 100%;
+            max-height: 180px;
+            object-fit: cover;
             border-radius: 8px;
-            z-index: 10;
         }
     </style>
 }
@@ -221,7 +101,6 @@
                             <option value="discontinued">Discontinued</option>
                         </select>
                     </div>
-
                     <div class="col-md-3">
                         <label for="categoryFilter" class="form-label">Category</label>
                         <select class="form-select" id="categoryFilter">
@@ -232,7 +111,6 @@
                             <option value="footwear">Footwear</option>
                         </select>
                     </div>
-
                     <div class="col-md-3">
                         <label for="typeFilter" class="form-label">Type</label>
                         <select class="form-select" id="typeFilter">
@@ -242,7 +120,6 @@
                             <option value="accessories">Accessories</option>
                         </select>
                     </div>
-
                     <div class="col-md-3">
                         <label for="priceRangeFilter" class="form-label">Price Range</label>
                         <select class="form-select" id="priceRangeFilter">
@@ -290,18 +167,23 @@
                     <tbody>
                         @foreach (var product in Model.ProductList)
                         {
-                            <tr data-status="@(product.Product.Status?.ToLower() ?? "active")" 
-                                data-category="@(product.Product.Category?.ToLower() ?? "")" 
+                            <tr data-status="@(product.Product.Status?.ToLower() ?? "active")"
+                                data-category="@(product.Product.Category?.ToLower() ?? "")"
                                 data-type="@(product.Product.Type?.ToLower() ?? "")"
                                 data-price="@(product.Product.Price ?? 0)"
+                                data-points="@(product.Product.Points ?? 0)"
                                 data-image-url="@product.Product.ImageURL"
-                                data-product-id="@product.Product.ProductId">
+                                data-product-id="@product.Product.ProductId"
+                                data-product-title="@product.Product.Title"
+                                data-product-number="@product.Product.ProductNumber"
+                                data-description="@product.Product.Description"
+                                data-tag="@product.Product.Tag">
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <div class="product-image-cell me-3">
                                             @if (!string.IsNullOrEmpty(product.Product.ImageURL))
                                             {
-                                                <img src="@product.Product.ImageURL" alt="@product.Product.Title" class="product-image" 
+                                                <img src="@product.Product.ImageURL" alt="@product.Product.Title" class="product-image"
                                                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
                                                      loading="lazy">
                                                 <div class="product-initials" style="display: none;">
@@ -316,23 +198,28 @@
                                             }
                                         </div>
                                         <div>
-                                            <div class="fw-semibold">@product.Product.Title</div>
-                                            <div class="text-muted small">@(product.Product.ProductNumber)</div>
+                                            <div class="fw-semibold product-title">@product.Product.Title</div>
+                                            <div class="text-muted small product-number">@(product.Product.ProductNumber)</div>
                                         </div>
                                     </div>
                                 </td>
-                                <td>$@(product.Product.Price?.ToString("F2") ?? "0.00")</td>
-                                <td>@(product.Product.Points ?? 0)</td>
+                                <td class="product-price">$@(product.Product.Price?.ToString("F2") ?? "0.00")</td>
+                                <td class="product-points">@(product.Product.Points ?? 0)</td>
                                 <td>
-                                    <span class="badge bg-success badge-pill">@(product.Product.Status ?? "Active")</span>
+                                    <span class="badge bg-success badge-pill product-status">@(product.Product.Status ?? "Active")</span>
                                 </td>
-                                <td>@(product.Product.Category ?? "N/A")</td>
+                                <td class="product-category">@(product.Product.Category ?? "N/A")</td>
                                 <td>
                                     <div class="table-actions">
-                                        <button type="button" class="btn btn-sm btn-outline-primary action-icon" data-bs-toggle="modal" data-bs-target="#editProductModal" data-product-id="@product.Product.ProductId" title="Edit">
+                                        <button type="button" class="btn btn-sm btn-outline-primary action-icon"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#editProductModal"
+                                                data-product-id="@product.Product.ProductId"
+                                                title="Edit">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                        <a href="@Url.Action("Details", "Product", new { id = product.Product.ProductId })" class="btn btn-sm btn-primary action-icon" title="View Details">
+                                        <a href="@Url.Action("Details", "Product", new { id = product.Product.ProductId })"
+                                           class="btn btn-sm btn-primary action-icon" title="View Details">
                                             <i class="bi bi-eye"></i>
                                         </a>
                                     </div>
@@ -368,49 +255,6 @@
             <form id="addProductForm" method="post" action="@Url.Action("Create", "Product")" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
                 <div class="modal-body">
-                    <!-- Enhanced Product Image Section -->
-                    <div class="row mb-4">
-                        <div class="col-md-12">
-                            <label class="form-label fw-bold">Product Image</label>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <div class="image-preview-container mb-3 upload-area">
-                                        <div id="addImagePreview" class="current-image-preview border rounded p-3 text-center" style="min-height: 160px; background-color: #f8f9fa;">
-                                            <img id="addPreviewImage" src="" alt="Product Image Preview" class="img-fluid rounded" style="max-height: 140px; display: none;">
-                                            <div id="addImagePlaceholder" class="d-flex flex-column align-items-center justify-content-center h-100">
-                                                <i class="bi bi-cloud-upload text-muted" style="font-size: 2.5rem;"></i>
-                                                <p class="text-muted mt-2 mb-0">Drag & Drop Image</p>
-                                                <small class="text-muted">or click to browse</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-8">
-                                    <div class="upload-option">
-                                        <label for="addImageFile" class="form-label mb-2">
-                                            <i class="bi bi-cloud-upload me-2"></i>Upload Image File
-                                        </label>
-                                        <input type="file" class="form-control" id="addImageFile" name="ImageFile" accept="image/*">
-                                        <div class="form-text">Supported formats: JPG, PNG, GIF, BMP, WEBP. Max size: 5MB. Images will be stored in Azure Blob Storage.</div>
-                                    </div>
-                                    
-                                    <div class="upload-option">
-                                        <label for="addImageURL" class="form-label mb-2">
-                                            <i class="bi bi-link-45deg me-2"></i>Or Image URL
-                                        </label>
-                                        <div class="input-group">
-                                            <input type="url" class="form-control" id="addImageURL" name="ImageURL" placeholder="https://example.com/image.jpg">
-                                            <button type="button" class="btn btn-outline-secondary" id="addPreviewUrlBtn">
-                                                <i class="bi bi-eye"></i> Preview
-                                            </button>
-                                        </div>
-                                        <div class="form-text">Provide a direct link to the product image</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="addTitle" class="form-label">Title <span class="text-danger">*</span></label>
@@ -421,14 +265,12 @@
                             <input type="text" class="form-control" id="addProductNumber" name="ProductNumber">
                         </div>
                     </div>
-
                     <div class="row mb-3">
                         <div class="col-md-12">
                             <label for="addDescription" class="form-label">Description</label>
                             <textarea class="form-control" id="addDescription" name="Description" rows="3"></textarea>
                         </div>
                     </div>
-
                     <div class="row mb-3">
                         <div class="col-md-4">
                             <label for="addPrice" class="form-label">Price <span class="text-danger">*</span></label>
@@ -443,7 +285,6 @@
                             <input type="text" class="form-control" id="addTag" name="Tag">
                         </div>
                     </div>
-
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="addType" class="form-label">Type <span class="text-danger">*</span></label>
@@ -487,28 +328,26 @@
             <div class="modal-body">
                 <ul class="nav nav-tabs" id="editProductTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="product-details-tab" data-bs-toggle="tab" data-bs-target="#product-details-tab-pane" type="button" role="tab" aria-controls="product-details-tab-pane" aria-selected="true">Product Details</button>
+                        <button class="nav-link active" id="product-details-tab" data-bs-toggle="tab" data-bs-target="#product-details-tab-pane" type="button" role="tab">Product Details</button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="product-info-tab" data-bs-toggle="tab" data-bs-target="#product-info-tab-pane" type="button" role="tab" aria-controls="product-info-tab-pane" aria-selected="false">Product Info</button>
+                        <button class="nav-link" id="product-info-tab" data-bs-toggle="tab" data-bs-target="#product-info-tab-pane" type="button" role="tab">Product Info</button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="inventory-tab" data-bs-toggle="tab" data-bs-target="#inventory-tab-pane" type="button" role="tab" aria-controls="inventory-tab-pane" aria-selected="false">Inventory</button>
+                        <button class="nav-link" id="inventory-tab" data-bs-toggle="tab" data-bs-target="#inventory-tab-pane" type="button" role="tab">Inventory</button>
                     </li>
                 </ul>
                 <div class="tab-content" id="editProductTabContent">
                     <!-- Product Details Tab -->
-                    <div class="tab-pane fade show active" id="product-details-tab-pane" role="tabpanel" aria-labelledby="product-details-tab" tabindex="0">
+                    <div class="tab-pane fade show active" id="product-details-tab-pane" role="tabpanel">
                         <form id="editProductForm" method="post" action="@Url.Action("Edit", "Product")" enctype="multipart/form-data" class="mt-4">
                             @Html.AntiForgeryToken()
                             <input type="hidden" id="editProductId" name="ProductId" value="" />
-                            
-                            <!-- Enhanced Product Image Section with Blob Storage -->
+
+                            <!-- Image Section -->
                             <div class="row mb-4">
                                 <div class="col-md-12">
-                                    <label class="form-label fw-bold">Product Image 
-                                        <small class="text-muted">(Stored in Azure Blob Storage)</small>
-                                    </label>
+                                    <label class="form-label fw-bold">Product Image</label>
                                     <div class="row">
                                         <div class="col-md-4">
                                             <div class="image-preview-container mb-3">
@@ -523,54 +362,15 @@
                                             </div>
                                         </div>
                                         <div class="col-md-8">
-                                            <div class="image-upload-options">
-                                                <!-- File Upload Option with Drag & Drop -->
-                                                <div class="upload-option mb-3 upload-area">
-                                                    <label for="editImageFile" class="form-label mb-2">
-                                                        <i class="bi bi-cloud-upload me-2"></i>Upload New Image to Cloud Storage
-                                                    </label>
-                                                    <input type="file" class="form-control" id="editImageFile" name="ImageFile" accept="image/*">
-                                                    <div class="form-text">
-                                                        <i class="bi bi-info-circle me-1"></i>
-                                                        Drag & drop files here or click to browse. Images are automatically uploaded to Azure Blob Storage.
-                                                        <br>Supported: JPG, PNG, GIF, BMP, WEBP. Max size: 5MB
-                                                    </div>
-                                                </div>
-                                                
-                                                <!-- URL Option -->
-                                                <div class="upload-option mb-3">
-                                                    <label for="editImageURL" class="form-label mb-2">
-                                                        <i class="bi bi-link-45deg me-2"></i>Or Image URL
-                                                    </label>
-                                                    <div class="input-group">
-                                                        <input type="url" class="form-control" id="editImageURL" name="ImageURL" placeholder="https://example.com/image.jpg">
-                                                        <button type="button" class="btn btn-outline-secondary" id="previewUrlBtn">
-                                                            <i class="bi bi-eye"></i> Preview
-                                                        </button>
-                                                    </div>
-                                                    <div class="form-text">Provide a direct link to the product image</div>
-                                                </div>
-                                                
-                                                <!-- Preview for new image -->
-                                                <div id="newImagePreview" class="new-image-preview border rounded p-3 text-center mb-3" style="min-height: 150px; background-color: #f8f9fa; display: none;">
-                                                    <img id="newImage" src="" alt="New Product Image" class="img-fluid rounded" style="max-height: 130px;">
-                                                    <div class="mt-2">
-                                                        <small class="text-success">
-                                                            <i class="bi bi-check-circle me-1"></i>New image preview - will be uploaded to cloud storage
-                                                        </small>
-                                                        <button type="button" class="btn btn-sm btn-outline-danger ms-2" id="clearNewImageBtn">
-                                                            <i class="bi bi-x"></i> Clear
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                                
-                                                <!-- Image Actions -->
-                                                <div class="image-actions">
-                                                    <button type="button" class="btn btn-sm btn-outline-danger" id="removeImageBtn">
-                                                        <i class="bi bi-trash me-1"></i>Remove Current Image
-                                                    </button>
-                                                    <div id="autoSaveStatus" class="small text-muted mt-2"></div>
-                                                </div>
+                                            <div class="mb-3">
+                                                <label for="editImageFile" class="form-label">Upload New Image</label>
+                                                <input type="file" class="form-control" id="editImageFile" name="ImageFile" accept="image/*">
+                                                <div class="form-text">Supported: JPG, PNG, GIF, BMP, WEBP. Max size: 5MB</div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="editImageURL" class="form-label">Or Image URL</label>
+                                                <input type="url" class="form-control" id="editImageURL" name="ImageURL" placeholder="https://example.com/image.jpg">
+                                                <div class="form-text">Provide a direct link to the product image</div>
                                             </div>
                                         </div>
                                     </div>
@@ -651,13 +451,11 @@
                     </div>
 
                     <!-- Product Info Tab -->
-                    <div class="tab-pane fade" id="product-info-tab-pane" role="tabpanel" aria-labelledby="product-info-tab" tabindex="0">
+                    <div class="tab-pane fade" id="product-info-tab-pane" role="tabpanel">
                         <div class="mt-4">
                             <div class="text-center mb-4">
-                                <div class="position-relative d-inline-block">
-                                    <div class="rounded-circle bg-navy text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 100px; height: 100px; font-size: 2.5rem;" id="productInfoAvatar">
-                                        <span id="productInfoInitials">--</span>
-                                    </div>
+                                <div class="rounded-circle bg-navy text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 100px; height: 100px; font-size: 2.5rem;" id="productInfoAvatar">
+                                    <span id="productInfoInitials">--</span>
                                 </div>
                                 <h4 class="mb-1" id="productInfoTitle">--</h4>
                                 <p class="text-muted" id="productInfoNumber">--</p>
@@ -734,7 +532,7 @@
                     </div>
 
                     <!-- Inventory Tab -->
-                    <div class="tab-pane fade" id="inventory-tab-pane" role="tabpanel" aria-labelledby="inventory-tab" tabindex="0">
+                    <div class="tab-pane fade" id="inventory-tab-pane" role="tabpanel">
                         <div class="mt-4">
                             <h6 class="mb-3">Inventory Management</h6>
                             <div class="row mb-4">
@@ -784,23 +582,27 @@
 </div>
 
 @section Scripts {
+    <!-- CRITICAL: URL configuration must come first -->
+    <script>
+        window.appUrls = {
+            getProductData: '@Url.Action("GetProductData", "Product")',
+            updateInventory: '@Url.Action("UpdateInventory", "Product")',
+            uploadImage: '@Url.Action("UploadImage", "Product")',
+            deleteImage: '@Url.Action("DeleteImage", "Product")',
+            validateImageUrl: '@Url.Action("ValidateImageUrl", "Product")'
+        };
+        console.log('Product API URLs configured:', window.appUrls);
+    </script>
+
+    <!-- DataTables Scripts -->
     <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.9/js/responsive.bootstrap5.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
     <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.9/js/responsive.bootstrap5.min.js"></script>
     <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
     <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.bootstrap5.min.js"></script>
     <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
 
-    <script>
-        // Inject API URLs
-        window.appUrls = {
-            getProductData: '/Product/GetProductData',
-            updateInventory: '/Product/UpdateInventory',
-            uploadImage: '/Product/UploadImage',
-            deleteImage: '/Product/DeleteImage',
-            validateImageUrl: '/Product/ValidateImageUrl'
-        };
-    </script>
+    <!-- Product Management Script -->
     <script type="text/javascript" src="~/js/productManagement.js"></script>
 }
