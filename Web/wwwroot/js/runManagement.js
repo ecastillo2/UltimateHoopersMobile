@@ -1,9 +1,11 @@
 ﻿/**
- * Fixed Run Management JavaScript - Court Dropdown Issue Resolution
- * This fixes the court list not displaying in the dropdown
+ * Complete Fixed Run Management JavaScript
+ * Consolidated version to prevent DataTable reinitialization errors
  */
 
 document.addEventListener('DOMContentLoaded', function () {
+    console.log('🚀 Initializing Enhanced Run Management');
+
     // Helper functions
     function getAntiForgeryToken() {
         return document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
@@ -21,13 +23,54 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function showToast(message, type = 'success') {
         console.log(`${type}: ${message}`);
-        // You can implement a proper toast notification here
-        if (type === 'error') {
-            alert(`Error: ${message}`);
+        // Create toast container if it doesn't exist
+        let container = document.querySelector('.toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+            container.style.zIndex = '9999';
+            document.body.appendChild(container);
+        }
+
+        // Create toast
+        const toastId = `toast-${Date.now()}`;
+        const iconClass = {
+            'success': 'bi-check-circle',
+            'error': 'bi-exclamation-triangle',
+            'warning': 'bi-exclamation-triangle',
+            'info': 'bi-info-circle'
+        }[type] || 'bi-info-circle';
+
+        const toastHtml = `
+            <div id="${toastId}" class="toast align-items-center text-white bg-${type === 'error' ? 'danger' : type} border-0" role="alert">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="bi ${iconClass} me-2"></i>
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `;
+
+        container.insertAdjacentHTML('beforeend', toastHtml);
+
+        // Initialize and show toast
+        const toastElement = document.getElementById(toastId);
+        if (toastElement && typeof bootstrap !== 'undefined' && bootstrap.Toast) {
+            const toast = new bootstrap.Toast(toastElement, {
+                autohide: type !== 'error',
+                delay: 5000
+            });
+            toast.show();
+
+            toastElement.addEventListener('hidden.bs.toast', () => {
+                toastElement.remove();
+            });
         }
     }
 
-    // FIXED: Enhanced court dropdown population function
+    // Enhanced court dropdown population function
     function populateCourtDropdown(courtList, selectedCourtId = null) {
         const courtSelect = document.getElementById('editCourtList');
 
@@ -103,101 +146,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 300);
     }
 
-    // FIXED: Enhanced run data loading with better court handling
-    function loadRunDataEnhanced(runId) {
-        console.log('🔄 Loading run data for ID:', runId);
-
-        if (!runId) {
-            console.error('❌ No run ID provided');
-            hideLoading();
-            return;
-        }
-
-        showLoading();
-
-        fetch(`/Run/GetRunData?id=${runId}`)
-            .then(response => {
-                console.log('📡 API Response status:', response.status);
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                hideLoading();
-                console.log('📦 Received run data:', data);
-
-                if (data.success === false) {
-                    console.error('❌ API returned error:', data.message);
-                    showToast('Error loading run data: ' + (data.message || 'Unknown error'), 'error');
-                    return;
-                }
-
-                // Populate basic form fields
-                populateBasicRunFields(data);
-
-                // Handle court data with enhanced logging
-                handleCourtData(data);
-
-                // Update participant counts
-                updateParticipantCounts(data);
-
-                // Set delete button run ID
-                const deleteIdField = document.getElementById('deleteRunId');
-                if (deleteIdField) {
-                    deleteIdField.value = data.runId || runId;
-                }
-
-                // Load participants
-                try {
-                    loadParticipants(data.runId || runId);
-                } catch (e) {
-                    console.error('❌ Error loading participants:', e);
-                }
-
-                console.log('✅ Run data loaded successfully');
-            })
-            .catch(error => {
-                hideLoading();
-                console.error('❌ Error loading run data:', error);
-                showToast('Error loading run data: ' + error.message, 'error');
-            });
-    }
-
-    // NEW: Separate function to handle court data
-    function handleCourtData(data) {
-        console.log('🏀 Handling court data...');
-        console.log('🏀 Court list from API:', data.courtList);
-        console.log('🏀 Selected court ID:', data.courtId);
-        console.log('🏀 Client ID:', data.clientId);
-
-        // First, set the client ID in the form
-        const clientIdField = document.getElementById('editClientId');
-        if (clientIdField && data.clientId) {
-            clientIdField.value = data.clientId;
-            console.log('✅ Set client ID:', data.clientId);
-        }
-
-        // Handle court dropdown population
-        try {
-            if (data.courtList && Array.isArray(data.courtList)) {
-                console.log('🏀 Using court list from run data');
-                populateCourtDropdown(data.courtList, data.courtId);
-            } else if (data.clientId) {
-                console.log('🏀 No court list in run data, fetching courts for client:', data.clientId);
-                fetchCourtsForClient(data.clientId, data.courtId);
-            } else {
-                console.warn('⚠️ No court list or client ID available');
-                populateCourtDropdown([], null);
-            }
-        } catch (e) {
-            console.error('❌ Error handling court data:', e);
-            populateCourtDropdown([], null);
-        }
-    }
-
-    // NEW: Function to fetch courts for a specific client
+    // Function to fetch courts for a specific client
     function fetchCourtsForClient(clientId, selectedCourtId = null) {
         console.log('🔄 Fetching courts for client:', clientId);
 
@@ -234,7 +183,39 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
-    // NEW: Function to populate basic run fields
+    // Function to handle court data
+    function handleCourtData(data) {
+        console.log('🏀 Handling court data...');
+        console.log('🏀 Court list from API:', data.courtList);
+        console.log('🏀 Selected court ID:', data.courtId);
+        console.log('🏀 Client ID:', data.clientId);
+
+        // First, set the client ID in the form
+        const clientIdField = document.getElementById('editClientId');
+        if (clientIdField && data.clientId) {
+            clientIdField.value = data.clientId;
+            console.log('✅ Set client ID:', data.clientId);
+        }
+
+        // Handle court dropdown population
+        try {
+            if (data.courtList && Array.isArray(data.courtList)) {
+                console.log('🏀 Using court list from run data');
+                populateCourtDropdown(data.courtList, data.courtId);
+            } else if (data.clientId) {
+                console.log('🏀 No court list in run data, fetching courts for client:', data.clientId);
+                fetchCourtsForClient(data.clientId, data.courtId);
+            } else {
+                console.warn('⚠️ No court list or client ID available');
+                populateCourtDropdown([], null);
+            }
+        } catch (e) {
+            console.error('❌ Error handling court data:', e);
+            populateCourtDropdown([], null);
+        }
+    }
+
+    // Function to populate basic run fields
     function populateBasicRunFields(data) {
         console.log('📝 Populating basic run fields...');
 
@@ -326,7 +307,7 @@ document.addEventListener('DOMContentLoaded', function () {
         setSelectField('editCourtType', data.isOutdoor ? 'true' : 'false', 'false');
     }
 
-    // NEW: Function to update participant counts
+    // Function to update participant counts
     function updateParticipantCounts(data) {
         const updateCount = (elementId, count, defaultValue = 0) => {
             const element = document.getElementById(elementId);
@@ -341,7 +322,69 @@ document.addEventListener('DOMContentLoaded', function () {
         updateCount('maxParticipantsCount', data.playerLimit, 0);
     }
 
-    // Function to load participants (keeping existing implementation)
+    // Enhanced run data loading function
+    function loadRunDataEnhanced(runId) {
+        console.log('🔄 Loading run data for ID:', runId);
+
+        if (!runId) {
+            console.error('❌ No run ID provided');
+            hideLoading();
+            return;
+        }
+
+        showLoading();
+
+        fetch(`/Run/GetRunData?id=${runId}`)
+            .then(response => {
+                console.log('📡 API Response status:', response.status);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                hideLoading();
+                console.log('📦 Received run data:', data);
+
+                if (data.success === false) {
+                    console.error('❌ API returned error:', data.message);
+                    showToast('Error loading run data: ' + (data.message || 'Unknown error'), 'error');
+                    return;
+                }
+
+                // Populate basic form fields
+                populateBasicRunFields(data);
+
+                // Handle court data with enhanced logging
+                handleCourtData(data);
+
+                // Update participant counts
+                updateParticipantCounts(data);
+
+                // Set delete button run ID
+                const deleteIdField = document.getElementById('deleteRunId');
+                if (deleteIdField) {
+                    deleteIdField.value = data.runId || runId;
+                }
+
+                // Load participants
+                try {
+                    loadParticipants(data.runId || runId);
+                } catch (e) {
+                    console.error('❌ Error loading participants:', e);
+                }
+
+                console.log('✅ Run data loaded successfully');
+            })
+            .catch(error => {
+                hideLoading();
+                console.error('❌ Error loading run data:', error);
+                showToast('Error loading run data: ' + error.message, 'error');
+            });
+    }
+
+    // Function to load participants
     function loadParticipants(runId) {
         const participantsList = document.getElementById('participantsList');
         if (!participantsList) return;
@@ -414,7 +457,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
-    // Function to remove participant (keeping existing implementation)
+    // Function to remove participant
     function removeParticipant(runId, participantId) {
         showLoading();
 
@@ -451,11 +494,18 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
-    // Initialize DataTable only if table exists
+    // Initialize DataTable only if table exists AND hasn't been initialized yet
     let runsTable = null;
     const tableElement = document.getElementById('runsTable');
 
     if (tableElement && tableElement.querySelector('tbody tr')) {
+        // Check if DataTable already exists
+        if ($.fn.dataTable && $.fn.dataTable.isDataTable('#runsTable')) {
+            console.log('📊 DataTable already initialized, destroying first...');
+            $('#runsTable').DataTable().destroy();
+        }
+
+        console.log('📊 Initializing DataTable...');
         runsTable = $('#runsTable').DataTable({
             responsive: true,
             lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
@@ -474,6 +524,7 @@ document.addEventListener('DOMContentLoaded', function () {
             ],
             order: [[1, 'asc']]
         });
+        console.log('📊 DataTable initialized successfully');
     }
 
     // Set minimum date for date pickers
@@ -581,10 +632,9 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // NEW: Add client change handler to reload courts
+    // Add client change handler to reload courts
     const clientIdField = document.getElementById('editClientId');
     if (clientIdField) {
-        // Add change event listener to reload courts when client changes
         clientIdField.addEventListener('change', function () {
             const clientId = this.value;
             if (clientId) {
@@ -594,6 +644,56 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log('🏀 Client cleared, clearing courts');
                 populateCourtDropdown([], null);
             }
+        });
+    }
+
+    // Form submission handler with AJAX
+    const editRunForm = document.getElementById('editRunForm');
+    if (editRunForm) {
+        editRunForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            // Get form data
+            const formData = new FormData(this);
+            const runData = {};
+
+            // Convert FormData to object
+            for (const [key, value] of formData.entries()) {
+                runData[key] = value;
+            }
+
+            showLoading();
+
+            fetch('/Run/Edit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': getAntiForgeryToken()
+                },
+                body: JSON.stringify(runData)
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(data => {
+                    hideLoading();
+                    if (data.success) {
+                        showToast('Run updated successfully!');
+                        // Close modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('editRunModal'));
+                        if (modal) modal.hide();
+                        // Refresh page to show changes
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showToast('Error updating run: ' + (data.message || 'Unknown error'), 'error');
+                    }
+                })
+                .catch(error => {
+                    hideLoading();
+                    console.error('Error updating run:', error);
+                    showToast('Error updating run. Please try again.', 'error');
+                });
         });
     }
 
@@ -614,6 +714,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
-    console.log('✅ Enhanced Run Management with Court Fix loaded successfully');
+    console.log('✅ Enhanced Run Management loaded successfully');
     console.log('🧪 Debug functions available: window.debugCourts');
 });
