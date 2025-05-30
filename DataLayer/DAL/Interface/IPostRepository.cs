@@ -16,7 +16,7 @@ namespace DataLayer.DAL.Interface
         /// <summary>
         /// Get all posts with timezone for relative time calculation
         /// </summary>
-        Task<List<Post>> GetPosts(string timezone);
+        Task<List<Post>> GetPosts(string posttype,string timezone);
 
         /// <summary>
         /// Get posts with cursor-based pagination optimized for mobile scrolling

@@ -1,15 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using DataLayer.DAL;
 using DataLayer.DAL.Interface;
-using Domain;
 using Domain.DtoModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
+using Microsoft.Extensions.Logging;
 
 namespace WebAPI.Controllers
 {
@@ -27,34 +23,61 @@ namespace WebAPI.Controllers
         }
 
         /// <summary>
-        /// 
+        /// Get all counts for dashboard reporting
         /// </summary>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<ReportDto>), 200)]
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>ReportDto with all counts</returns>
+        [HttpGet("StreamAllCountsAsync")]
+        [ProducesResponseType(typeof(ReportDto), 200)]
+        [ProducesResponseType(500)]
         public async Task<IActionResult> StreamAllCountsAsync(CancellationToken cancellationToken)
         {
             try
             {
-                var counts =  _reportRepository.StreamAllCountsAsync(cancellationToken);
-                
+                _logger.LogInformation("Getting report counts");
 
-                return Ok(counts);
+                var reportDto = await _reportRepository.GetAllCountsAsync(cancellationToken);
+
+                if (!reportDto.IsDataComplete)
+                {
+                    _logger.LogWarning("Report data incomplete. Errors: {Errors}", string.Join(", ", reportDto.Errors));
+                }
+
+                return Ok(reportDto);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving Courts");
-                return StatusCode(500, "An error occurred while retrieving Courts");
+                _logger.LogError(ex, "Error retrieving report counts");
+                return StatusCode(500, new
+                {
+                    message = "An error occurred while retrieving report counts",
+                    details = ex.Message
+                });
             }
         }
 
-       
+        /// <summary>
+        /// Get all counts (alternative endpoint name for clarity)
+        /// </summary>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>ReportDto with all counts</returns>
+        [HttpGet("GetAllCounts")]
+        [ProducesResponseType(typeof(ReportDto), 200)]
+        [ProducesResponseType(500)]
+        public async Task<IActionResult> GetAllCounts(CancellationToken cancellationToken)
+        {
+            return await StreamAllCountsAsync(cancellationToken);
+        }
 
-
-
-
-
+        /// <summary>
+        /// Health check endpoint for the report service
+        /// </summary>
+        /// <returns>Health status</returns>
+        [HttpGet("health")]
+        [ProducesResponseType(200)]
+        public IActionResult Health()
+        {
+            return Ok(new { status = "healthy", timestamp = DateTime.UtcNow });
+        }
     }
 }
-

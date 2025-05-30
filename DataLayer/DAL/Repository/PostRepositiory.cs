@@ -396,7 +396,7 @@ namespace DataLayer.DAL.Repository
         /// <summary>
         /// Get all posts with optimized queries
         /// </summary>
-        public async Task<List<Post>> GetPosts(string timeZone)
+        public async Task<List<Post>> GetPosts(string postType,string timeZone)
         {
             try
             {
@@ -410,7 +410,7 @@ namespace DataLayer.DAL.Repository
                 // Fetch posts using EF Core, filtering for PostType = "User"
                 var posts = await _context.Post
                     .AsNoTracking()
-                    .Where(p => p.PostType == "User" && p.Status == "Active")
+                    .Where(p => p.PostType == postType && p.Status == "Active")
                     .OrderByDescending(p => p.PostedDate)
                     .ToListAsync();
 

@@ -59,6 +59,15 @@ builder.Services.AddHttpClient<IStorageApi, StorageApi>(client =>
 {
 
 });
+builder.Services.AddHttpClient<IReportApi, ReportApi>(client =>
+{
+
+});
+builder.Services.AddHttpClient<IPostApi, PostApi>(client =>
+{
+
+});
+
 
 //builder.Services.AddHttpClient<IUserApi, UserApi>(user =>
 //{

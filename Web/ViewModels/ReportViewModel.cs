@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Domain;
+using Domain.DtoModel;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
@@ -8,6 +10,10 @@ namespace Website.ViewModels
     {
         // Report configuration
         public List<string> AvailableReportTypes { get; set; } = new List<string>();
+
+        public ReportDto? reportDto { get; set; }
+        public IList<Run> RuntList { get; set; }
+        public IList<Post> EventList { get; set; }
 
         [Required(ErrorMessage = "Report type is required")]
         [Display(Name = "Report Type")]

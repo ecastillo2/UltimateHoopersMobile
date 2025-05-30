@@ -8,13 +8,19 @@ namespace Domain.DtoModel
 {
     public class ReportDto
     {
-        public int? UsersCount { get; set; }
-        public int? CourtsCount { get; set; }
-        public int? PostCount { get; set; }
-        public int? ClientsCount { get; set; }
-        public int? ProductsCount { get; set; }
-        public int? RunsCount { get; set; }
-        
+        public int CourtsCount { get; set; } = 0;
+        public int ProductsCount { get; set; } = 0;
+        public int ClientsCount { get; set; } = 0;
+        public int RunsCount { get; set; } = 0;
+        public int UsersCount { get; set; } = 0;
+        public int ProfilesCount { get; set; } = 0;
+        public int OrdersCount { get; set; } = 0;
+        public int PostsCount { get; set; } = 0;
 
+       
+
+        // Optional: Add properties to indicate if counts are reliable
+        public bool IsDataComplete { get; set; } = true;
+        public List<string> Errors { get; set; } = new List<string>();
     }
 }

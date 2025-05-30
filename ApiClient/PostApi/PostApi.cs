@@ -36,11 +36,30 @@ namespace WebAPI.ApiClients
         /// <summary>
         /// Get all posts
         /// </summary>
-        public async Task<List<Post>> GetPostsAsync(string accessToken, CancellationToken cancellationToken = default)
+        public async Task<List<Post>> GetPostsAsync(string postType, string accessToken, CancellationToken cancellationToken = default)
         {
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            var response = await _httpClient.GetAsync($"{_baseUrl}/api/Post/GetPosts", cancellationToken);
+            // Add postType as query parameter and TimeZone header
+            var url = $"{_baseUrl}/api/Post/GetPosts?postType={Uri.EscapeDataString(postType)}";
+
+            // Add TimeZone header if needed
+            _httpClient.DefaultRequestHeaders.Remove("TimeZone");
+            _httpClient.DefaultRequestHeaders.Add("TimeZone", "America/New_York"); // or pass as parameter
+
+            var response = await _httpClient.GetAsync(url, cancellationToken);
+            response.EnsureSuccessStatusCode();
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            return JsonSerializer.Deserialize<List<Post>>(content, _jsonOptions);
+        }
+        /// <summary>
+        /// Get all posts
+        /// </summary>
+        public async Task<List<Post>> GetNewsPostsAsync(string accessToken, CancellationToken cancellationToken = default)
+        {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            var response = await _httpClient.GetAsync($"{_baseUrl}/api/Post/GetNewsPosts", cancellationToken);
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync(cancellationToken);

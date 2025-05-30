@@ -18,9 +18,10 @@ namespace WebAPI.ApiClients
         /// <summary>
         /// Get all posts
         /// </summary>
-        Task<List<Post>> GetPostsAsync(string accessToken, CancellationToken cancellationToken = default);
+        Task<List<Post>> GetPostsAsync(string postType, string accessToken, CancellationToken cancellationToken = default);
 
-       
+        
+
         Task<CursorPaginatedResultDto<PostViewModelDto>> GetPostsWithCursorAsync(
             string cursor = null,
             int limit = 20,

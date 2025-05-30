@@ -89,12 +89,12 @@ namespace WebAPI.Controllers
         /// Get All Posts
         /// </summary>
         [HttpGet("GetPosts")]
-        public async Task<ActionResult<IEnumerable<Post>>> GetPosts()
+        public async Task<ActionResult<IEnumerable<Post>>> GetPosts(string postType)
         {
             try
             {
                 var timeZone = Request.Headers.TryGetValue("TimeZone", out var tz) ? tz.ToString() : "America/New_York";
-                var posts = await _repository.GetPosts(timeZone);
+                var posts = await _repository.GetPosts(postType, timeZone);
                 return Ok(posts);
             }
             catch (Exception ex)
