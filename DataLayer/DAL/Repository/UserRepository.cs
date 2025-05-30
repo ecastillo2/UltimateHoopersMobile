@@ -370,7 +370,7 @@ namespace DataLayer.DAL.Repository
                         BallHandling = 1,
                         Passing = 1,
                         Defense = 1,
-                        Redounding = 1,
+                        Rebounding = 1,
                         Athleticism = 1
                     };
 

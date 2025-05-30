@@ -133,6 +133,13 @@ namespace DataLayer.DAL.Interface
             CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Get scouting report for a profile
+        /// </summary>
+        Task<ScoutingReport> GetScoutingReportByIdAsync(
+            string profileId,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Get squad for a profile
         /// </summary>
         Task<Squad> GetProfileSquadAsync(

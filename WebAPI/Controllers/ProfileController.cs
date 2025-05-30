@@ -234,14 +234,14 @@ namespace WebAPI.Controllers
                 return BadRequest(ModelState);
 
             if (model.ProfileId != model.ProfileId)
-                return BadRequest("products ID mismatch");
+                return BadRequest("ScoutingReport ID mismatch");
 
             try
             {
-                var products = await _profileRepository.GetScoutingReportAsync(model.ScoutingReportId, cancellationToken);
+                var products = await _profileRepository.GetScoutingReportByIdAsync(model.ScoutingReportId, cancellationToken);
 
                 if (products == null)
-                    return NotFound($"products with ID {model.ScoutingReportId} not found");
+                    return NotFound($"ScoutingReport with ID {model.ScoutingReportId} not found");
 
 
 

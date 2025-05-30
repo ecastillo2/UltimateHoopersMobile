@@ -66,7 +66,7 @@ namespace DataLayer.DAL.Repository
                     existingItem.BallHandling = model.BallHandling;
                     existingItem.Passing = model.Passing;
                     existingItem.Defense = model.Defense;
-                    existingItem.Redounding = model.Redounding;
+                    existingItem.Rebounding = model.Rebounding;
                     existingItem.Athleticism = model.Athleticism;
                     existingItem.Strengths = model.Strengths;
                     existingItem.AreasforImprovement = model.AreasforImprovement;

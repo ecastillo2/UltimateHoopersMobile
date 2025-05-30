@@ -139,6 +139,7 @@ namespace WebAPI.ApiClients
                 // Set authentication header
                 if (!string.IsNullOrEmpty(accessToken))
                 {
+                    _httpClient.DefaultRequestHeaders.Clear();
                     _httpClient.DefaultRequestHeaders.Authorization =
                         new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
                 }

@@ -436,7 +436,7 @@ namespace Web.Controllers
                     ballHandling = scoutingReportData.BallHandling,
                     passing = scoutingReportData.Passing,
                     defense = scoutingReportData.Defense,
-                    rebounding = scoutingReportData.Redounding,
+                    rebounding = scoutingReportData.Rebounding,
                     athleticism = scoutingReportData.Athleticism,
                     strengths = scoutingReportData.Strengths,
                     weaknesses = scoutingReportData.AreasforImprovement,

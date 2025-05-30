@@ -677,6 +677,23 @@ namespace DataLayer.DAL.Repository
             }
         }
 
+        public async Task<ScoutingReport> GetScoutingReportByIdAsync(
+            string scoutingReportId,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await _context.ScoutingReport
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(s => s.ScoutingReportId == scoutingReportId, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting scouting report for ScoutingReport {ScoutingReportId}", scoutingReportId);
+                throw;
+            }
+        }
+
         /// <summary>
         /// Update Client Async
         /// </summary>
@@ -706,7 +723,7 @@ namespace DataLayer.DAL.Repository
                 existingProduct.BallHandling = model.BallHandling;
                 existingProduct.Passing = model.Passing;
                 existingProduct.Defense = model.Defense;
-                existingProduct.Redounding = model.Redounding;
+                existingProduct.Rebounding = model.Rebounding;
                 existingProduct.Athleticism = model.Athleticism;
                 existingProduct.Strengths = model.Strengths;
                 existingProduct.AreasforImprovement = model.AreasforImprovement;
@@ -948,7 +965,7 @@ namespace DataLayer.DAL.Repository
                     existingReport.BallHandling = scoutingReport.BallHandling;
                     existingReport.Passing = scoutingReport.Passing;
                     existingReport.Defense = scoutingReport.Defense;
-                    existingReport.Redounding = scoutingReport.Redounding;
+                    existingReport.Rebounding = scoutingReport.Rebounding;
                     existingReport.Athleticism = scoutingReport.Athleticism;
                     existingReport.Strengths = scoutingReport.Strengths;
                     existingReport.AreasforImprovement = scoutingReport.AreasforImprovement;

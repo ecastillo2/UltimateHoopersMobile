@@ -17,7 +17,7 @@ namespace Domain.DtoModel
         public int? BallHandling { get; set; }
         public int? Passing { get; set; }
         public int? Defense { get; set; }
-        public int? Redounding { get; set; }
+        public int? Rebounding { get; set; }
         public int? Athleticism { get; set; }
         public string? Strengths { get; set; }
         public string? AreasforImprovement { get; set; }
@@ -33,7 +33,7 @@ namespace Domain.DtoModel
             report.BallHandling = BallHandling;
             report.Passing = Passing;
             report.Defense = Defense;
-            report.Redounding = Redounding;
+            report.Rebounding = Rebounding;
             report.Athleticism = Athleticism;
             report.Strengths = Strengths;
             report.AreasforImprovement = AreasforImprovement;
