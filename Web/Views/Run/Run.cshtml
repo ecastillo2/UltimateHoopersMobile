@@ -521,516 +521,558 @@
     <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-    // Helper functions
-    function getAntiForgeryToken() {
-        return document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
-    }
-
-    function showLoading() {
-        const spinner = document.querySelector('.loading-spinner');
-        if (spinner) spinner.classList.add('active');
-    }
-
-    function hideLoading() {
-        const spinner = document.querySelector('.loading-spinner');
-        if (spinner) spinner.classList.remove('active');
-    }
-
-    function showToast(message, type = 'success') {
-        // You can implement a toast notification here
-        console.log(`${type}: ${message}`);
-    }
-
-    // Initialize DataTable only if table exists
-    let runsTable = null;
-    const tableElement = document.getElementById('runsTable');
-    
-    if (tableElement && tableElement.querySelector('tbody tr')) {
-        runsTable = $('#runsTable').DataTable({
-            responsive: true,
-            lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
-            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip',
-            language: {
-                search: "_INPUT_",
-                searchPlaceholder: "Search runs...",
-                lengthMenu: "Show _MENU_ runs per page",
-                info: "Showing _START_ to _END_ of _TOTAL_ runs",
-                infoEmpty: "Showing 0 to 0 of 0 runs",
-                infoFiltered: "(filtered from _MAX_ total runs)"
-            },
-            columnDefs: [
-                { className: "align-middle", targets: "_all" },
-                { orderable: false, targets: [5] }
-            ],
-            order: [[1, 'asc']]
-        });
-
-        // Filter functionality
-        const statusFilter = document.getElementById('statusFilter');
-        const dateFilter = document.getElementById('dateFilter');
-        const locationFilter = document.getElementById('locationFilter');
-        const typeFilter = document.getElementById('typeFilter');
-        const resetFiltersBtn = document.getElementById('resetFilters');
-        const activeFiltersContainer = document.getElementById('activeFilters');
-
-        function applyFilters() {
-            // Clear existing custom search functions
-            if ($.fn.dataTable.ext.search.length > 0) {
-                $.fn.dataTable.ext.search.pop();
+              document.addEventListener('DOMContentLoaded', function() {
+            // Helper functions
+            function getAntiForgeryToken() {
+                return document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
             }
 
-            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
-                if (!runsTable || settings.nTable.id !== 'runsTable') return true;
+            function showLoading() {
+                const spinner = document.querySelector('.loading-spinner');
+                if (spinner) spinner.classList.add('active');
+            }
 
-                // If all filters are set to 'all', show all rows
-                if (statusFilter.value === 'all' &&
-                    dateFilter.value === 'all' &&
-                    locationFilter.value === 'all' &&
-                    typeFilter.value === 'all') {
-                    return true;
+            function hideLoading() {
+                const spinner = document.querySelector('.loading-spinner');
+                if (spinner) spinner.classList.remove('active');
+            }
+
+            function showToast(message, type = 'success') {
+                console.log(`${type}: ${message}`);
+                // You can implement a proper toast notification here
+                if (type === 'error') {
+                    alert(`Error: ${message}`);
+                }
+            }
+
+            // Function to populate court dropdown
+            function populateCourtDropdown(courtList, selectedCourtId = null) {
+                const courtSelect = document.getElementById('editCourtList');
+
+                if (!courtSelect) {
+                    console.warn('Court dropdown element not found');
+                    return;
                 }
 
-                // Status filter
-                if (statusFilter.value !== 'all') {
-                    const status = data[4].toLowerCase();
-                    const statusValue = statusFilter.value.toLowerCase();
+                // Show loading state
+                courtSelect.classList.add('court-dropdown-loading');
+                courtSelect.disabled = true;
 
-                    if (statusValue === 'upcoming' && !status.includes('upcoming')) return false;
-                    if (statusValue === 'almost-full' && !status.includes('almost full')) return false;
-                    if (statusValue === 'past' && !status.includes('past')) return false;
+                // Clear existing options except the first one
+                courtSelect.innerHTML = '<option value="">Loading courts...</option>';
+
+                // Add courts from the data
+                setTimeout(() => { // Small delay to show loading state
+                    courtSelect.innerHTML = '<option value="">Select a court...</option>';
+
+                    if (courtList && courtList.length > 0) {
+                        courtList.forEach(court => {
+                            const option = document.createElement('option');
+                            option.value = court.courtId;
+                            option.textContent = court.name;
+
+                            // Select this option if it matches the current court
+                            if (selectedCourtId && court.courtId === selectedCourtId) {
+                                option.selected = true;
+                            }
+
+                            courtSelect.appendChild(option);
+                        });
+
+                        console.log(`Added ${courtList.length} courts to dropdown`);
+                    } else {
+                        // Add a "No courts available" option
+                        const noOption = document.createElement('option');
+                        noOption.value = '';
+                        noOption.textContent = 'No courts available for this client';
+                        noOption.disabled = true;
+                        courtSelect.appendChild(noOption);
+
+                        console.log('No courts available for this client');
+                    }
+
+                    // Remove loading state
+                    courtSelect.classList.remove('court-dropdown-loading');
+                    courtSelect.disabled = false;
+                }, 300);
+            }
+
+            // Initialize DataTable only if table exists
+            let runsTable = null;
+            const tableElement = document.getElementById('runsTable');
+
+            if (tableElement && tableElement.querySelector('tbody tr')) {
+                runsTable = $('#runsTable').DataTable({
+                    responsive: true,
+                    lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+                    dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip',
+                    language: {
+                        search: "_INPUT_",
+                        searchPlaceholder: "Search runs...",
+                        lengthMenu: "Show _MENU_ runs per page",
+                        info: "Showing _START_ to _END_ of _TOTAL_ runs",
+                        infoEmpty: "Showing 0 to 0 of 0 runs",
+                        infoFiltered: "(filtered from _MAX_ total runs)"
+                    },
+                    columnDefs: [
+                        { className: "align-middle", targets: "_all" },
+                        { orderable: false, targets: [5] }
+                    ],
+                    order: [[1, 'asc']]
+                });
+
+                // Filter functionality
+                const statusFilter = document.getElementById('statusFilter');
+                const dateFilter = document.getElementById('dateFilter');
+                const locationFilter = document.getElementById('locationFilter');
+                const typeFilter = document.getElementById('typeFilter');
+                const resetFiltersBtn = document.getElementById('resetFilters');
+                const activeFiltersContainer = document.getElementById('activeFilters');
+
+                function applyFilters() {
+                    // Clear existing custom search functions
+                    if ($.fn.dataTable.ext.search.length > 0) {
+                        $.fn.dataTable.ext.search.pop();
+                    }
+
+                    $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                        if (!runsTable || settings.nTable.id !== 'runsTable') return true;
+
+                        // If all filters are set to 'all', show all rows
+                        if (statusFilter.value === 'all' &&
+                            dateFilter.value === 'all' &&
+                            locationFilter.value === 'all' &&
+                            typeFilter.value === 'all') {
+                            return true;
+                        }
+
+                        // Status filter
+                        if (statusFilter.value !== 'all') {
+                            const status = data[4].toLowerCase();
+                            const statusValue = statusFilter.value.toLowerCase();
+
+                            if (statusValue === 'upcoming' && !status.includes('upcoming')) return false;
+                            if (statusValue === 'almost-full' && !status.includes('almost full')) return false;
+                            if (statusValue === 'past' && !status.includes('past')) return false;
+                        }
+
+                        // Date filter
+                        if (dateFilter.value !== 'all') {
+                            const dateString = data[1];
+                            const datePart = dateString.split(' ')[0];
+                            const date = new Date(datePart);
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+
+                            const tomorrow = new Date(today);
+                            tomorrow.setDate(tomorrow.getDate() + 1);
+
+                            const endOfWeek = new Date(today);
+                            endOfWeek.setDate(endOfWeek.getDate() + 7);
+
+                            switch (dateFilter.value) {
+                                case 'today':
+                                    if (date < today || date >= tomorrow) return false;
+                                    break;
+                                case 'this-week':
+                                    if (date < today || date > endOfWeek) return false;
+                                    break;
+                                case 'upcoming':
+                                    if (date < today) return false;
+                                    break;
+                                case 'past':
+                                    if (date >= today) return false;
+                                    break;
+                            }
+                        }
+
+                        // Location filter
+                        if (locationFilter.value !== 'all') {
+                            if (data[2] !== locationFilter.value) return false;
+                        }
+
+                        // Type filter
+                        if (typeFilter.value !== 'all') {
+                            const row = runsTable.row(dataIndex).node();
+                            const runType = row.getAttribute('data-run-type');
+                            if (runType !== typeFilter.value) return false;
+                        }
+
+                        return true;
+                    });
+
+                    runsTable.draw();
+                    updateActiveFilters();
                 }
 
-                // Date filter
-                if (dateFilter.value !== 'all') {
-                    const dateString = data[1];
-                    // Extract date part before any time information
-                    const datePart = dateString.split(' ')[0];
-                    const date = new Date(datePart);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
+                function updateActiveFilters() {
+                    // Remove existing filter badges
+                    const existingBadges = activeFiltersContainer.querySelectorAll('.filter-badge, .filter-none');
+                    existingBadges.forEach(badge => badge.remove());
 
-                    const tomorrow = new Date(today);
-                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    const hasActiveFilters =
+                        statusFilter.value !== 'all' ||
+                        dateFilter.value !== 'all' ||
+                        locationFilter.value !== 'all' ||
+                        typeFilter.value !== 'all';
 
-                    const endOfWeek = new Date(today);
-                    endOfWeek.setDate(endOfWeek.getDate() + 7);
+                    if (!hasActiveFilters) {
+                        const noneSpan = document.createElement('span');
+                        noneSpan.className = 'text-muted filter-none';
+                        noneSpan.textContent = 'None';
+                        activeFiltersContainer.appendChild(noneSpan);
+                        return;
+                    }
 
-                    switch (dateFilter.value) {
-                        case 'today':
-                            if (date < today || date >= tomorrow) return false;
-                            break;
-                        case 'this-week':
-                            if (date < today || date > endOfWeek) return false;
-                            break;
-                        case 'upcoming':
-                            if (date < today) return false;
-                            break;
-                        case 'past':
-                            if (date >= today) return false;
-                            break;
+                    if (statusFilter.value !== 'all') {
+                        addFilterBadge('Status', formatFilterValue(statusFilter.value), function() {
+                            statusFilter.value = 'all';
+                            applyFilters();
+                        });
+                    }
+
+                    if (dateFilter.value !== 'all') {
+                        addFilterBadge('Date', formatFilterValue(dateFilter.value), function() {
+                            dateFilter.value = 'all';
+                            applyFilters();
+                        });
+                    }
+
+                    if (locationFilter.value !== 'all') {
+                        addFilterBadge('Location', locationFilter.value, function() {
+                            locationFilter.value = 'all';
+                            applyFilters();
+                        });
+                    }
+
+                    if (typeFilter.value !== 'all') {
+                        addFilterBadge('Type', formatFilterValue(typeFilter.value), function() {
+                            typeFilter.value = 'all';
+                            applyFilters();
+                        });
                     }
                 }
 
-                // Location filter
-                if (locationFilter.value !== 'all') {
-                    if (data[2] !== locationFilter.value) return false;
+                function formatFilterValue(value) {
+                    return value
+                        .split('-')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                        .join(' ');
                 }
 
-                // Type filter
-                if (typeFilter.value !== 'all') {
-                    const row = runsTable.row(dataIndex).node();
-                    const runType = row.getAttribute('data-run-type');
-                    if (runType !== typeFilter.value) return false;
+                function addFilterBadge(label, value, removeCallback) {
+                    const badge = document.createElement('span');
+                    badge.className = 'badge bg-primary me-2 filter-badge';
+                    badge.textContent = `${label}: ${value}`;
+
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'btn-close btn-close-white ms-1';
+                    removeBtn.style.fontSize = '0.5rem';
+                    removeBtn.addEventListener('click', removeCallback);
+
+                    badge.appendChild(removeBtn);
+                    activeFiltersContainer.appendChild(badge);
                 }
 
-                return true;
-            });
+                // Add event listeners for filters
+                if (statusFilter) statusFilter.addEventListener('change', applyFilters);
+                if (dateFilter) dateFilter.addEventListener('change', applyFilters);
+                if (locationFilter) locationFilter.addEventListener('change', applyFilters);
+                if (typeFilter) typeFilter.addEventListener('change', applyFilters);
 
-            runsTable.draw();
-            updateActiveFilters();
-        }
+                if (resetFiltersBtn) {
+                    resetFiltersBtn.addEventListener('click', function() {
+                        statusFilter.value = 'all';
+                        dateFilter.value = 'all';
+                        locationFilter.value = 'all';
+                        typeFilter.value = 'all';
+                        applyFilters();
+                    });
+                }
 
-                function populateCourtDropdown(courtList) {
-            const courtSelect = document.getElementById('editCourtList');
-
-            // Clear existing options except the first one
-            courtSelect.innerHTML = '<option value="">Select a court...</option>';
-
-            // Add courts from the data
-            courtList.forEach(court => {
-                const option = document.createElement('option');
-                option.value = court.courtId;
-                option.textContent = court.name;
-                courtSelect.appendChild(option);
-            });
-        }
-
-        function updateActiveFilters() {
-            // Remove existing filter badges
-            const existingBadges = activeFiltersContainer.querySelectorAll('.filter-badge, .filter-none');
-            existingBadges.forEach(badge => badge.remove());
-
-            const hasActiveFilters =
-                statusFilter.value !== 'all' ||
-                dateFilter.value !== 'all' ||
-                locationFilter.value !== 'all' ||
-                typeFilter.value !== 'all';
-
-            if (!hasActiveFilters) {
-                const noneSpan = document.createElement('span');
-                noneSpan.className = 'text-muted filter-none';
-                noneSpan.textContent = 'None';
-                activeFiltersContainer.appendChild(noneSpan);
-                return;
-            }
-
-            if (statusFilter.value !== 'all') {
-                addFilterBadge('Status', formatFilterValue(statusFilter.value), function() {
-                    statusFilter.value = 'all';
-                    applyFilters();
-                });
-            }
-
-            if (dateFilter.value !== 'all') {
-                addFilterBadge('Date', formatFilterValue(dateFilter.value), function() {
-                    dateFilter.value = 'all';
-                    applyFilters();
-                });
-            }
-
-            if (locationFilter.value !== 'all') {
-                addFilterBadge('Location', locationFilter.value, function() {
-                    locationFilter.value = 'all';
-                    applyFilters();
-                });
-            }
-
-            if (typeFilter.value !== 'all') {
-                addFilterBadge('Type', formatFilterValue(typeFilter.value), function() {
-                    typeFilter.value = 'all';
-                    applyFilters();
-                });
-            }
-        }
-
-        function formatFilterValue(value) {
-            return value
-                .split('-')
-                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(' ');
-        }
-
-        function addFilterBadge(label, value, removeCallback) {
-            const badge = document.createElement('span');
-            badge.className = 'badge bg-primary me-2 filter-badge';
-            badge.textContent = `${label}: ${value}`;
-
-            const removeBtn = document.createElement('button');
-            removeBtn.className = 'btn-close btn-close-white ms-1';
-            removeBtn.style.fontSize = '0.5rem';
-            removeBtn.addEventListener('click', removeCallback);
-
-            badge.appendChild(removeBtn);
-            activeFiltersContainer.appendChild(badge);
-        }
-
-        // Add event listeners for filters
-        if (statusFilter) statusFilter.addEventListener('change', applyFilters);
-        if (dateFilter) dateFilter.addEventListener('change', applyFilters);
-        if (locationFilter) locationFilter.addEventListener('change', applyFilters);
-        if (typeFilter) typeFilter.addEventListener('change', applyFilters);
-
-        if (resetFiltersBtn) {
-            resetFiltersBtn.addEventListener('click', function() {
-                statusFilter.value = 'all';
-                dateFilter.value = 'all';
-                locationFilter.value = 'all';
-                typeFilter.value = 'all';
+                // Initialize filters
                 applyFilters();
-            });
-        }
-
-        // Initialize filters
-        applyFilters();
-    }
-
-    // Set minimum date for date pickers
-    const today = new Date().toISOString().split('T')[0];
-    const dateInputs = document.querySelectorAll('input[type="date"]');
-    dateInputs.forEach(input => {
-        input.min = today;
-    });
-
-    // Handle edit run modal
-    const editRunModal = document.getElementById('editRunModal');
-    if (editRunModal) {
-        editRunModal.addEventListener('show.bs.modal', function(event) {
-            const button = event.relatedTarget;
-            const runId = button.getAttribute('data-run-id');
-
-            if (!runId) {
-                console.error('No run ID found');
-                return;
             }
 
-            const editRunIdField = document.getElementById('editRunId');
-            if (editRunIdField) editRunIdField.value = runId;
-            
-            showLoading();
+            // Set minimum date for date pickers
+            const today = new Date().toISOString().split('T')[0];
+            const dateInputs = document.querySelectorAll('input[type="date"]');
+            dateInputs.forEach(input => {
+                input.min = today;
+            });
 
-            // Load run data
-            fetch(`/Run/GetRunData?id=${runId}/`)
+            // Handle edit run modal
+            const editRunModal = document.getElementById('editRunModal');
+            if (editRunModal) {
+                editRunModal.addEventListener('show.bs.modal', function(event) {
+                    const button = event.relatedTarget;
+                    const runId = button.getAttribute('data-run-id');
+
+                    if (!runId) {
+                        console.error('No run ID found');
+                        return;
+                    }
+
+                    const editRunIdField = document.getElementById('editRunId');
+                    if (editRunIdField) editRunIdField.value = runId;
+
+                    showLoading();
+
+                    // Load run data with improved court handling
+                    fetch(`/Run/GetRunData?id=${runId}`)
+                        .then(response => {
+                            if (!response.ok) throw new Error('Network response was not ok');
+                            return response.json();
+                        })
+                        .then(data => {
+                            hideLoading();
+
+                            if (data.success === false) {
+                                throw new Error(data.message || 'Failed to load run data');
+                            }
+
+                            // Populate form fields with null checks
+                            const setFieldValue = (fieldId, value) => {
+                                const field = document.getElementById(fieldId);
+                                if (field && value !== null && value !== undefined) {
+                                    field.value = value;
+                                }
+                            };
+
+                            setFieldValue('editRunTitle', data.name);
+                            setFieldValue('editRunDate', data.runDate);
+                            setFieldValue('editRunTime', data.startTime);
+                            setFieldValue('editEndTime', data.endTime);
+                            setFieldValue('editAddress', data.address);
+                            setFieldValue('editCity', data.city);
+                            setFieldValue('editState', data.state);
+                            setFieldValue('editZip', data.zip);
+                            setFieldValue('editCourtType', data.isOutdoor ? 'true' : 'false');
+                            setFieldValue('editMaxParticipants', data.playerLimit);
+                            setFieldValue('editSkillLevel', data.skillLevel);
+                            setFieldValue('editRunDescription', data.description);
+                            setFieldValue('editIsPublic', data.isPublic ? 'true' : 'false');
+                            setFieldValue('editStatus', data.status);
+                            setFieldValue('editRunType', data.type);
+                            setFieldValue('editTeamType', data.teamType);
+
+                            // Populate court dropdown with the current selection
+                            console.log('Court data received:', data.courtList);
+                            console.log('Current court ID:', data.courtId);
+                            populateCourtDropdown(data.courtList, data.courtId);
+
+                            // Update participant counts
+                            const currentCount = document.getElementById('currentParticipantsCount');
+                            const maxCount = document.getElementById('maxParticipantsCount');
+                            if (currentCount) currentCount.textContent = data.playerCount || 0;
+                            if (maxCount) maxCount.textContent = data.playerLimit || 0;
+
+                            // Set delete button run ID
+                            const deleteIdField = document.getElementById('deleteRunId');
+                            if (deleteIdField) deleteIdField.value = data.runId || runId;
+
+                            // Load participants
+                            loadParticipants(data.runId || runId);
+                        })
+                        .catch(error => {
+                            hideLoading();
+                            console.error('Error loading run data:', error);
+                            showToast('Error loading run data. Please try again.', 'error');
+                        });
+                });
+            }
+
+            // Handle delete run button
+            const deleteRunBtn = document.getElementById('deleteRunBtn');
+            if (deleteRunBtn) {
+                deleteRunBtn.addEventListener('click', function() {
+                    const runId = document.getElementById('editRunId').value;
+                    const deleteIdField = document.getElementById('deleteRunId');
+                    if (deleteIdField) deleteIdField.value = runId;
+
+                    const editModal = bootstrap.Modal.getInstance(document.getElementById('editRunModal'));
+                    if (editModal) editModal.hide();
+
+                    const deleteModal = new bootstrap.Modal(document.getElementById('deleteRunModal'));
+                    deleteModal.show();
+                });
+            }
+
+            // Function to load participants
+            function loadParticipants(runId) {
+                const participantsList = document.getElementById('participantsList');
+                if (!participantsList) return;
+
+                participantsList.innerHTML = '<div class="text-center py-4 text-muted"><i class="bi bi-people"></i> Loading participants...</div>';
+
+                fetch(`/Run/GetRunParticipants?runId=${runId}`)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (!Array.isArray(data) || data.length === 0) {
+                            participantsList.innerHTML = `
+                                <div class="text-center py-4 text-muted">
+                                    <p>No participants have joined this run yet.</p>
+                                </div>`;
+                            return;
+                        }
+
+                        let html = '';
+                        data.forEach(participant => {
+                            const userName = participant.userName || 'Unknown Player';
+                            const initials = userName
+                                .split(' ')
+                                .map(n => n[0] || '')
+                                .join('')
+                                .substring(0, 2)
+                                .toUpperCase() || 'UP';
+
+                            html += `
+                                <div class="d-flex align-items-center p-2 border-bottom">
+                                    <div class="participant-avatar flex-shrink-0 me-3">
+                                        ${initials}
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">${userName}</h6>
+                                        <span class="text-muted small">Status: ${participant.status || 'Active'}</span>
+                                    </div>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li><a class="dropdown-item" href="#"><i class="bi bi-envelope me-2"></i>Message</a></li>
+                                            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>View Profile</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-danger remove-participant" data-participant-id="${participant.profileId}" href="#"><i class="bi bi-person-x me-2"></i>Remove</a></li>
+                                        </ul>
+                                    </div>
+                                </div>`;
+                        });
+
+                        participantsList.innerHTML = html;
+
+                        // Add event listeners to remove buttons
+                        document.querySelectorAll('.remove-participant').forEach(button => {
+                            button.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                const participantId = this.getAttribute('data-participant-id');
+
+                                if (confirm('Are you sure you want to remove this participant?')) {
+                                    removeParticipant(runId, participantId);
+                                }
+                            });
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error loading participants:', error);
+                        participantsList.innerHTML = `
+                            <div class="text-center py-4 text-danger">
+                                <p>Error loading participants. Please try again.</p>
+                            </div>`;
+                    });
+            }
+
+            // Function to remove participant
+            function removeParticipant(runId, participantId) {
+                showLoading();
+
+                fetch('/Run/RemoveParticipant', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': getAntiForgeryToken()
+                    },
+                    body: JSON.stringify(participantId)
+                })
                 .then(response => {
                     if (!response.ok) throw new Error('Network response was not ok');
                     return response.json();
                 })
                 .then(data => {
                     hideLoading();
-
-                    if (data.success === false) {
-                        throw new Error(data.message || 'Failed to load run data');
-                    }
-
-                    // Populate form fields with null checks
-                    const setFieldValue = (fieldId, value) => {
-                        const field = document.getElementById(fieldId);
-                        if (field && value !== null && value !== undefined) {
-                            field.value = value;
+                    if (data.success) {
+                        loadParticipants(runId);
+                        const currentCount = document.getElementById('currentParticipantsCount');
+                        if (currentCount) {
+                            const count = parseInt(currentCount.textContent);
+                            currentCount.textContent = Math.max(0, count - 1);
                         }
-                    };
-
-                    setFieldValue('editRunTitle', data.name);
-                    setFieldValue('editRunDate', data.runDate);
-                    setFieldValue('editRunTime', data.startTime);
-                    setFieldValue('editEndTime', data.endTime);
-                    setFieldValue('editAddress', data.address);
-                    setFieldValue('editCity', data.city);
-                    setFieldValue('editState', data.state);
-                    setFieldValue('editZip', data.zip);
-                    setFieldValue('editCourtType', data.isOutdoor ? 'true' : 'false');
-                    setFieldValue('editMaxParticipants', data.playerLimit);
-                    setFieldValue('editSkillLevel', data.skillLevel);
-                    setFieldValue('editRunDescription', data.description);
-                    setFieldValue('editIsPublic', data.isPublic ? 'true' : 'false');
-                    setFieldValue('editStatus', data.status);
-                    setFieldValue('editRunType', data.type);
-                    setFieldValue('editTeamType', data.teamType);
-                    setFieldValue('editCourtList', data.CourtList);
-
-                    // Update participant counts
-                    const currentCount = document.getElementById('currentParticipantsCount');
-                    const maxCount = document.getElementById('maxParticipantsCount');
-                    if (currentCount) currentCount.textContent = data.playerCount || 0;
-                    if (maxCount) maxCount.textContent = data.playerLimit || 0;
-
-                    // Set delete button run ID
-                    const deleteIdField = document.getElementById('deleteRunId');
-                    if (deleteIdField) deleteIdField.value = data.runId || runId;
-
-                    // Load participants
-                    loadParticipants(data.runId || runId);
+                        showToast('Participant removed successfully');
+                    } else {
+                        showToast('Error removing participant: ' + (data.message || 'Unknown error'), 'error');
+                    }
                 })
                 .catch(error => {
                     hideLoading();
-                    console.error('Error loading run data:', error);
-                    alert('Error loading run data. Please try again.');
+                    console.error('Error removing participant:', error);
+                    showToast('Error removing participant. Please try again.', 'error');
                 });
-        });
-    }
+            }
 
-    // Handle delete run button
-    const deleteRunBtn = document.getElementById('deleteRunBtn');
-    if (deleteRunBtn) {
-        deleteRunBtn.addEventListener('click', function() {
-            const runId = document.getElementById('editRunId').value;
-            const deleteIdField = document.getElementById('deleteRunId');
-            if (deleteIdField) deleteIdField.value = runId;
+            // Add participant button
+            const addParticipantBtn = document.getElementById('addParticipantBtn');
+            if (addParticipantBtn) {
+                addParticipantBtn.addEventListener('click', function() {
+                    const runId = document.getElementById('editRunId').value;
+                    const currentCountEl = document.getElementById('currentParticipantsCount');
+                    const maxCountEl = document.getElementById('maxParticipantsCount');
 
-            const editModal = bootstrap.Modal.getInstance(document.getElementById('editRunModal'));
-            if (editModal) editModal.hide();
+                    if (!currentCountEl || !maxCountEl) {
+                        showToast('Unable to determine current capacity. Please refresh and try again.', 'error');
+                        return;
+                    }
 
-            const deleteModal = new bootstrap.Modal(document.getElementById('deleteRunModal'));
-            deleteModal.show();
-        });
-    }
+                    const currentCount = parseInt(currentCountEl.textContent);
+                    const maxCount = parseInt(maxCountEl.textContent);
 
-    // Function to load participants
-    function loadParticipants(runId) {
-        const participantsList = document.getElementById('participantsList');
-        if (!participantsList) return;
+                    if (currentCount >= maxCount) {
+                        showToast('This run is already at maximum capacity. Cannot add more participants.', 'error');
+                        return;
+                    }
 
-        participantsList.innerHTML = '<div class="text-center py-4 text-muted"><i class="bi bi-people"></i> Loading participants...</div>';
+                    const profileId = prompt('Enter participant profile ID:');
+                    if (!profileId) return;
 
-        fetch(`/Run/GetRunParticipants?runId=${runId}`)
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.json();
-            })
-            .then(data => {
-                if (!Array.isArray(data) || data.length === 0) {
-                    participantsList.innerHTML = `
-                        <div class="text-center py-4 text-muted">
-                            <p>No participants have joined this run yet.</p>
-                        </div>`;
-                    return;
-                }
+                    showLoading();
 
-                let html = '';
-                data.forEach(participant => {
-                    const userName = participant.userName || 'Unknown Player';
-                    const initials = userName
-                        .split(' ')
-                        .map(n => n[0] || '')
-                        .join('')
-                        .substring(0, 2)
-                        .toUpperCase() || 'UP';
+                    const requestData = {
+                        RunId: runId,
+                        ProfileId: profileId
+                    };
 
-                    html += `
-                        <div class="d-flex align-items-center p-2 border-bottom">
-                            <div class="participant-avatar flex-shrink-0 me-3">
-                                ${initials}
-                            </div>
-                            <div class="flex-grow-1">
-                                <h6 class="mb-0">${userName}</h6>
-                                <span class="text-muted small">Status: ${participant.status || 'Active'}</span>
-                            </div>
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="bi bi-three-dots-vertical"></i>
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li><a class="dropdown-item" href="#"><i class="bi bi-envelope me-2"></i>Message</a></li>
-                                    <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>View Profile</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item text-danger remove-participant" data-participant-id="${participant.profileId}" href="#"><i class="bi bi-person-x me-2"></i>Remove</a></li>
-                                </ul>
-                            </div>
-                        </div>`;
-                });
-
-                participantsList.innerHTML = html;
-
-                // Add event listeners to remove buttons
-                document.querySelectorAll('.remove-participant').forEach(button => {
-                    button.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        const participantId = this.getAttribute('data-participant-id');
-
-                        if (confirm('Are you sure you want to remove this participant?')) {
-                            removeParticipant(runId, participantId);
+                    fetch(`/Run/AddParticipant?runId=${runId}&profileId=${profileId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': getAntiForgeryToken()
+                        },
+                        body: JSON.stringify(requestData)
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        return response.json();
+                    })
+                    .then(data => {
+                        hideLoading();
+                        if (data.success) {
+                            loadParticipants(runId);
+                            const currentCount = parseInt(currentCountEl.textContent);
+                            currentCountEl.textContent = currentCount + 1;
+                            showToast('Participant added successfully');
+                        } else {
+                            showToast('Error adding participant: ' + (data.message || 'Unknown error'), 'error');
                         }
+                    })
+                    .catch(error => {
+                        hideLoading();
+                        console.error('Error adding participant:', error);
+                        showToast('Error adding participant. Please try again.', 'error');
                     });
                 });
-            })
-            .catch(error => {
-                console.error('Error loading participants:', error);
-                participantsList.innerHTML = `
-                    <div class="text-center py-4 text-danger">
-                        <p>Error loading participants. Please try again.</p>
-                    </div>`;
-            });
-    }
-
-    // Function to remove participant
-    function removeParticipant(runId, participantId) {
-        showLoading();
-
-        fetch('/Run/RemoveParticipant', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': getAntiForgeryToken()
-            },
-            body: JSON.stringify(participantId) // Send participantId as string in body
-        })
-        .then(response => {
-            if (!response.ok) throw new Error('Network response was not ok');
-            return response.json();
-        })
-        .then(data => {
-            hideLoading();
-            if (data.success) {
-                loadParticipants(runId);
-                const currentCount = document.getElementById('currentParticipantsCount');
-                if (currentCount) {
-                    const count = parseInt(currentCount.textContent);
-                    currentCount.textContent = Math.max(0, count - 1);
-                }
-                showToast('Participant removed successfully');
-            } else {
-                alert('Error removing participant: ' + (data.message || 'Unknown error'));
             }
-        })
-        .catch(error => {
-            hideLoading();
-            console.error('Error removing participant:', error);
-            alert('Error removing participant. Please try again.');
         });
-    }
-
-    // Add participant button
-    const addParticipantBtn = document.getElementById('addParticipantBtn');
-    if (addParticipantBtn) {
-        addParticipantBtn.addEventListener('click', function() {
-            const runId = document.getElementById('editRunId').value;
-            const currentCountEl = document.getElementById('currentParticipantsCount');
-            const maxCountEl = document.getElementById('maxParticipantsCount');
-            
-            if (!currentCountEl || !maxCountEl) {
-                alert('Unable to determine current capacity. Please refresh and try again.');
-                return;
-            }
-            
-            const currentCount = parseInt(currentCountEl.textContent);
-            const maxCount = parseInt(maxCountEl.textContent);
-
-            if (currentCount >= maxCount) {
-                alert('This run is already at maximum capacity. Cannot add more participants.');
-                return;
-            }
-
-            const profileId = prompt('Enter participant profile ID:');
-            if (!profileId) return;
-
-            showLoading();
-
-            // Create request object matching your controller's AddParticipant method
-            const requestData = {
-                RunId: runId,
-                ProfileId: profileId
-            };
-
-            fetch(`/Run/AddParticipant?runId=${runId}&profileId=${profileId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': getAntiForgeryToken()
-                },
-                body: JSON.stringify(requestData)
-            })
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.json();
-            })
-            .then(data => {
-                hideLoading();
-                if (data.success) {
-                    loadParticipants(runId);
-                    const currentCount = parseInt(currentCountEl.textContent);
-                    currentCountEl.textContent = currentCount + 1;
-                    showToast('Participant added successfully');
-                } else {
-                    alert('Error adding participant: ' + (data.message || 'Unknown error'));
-                }
-            })
-            .catch(error => {
-                hideLoading();
-                console.error('Error adding participant:', error);
-                alert('Error adding participant. Please try again.');
-            });
-        });
-    }
-});
     </script>
 }

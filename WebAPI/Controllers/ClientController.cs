@@ -51,11 +51,11 @@ namespace WebAPI.Controllers
         [HttpGet("{clientId}/courts")]
         [ProducesResponseType(typeof(IEnumerable<Court>), 200)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> GetClientCourtsAsync(string clientId, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetClientCourtsAsync(string runId, CancellationToken cancellationToken)
         {
             try
             {
-                var privateRuns = await _repository.GetClientCourtsAsync(clientId,cancellationToken);
+                var privateRuns = await _repository.GetClientCourtsAsync(runId, cancellationToken);
                 
                 return Ok(privateRuns);
             }

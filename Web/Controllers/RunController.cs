@@ -95,7 +95,7 @@ namespace Web.Controllers
                     return Json(new { success = false, message = "Run not found" });
                 }
 
-                var clientCourtList =  await _clientApi.GetClientCourtsAsync(id, accessToken, cancellationToken);
+                var clientCourtList =  await _clientApi.GetClientCourtsAsync(run.ClientId, accessToken, cancellationToken);
 
                 // Transform the data to match what the view expects
                 var runData = new
