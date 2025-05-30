@@ -172,100 +172,113 @@
                     </thead>
                     <tbody>
                         @foreach (var run in Model.Runs)
+    {
+        // Determine run status badge
+        string badgeClass = "bg-success";
+        string badgeText = "Upcoming";
+        string statusForFilter = "upcoming";
+
+        if (run.PlayerCount > 0 && run.PlayerLimit > 0 &&
+        (float)run.PlayerCount / run.PlayerLimit >= 0.85)
+        {
+            badgeClass = "bg-warning";
+            badgeText = "Almost Full";
+            statusForFilter = "almost-full";
+        }
+        else if (run.RunDate < DateTime.Now)
+        {
+            badgeClass = "bg-secondary";
+            badgeText = "Past";
+            statusForFilter = "past";
+        }
+
+        // Get host initials
+        string hostInitials = "NA";
+        if (!string.IsNullOrEmpty(run.ProfileId))
+        {
+            var names = run.ProfileId.Split(' ');
+            if (names.Length >= 2)
+            {
+                hostInitials = $"{names[0][0]}{names[1][0]}";
+            }
+            else if (names.Length == 1 && names[0].Length > 0)
+            {
+                hostInitials = names[0][0].ToString();
+            }
+        }
+
+        // Build location string for filtering
+        var locationParts = new List<string>();
+        if (!string.IsNullOrEmpty(run.Address)) locationParts.Add(run.Address);
+        if (!string.IsNullOrEmpty(run.City)) locationParts.Add(run.City);
+        if (!string.IsNullOrEmpty(run.State)) locationParts.Add(run.State);
+        var fullLocation = string.Join(", ", locationParts);
+
+        <tr data-run-type="@(run.Type?.ToLower() ?? "pickup")"
+            data-capacity-current="@(run.PlayerCount ?? 0)"
+            data-capacity-max="@(run.PlayerLimit ?? 0)"
+            data-run-date="@(run.RunDate?.ToString("yyyy-MM-dd") ?? "")"
+            data-location="@fullLocation"
+            data-status="@statusForFilter"
+            data-skill-level="@(run.SkillLevel?.ToLower() ?? "intermediate")"
+            data-run-id="@run.RunId">
+            <td>
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <div class="fw-semibold">@run.Name</div>
+                        <div class="text-muted small">@(run.Type ?? "Pickup") • @(run.SkillLevel ?? "All Levels")</div>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div>
+                    <div class="fw-semibold">@run.RunDate?.ToString("MMM dd, yyyy")</div>
+                    <div class="text-muted small">
+                        @if (run.StartTime.HasValue)
                         {
-                            // Determine run status badge
-                            string badgeClass = "bg-success";
-                            string badgeText = "Upcoming";
-
-                            if (run.PlayerCount > 0 && run.PlayerLimit > 0 &&
-                            (float)run.PlayerCount / run.PlayerLimit >= 0.85)
-                            {
-                                badgeClass = "bg-warning";
-                                badgeText = "Almost Full";
-                            }
-                            else if (run.RunDate < DateTime.Now)
-                            {
-                                badgeClass = "bg-secondary";
-                                badgeText = "Past";
-                            }
-
-                            // Get host initials
-                            string hostInitials = "NA";
-                            if (!string.IsNullOrEmpty(run.ProfileId))
-                            {
-                                var names = run.ProfileId.Split(' ');
-                                if (names.Length >= 2)
-                                {
-                                    hostInitials = $"{names[0][0]}{names[1][0]}";
-                                }
-                                else if (names.Length == 1 && names[0].Length > 0)
-                                {
-                                    hostInitials = names[0][0].ToString();
-                                }
-                            }
-
-                            <tr data-run-type="@(run.Type?.ToLower() ?? "pickup")"
-                                data-capacity-current="@run.PlayerCount"
-                                data-capacity-max="@run.PlayerLimit"
-                                data-run-date="@(run.RunDate?.ToString("yyyy-MM-dd"))"
-                                data-location="@run.Address">
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="me-3">
-                                            <div class="fw-semibold">@run.Name</div>
-                                            <div class="text-muted small">@(run.Type ?? "Pickup") • @(run.SkillLevel ?? "All Levels")</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div>
-                                        <div class="fw-semibold">@run.RunDate?.ToString("MMM dd, yyyy")</div>
-                                        <div class="text-muted small">
-                                            @if (run.StartTime.HasValue)
-                                            {
-                                                @DateTime.Today.Add(run.StartTime.Value).ToString("h:mm tt")
-                                            }
-                                            @if (run.EndTime.HasValue)
-                                            {
-                                                <span> - @DateTime.Today.Add(run.EndTime.Value).ToString("h:mm tt")</span>
-                                            }
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div>
-                                        <div class="fw-semibold">@(run.Address ?? "Location TBD")</div>
-                                        @if (!string.IsNullOrEmpty(run.City) || !string.IsNullOrEmpty(run.State))
-                                        {
-                                            <div class="text-muted small">@run.City@(!string.IsNullOrEmpty(run.City) && !string.IsNullOrEmpty(run.State) ? ", " : "")@run.State</div>
-                                        }
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="capacity-container">
-                                        <div class="capacity-text">@(run.PlayerCount ?? 0)/@(run.PlayerLimit ?? 0)</div>
-                                        <div class="progress progress-sm" style="width: 60px;">
-                                            @{
-                                                var percentFull = run.PlayerLimit > 0 ? ((double)(run.PlayerCount ?? 0) / run.PlayerLimit.Value) * 100 : 0;
-                                                var progressClass = percentFull >= 85 ? "bg-warning" : "bg-primary";
-                                            }
-                                            <div class="progress-bar @progressClass" role="progressbar" style="width: @percentFull%" aria-valuenow="@percentFull" aria-valuemin="0" aria-valuemax="100"></div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td><span class="badge @badgeClass badge-pill">@badgeText</span></td>
-                                <td>
-                                    <div class="table-actions">
-                                        <button type="button" class="btn btn-sm btn-outline-primary action-icon" data-bs-toggle="modal" data-bs-target="#editRunModal" data-run-id="@run.RunId" title="Edit">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                        <a href="@Url.Action("Details", "Run", new { id = run.RunId })" class="btn btn-sm btn-primary action-icon" title="View">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
+                            @DateTime.Today.Add(run.StartTime.Value).ToString("h:mm tt")
                         }
+                        @if (run.EndTime.HasValue)
+                        {
+                            <span> - @DateTime.Today.Add(run.EndTime.Value).ToString("h:mm tt")</span>
+                        }
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div>
+                    <div class="fw-semibold">@(run.Address ?? "Location TBD")</div>
+                    @if (!string.IsNullOrEmpty(run.City) || !string.IsNullOrEmpty(run.State))
+                    {
+                        <div class="text-muted small">@run.City@(!string.IsNullOrEmpty(run.City) && !string.IsNullOrEmpty(run.State) ? ", " : "")@run.State</div>
+                    }
+                </div>
+            </td>
+            <td>
+                <div class="capacity-container">
+                    <div class="capacity-text">@(run.PlayerCount ?? 0)/@(run.PlayerLimit ?? 0)</div>
+                    <div class="progress progress-sm" style="width: 60px;">
+                        @{
+                            var percentFull = run.PlayerLimit > 0 ? ((double)(run.PlayerCount ?? 0) / run.PlayerLimit.Value) * 100 : 0;
+                            var progressClass = percentFull >= 85 ? "bg-warning" : "bg-primary";
+                        }
+                        <div class="progress-bar @progressClass" role="progressbar" style="width: @percentFull%" aria-valuenow="@percentFull" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+            </td>
+            <td><span class="badge @badgeClass badge-pill">@badgeText</span></td>
+            <td>
+                <div class="table-actions">
+                    <button type="button" class="btn btn-sm btn-outline-primary action-icon" data-bs-toggle="modal" data-bs-target="#editRunModal" data-run-id="@run.RunId" title="Edit">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <a href="@Url.Action("Details", "Run", new { id = run.RunId })" class="btn btn-sm btn-primary action-icon" title="View">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                </div>
+            </td>
+        </tr>
+    }
                     </tbody>
                 </table>
             </div>

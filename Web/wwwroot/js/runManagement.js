@@ -1,10 +1,10 @@
 ﻿/**
- * Fixed Run Management JavaScript
- * Resolves Edit Run Details tab population issues
+ * Fixed Run Management JavaScript with Working Table Filters
+ * Complete solution for Run.cshtml filtering functionality
  */
 
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('🚀 Initializing Fixed Run Management');
+    console.log('🚀 Initializing Fixed Run Management with Filters');
 
     // Helper functions
     function getAntiForgeryToken() {
@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <i class="bi ${iconClass} me-2"></i>
                         ${message}
                     </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
                 </div>
             </div>
         `;
@@ -558,7 +558,315 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
-    // Initialize DataTable
+    // ====== NEW: TABLE FILTERS IMPLEMENTATION ======
+    function initializeRunFilters() {
+        console.log('🔍 Initializing run table filters...');
+
+        const runsTable = $('#runsTable');
+        if (!runsTable.length || !$.fn.dataTable.isDataTable(runsTable)) {
+            console.warn('⚠️ Runs table not found or not initialized as DataTable');
+            return;
+        }
+
+        const table = runsTable.DataTable();
+
+        // Get filter elements
+        const statusFilter = $('#statusFilter');
+        const dateFilter = $('#dateFilter');
+        const locationFilter = $('#locationFilter');
+        const typeFilter = $('#typeFilter');
+        const resetFiltersBtn = $('#resetFilters');
+        const activeFiltersContainer = $('#activeFilters');
+
+        if (!statusFilter.length || !dateFilter.length || !locationFilter.length || !typeFilter.length) {
+            console.warn('⚠️ Some filter elements not found');
+            return;
+        }
+
+        // Apply filter function
+        function applyFilters() {
+            console.log('🔍 Applying filters...', {
+                status: statusFilter.val(),
+                date: dateFilter.val(),
+                location: locationFilter.val(),
+                type: typeFilter.val()
+            });
+
+            // Remove any existing custom filter to prevent stacking
+            if ($.fn.dataTable.ext.search.length > 0) {
+                // Remove only our custom filters, keep others
+                $.fn.dataTable.ext.search = $.fn.dataTable.ext.search.filter(fn =>
+                    !fn.name || fn.name !== 'runTableFilter'
+                );
+            }
+
+            // Create a new custom filter function
+            const customFilter = function (settings, data, dataIndex) {
+                // Only apply this filter to our runsTable
+                if (settings.nTable.id !== 'runsTable') return true;
+
+                const row = $(table.row(dataIndex).node());
+
+                // Skip filtering if all filters are set to 'all'
+                if (statusFilter.val() === 'all' &&
+                    dateFilter.val() === 'all' &&
+                    locationFilter.val() === 'all' &&
+                    typeFilter.val() === 'all') {
+                    return true;
+                }
+
+                try {
+                    // Status filtering
+                    if (statusFilter.val() !== 'all') {
+                        const statusValue = statusFilter.val().toLowerCase();
+
+                        // Get current and max participants from data attributes
+                        const currentParticipants = parseInt(row.attr('data-capacity-current')) || 0;
+                        const maxParticipants = parseInt(row.attr('data-capacity-max')) || 0;
+
+                        // Get run date for past/upcoming determination
+                        const runDateStr = row.attr('data-run-date');
+                        const runDate = runDateStr ? new Date(runDateStr) : null;
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+
+                        let matchesStatus = false;
+
+                        switch (statusValue) {
+                            case 'upcoming':
+                                matchesStatus = runDate && runDate >= today;
+                                break;
+                            case 'almost-full':
+                                matchesStatus = maxParticipants > 0 && (currentParticipants / maxParticipants) >= 0.85;
+                                break;
+                            case 'past':
+                                matchesStatus = runDate && runDate < today;
+                                break;
+                            default:
+                                matchesStatus = true;
+                        }
+
+                        if (!matchesStatus) {
+                            return false;
+                        }
+                    }
+
+                    // Date filtering
+                    if (dateFilter.val() !== 'all') {
+                        const dateValue = dateFilter.val().toLowerCase();
+                        const runDateStr = row.attr('data-run-date');
+
+                        if (!runDateStr) {
+                            return dateValue === 'all';
+                        }
+
+                        const runDate = new Date(runDateStr);
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+
+                        let matchesDate = false;
+
+                        switch (dateValue) {
+                            case 'today':
+                                const todayStr = today.toISOString().split('T')[0];
+                                matchesDate = runDateStr === todayStr;
+                                break;
+                            case 'this-week':
+                                const startOfWeek = new Date(today);
+                                startOfWeek.setDate(today.getDate() - today.getDay()); // Sunday
+                                const endOfWeek = new Date(startOfWeek);
+                                endOfWeek.setDate(startOfWeek.getDate() + 6); // Saturday
+                                matchesDate = runDate >= startOfWeek && runDate <= endOfWeek;
+                                break;
+                            case 'upcoming':
+                                matchesDate = runDate >= today;
+                                break;
+                            case 'past':
+                                matchesDate = runDate < today;
+                                break;
+                            default:
+                                matchesDate = true;
+                        }
+
+                        if (!matchesDate) {
+                            return false;
+                        }
+                    }
+
+                    // Location filtering
+                    if (locationFilter.val() !== 'all') {
+                        const locationValue = locationFilter.val().toLowerCase();
+                        const runLocation = (row.attr('data-location') || '').toLowerCase();
+
+                        // Also check the location cell content
+                        const locationCell = row.find('td:nth-child(3)'); // Location column
+                        const locationText = locationCell.text().toLowerCase();
+
+                        const matchesLocation = runLocation.includes(locationValue) ||
+                            locationText.includes(locationValue);
+
+                        if (!matchesLocation) {
+                            return false;
+                        }
+                    }
+
+                    // Type filtering
+                    if (typeFilter.val() !== 'all') {
+                        const typeValue = typeFilter.val().toLowerCase();
+                        const runType = (row.attr('data-run-type') || '').toLowerCase();
+
+                        // Also check the name cell for type information
+                        const nameCell = row.find('td:first-child');
+                        const nameText = nameCell.text().toLowerCase();
+
+                        const matchesType = runType === typeValue || nameText.includes(typeValue);
+
+                        if (!matchesType) {
+                            return false;
+                        }
+                    }
+
+                    // If we got here, the row passes all filters
+                    return true;
+
+                } catch (error) {
+                    console.error('❌ Error in filter function:', error);
+                    return true; // Show row if there's an error
+                }
+            };
+
+            // Mark the filter function for identification
+            customFilter.name = 'runTableFilter';
+
+            // Add the custom filter
+            $.fn.dataTable.ext.search.push(customFilter);
+
+            // Redraw the table to apply filters
+            table.draw();
+
+            // Update the active filters display
+            updateActiveFilters();
+        }
+
+        // Update the active filters display
+        function updateActiveFilters() {
+            if (!activeFiltersContainer.length) return;
+
+            // Clear the current active filters display (except the label)
+            activeFiltersContainer.find('.filter-badge, .filter-none').remove();
+
+            // Check if any filters are active
+            const hasActiveFilters =
+                statusFilter.val() !== 'all' ||
+                dateFilter.val() !== 'all' ||
+                locationFilter.val() !== 'all' ||
+                typeFilter.val() !== 'all';
+
+            // If no filters are active, show "None"
+            if (!hasActiveFilters) {
+                activeFiltersContainer.append(
+                    $('<span>').addClass('text-muted filter-none').text('None')
+                );
+                return;
+            }
+
+            // Add badges for active filters
+            if (statusFilter.val() !== 'all') {
+                addFilterBadge('Status', formatFilterValue(statusFilter.val()), function () {
+                    statusFilter.val('all');
+                    applyFilters();
+                });
+            }
+
+            if (dateFilter.val() !== 'all') {
+                addFilterBadge('Date', formatFilterValue(dateFilter.val()), function () {
+                    dateFilter.val('all');
+                    applyFilters();
+                });
+            }
+
+            if (locationFilter.val() !== 'all') {
+                addFilterBadge('Location', formatFilterValue(locationFilter.val()), function () {
+                    locationFilter.val('all');
+                    applyFilters();
+                });
+            }
+
+            if (typeFilter.val() !== 'all') {
+                addFilterBadge('Type', formatFilterValue(typeFilter.val()), function () {
+                    typeFilter.val('all');
+                    applyFilters();
+                });
+            }
+        }
+
+        // Helper function to format filter values for display
+        function formatFilterValue(value) {
+            return value
+                .split('-')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+        }
+
+        // Add a filter badge to the display
+        function addFilterBadge(label, value, removeCallback) {
+            const badge = $('<span>')
+                .addClass('badge bg-primary me-2 filter-badge')
+                .text(`${label}: ${value}`);
+
+            const removeBtn = $('<button>')
+                .addClass('btn-close btn-close-white ms-1')
+                .css('font-size', '0.5rem')
+                .on('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    removeCallback();
+                });
+
+            badge.append(removeBtn);
+            activeFiltersContainer.append(badge);
+        }
+
+        // Add event listeners to filters
+        statusFilter.on('change', function () {
+            console.log('Status filter changed to:', this.value);
+            applyFilters();
+        });
+
+        dateFilter.on('change', function () {
+            console.log('Date filter changed to:', this.value);
+            applyFilters();
+        });
+
+        locationFilter.on('change', function () {
+            console.log('Location filter changed to:', this.value);
+            applyFilters();
+        });
+
+        typeFilter.on('change', function () {
+            console.log('Type filter changed to:', this.value);
+            applyFilters();
+        });
+
+        // Reset filters button
+        if (resetFiltersBtn.length) {
+            resetFiltersBtn.on('click', function () {
+                console.log('🔄 Resetting all filters');
+                statusFilter.val('all');
+                dateFilter.val('all');
+                locationFilter.val('all');
+                typeFilter.val('all');
+                applyFilters();
+            });
+        }
+
+        // Initialize with current filter values
+        applyFilters();
+
+        console.log('✅ Run table filters initialized successfully');
+    }
+
+    // Initialize DataTable with filter setup
     function initializeDataTable() {
         const tableElement = document.getElementById('runsTable');
         if (tableElement && tableElement.querySelector('tbody tr')) {
@@ -579,9 +887,22 @@ document.addEventListener('DOMContentLoaded', function () {
                     { className: "align-middle", targets: "_all" },
                     { orderable: false, targets: [5] }
                 ],
-                order: [[1, 'asc']]
+                order: [[1, 'asc']],
+                // Add callback to initialize filters after table is ready
+                initComplete: function () {
+                    console.log('📊 DataTable initialization complete, setting up filters...');
+                    // Small delay to ensure DOM is ready
+                    setTimeout(function () {
+                        initializeRunFilters();
+                    }, 100);
+                }
             });
             console.log('📊 DataTable initialized successfully');
+        } else {
+            // If no data, still try to initialize filters after a delay
+            setTimeout(function () {
+                initializeRunFilters();
+            }, 500);
         }
     }
 
@@ -860,12 +1181,21 @@ document.addEventListener('DOMContentLoaded', function () {
         loadRunDataEnhanced,
         populateBasicRunFields,
         clearRunForm,
+        initializeRunFilters,
         testRunData: function (runId = 'test-run-123') {
             console.log('🧪 Testing with run ID:', runId);
             loadRunDataEnhanced(runId);
+        },
+        testFilters: function () {
+            console.log('🧪 Testing filters...');
+            initializeRunFilters();
         }
     };
 
-    console.log('✅ Fixed Run Management loaded successfully');
+    // Export for global access
+    window.initializeRunFilters = initializeRunFilters;
+    window.loadRunDataEnhanced = loadRunDataEnhanced;
+
+    console.log('✅ Fixed Run Management with Working Filters loaded successfully');
     console.log('🧪 Debug functions available: window.debugRuns');
 });
