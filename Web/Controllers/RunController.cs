@@ -22,10 +22,10 @@ namespace Web.Controllers
         private readonly ILogger<RunController> _logger;
 
         public RunController(
-            IRunApi runApi,
-            IClientApi clientApi,
-            IJoinedRunApi joinedRunApi,
-            ILogger<RunController> logger)
+         IRunApi runApi,
+         IClientApi clientApi,
+         IJoinedRunApi joinedRunApi,
+         ILogger<RunController> logger)
         {
             _clientApi = clientApi ?? throw new ArgumentNullException(nameof(clientApi));
             _joinedRunApi = joinedRunApi ?? throw new ArgumentNullException(nameof(joinedRunApi));
@@ -142,11 +142,11 @@ namespace Web.Controllers
                     startTime = FormatTimeSpan(run.StartTime),
                     endTime = FormatTimeSpan(run.EndTime),
 
-                    // Default address fields - these seem to be hardcoded in original
-                    address ="Location not specified",
-                    city = "Not specified",
+                    // Address fields
+                    address =  "Location not specified",
+                    city =  "Not specified",
                     state =  "Not specified",
-                    zip = "Not specified",
+                    zip =  "Not specified",
 
                     // Safe numeric conversions
                     playerLimit = run.PlayerLimit ?? 0,
@@ -176,6 +176,45 @@ namespace Web.Controllers
             {
                 _logger.LogError(ex, "Error retrieving run data for ID: {RunId}", id);
                 return Json(new { success = false, message = $"Error loading run data: {ex.Message}" });
+            }
+        }
+
+        // New method to get courts for a specific client
+        [HttpGet]
+        public async Task<IActionResult> GetRunCourts(string clientId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var accessToken = HttpContext.Session.GetString("UserToken");
+                if (string.IsNullOrEmpty(accessToken))
+                {
+                    return Json(new { success = false, message = "Authentication required" });
+                }
+
+                if (string.IsNullOrEmpty(clientId))
+                {
+                    return Json(new { success = true, courts = new List<object>() });
+                }
+
+                // Get courts for the client
+                var courts = await _clientApi.GetClientCourtsAsync(clientId, accessToken, cancellationToken);
+
+                //var courtData = courts?.Select(c => new
+                //{
+                //    courtId = c.CourtId,
+                //    name = c.Name,
+                //}).ToList() ?? new List<object>();
+
+                return Json(new
+                {
+                    success = true,
+                    courts = courts
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving courts for client: {ClientId}", clientId);
+                return Json(new { success = false, message = "Error loading courts" });
             }
         }
 
@@ -474,9 +513,10 @@ namespace Web.Controllers
             }
         }
 
+        
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit([FromBody] Run run, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Edit([FromBody]  Run run, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -594,7 +634,6 @@ namespace Web.Controllers
             }
         }
 
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(string id, CancellationToken cancellationToken = default)
@@ -697,3 +736,5 @@ namespace Web.Controllers
         public string ProfileId { get; set; }
     }
 }
+
+   
