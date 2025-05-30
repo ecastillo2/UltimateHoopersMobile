@@ -12,6 +12,7 @@ namespace Domain.DtoModel
     {
         public string? RunId { get; set; }
         public string? CourtId { get; set; }
+        public string ClientId { get; set; }
         public string? ProfileId { get; set; }
         public string? Status { get; set; }
         public DateTime? RunDate { get; set; }
@@ -32,7 +33,7 @@ namespace Domain.DtoModel
         
         public void UpdateRun(Run run)
         {
-            run.Status = Status;
+            
             run.Cost = Cost;
             run.Status = Status;
           

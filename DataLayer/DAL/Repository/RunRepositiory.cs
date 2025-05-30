@@ -244,19 +244,42 @@ namespace DataLayer.DAL.Repository
         }
 
         public async Task<bool> UpdateRunAsync(
-            Run run,
+            Run model,
             CancellationToken cancellationToken = default)
         {
-            try
+
+            using (var context = _context)
             {
-                _context.Entry(run).State = EntityState.Modified;
+                var existingItem = context.Run.Where(s => s.RunId == model.RunId).FirstOrDefault<Run>();
+
+                if (existingItem != null)
+                {
+                    existingItem.Status = model.Status;
+                    existingItem.RunDate = model.RunDate;
+                    existingItem.Cost = model.Cost;
+                    existingItem.Name = model.Name;
+                    existingItem.Description = model.Description;
+                    existingItem.StartTime = model.StartTime;
+                    existingItem.EndTime = model.EndTime;
+                    existingItem.Type = model.Type;
+                    existingItem.SkillLevel = model.SkillLevel;
+                    existingItem.PaymentMethod = model.PaymentMethod;
+                    existingItem.TeamType = model.TeamType;
+                    existingItem.IsPublic = model.IsPublic;
+                
+
+
+                    context.Run.Update(existingItem);
+                    
+                }
+                else
+                {
+
+                }
+
                 return await SaveChangesAsync(cancellationToken) > 0;
             }
-            catch (Exception ex)
-            {
-                _logger?.LogError(ex, "Error updating PrivateRun {PrivateRunId}", run.RunId);
-                throw;
-            }
+
         }
 
 

@@ -1,12 +1,6 @@
 ﻿using Domain;
 using Domain.DtoModel;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using WebAPI.ApiClients;
 using Website.Attributes;
 using Website.ViewModels;
@@ -103,12 +97,19 @@ namespace Web.Controllers
 
                 var clientCourtList = new List<Court>();
 
-                // Safely handle court data retrieval
+                // Enhanced court data retrieval with better error handling
                 try
                 {
                     if (!string.IsNullOrEmpty(run.ClientId))
                     {
+                        _logger.LogInformation("Fetching courts for client: {ClientId}", run.ClientId);
                         clientCourtList = await _clientApi.GetClientCourtsAsync(run.ClientId, accessToken, cancellationToken);
+                        _logger.LogInformation("Retrieved {CourtCount} courts for client {ClientId}",
+                            clientCourtList?.Count ?? 0, run.ClientId);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("No ClientId found for run {RunId}", run.RunId);
                     }
                 }
                 catch (Exception courtEx)
@@ -117,18 +118,28 @@ namespace Web.Controllers
                     // Continue with empty courts list
                 }
 
-                // Safe court list handling
+                // Enhanced court list handling with better structure
                 var courtListData = new List<object>();
                 if (clientCourtList != null && clientCourtList.Any())
                 {
                     courtListData = clientCourtList.Select(c => new
                     {
                         courtId = c.CourtId ?? "",
-                        name = c.Name ?? "Unnamed Court"
+                        name = c.Name ?? "Unnamed Court",
+                        // Add additional court properties if needed
+                        address = c.Address ?? "",
+                        isIndoor =  true,
+                        isActive =  true
                     }).Cast<object>().ToList();
+
+                    _logger.LogInformation("Transformed {CourtCount} courts for API response", courtListData.Count);
+                }
+                else
+                {
+                    _logger.LogWarning("No courts available for client {ClientId}", run.ClientId);
                 }
 
-                // Transform the data to match what the view expects with safe conversions
+                // Enhanced run data response with comprehensive court information
                 var runData = new
                 {
                     runId = run.RunId ?? "",
@@ -138,15 +149,15 @@ namespace Web.Controllers
                     // Safe date formatting
                     runDate = run.RunDate?.ToString("yyyy-MM-dd") ?? "",
 
-                    // Safe TimeSpan formatting - handle both TimeSpan and nullable TimeSpan
+                    // Safe TimeSpan formatting
                     startTime = FormatTimeSpan(run.StartTime),
                     endTime = FormatTimeSpan(run.EndTime),
 
-                    // Address fields
-                    address =  "Location not specified",
-                    city =  "Not specified",
-                    state =  "Not specified",
-                    zip =  "Not specified",
+                    // Address fields with defaults
+                    address =  "",
+                    city =  "",
+                    state =  "",
+                    zip =  "",
 
                     // Safe numeric conversions
                     playerLimit = run.PlayerLimit ?? 0,
@@ -161,23 +172,43 @@ namespace Web.Controllers
 
                     // Safe boolean conversion
                     isPublic = run.IsPublic ?? true,
+                    isOutdoor =  false,
 
-                    // Safe court selection - get the court ID if available
+                    // Enhanced court selection
                     courtId = GetCourtIdFromRun(run),
 
+                    // Enhanced court list with comprehensive data
                     courtList = courtListData,
 
-                    success = true
+                    success = true,
+
+                    // Additional debugging information (remove in production)
+                    debug = new
+                    {
+                        hasClientId = !string.IsNullOrEmpty(run.ClientId),
+                        clientId = run.ClientId,
+                        courtCount = courtListData.Count,
+                        runCourtId = GetCourtIdFromRun(run)
+                    }
                 };
+
+                _logger.LogInformation("Successfully prepared run data for {RunId} with {CourtCount} courts",
+                    run.RunId, courtListData.Count);
 
                 return Json(runData);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error retrieving run data for ID: {RunId}", id);
-                return Json(new { success = false, message = $"Error loading run data: {ex.Message}" });
+                return Json(new
+                {
+                    success = false,
+                    message = $"Error loading run data: {ex.Message}",
+                    error = ex.GetType().Name // Additional debugging info
+                });
             }
         }
+
 
         // New method to get courts for a specific client
         [HttpGet]
@@ -196,29 +227,51 @@ namespace Web.Controllers
                     return Json(new { success = true, courts = new List<object>() });
                 }
 
+                _logger.LogInformation("Fetching courts for client: {ClientId}", clientId);
+
                 // Get courts for the client
                 var courts = await _clientApi.GetClientCourtsAsync(clientId, accessToken, cancellationToken);
 
-                //var courtData = courts?.Select(c => new
-                //{
-                //    courtId = c.CourtId,
-                //    name = c.Name,
-                //}).ToList() ?? new List<object>();
+                if (courts == null)
+                {
+                    _logger.LogWarning("GetClientCourtsAsync returned null for client: {ClientId}", clientId);
+                    courts = new List<Court>();
+                }
+
+                // Transform courts data with comprehensive information
+                var courtData = courts.Select(c => new
+                {
+                    courtId = c.CourtId ?? "",
+                    name = c.Name ?? "Unnamed Court",
+                    address = c.Address ?? "",
+                    isIndoor = true,
+                    isActive =  true
+                }).ToList();
+
+                _logger.LogInformation("Successfully retrieved {CourtCount} courts for client {ClientId}",
+                    courtData.Count, clientId);
 
                 return Json(new
                 {
                     success = true,
-                    courts = courts
+                    courts = courtData,
+                    clientId = clientId,
+                    count = courtData.Count
                 });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error retrieving courts for client: {ClientId}", clientId);
-                return Json(new { success = false, message = "Error loading courts" });
+                return Json(new
+                {
+                    success = false,
+                    message = "Error loading courts",
+                    error = ex.GetType().Name
+                });
             }
         }
 
-        // Helper method to safely format TimeSpan values
+        // Enhanced helper method to safely format TimeSpan values
         private string FormatTimeSpan(TimeSpan? timeSpan)
         {
             if (!timeSpan.HasValue)
@@ -229,8 +282,9 @@ namespace Web.Controllers
                 // Format as HH:mm for HTML time input
                 return timeSpan.Value.ToString(@"hh\:mm");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogWarning(ex, "Error formatting TimeSpan: {TimeSpan}", timeSpan);
                 return "";
             }
         }
@@ -242,16 +296,32 @@ namespace Web.Controllers
             {
                 // Try different possible property names for court ID
                 if (run.CourtId != null)
-                    return run.CourtId.ToString();
-                if (run.Court?.CourtId != null)
-                    return run.Court.CourtId.ToString();
-                if (run.VenueId != null)
-                    return run.VenueId.ToString();
+                {
+                    var courtId = run.CourtId.ToString();
+                   // _logger.LogDebug("Found CourtId: {CourtId}", courtId);
+                    return courtId;
+                }
 
+                if (run.Court?.CourtId != null)
+                {
+                    var courtId = run.Court.CourtId.ToString();
+                  //  _logger.LogWarning("Found Court.CourtId: {CourtId}", courtId);
+                    return courtId;
+                }
+
+                if (run.VenueId != null)
+                {
+                    var venueId = run.VenueId.ToString();
+                   // _logger.LogDebug("Found VenueId (using as CourtId): {VenueId}", venueId);
+                    return venueId;
+                }
+
+                _logger.LogDebug("No court ID found in run data");
                 return "";
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogWarning(ex, "Error extracting court ID from run data");
                 return "";
             }
         }
