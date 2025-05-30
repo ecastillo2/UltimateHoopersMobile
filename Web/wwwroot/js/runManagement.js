@@ -496,36 +496,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Initialize DataTable only if table exists AND hasn't been initialized yet
     let runsTable = null;
-    const tableElement = document.getElementById('runsTable');
 
-    if (tableElement && tableElement.querySelector('tbody tr')) {
-        // Check if DataTable already exists
-        if ($.fn.dataTable && $.fn.dataTable.isDataTable('#runsTable')) {
-            console.log('📊 DataTable already initialized, destroying first...');
-            $('#runsTable').DataTable().destroy();
-        }
-
-        console.log('📊 Initializing DataTable...');
-        runsTable = $('#runsTable').DataTable({
-            responsive: true,
-            lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
-            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip',
-            language: {
-                search: "_INPUT_",
-                searchPlaceholder: "Search runs...",
-                lengthMenu: "Show _MENU_ runs per page",
-                info: "Showing _START_ to _END_ of _TOTAL_ runs",
-                infoEmpty: "Showing 0 to 0 of 0 runs",
-                infoFiltered: "(filtered from _MAX_ total runs)"
-            },
-            columnDefs: [
-                { className: "align-middle", targets: "_all" },
-                { orderable: false, targets: [5] }
-            ],
-            order: [[1, 'asc']]
-        });
-        console.log('📊 DataTable initialized successfully');
-    }
+    // Call the initialization function
+    initializeDataTable();
 
     // Set minimum date for date pickers
     const today = new Date().toISOString().split('T')[0];
@@ -647,22 +620,72 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Form submission handler with AJAX
+    // Enhanced form submission handler with proper JSON formatting
     const editRunForm = document.getElementById('editRunForm');
     if (editRunForm) {
         editRunForm.addEventListener('submit', function (e) {
             e.preventDefault();
 
-            // Get form data
+            // Client-side validation first
+            if (!validateRunForm()) {
+                return;
+            }
+
+            // Get form data and convert to proper JSON structure
             const formData = new FormData(this);
             const runData = {};
 
-            // Convert FormData to object
+            // Convert FormData to object with proper type conversion
             for (const [key, value] of formData.entries()) {
-                runData[key] = value;
+                if (!value && value !== '0' && value !== 0) {
+                    // Skip empty values except for '0'
+                    continue;
+                }
+
+                // Handle boolean fields
+                if (key === 'IsPublic' || key === 'IsOutdoor') {
+                    runData[key] = value === 'true';
+                }
+                // Handle numeric fields
+                else if (key === 'PlayerLimit' || key === 'PlayerCount') {
+                    const numValue = parseInt(value);
+                    if (!isNaN(numValue)) {
+                        runData[key] = numValue;
+                    }
+                }
+                // Handle date fields - ensure proper format
+                else if (key === 'RunDate' && value) {
+                    runData[key] = value; // Keep as string in YYYY-MM-DD format
+                }
+                // Handle time fields - convert to TimeSpan format
+                else if (key === 'StartTime' || key === 'EndTime') {
+                    if (value) {
+                        // Convert HH:MM to HH:MM:SS for TimeSpan
+                        runData[key] = value.includes(':') ? value + ':00' : value;
+                    }
+                }
+                // Handle regular string fields
+                else {
+                    runData[key] = value;
+                }
             }
 
+            // Ensure required fields are present
+            if (!runData.RunId) {
+                const runIdField = document.getElementById('editRunId');
+                if (runIdField && runIdField.value) {
+                    runData.RunId = runIdField.value;
+                }
+            }
+
+            console.log('🚀 Submitting run data:', runData);
             showLoading();
+
+            // Disable submit button to prevent double submission
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
 
             fetch('/Run/Edit', {
                 method: 'POST',
@@ -673,28 +696,238 @@ document.addEventListener('DOMContentLoaded', function () {
                 body: JSON.stringify(runData)
             })
                 .then(response => {
-                    if (!response.ok) throw new Error('Network response was not ok');
+                    console.log('📡 Response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
                     return response.json();
                 })
                 .then(data => {
                     hideLoading();
+                    console.log('📦 Response data:', data);
+
+                    // Re-enable submit button
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText;
+
                     if (data.success) {
-                        showToast('Run updated successfully!');
-                        // Close modal
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('editRunModal'));
-                        if (modal) modal.hide();
-                        // Refresh page to show changes
-                        setTimeout(() => location.reload(), 1500);
+                        showToast('✅ ' + data.message, 'success');
+
+                        // Close modal after a short delay
+                        setTimeout(() => {
+                            const modal = bootstrap.Modal.getInstance(document.getElementById('editRunModal'));
+                            if (modal) {
+                                modal.hide();
+                            }
+                        }, 1000);
+
+                        // Refresh the runs table
+                        refreshRunsTable();
                     } else {
-                        showToast('Error updating run: ' + (data.message || 'Unknown error'), 'error');
+                        // Handle different error types
+                        if (data.requiresLogin) {
+                            showToast('⚠️ Session expired. Please log in again.', 'warning');
+                            setTimeout(() => {
+                                window.location.href = '/Home/Index#login';
+                            }, 2000);
+                        } else if (data.field) {
+                            // Field-specific validation error
+                            showToast('❌ ' + data.message, 'error');
+                            highlightErrorField(data.field);
+                        } else {
+                            showToast('❌ ' + data.message, 'error');
+                        }
                     }
                 })
                 .catch(error => {
                     hideLoading();
-                    console.error('Error updating run:', error);
-                    showToast('Error updating run. Please try again.', 'error');
+                    console.error('❌ Error updating run:', error);
+
+                    // Re-enable submit button
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText;
+
+                    if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+                        showToast('🌐 Network error. Please check your connection and try again.', 'error');
+                    } else {
+                        showToast('💥 Unexpected error occurred. Please try again.', 'error');
+                    }
                 });
         });
+    }
+
+    // Client-side form validation
+    function validateRunForm() {
+        const errors = [];
+
+        // Required fields validation
+        const requiredFields = [
+            { id: 'editRunTitle', name: 'Run name' },
+            { id: 'editRunDescription', name: 'Description' },
+            { id: 'editRunDate', name: 'Run date' },
+            { id: 'editRunTime', name: 'Start time' },
+            { id: 'editMaxParticipants', name: 'Player limit' }
+        ];
+
+        requiredFields.forEach(field => {
+            const element = document.getElementById(field.id);
+            if (element && !element.value.trim()) {
+                errors.push(`${field.name} is required`);
+                highlightErrorField(field.id);
+            } else if (element) {
+                clearErrorField(field.id);
+            }
+        });
+
+        // Date validation
+        const dateField = document.getElementById('editRunDate');
+        if (dateField && dateField.value) {
+            const selectedDate = new Date(dateField.value);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (selectedDate < today) {
+                errors.push('Run date cannot be in the past');
+                highlightErrorField('editRunDate');
+            }
+        }
+
+        // Time validation
+        const startTime = document.getElementById('editRunTime');
+        const endTime = document.getElementById('editEndTime');
+        if (startTime && endTime && startTime.value && endTime.value) {
+            if (endTime.value <= startTime.value) {
+                errors.push('End time must be after start time');
+                highlightErrorField('editEndTime');
+            }
+        }
+
+        // Player limit validation
+        const playerLimit = document.getElementById('editMaxParticipants');
+        if (playerLimit && playerLimit.value) {
+            const limit = parseInt(playerLimit.value);
+            if (limit <= 0 || limit > 50) {
+                errors.push('Player limit must be between 1 and 50');
+                highlightErrorField('editMaxParticipants');
+            }
+        }
+
+        if (errors.length > 0) {
+            showToast('Please fix the following errors:\n• ' + errors.join('\n• '), 'error');
+            return false;
+        }
+
+        return true;
+    }
+
+    // Highlight error field
+    function highlightErrorField(fieldId) {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.classList.add('is-invalid');
+            field.addEventListener('input', () => clearErrorField(fieldId), { once: true });
+        }
+    }
+
+    // Clear error field highlighting
+    function clearErrorField(fieldId) {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.classList.remove('is-invalid');
+        }
+    }
+
+    // Function to refresh the runs table
+    function refreshRunsTable() {
+        console.log('🔄 Refreshing runs table...');
+
+        if (!runsTable) {
+            console.log('📊 No DataTable instance found, reloading page...');
+            setTimeout(() => location.reload(), 1500);
+            return;
+        }
+
+        showLoading();
+
+        fetch('/Run/Run', {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'text/html'
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.text();
+            })
+            .then(html => {
+                hideLoading();
+
+                // Parse the HTML response to extract table data
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newTableBody = doc.querySelector('#runsTable tbody');
+
+                if (newTableBody) {
+                    // Destroy existing DataTable
+                    runsTable.destroy();
+
+                    // Update table body content
+                    const currentTableBody = document.querySelector('#runsTable tbody');
+                    if (currentTableBody) {
+                        currentTableBody.innerHTML = newTableBody.innerHTML;
+                    }
+
+                    // Reinitialize DataTable
+                    initializeDataTable();
+
+                    console.log('✅ Runs table refreshed successfully');
+                    showToast('📊 Table updated with latest data', 'info');
+                } else {
+                    console.warn('⚠️ Could not find table data in response');
+                    // Fallback to page reload
+                    setTimeout(() => location.reload(), 1000);
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                console.error('❌ Error refreshing table:', error);
+                showToast('⚠️ Could not refresh table. Reloading page...', 'warning');
+                // Fallback to page reload
+                setTimeout(() => location.reload(), 2000);
+            });
+    }
+
+    // Enhanced DataTable initialization function
+    function initializeDataTable() {
+        const tableElement = document.getElementById('runsTable');
+
+        if (tableElement && tableElement.querySelector('tbody tr')) {
+            console.log('📊 Initializing DataTable...');
+            runsTable = $('#runsTable').DataTable({
+                responsive: true,
+                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+                dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip',
+                language: {
+                    search: "_INPUT_",
+                    searchPlaceholder: "Search runs...",
+                    lengthMenu: "Show _MENU_ runs per page",
+                    info: "Showing _START_ to _END_ of _TOTAL_ runs",
+                    infoEmpty: "Showing 0 to 0 of 0 runs",
+                    infoFiltered: "(filtered from _MAX_ total runs)"
+                },
+                columnDefs: [
+                    { className: "align-middle", targets: "_all" },
+                    { orderable: false, targets: [5] }
+                ],
+                order: [[1, 'asc']]
+            });
+            console.log('📊 DataTable initialized successfully');
+        } else {
+            console.log('📊 No table data found for DataTable initialization');
+        }
     }
 
     // Debug functions for testing

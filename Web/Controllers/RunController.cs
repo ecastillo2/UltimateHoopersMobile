@@ -1,6 +1,7 @@
 ﻿using Domain;
 using Domain.DtoModel;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 using WebAPI.ApiClients;
 using Website.Attributes;
 using Website.ViewModels;
@@ -583,10 +584,10 @@ namespace Web.Controllers
             }
         }
 
-        
+
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit([FromBody]  Run run, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Edit([FromBody] Run run, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -594,7 +595,12 @@ namespace Web.Controllers
                 var accessToken = HttpContext.Session.GetString("UserToken");
                 if (string.IsNullOrEmpty(accessToken))
                 {
-                    return Json(new { success = false, message = "You must be logged in to edit a run." });
+                    return Json(new
+                    {
+                        success = false,
+                        message = "You must be logged in to edit a run.",
+                        requiresLogin = true
+                    });
                 }
 
                 // Get user info for permission checking
@@ -602,74 +608,51 @@ namespace Web.Controllers
                 var userRole = HttpContext.Session.GetString("UserRole");
 
                 // Validate the run data
-                if (string.IsNullOrEmpty(run.RunId))
+                var validationResult = ValidateRunData(run);
+                if (!validationResult.IsValid)
                 {
-                    return Json(new { success = false, message = "Run ID is required." });
-                }
-
-                if (string.IsNullOrEmpty(run.Name))
-                {
-                    return Json(new { success = false, message = "Run name is required." });
-                }
-
-                if (string.IsNullOrEmpty(run.Description))
-                {
-                    return Json(new { success = false, message = "Run description is required." });
-                }
-
-                if (!run.RunDate.HasValue)
-                {
-                    return Json(new { success = false, message = "Run date is required." });
-                }
-
-                if (!run.StartTime.HasValue)
-                {
-                    return Json(new { success = false, message = "Start time is required." });
-                }
-
-                if (!run.PlayerLimit.HasValue || run.PlayerLimit <= 0)
-                {
-                    return Json(new { success = false, message = "Player limit must be greater than 0." });
+                    return Json(new
+                    {
+                        success = false,
+                        message = validationResult.ErrorMessage,
+                        field = validationResult.Field
+                    });
                 }
 
                 // Get the existing run to check permissions
                 var existingRun = await _runApi.GetRunByIdAsync(run.RunId, accessToken, cancellationToken);
                 if (existingRun == null)
                 {
-                    return Json(new { success = false, message = "Run not found." });
+                    return Json(new
+                    {
+                        success = false,
+                        message = "Run not found. It may have been deleted by another user."
+                    });
                 }
 
                 // Verify user has permission to edit this run
                 if (existingRun.ProfileId != profileId && userRole != "Admin")
                 {
-                    return Json(new { success = false, message = "You do not have permission to edit this run." });
+                    return Json(new
+                    {
+                        success = false,
+                        message = "You do not have permission to edit this run."
+                    });
+                }
+
+                // Check if player limit is being reduced below current participant count
+                if (run.PlayerLimit.HasValue && existingRun.PlayerCount.HasValue &&
+                    run.PlayerLimit < existingRun.PlayerCount)
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = $"Cannot reduce player limit to {run.PlayerLimit} because there are already {existingRun.PlayerCount} participants joined."
+                    });
                 }
 
                 // Set default values if not provided
-                if (string.IsNullOrEmpty(run.Status))
-                {
-                    run.Status = "Active";
-                }
-
-                if (string.IsNullOrEmpty(run.Type))
-                {
-                    run.Type = "Pickup";
-                }
-
-                if (string.IsNullOrEmpty(run.SkillLevel))
-                {
-                    run.SkillLevel = "Intermediate";
-                }
-
-                if (string.IsNullOrEmpty(run.TeamType))
-                {
-                    run.TeamType = "Individual";
-                }
-
-                if (!run.IsPublic.HasValue)
-                {
-                    run.IsPublic = true;
-                }
+                SetDefaultRunValues(run, existingRun);
 
                 // Preserve the original ProfileId and other system fields
                 run.ProfileId = existingRun.ProfileId;
@@ -681,27 +664,221 @@ namespace Web.Controllers
                 }
 
                 // Update run via API
-                await _runApi.UpdateRunAsync(run, accessToken, cancellationToken);
+                var updateResult = await _runApi.UpdateRunAsync(run, accessToken, cancellationToken);
+
+                if (!updateResult)
+                {
+                    _logger.LogWarning("Failed to update run {RunId} via API", run.RunId);
+                    return Json(new
+                    {
+                        success = false,
+                        message = "Failed to update the run. Please try again later."
+                    });
+                }
 
                 _logger.LogInformation("Run updated successfully by user {ProfileId}: {RunId}", profileId, run.RunId);
+
+                // Fetch the updated run data to return current state
+                var refreshedRun = await _runApi.GetRunByIdAsync(run.RunId, accessToken, cancellationToken);
 
                 return Json(new
                 {
                     success = true,
-                    message = "Run updated successfully.",
-                    runId = run.RunId
+                    message = "Run updated successfully!",
+                    runId = run.RunId,
+                    updatedRun = refreshedRun != null ? new
+                    {
+                        runId = refreshedRun.RunId,
+                        name = refreshedRun.Name,
+                        runDate = refreshedRun.RunDate?.ToString("yyyy-MM-dd"),
+                        startTime = FormatTimeSpan(refreshedRun.StartTime),
+                        endTime = FormatTimeSpan(refreshedRun.EndTime),
+                        playerLimit = refreshedRun.PlayerLimit,
+                        playerCount = refreshedRun.PlayerCount,
+                        status = refreshedRun.Status,
+                        skillLevel = refreshedRun.SkillLevel,
+                        type = refreshedRun.Type,
+                        isPublic = refreshedRun.IsPublic,
+                        address = "",
+                        city = "",
+                        state = "",
+                        zip = ""
+                    } : new
+                    {
+                        runId = run.RunId,
+                        name = run.Name,
+                        runDate = run.RunDate?.ToString("yyyy-MM-dd"),
+                        startTime = FormatTimeSpan(run.StartTime),
+                        endTime = FormatTimeSpan(run.EndTime),
+                        playerLimit = run.PlayerLimit,
+                        playerCount = run.PlayerCount,
+                        status = run.Status,
+                        skillLevel = run.SkillLevel,
+                        type = run.Type,
+                        isPublic = run.IsPublic,
+                        address = "",
+                        city = "",
+                        state = "",
+                        zip = ""
+                    }
                 });
             }
-            catch (Exception ex)
+            catch (UnauthorizedAccessException)
             {
-                _logger.LogError(ex, "Error updating run: {RunId}", run?.RunId);
+                _logger.LogWarning("Unauthorized attempt to update run {RunId} by user {ProfileId}", run?.RunId, HttpContext.Session.GetString("ProfileId"));
 
                 return Json(new
                 {
                     success = false,
-                    message = "An error occurred while updating the run. Please try again later."
+                    message = "Your session has expired. Please log in again.",
+                    requiresLogin = true
                 });
             }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning(ex, "Invalid data provided for run update: {RunId}", run?.RunId);
+
+                return Json(new
+                {
+                    success = false,
+                    message = ex.Message
+                });
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "API communication error while updating run: {RunId}", run?.RunId);
+
+                return Json(new
+                {
+                    success = false,
+                    message = "Unable to connect to the server. Please check your internet connection and try again."
+                });
+            }
+            catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+            {
+                _logger.LogError(ex, "Timeout while updating run: {RunId}", run?.RunId);
+
+                return Json(new
+                {
+                    success = false,
+                    message = "The request timed out. Please try again."
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error updating run: {RunId}", run?.RunId);
+
+                return Json(new
+                {
+                    success = false,
+                    message = "An unexpected error occurred while updating the run. Please try again later.",
+                    error = ex.GetType().Name // Only include in development
+                });
+            }
+        }
+
+
+        private ValidationResult ValidateRunData(Run run)
+        {
+            if (string.IsNullOrEmpty(run.RunId))
+            {
+                return new ValidationResult { IsValid = false, ErrorMessage = "Run ID is required.", Field = "runId" };
+            }
+
+            if (string.IsNullOrEmpty(run.Name?.Trim()))
+            {
+                return new ValidationResult { IsValid = false, ErrorMessage = "Run name is required.", Field = "name" };
+            }
+
+            if (run.Name.Length > 100)
+            {
+                return new ValidationResult { IsValid = false, ErrorMessage = "Run name cannot exceed 100 characters.", Field = "name" };
+            }
+
+            if (string.IsNullOrEmpty(run.Description?.Trim()))
+            {
+                return new ValidationResult { IsValid = false, ErrorMessage = "Run description is required.", Field = "description" };
+            }
+
+            if (run.Description.Length > 1000)
+            {
+                return new ValidationResult { IsValid = false, ErrorMessage = "Run description cannot exceed 1000 characters.", Field = "description" };
+            }
+
+            if (!run.RunDate.HasValue)
+            {
+                return new ValidationResult { IsValid = false, ErrorMessage = "Run date is required.", Field = "runDate" };
+            }
+
+            if (run.RunDate.Value.Date < DateTime.Today)
+            {
+                return new ValidationResult { IsValid = false, ErrorMessage = "Run date cannot be in the past.", Field = "runDate" };
+            }
+
+            if (!run.StartTime.HasValue)
+            {
+                return new ValidationResult { IsValid = false, ErrorMessage = "Start time is required.", Field = "startTime" };
+            }
+
+            if (run.EndTime.HasValue && run.StartTime.HasValue && run.EndTime <= run.StartTime)
+            {
+                return new ValidationResult { IsValid = false, ErrorMessage = "End time must be after start time.", Field = "endTime" };
+            }
+
+            if (!run.PlayerLimit.HasValue || run.PlayerLimit <= 0)
+            {
+                return new ValidationResult { IsValid = false, ErrorMessage = "Player limit must be greater than 0.", Field = "playerLimit" };
+            }
+
+            if (run.PlayerLimit > 50)
+            {
+                return new ValidationResult { IsValid = false, ErrorMessage = "Player limit cannot exceed 50.", Field = "playerLimit" };
+            }
+
+            return new ValidationResult { IsValid = true };
+        }
+
+        private void SetDefaultRunValues(Run run, Run existingRun)
+        {
+            if (string.IsNullOrEmpty(run.Status))
+            {
+                run.Status = existingRun.Status ?? "Active";
+            }
+
+            if (string.IsNullOrEmpty(run.Type))
+            {
+                run.Type = existingRun.Type ?? "Pickup";
+            }
+
+            if (string.IsNullOrEmpty(run.SkillLevel))
+            {
+                run.SkillLevel = existingRun.SkillLevel ?? "Intermediate";
+            }
+
+            if (string.IsNullOrEmpty(run.TeamType))
+            {
+                run.TeamType = existingRun.TeamType ?? "Individual";
+            }
+
+            if (!run.IsPublic.HasValue)
+            {
+                run.IsPublic = existingRun.IsPublic ?? true;
+            }
+
+            // Preserve creation metadata
+            run.CreatedDate = existingRun.CreatedDate;
+           // run.CreatedBy = existingRun.CreatedBy;
+
+            // Set update metadata
+           // run.UpdatedDate = DateTime.UtcNow;
+            //run.UpdatedBy = HttpContext.Session.GetString("ProfileId");
+        }
+
+        private class ValidationResult
+        {
+            public bool IsValid { get; set; }
+            public string ErrorMessage { get; set; }
+            public string Field { get; set; }
         }
 
         [HttpPost]
@@ -792,6 +969,8 @@ namespace Web.Controllers
             }
         }
     }
+
+    
 
     // Request models for API calls
     public class RemoveParticipantRequest
