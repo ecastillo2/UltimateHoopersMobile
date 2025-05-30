@@ -476,7 +476,7 @@ namespace Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Run run, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Edit([FromBody] Run run, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -484,32 +484,116 @@ namespace Web.Controllers
                 var accessToken = HttpContext.Session.GetString("UserToken");
                 if (string.IsNullOrEmpty(accessToken))
                 {
-                    TempData["Error"] = "You must be logged in to edit a run.";
-                    return RedirectToAction("Index", "Home", new { scrollTo = "login" });
+                    return Json(new { success = false, message = "You must be logged in to edit a run." });
                 }
 
-                // Verify user is creator or admin
+                // Get user info for permission checking
                 var profileId = HttpContext.Session.GetString("ProfileId");
                 var userRole = HttpContext.Session.GetString("UserRole");
-                if (run.ProfileId != profileId && userRole != "Admin")
+
+                // Validate the run data
+                if (string.IsNullOrEmpty(run.RunId))
                 {
-                    TempData["Error"] = "You do not have permission to edit this run.";
-                    return RedirectToAction("Details", new { id = run.RunId });
+                    return Json(new { success = false, message = "Run ID is required." });
                 }
 
-                // Update run
+                if (string.IsNullOrEmpty(run.Name))
+                {
+                    return Json(new { success = false, message = "Run name is required." });
+                }
+
+                if (string.IsNullOrEmpty(run.Description))
+                {
+                    return Json(new { success = false, message = "Run description is required." });
+                }
+
+                if (!run.RunDate.HasValue)
+                {
+                    return Json(new { success = false, message = "Run date is required." });
+                }
+
+                if (!run.StartTime.HasValue)
+                {
+                    return Json(new { success = false, message = "Start time is required." });
+                }
+
+                if (!run.PlayerLimit.HasValue || run.PlayerLimit <= 0)
+                {
+                    return Json(new { success = false, message = "Player limit must be greater than 0." });
+                }
+
+                // Get the existing run to check permissions
+                var existingRun = await _runApi.GetRunByIdAsync(run.RunId, accessToken, cancellationToken);
+                if (existingRun == null)
+                {
+                    return Json(new { success = false, message = "Run not found." });
+                }
+
+                // Verify user has permission to edit this run
+                if (existingRun.ProfileId != profileId && userRole != "Admin")
+                {
+                    return Json(new { success = false, message = "You do not have permission to edit this run." });
+                }
+
+                // Set default values if not provided
+                if (string.IsNullOrEmpty(run.Status))
+                {
+                    run.Status = "Active";
+                }
+
+                if (string.IsNullOrEmpty(run.Type))
+                {
+                    run.Type = "Pickup";
+                }
+
+                if (string.IsNullOrEmpty(run.SkillLevel))
+                {
+                    run.SkillLevel = "Intermediate";
+                }
+
+                if (string.IsNullOrEmpty(run.TeamType))
+                {
+                    run.TeamType = "Individual";
+                }
+
+                if (!run.IsPublic.HasValue)
+                {
+                    run.IsPublic = true;
+                }
+
+                // Preserve the original ProfileId and other system fields
+                run.ProfileId = existingRun.ProfileId;
+
+                // Preserve player count if not provided
+                if (!run.PlayerCount.HasValue)
+                {
+                    run.PlayerCount = existingRun.PlayerCount;
+                }
+
+                // Update run via API
                 await _runApi.UpdateRunAsync(run, accessToken, cancellationToken);
 
-                TempData["Success"] = "Run updated successfully.";
-                return RedirectToAction("Details", new { id = run.RunId });
+                _logger.LogInformation("Run updated successfully by user {ProfileId}: {RunId}", profileId, run.RunId);
+
+                return Json(new
+                {
+                    success = true,
+                    message = "Run updated successfully.",
+                    runId = run.RunId
+                });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating run: {RunId}", run.RunId);
-                TempData["Error"] = "An error occurred while updating the run. Please try again later.";
-                return View(run);
+                _logger.LogError(ex, "Error updating run: {RunId}", run?.RunId);
+
+                return Json(new
+                {
+                    success = false,
+                    message = "An error occurred while updating the run. Please try again later."
+                });
             }
         }
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]
