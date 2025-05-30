@@ -23,6 +23,7 @@ namespace UltimateHoopers.Models
         public string CourtImageUrl { get; set; }
         public decimal Cost { get; set; }
         public double Distance { get; set; }
+        
         public ObservableCollection<Player> Players { get; set; } = new ObservableCollection<Player>();
 
         // Computed properties

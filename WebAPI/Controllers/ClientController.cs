@@ -49,13 +49,13 @@ namespace WebAPI.Controllers
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         [HttpGet("{clientId}/courts")]
-        [ProducesResponseType(typeof(IEnumerable<Court>), 200)]
+        [ProducesResponseType(typeof(List<Court>), 200)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> GetClientCourtsAsync(string runId, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetClientCourtsAsync(string clientId, CancellationToken cancellationToken)
         {
             try
             {
-                var privateRuns = await _repository.GetClientCourtsAsync(runId, cancellationToken);
+                var privateRuns = await _repository.GetClientCourtsAsync(clientId, cancellationToken);
                 
                 return Ok(privateRuns);
             }

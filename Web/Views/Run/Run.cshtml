@@ -18,11 +18,17 @@
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 9999;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
-        .loading-spinner.active {
-            display: block;
-        }
+            .loading-spinner.active {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
 
         .participant-avatar {
             width: 40px;
@@ -35,13 +41,26 @@
             justify-content: center;
             font-weight: bold;
         }
+
+        .court-dropdown-loading {
+            background-image: url("data:image/svg+xml,%3csvg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M8 3a5 5 0 11-4.546 2.914.5.5 0 00-.908-.417A6 6 0 108 2v1z'/%3e%3cpath d='M8 4.466V.534a.25.25 0 01.41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 018 4.466z'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            background-size: 16px;
+        }
+
+        .form-field-required::after {
+            content: " *";
+            color: #dc3545;
+        }
     </style>
 }
 
-<div class="loading-spinner">
-    <div class="spinner-border text-primary" role="status">
+<div class="loading-spinner" id="loadingSpinner">
+    <div class="spinner-border text-primary mb-2" role="status">
         <span class="visually-hidden">Loading...</span>
     </div>
+    <div class="text-muted">Loading...</div>
 </div>
 
 <div class="dashboard-header">
@@ -146,7 +165,7 @@
                             <th>Name</th>
                             <th>Date & Time</th>
                             <th>Location</th>
-                            <th>Host</th>
+                            <th>Participants</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -187,14 +206,51 @@
 
                             <tr data-run-type="@(run.Type?.ToLower() ?? "pickup")"
                                 data-capacity-current="@run.PlayerCount"
-                                data-capacity-max="@run.PlayerLimit">
-                                <td>@run.Name</td>
-                                <td>@run.RunDate?.ToString("MM/dd/yyyy") @run.StartTime?.ToString(@"hh\:mm")</td>
-                                <td>@run.Address</td>
+                                data-capacity-max="@run.PlayerLimit"
+                                data-run-date="@(run.RunDate?.ToString("yyyy-MM-dd"))"
+                                data-location="@run.Address">
                                 <td>
-                                    <div class="host-container">
-                                        <div class="host-avatar">@hostInitials</div>
-                                        <span>@run.ProfileId</span>
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3">
+                                            <div class="fw-semibold">@run.Name</div>
+                                            <div class="text-muted small">@(run.Type ?? "Pickup") • @(run.SkillLevel ?? "All Levels")</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <div class="fw-semibold">@run.RunDate?.ToString("MMM dd, yyyy")</div>
+                                        <div class="text-muted small">
+                                            @if (run.StartTime.HasValue)
+                                            {
+                                                @DateTime.Today.Add(run.StartTime.Value).ToString("h:mm tt")
+                                            }
+                                            @if (run.EndTime.HasValue)
+                                            {
+                                                <span> - @DateTime.Today.Add(run.EndTime.Value).ToString("h:mm tt")</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <div class="fw-semibold">@(run.Address ?? "Location TBD")</div>
+                                        @if (!string.IsNullOrEmpty(run.City) || !string.IsNullOrEmpty(run.State))
+                                        {
+                                            <div class="text-muted small">@run.City@(!string.IsNullOrEmpty(run.City) && !string.IsNullOrEmpty(run.State) ? ", " : "")@run.State</div>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="capacity-container">
+                                        <div class="capacity-text">@(run.PlayerCount ?? 0)/@(run.PlayerLimit ?? 0)</div>
+                                        <div class="progress progress-sm" style="width: 60px;">
+                                            @{
+                                                var percentFull = run.PlayerLimit > 0 ? ((double)(run.PlayerCount ?? 0) / run.PlayerLimit.Value) * 100 : 0;
+                                                var progressClass = percentFull >= 85 ? "bg-warning" : "bg-primary";
+                                            }
+                                            <div class="progress-bar @progressClass" role="progressbar" style="width: @percentFull%" aria-valuenow="@percentFull" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
                                     </div>
                                 </td>
                                 <td><span class="badge @badgeClass badge-pill">@badgeText</span></td>
@@ -234,50 +290,73 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="addRunModalLabel">Create New Run</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="addRunForm" method="post" action="@Url.Action("Create", "Run")">
                 @Html.AntiForgeryToken()
                 <div class="modal-body">
                     <div class="row mb-3">
                         <div class="col-md-12">
-                            <label for="runTitle" class="form-label">Run Title</label>
+                            <label for="runTitle" class="form-label form-field-required">Run Title</label>
                             <input type="text" class="form-control" id="runTitle" name="Name" placeholder="e.g. Weeknight Run, Sunday Morning Basketball" required>
                         </div>
                     </div>
 
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="runDate" class="form-label">Date</label>
+                            <label for="runDate" class="form-label form-field-required">Date</label>
                             <input type="date" class="form-control date-picker" id="runDate" name="RunDate" required>
                         </div>
                         <div class="col-md-6">
-                            <label for="runTime" class="form-label">Start Time</label>
+                            <label for="runTime" class="form-label form-field-required">Start Time</label>
                             <input type="time" class="form-control time-picker" id="runTime" name="StartTime" required>
                         </div>
                     </div>
 
                     <div class="row mb-3">
-                        
+                        <div class="col-md-6">
+                            <label for="endTime" class="form-label">End Time</label>
+                            <input type="time" class="form-control time-picker" id="endTime" name="EndTime">
+                        </div>
                         <div class="col-md-6">
                             <label for="courtType" class="form-label">Court Type</label>
-                            <select class="form-select" id="courtType" name="IsOutdoor" required>
+                            <select class="form-select" id="courtType" name="IsOutdoor">
                                 <option value="false" selected>Indoor</option>
                                 <option value="true">Outdoor</option>
                             </select>
                         </div>
                     </div>
 
-                    
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="address" class="form-label">Address</label>
+                            <input type="text" class="form-control" id="address" name="Address" placeholder="e.g. 123 Basketball Court St">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="city" class="form-label">City</label>
+                            <input type="text" class="form-control" id="city" name="City" placeholder="City">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="state" class="form-label">State</label>
+                            <input type="text" class="form-control" id="state" name="State" placeholder="State">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="zip" class="form-label">Zip Code</label>
+                            <input type="text" class="form-control" id="zip" name="Zip" placeholder="Zip">
+                        </div>
+                    </div>
 
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="maxParticipants" class="form-label">Maximum Participants</label>
+                            <label for="maxParticipants" class="form-label form-field-required">Maximum Participants</label>
                             <input type="number" class="form-control" id="maxParticipants" name="PlayerLimit" min="2" max="30" value="10" required>
                         </div>
                         <div class="col-md-6">
                             <label for="skillLevel" class="form-label">Skill Level</label>
-                            <select class="form-select" id="skillLevel" name="SkillLevel" required>
+                            <select class="form-select" id="skillLevel" name="SkillLevel">
                                 <option value="Beginner">Beginner</option>
                                 <option value="Intermediate" selected>Intermediate</option>
                                 <option value="Advanced">Advanced</option>
@@ -289,7 +368,7 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="runType" class="form-label">Run Type</label>
-                            <select class="form-select" id="runType" name="Type" required>
+                            <select class="form-select" id="runType" name="Type">
                                 <option value="Pickup" selected>Pickup Games</option>
                                 <option value="Training">Training Session</option>
                                 <option value="Tournament">Tournament</option>
@@ -299,7 +378,7 @@
                         </div>
                         <div class="col-md-6">
                             <label for="isPublic" class="form-label">Visibility</label>
-                            <select class="form-select" id="isPublic" name="IsPublic" required>
+                            <select class="form-select" id="isPublic" name="IsPublic">
                                 <option value="true" selected>Public</option>
                                 <option value="false">Private</option>
                             </select>
@@ -308,7 +387,7 @@
 
                     <div class="row mb-3">
                         <div class="col-md-12">
-                            <label for="runDescription" class="form-label">Description</label>
+                            <label for="runDescription" class="form-label form-field-required">Description</label>
                             <textarea class="form-control" id="runDescription" name="Description" rows="3" placeholder="Describe the run, what to expect, what to bring, etc." required></textarea>
                         </div>
                     </div>
@@ -324,11 +403,11 @@
 
 <!-- Edit Run Modal -->
 <div class="modal fade" id="editRunModal" tabindex="-1" aria-labelledby="editRunModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="editRunModalLabel">Edit Run</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <ul class="nav nav-tabs" id="editRunTabs" role="tablist">
@@ -344,63 +423,86 @@
                         <form id="editRunForm" method="post" action="@Url.Action("Edit", "Run")" class="mt-4">
                             @Html.AntiForgeryToken()
                             <input type="hidden" id="editRunId" name="RunId" value="" />
+                            <input type="hidden" id="editProfileId" name="ProfileId" value="" />
 
                             <div class="row mb-3">
                                 <div class="col-md-12">
-                                    <label for="editRunTitle" class="form-label">Name</label>
+                                    <label for="editRunTitle" class="form-label form-field-required">Name</label>
                                     <input type="text" class="form-control" id="editRunTitle" name="Name" required>
                                 </div>
                             </div>
 
                             <div class="row mb-3">
-                                <div class="col-md-12">
-                                    <label for="editRunDate" class="form-label">Date</label>
+                                <div class="col-md-6">
+                                    <label for="editRunDate" class="form-label form-field-required">Date</label>
                                     <input type="date" class="form-control date-picker" id="editRunDate" name="RunDate" required>
                                 </div>
-                            </div>
-
-                            <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <label for="editRunTime" class="form-label">Start Time</label>
+                                    <label for="editRunTime" class="form-label form-field-required">Start Time</label>
                                     <input type="time" class="form-control time-picker" id="editRunTime" name="StartTime" required>
                                 </div>
-                                <div class="col-md-6">
-                                    <label for="editEndTime" class="form-label">End Time</label>
-                                    <input type="time" class="form-control time-picker" id="editEndTime" name="EndTime" required>
-                                </div>
                             </div>
 
                             <div class="row mb-3">
-
                                 <div class="col-md-6">
-                                    <label for="editCourtType" class="form-label">Choose Court</label>
-                                    <select class="form-select" id="editCourtList" name="CourtId" required>
-                                        <option value="">Select a court...</option>
-                                    </select>
+                                    <label for="editEndTime" class="form-label">End Time</label>
+                                    <input type="time" class="form-control time-picker" id="editEndTime" name="EndTime">
                                 </div>
-
                                 <div class="col-md-6">
                                     <label for="editCourtType" class="form-label">Court Type</label>
-                                    <select class="form-select" id="editCourtType" name="IsOutdoor" required>
+                                    <select class="form-select" id="editCourtType" name="IsOutdoor">
                                         <option value="false">Indoor</option>
                                         <option value="true">Outdoor</option>
                                     </select>
                                 </div>
                             </div>
 
-                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="editCourtList" class="form-label">Choose Court</label>
+                                    <select class="form-select" id="editCourtList" name="CourtId">
+                                        <option value="">Loading courts...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="editClientId" class="form-label">Client</label>
+                                    <input type="text" class="form-control" id="editClientId" name="ClientId" readonly>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label for="editAddress" class="form-label">Address</label>
+                                    <input type="text" class="form-control" id="editAddress" name="Address">
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label for="editCity" class="form-label">City</label>
+                                    <input type="text" class="form-control" id="editCity" name="City">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="editState" class="form-label">State</label>
+                                    <input type="text" class="form-control" id="editState" name="State">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="editZip" class="form-label">Zip Code</label>
+                                    <input type="text" class="form-control" id="editZip" name="Zip">
+                                </div>
+                            </div>
 
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label for="editIsPublic" class="form-label">Visibility</label>
-                                    <select class="form-select" id="editIsPublic" name="IsPublic" required>
+                                    <select class="form-select" id="editIsPublic" name="IsPublic">
                                         <option value="true">Public</option>
                                         <option value="false">Private</option>
                                     </select>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="editSkillLevel" class="form-label">Skill Level</label>
-                                    <select class="form-select" id="editSkillLevel" name="SkillLevel" required>
+                                    <select class="form-select" id="editSkillLevel" name="SkillLevel">
                                         <option value="Beginner">Beginner</option>
                                         <option value="Intermediate">Intermediate</option>
                                         <option value="Advanced">Advanced</option>
@@ -411,12 +513,12 @@
 
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <label for="editMaxParticipants" class="form-label">Maximum Participants</label>
+                                    <label for="editMaxParticipants" class="form-label form-field-required">Maximum Participants</label>
                                     <input type="number" class="form-control" id="editMaxParticipants" name="PlayerLimit" min="2" max="30" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="editStatus" class="form-label">Status</label>
-                                    <select class="form-select" id="editStatus" name="Status" required>
+                                    <select class="form-select" id="editStatus" name="Status">
                                         <option value="Active">Active</option>
                                         <option value="Inactive">Inactive</option>
                                         <option value="Cancelled">Cancelled</option>
@@ -428,7 +530,7 @@
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label for="editRunType" class="form-label">Run Type</label>
-                                    <select class="form-select" id="editRunType" name="Type" required>
+                                    <select class="form-select" id="editRunType" name="Type">
                                         <option value="Pickup">Pickup Games</option>
                                         <option value="Training">Training Session</option>
                                         <option value="Tournament">Tournament</option>
@@ -438,7 +540,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label for="editTeamType" class="form-label">Team Type</label>
-                                    <select class="form-select" id="editTeamType" name="TeamType" required>
+                                    <select class="form-select" id="editTeamType" name="TeamType">
                                         <option value="Individual">Individual</option>
                                         <option value="Team">Team</option>
                                     </select>
@@ -447,7 +549,7 @@
 
                             <div class="row mb-3">
                                 <div class="col-md-12">
-                                    <label for="editRunDescription" class="form-label">Description</label>
+                                    <label for="editRunDescription" class="form-label form-field-required">Description</label>
                                     <textarea class="form-control" id="editRunDescription" name="Description" rows="3" required></textarea>
                                 </div>
                             </div>
@@ -493,7 +595,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Confirm Deletion</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <p>Are you sure you want to delete this run? This action cannot be undone.</p>
@@ -521,80 +623,74 @@
     <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
 
     <script>
-              document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function() {
             // Helper functions
             function getAntiForgeryToken() {
                 return document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
             }
 
             function showLoading() {
-                const spinner = document.querySelector('.loading-spinner');
+                const spinner = document.getElementById('loadingSpinner');
                 if (spinner) spinner.classList.add('active');
             }
 
             function hideLoading() {
-                const spinner = document.querySelector('.loading-spinner');
+                const spinner = document.getElementById('loadingSpinner');
                 if (spinner) spinner.classList.remove('active');
             }
 
             function showToast(message, type = 'success') {
                 console.log(`${type}: ${message}`);
-                // You can implement a proper toast notification here
-                if (type === 'error') {
-                    alert(`Error: ${message}`);
+                // Create a simple toast notification
+                const toastContainer = document.querySelector('.toast-container') || createToastContainer();
+                const toast = createToast(message, type);
+                toastContainer.appendChild(toast);
+
+                if (typeof bootstrap !== 'undefined' && bootstrap.Toast) {
+                    const bsToast = new bootstrap.Toast(toast);
+                    bsToast.show();
+                }
+
+                setTimeout(() => toast.remove(), 5000);
+            }
+
+            function createToastContainer() {
+                const container = document.createElement('div');
+                container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+                container.style.zIndex = '9999';
+                document.body.appendChild(container);
+                return container;
+            }
+
+            function createToast(message, type) {
+                const toast = document.createElement('div');
+                toast.className = `toast align-items-center text-white bg-${type} border-0`;
+                toast.innerHTML = `
+                    <div class="d-flex">
+                        <div class="toast-body">${message}</div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                `;
+                return toast;
+            }
+
+            function safeSetValue(elementId, value) {
+                const element = document.getElementById(elementId);
+                if (element) {
+                    element.value = value || '';
                 }
             }
 
-            // Function to populate court dropdown
-            function populateCourtDropdown(courtList, selectedCourtId = null) {
-                const courtSelect = document.getElementById('editCourtList');
-
-                if (!courtSelect) {
-                    console.warn('Court dropdown element not found');
-                    return;
-                }
-
-                // Show loading state
-                courtSelect.classList.add('court-dropdown-loading');
-                courtSelect.disabled = true;
-
-                // Clear existing options except the first one
-                courtSelect.innerHTML = '<option value="">Loading courts...</option>';
-
-                // Add courts from the data
-                setTimeout(() => { // Small delay to show loading state
-                    courtSelect.innerHTML = '<option value="">Select a court...</option>';
-
-                    if (courtList && courtList.length > 0) {
-                        courtList.forEach(court => {
-                            const option = document.createElement('option');
-                            option.value = court.courtId;
-                            option.textContent = court.name;
-
-                            // Select this option if it matches the current court
-                            if (selectedCourtId && court.courtId === selectedCourtId) {
-                                option.selected = true;
-                            }
-
-                            courtSelect.appendChild(option);
-                        });
-
-                        console.log(`Added ${courtList.length} courts to dropdown`);
-                    } else {
-                        // Add a "No courts available" option
-                        const noOption = document.createElement('option');
-                        noOption.value = '';
-                        noOption.textContent = 'No courts available for this client';
-                        noOption.disabled = true;
-                        courtSelect.appendChild(noOption);
-
-                        console.log('No courts available for this client');
+            function safeSetSelect(elementId, value) {
+                const select = document.getElementById(elementId);
+                if (select && value !== undefined && value !== null) {
+                    const option = Array.from(select.options).find(opt =>
+                        opt.value.toLowerCase() === value.toString().toLowerCase()
+                    );
+                    if (option) {
+                        select.value = option.value;
                     }
-
-                    // Remove loading state
-                    courtSelect.classList.remove('court-dropdown-loading');
-                    courtSelect.disabled = false;
-                }, 300);
+                }
             }
 
             // Initialize DataTable only if table exists
@@ -621,7 +717,444 @@
                     order: [[1, 'asc']]
                 });
 
-                // Filter functionality
+                // Initialize filters
+                initializeFilters();
+            }
+
+            // Function to populate court dropdown
+            function populateCourtDropdown(courtList, selectedCourtId = null) {
+                const courtSelect = document.getElementById('editCourtList');
+                if (!courtSelect) return;
+
+                courtSelect.classList.add('court-dropdown-loading');
+                courtSelect.disabled = true;
+                courtSelect.innerHTML = '<option value="">Loading courts...</option>';
+
+                setTimeout(() => {
+                    courtSelect.innerHTML = '<option value="">Select a court...</option>';
+
+                    if (courtList && courtList.length > 0) {
+                        courtList.forEach(court => {
+                            const option = document.createElement('option');
+                            option.value = court.courtId;
+                            option.textContent = court.name;
+
+                            if (selectedCourtId && court.courtId === selectedCourtId) {
+                                option.selected = true;
+                            }
+
+                            courtSelect.appendChild(option);
+                        });
+                    } else {
+                        const noOption = document.createElement('option');
+                        noOption.value = '';
+                        noOption.textContent = 'No courts available';
+                        noOption.disabled = true;
+                        courtSelect.appendChild(noOption);
+                    }
+
+                    courtSelect.classList.remove('court-dropdown-loading');
+                    courtSelect.disabled = false;
+                }, 300);
+            }
+
+            // Set minimum date for date pickers
+            const today = new Date().toISOString().split('T')[0];
+            const dateInputs = document.querySelectorAll('input[type="date"]');
+            dateInputs.forEach(input => {
+                input.min = today;
+            });
+
+            // Handle edit run modal
+            const editRunModal = document.getElementById('editRunModal');
+            if (editRunModal) {
+                editRunModal.addEventListener('show.bs.modal', function(event) {
+                    const button = event.relatedTarget;
+                    const runId = button.getAttribute('data-run-id');
+
+                    if (!runId) {
+                        console.error('No run ID found');
+                        return;
+                    }
+
+                    safeSetValue('editRunId', runId);
+                    showLoading();
+
+                    // Load run data
+                    fetch(`/Run/GetRunData?id=${runId}`)
+                        .then(response => {
+                            console.log('Response status:', response.status);
+                            if (!response.ok) {
+                                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                            }
+                            return response.text().then(text => {
+                                try {
+                                    return JSON.parse(text);
+                                } catch (e) {
+                                    console.error('Invalid JSON response:', text);
+                                    throw new Error('Invalid JSON response from server');
+                                }
+                            });
+                        })
+                        .then(data => {
+                            console.log('Received data:', data);
+                            hideLoading();
+
+                            if (data.success === false) {
+                                throw new Error(data.message || 'Failed to load run data');
+                            }
+
+                            // Populate form fields with null safety
+                            safeSetValue('editRunTitle', data.name);
+                            safeSetValue('editRunDate', data.runDate);
+                            safeSetValue('editRunTime', data.startTime);
+                            safeSetValue('editEndTime', data.endTime);
+                            safeSetValue('editAddress', data.address);
+                            safeSetValue('editCity', data.city);
+                            safeSetValue('editState', data.state);
+                            safeSetValue('editZip', data.zip);
+                            safeSetValue('editMaxParticipants', data.playerLimit);
+                            safeSetValue('editRunDescription', data.description);
+                            safeSetValue('editClientId', data.clientId);
+                            safeSetValue('editProfileId', data.profileId);
+
+                            // Set select values with validation
+                            safeSetSelect('editCourtType', data.isOutdoor ? 'true' : 'false');
+                            safeSetSelect('editSkillLevel', data.skillLevel);
+                            safeSetSelect('editIsPublic', data.isPublic ? 'true' : 'false');
+                            safeSetSelect('editStatus', data.status);
+                            safeSetSelect('editRunType', data.type);
+                            safeSetSelect('editTeamType', data.teamType);
+
+                            // Populate court dropdown
+                            populateCourtDropdown(data.courtList || [], data.courtId);
+
+                            // Update participant counts with validation
+                            const currentCount = document.getElementById('currentParticipantsCount');
+                            const maxCount = document.getElementById('maxParticipantsCount');
+                            if (currentCount) currentCount.textContent = data.playerCount || 0;
+                            if (maxCount) maxCount.textContent = data.playerLimit || 0;
+
+                            // Set delete button run ID
+                            safeSetValue('deleteRunId', data.runId || runId);
+
+                            // Load participants
+                            loadParticipants(data.runId || runId);
+
+                            console.log('Run data loaded successfully');
+                        })
+                        .catch(error => {
+                            hideLoading();
+                            console.error('Detailed error loading run data:', {
+                                error: error,
+                                message: error.message,
+                                stack: error.stack,
+                                runId: runId
+                            });
+                            showToast(`Error loading run data: ${error.message}`, 'danger');
+                        });
+                });
+            }
+
+            // Handle delete run button
+            const deleteRunBtn = document.getElementById('deleteRunBtn');
+            if (deleteRunBtn) {
+                deleteRunBtn.addEventListener('click', function() {
+                    const runId = document.getElementById('editRunId').value;
+                    safeSetValue('deleteRunId', runId);
+
+                    const editModal = bootstrap.Modal.getInstance(document.getElementById('editRunModal'));
+                    if (editModal) editModal.hide();
+
+                    const deleteModal = new bootstrap.Modal(document.getElementById('deleteRunModal'));
+                    deleteModal.show();
+                });
+            }
+
+            // Function to load participants
+                    function loadRunDataEnhanced(runId) {
+            console.log('🔄 Loading run data for ID:', runId);
+
+            if (!runId) {
+                console.error('❌ No run ID provided');
+                hideLoading();
+                return;
+            }
+
+            showLoading();
+
+            fetch(`/Run/GetRunData?id=${runId}`)
+                .then(response => {
+                    console.log('📡 API Response status:', response.status);
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    hideLoading();
+                    console.log('📦 Received data:', data);
+
+                    if (data.success === false) {
+                        console.error('❌ API returned error:', data.message);
+                        showToast('Error loading run data: ' + (data.message || 'Unknown error'), 'error');
+                        return;
+                    }
+
+                    // Populate form fields with safe value assignment
+                    const setFieldValue = (fieldId, value) => {
+                        const field = document.getElementById(fieldId);
+                        if (field && value !== null && value !== undefined) {
+                            field.value = value;
+                            console.log(`✅ Set ${fieldId} to: ${value}`);
+                        } else if (!field) {
+                            console.warn(`⚠️ Field ${fieldId} not found`);
+                        }
+                    };
+
+                    // Basic run information
+                    setFieldValue('editRunTitle', data.name || '');
+                    setFieldValue('editRunDescription', data.description || '');
+
+                    // Date handling with validation
+                    if (data.runDate) {
+                        try {
+                            const date = new Date(data.runDate);
+                            if (!isNaN(date.getTime())) {
+                                setFieldValue('editRunDate', data.runDate);
+                            }
+                        } catch (e) {
+                            console.warn('⚠️ Invalid run date format:', data.runDate);
+                        }
+                    }
+
+                    // Time handling with validation
+                    if (data.startTime) {
+                        try {
+                            // Handle different time formats
+                            let timeValue = data.startTime;
+
+                            // If it's in format "hh:mm:ss", convert to "hh:mm"
+                            if (timeValue.includes(':')) {
+                                const timeParts = timeValue.split(':');
+                                if (timeParts.length >= 2) {
+                                    timeValue = `${timeParts[0]}:${timeParts[1]}`;
+                                }
+                            }
+
+                            setFieldValue('editRunTime', timeValue);
+                        } catch (e) {
+                            console.warn('⚠️ Invalid start time format:', data.startTime);
+                        }
+                    }
+
+                    if (data.endTime) {
+                        try {
+                            let timeValue = data.endTime;
+
+                            // If it's in format "hh:mm:ss", convert to "hh:mm"
+                            if (timeValue.includes(':')) {
+                                const timeParts = timeValue.split(':');
+                                if (timeParts.length >= 2) {
+                                    timeValue = `${timeParts[0]}:${timeParts[1]}`;
+                                }
+                            }
+
+                            setFieldValue('editEndTime', timeValue);
+                        } catch (e) {
+                            console.warn('⚠️ Invalid end time format:', data.endTime);
+                        }
+                    }
+
+                    // Numeric fields with validation
+                    const setNumericField = (fieldId, value, defaultValue = 0) => {
+                        const field = document.getElementById(fieldId);
+                        if (field) {
+                            const numValue = parseInt(value) || defaultValue;
+                            field.value = numValue;
+                            console.log(`✅ Set ${fieldId} to: ${numValue}`);
+                        }
+                    };
+
+                    setNumericField('editMaxParticipants', data.playerLimit, 10);
+
+                    // Select fields with validation
+                    const setSelectField = (fieldId, value, defaultValue = '') => {
+                        const select = document.getElementById(fieldId);
+                        if (select && value) {
+                            // Try to find matching option
+                            for (let i = 0; i < select.options.length; i++) {
+                                if (select.options[i].value.toLowerCase() === value.toLowerCase()) {
+                                    select.selectedIndex = i;
+                                    console.log(`✅ Set ${fieldId} to: ${value}`);
+                                    return;
+                                }
+                            }
+                            console.warn(`⚠️ Option '${value}' not found for ${fieldId}`);
+                        } else if (!select) {
+                            console.warn(`⚠️ Select field ${fieldId} not found`);
+                        }
+                    };
+
+                    setSelectField('editSkillLevel', data.skillLevel, 'Intermediate');
+                    setSelectField('editStatus', data.status, 'Active');
+                    setSelectField('editRunType', data.type, 'Pickup');
+                    setSelectField('editTeamType', data.teamType, 'Individual');
+                    setSelectField('editIsPublic', data.isPublic ? 'true' : 'false', 'true');
+
+                    // Court dropdown population with error handling
+                    console.log('🏀 Court data received:', data.courtList);
+                    console.log('🏀 Current court ID:', data.courtId);
+
+                    try {
+                        populateCourtDropdown(data.courtList || [], data.courtId);
+                    } catch (e) {
+                        console.error('❌ Error populating court dropdown:', e);
+                        const courtSelect = document.getElementById('editCourtList');
+                        if (courtSelect) {
+                            courtSelect.innerHTML = '<option value="">Error loading courts</option>';
+                        }
+                    }
+
+                    // Update participant counts with validation
+                    const updateParticipantCount = (elementId, count, defaultValue = 0) => {
+                        const element = document.getElementById(elementId);
+                        if (element) {
+                            const numCount = parseInt(count) || defaultValue;
+                            element.textContent = numCount;
+                            console.log(`✅ Updated ${elementId} to: ${numCount}`);
+                        }
+                    };
+
+                    updateParticipantCount('currentParticipantsCount', data.playerCount, 0);
+                    updateParticipantCount('maxParticipantsCount', data.playerLimit, 0);
+
+                    // Set delete button run ID
+                    const deleteIdField = document.getElementById('deleteRunId');
+                    if (deleteIdField) {
+                        deleteIdField.value = data.runId || runId;
+                    }
+
+                    // Load participants
+                    try {
+                        loadParticipants(data.runId || runId);
+                    } catch (e) {
+                        console.error('❌ Error loading participants:', e);
+                    }
+
+                    console.log('✅ Run data loaded successfully');
+                })
+                .catch(error => {
+                    hideLoading();
+                    console.error('❌ Detailed error loading run data:', {
+                        error: error,
+                        message: error.message,
+                        stack: error.stack,
+                        runId: runId
+                    });
+                    showToast('Error loading run data: ' + error.message, 'error');
+                });
+        }
+
+            // Function to remove participant
+            function removeParticipant(runId, participantId) {
+                showLoading();
+
+                fetch('/Run/RemoveParticipant', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': getAntiForgeryToken()
+                    },
+                    body: JSON.stringify({ runId: runId, profileId: participantId })
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(data => {
+                    hideLoading();
+                    if (data.success) {
+                        loadParticipants(runId);
+                        const currentCount = document.getElementById('currentParticipantsCount');
+                        if (currentCount) {
+                            const count = parseInt(currentCount.textContent);
+                            currentCount.textContent = Math.max(0, count - 1);
+                        }
+                        showToast('Participant removed successfully');
+                    } else {
+                        showToast('Error removing participant: ' + (data.message || 'Unknown error'), 'danger');
+                    }
+                })
+                .catch(error => {
+                    hideLoading();
+                    console.error('Error removing participant:', error);
+                    showToast('Error removing participant. Please try again.', 'danger');
+                });
+            }
+
+            // Add participant button
+            const addParticipantBtn = document.getElementById('addParticipantBtn');
+            if (addParticipantBtn) {
+                addParticipantBtn.addEventListener('click', function() {
+                    const runId = document.getElementById('editRunId').value;
+                    const currentCountEl = document.getElementById('currentParticipantsCount');
+                    const maxCountEl = document.getElementById('maxParticipantsCount');
+
+                    if (!currentCountEl || !maxCountEl) {
+                        showToast('Unable to determine current capacity. Please refresh and try again.', 'danger');
+                        return;
+                    }
+
+                    const currentCount = parseInt(currentCountEl.textContent);
+                    const maxCount = parseInt(maxCountEl.textContent);
+
+                    if (currentCount >= maxCount) {
+                        showToast('This run is already at maximum capacity. Cannot add more participants.', 'danger');
+                        return;
+                    }
+
+                    const profileId = prompt('Enter participant profile ID:');
+                    if (!profileId) return;
+
+                    showLoading();
+
+                    fetch('/Run/AddParticipant', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': getAntiForgeryToken()
+                        },
+                        body: JSON.stringify({ runId: runId, profileId: profileId })
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        return response.json();
+                    })
+                    .then(data => {
+                        hideLoading();
+                        if (data.success) {
+                            loadParticipants(runId);
+                            const currentCount = parseInt(currentCountEl.textContent);
+                            currentCountEl.textContent = currentCount + 1;
+                            showToast('Participant added successfully');
+                        } else {
+                            showToast('Error adding participant: ' + (data.message || 'Unknown error'), 'danger');
+                        }
+                    })
+                    .catch(error => {
+                        hideLoading();
+                        console.error('Error adding participant:', error);
+                        showToast('Error adding participant. Please try again.', 'danger');
+                    });
+                });
+            }
+
+            // Initialize filters
+            function initializeFilters() {
+                if (!runsTable) return;
+
                 const statusFilter = document.getElementById('statusFilter');
                 const dateFilter = document.getElementById('dateFilter');
                 const locationFilter = document.getElementById('locationFilter');
@@ -646,6 +1179,8 @@
                             return true;
                         }
 
+                        const row = runsTable.row(dataIndex).node();
+
                         // Status filter
                         if (statusFilter.value !== 'all') {
                             const status = data[4].toLowerCase();
@@ -658,9 +1193,10 @@
 
                         // Date filter
                         if (dateFilter.value !== 'all') {
-                            const dateString = data[1];
-                            const datePart = dateString.split(' ')[0];
-                            const date = new Date(datePart);
+                            const runDate = row.getAttribute('data-run-date');
+                            if (!runDate) return false;
+
+                            const date = new Date(runDate);
                             const today = new Date();
                             today.setHours(0, 0, 0, 0);
 
@@ -688,12 +1224,12 @@
 
                         // Location filter
                         if (locationFilter.value !== 'all') {
-                            if (data[2] !== locationFilter.value) return false;
+                            const location = row.getAttribute('data-location') || '';
+                            if (!location.includes(locationFilter.value)) return false;
                         }
 
                         // Type filter
                         if (typeFilter.value !== 'all') {
-                            const row = runsTable.row(dataIndex).node();
                             const runType = row.getAttribute('data-run-type');
                             if (runType !== typeFilter.value) return false;
                         }
@@ -794,283 +1330,43 @@
                 applyFilters();
             }
 
-            // Set minimum date for date pickers
-            const today = new Date().toISOString().split('T')[0];
-            const dateInputs = document.querySelectorAll('input[type="date"]');
-            dateInputs.forEach(input => {
-                input.min = today;
-            });
+            // Form validation for add run form
+            const addRunForm = document.getElementById('addRunForm');
+            if (addRunForm) {
+                addRunForm.addEventListener('submit', function(e) {
+                    const runDate = document.getElementById('runDate').value;
+                    const runTime = document.getElementById('runTime').value;
 
-            // Handle edit run modal
-            const editRunModal = document.getElementById('editRunModal');
-            if (editRunModal) {
-                editRunModal.addEventListener('show.bs.modal', function(event) {
-                    const button = event.relatedTarget;
-                    const runId = button.getAttribute('data-run-id');
+                    if (runDate && runTime) {
+                        const selectedDateTime = new Date(`${runDate}T${runTime}`);
+                        const now = new Date();
 
-                    if (!runId) {
-                        console.error('No run ID found');
-                        return;
-                    }
-
-                    const editRunIdField = document.getElementById('editRunId');
-                    if (editRunIdField) editRunIdField.value = runId;
-
-                    showLoading();
-
-                    // Load run data with improved court handling
-                    fetch(`/Run/GetRunData?id=${runId}`)
-                        .then(response => {
-                            if (!response.ok) throw new Error('Network response was not ok');
-                            return response.json();
-                        })
-                        .then(data => {
-                            hideLoading();
-
-                            if (data.success === false) {
-                                throw new Error(data.message || 'Failed to load run data');
-                            }
-
-                            // Populate form fields with null checks
-                            const setFieldValue = (fieldId, value) => {
-                                const field = document.getElementById(fieldId);
-                                if (field && value !== null && value !== undefined) {
-                                    field.value = value;
-                                }
-                            };
-
-                            setFieldValue('editRunTitle', data.name);
-                            setFieldValue('editRunDate', data.runDate);
-                            setFieldValue('editRunTime', data.startTime);
-                            setFieldValue('editEndTime', data.endTime);
-                            setFieldValue('editAddress', data.address);
-                            setFieldValue('editCity', data.city);
-                            setFieldValue('editState', data.state);
-                            setFieldValue('editZip', data.zip);
-                            setFieldValue('editCourtType', data.isOutdoor ? 'true' : 'false');
-                            setFieldValue('editMaxParticipants', data.playerLimit);
-                            setFieldValue('editSkillLevel', data.skillLevel);
-                            setFieldValue('editRunDescription', data.description);
-                            setFieldValue('editIsPublic', data.isPublic ? 'true' : 'false');
-                            setFieldValue('editStatus', data.status);
-                            setFieldValue('editRunType', data.type);
-                            setFieldValue('editTeamType', data.teamType);
-
-                            // Populate court dropdown with the current selection
-                            console.log('Court data received:', data.courtList);
-                            console.log('Current court ID:', data.courtId);
-                            populateCourtDropdown(data.courtList, data.courtId);
-
-                            // Update participant counts
-                            const currentCount = document.getElementById('currentParticipantsCount');
-                            const maxCount = document.getElementById('maxParticipantsCount');
-                            if (currentCount) currentCount.textContent = data.playerCount || 0;
-                            if (maxCount) maxCount.textContent = data.playerLimit || 0;
-
-                            // Set delete button run ID
-                            const deleteIdField = document.getElementById('deleteRunId');
-                            if (deleteIdField) deleteIdField.value = data.runId || runId;
-
-                            // Load participants
-                            loadParticipants(data.runId || runId);
-                        })
-                        .catch(error => {
-                            hideLoading();
-                            console.error('Error loading run data:', error);
-                            showToast('Error loading run data. Please try again.', 'error');
-                        });
-                });
-            }
-
-            // Handle delete run button
-            const deleteRunBtn = document.getElementById('deleteRunBtn');
-            if (deleteRunBtn) {
-                deleteRunBtn.addEventListener('click', function() {
-                    const runId = document.getElementById('editRunId').value;
-                    const deleteIdField = document.getElementById('deleteRunId');
-                    if (deleteIdField) deleteIdField.value = runId;
-
-                    const editModal = bootstrap.Modal.getInstance(document.getElementById('editRunModal'));
-                    if (editModal) editModal.hide();
-
-                    const deleteModal = new bootstrap.Modal(document.getElementById('deleteRunModal'));
-                    deleteModal.show();
-                });
-            }
-
-            // Function to load participants
-            function loadParticipants(runId) {
-                const participantsList = document.getElementById('participantsList');
-                if (!participantsList) return;
-
-                participantsList.innerHTML = '<div class="text-center py-4 text-muted"><i class="bi bi-people"></i> Loading participants...</div>';
-
-                fetch(`/Run/GetRunParticipants?runId=${runId}`)
-                    .then(response => {
-                        if (!response.ok) throw new Error('Network response was not ok');
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (!Array.isArray(data) || data.length === 0) {
-                            participantsList.innerHTML = `
-                                <div class="text-center py-4 text-muted">
-                                    <p>No participants have joined this run yet.</p>
-                                </div>`;
+                        if (selectedDateTime <= now) {
+                            e.preventDefault();
+                            showToast('Run date and time must be in the future.', 'danger');
                             return;
                         }
-
-                        let html = '';
-                        data.forEach(participant => {
-                            const userName = participant.userName || 'Unknown Player';
-                            const initials = userName
-                                .split(' ')
-                                .map(n => n[0] || '')
-                                .join('')
-                                .substring(0, 2)
-                                .toUpperCase() || 'UP';
-
-                            html += `
-                                <div class="d-flex align-items-center p-2 border-bottom">
-                                    <div class="participant-avatar flex-shrink-0 me-3">
-                                        ${initials}
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <h6 class="mb-0">${userName}</h6>
-                                        <span class="text-muted small">Status: ${participant.status || 'Active'}</span>
-                                    </div>
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="bi bi-three-dots-vertical"></i>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end">
-                                            <li><a class="dropdown-item" href="#"><i class="bi bi-envelope me-2"></i>Message</a></li>
-                                            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>View Profile</a></li>
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li><a class="dropdown-item text-danger remove-participant" data-participant-id="${participant.profileId}" href="#"><i class="bi bi-person-x me-2"></i>Remove</a></li>
-                                        </ul>
-                                    </div>
-                                </div>`;
-                        });
-
-                        participantsList.innerHTML = html;
-
-                        // Add event listeners to remove buttons
-                        document.querySelectorAll('.remove-participant').forEach(button => {
-                            button.addEventListener('click', function(e) {
-                                e.preventDefault();
-                                const participantId = this.getAttribute('data-participant-id');
-
-                                if (confirm('Are you sure you want to remove this participant?')) {
-                                    removeParticipant(runId, participantId);
-                                }
-                            });
-                        });
-                    })
-                    .catch(error => {
-                        console.error('Error loading participants:', error);
-                        participantsList.innerHTML = `
-                            <div class="text-center py-4 text-danger">
-                                <p>Error loading participants. Please try again.</p>
-                            </div>`;
-                    });
-            }
-
-            // Function to remove participant
-            function removeParticipant(runId, participantId) {
-                showLoading();
-
-                fetch('/Run/RemoveParticipant', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': getAntiForgeryToken()
-                    },
-                    body: JSON.stringify(participantId)
-                })
-                .then(response => {
-                    if (!response.ok) throw new Error('Network response was not ok');
-                    return response.json();
-                })
-                .then(data => {
-                    hideLoading();
-                    if (data.success) {
-                        loadParticipants(runId);
-                        const currentCount = document.getElementById('currentParticipantsCount');
-                        if (currentCount) {
-                            const count = parseInt(currentCount.textContent);
-                            currentCount.textContent = Math.max(0, count - 1);
-                        }
-                        showToast('Participant removed successfully');
-                    } else {
-                        showToast('Error removing participant: ' + (data.message || 'Unknown error'), 'error');
                     }
-                })
-                .catch(error => {
-                    hideLoading();
-                    console.error('Error removing participant:', error);
-                    showToast('Error removing participant. Please try again.', 'error');
                 });
             }
 
-            // Add participant button
-            const addParticipantBtn = document.getElementById('addParticipantBtn');
-            if (addParticipantBtn) {
-                addParticipantBtn.addEventListener('click', function() {
-                    const runId = document.getElementById('editRunId').value;
-                    const currentCountEl = document.getElementById('currentParticipantsCount');
-                    const maxCountEl = document.getElementById('maxParticipantsCount');
+            // Form validation for edit run form
+            const editRunForm = document.getElementById('editRunForm');
+            if (editRunForm) {
+                editRunForm.addEventListener('submit', function(e) {
+                    const runDate = document.getElementById('editRunDate').value;
+                    const runTime = document.getElementById('editRunTime').value;
 
-                    if (!currentCountEl || !maxCountEl) {
-                        showToast('Unable to determine current capacity. Please refresh and try again.', 'error');
-                        return;
-                    }
+                    if (runDate && runTime) {
+                        const selectedDateTime = new Date(`${runDate}T${runTime}`);
+                        const now = new Date();
 
-                    const currentCount = parseInt(currentCountEl.textContent);
-                    const maxCount = parseInt(maxCountEl.textContent);
-
-                    if (currentCount >= maxCount) {
-                        showToast('This run is already at maximum capacity. Cannot add more participants.', 'error');
-                        return;
-                    }
-
-                    const profileId = prompt('Enter participant profile ID:');
-                    if (!profileId) return;
-
-                    showLoading();
-
-                    const requestData = {
-                        RunId: runId,
-                        ProfileId: profileId
-                    };
-
-                    fetch(`/Run/AddParticipant?runId=${runId}&profileId=${profileId}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'RequestVerificationToken': getAntiForgeryToken()
-                        },
-                        body: JSON.stringify(requestData)
-                    })
-                    .then(response => {
-                        if (!response.ok) throw new Error('Network response was not ok');
-                        return response.json();
-                    })
-                    .then(data => {
-                        hideLoading();
-                        if (data.success) {
-                            loadParticipants(runId);
-                            const currentCount = parseInt(currentCountEl.textContent);
-                            currentCountEl.textContent = currentCount + 1;
-                            showToast('Participant added successfully');
-                        } else {
-                            showToast('Error adding participant: ' + (data.message || 'Unknown error'), 'error');
+                        if (selectedDateTime <= now) {
+                            e.preventDefault();
+                            showToast('Run date and time must be in the future.', 'danger');
+                            return;
                         }
-                    })
-                    .catch(error => {
-                        hideLoading();
-                        console.error('Error adding participant:', error);
-                        showToast('Error adding participant. Please try again.', 'error');
-                    });
+                    }
                 });
             }
         });

@@ -29,13 +29,13 @@ namespace Domain.DtoModel
         public string? PaymentMethod { get; set; }
         public string? TeamType { get; set; }
         public int? PlayerLimit { get; set; }
-
+        
         public void UpdateRun(Run run)
         {
             run.Status = Status;
             run.Cost = Cost;
             run.Status = Status;
-
+          
             run.Description = Description;
             run.StartTime = StartTime;
             run.EndTime = EndTime;

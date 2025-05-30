@@ -47,7 +47,7 @@ namespace Domain.DtoModel
         public string? ProfileId { get; set; }
         public string? Status { get; set; }
         public DateTime? RunDate { get; set; }
-
+      
         public decimal? Cost { get; set; }
         public string? Name { get; set; }
         public string? Address { get; set; }

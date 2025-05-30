@@ -3,13 +3,17 @@ using Domain.DtoModel;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using WebAPI.ApiClients;
+using Website.Attributes;
 using Website.ViewModels;
 
 namespace Web.Controllers
 {
+    [Authentication] // Require authentication for all actions in this controller
     public class RunController : Controller
     {
         private readonly IRunApi _runApi;
@@ -78,8 +82,10 @@ namespace Web.Controllers
             }
         }
 
+        // Fixed GetRunData method in RunController.cs
+        // Replace the existing GetRunData method in Web/Controllers/RunController.cs with this implementation
         [HttpGet]
-        public async Task<IActionResult> GetRunData(string id,  CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetRunData(string id, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -95,34 +101,71 @@ namespace Web.Controllers
                     return Json(new { success = false, message = "Run not found" });
                 }
 
-                var clientCourtList =  await _clientApi.GetClientCourtsAsync(run.ClientId, accessToken, cancellationToken);
+                var clientCourtList = new List<Court>();
 
-                // Transform the data to match what the view expects
+                // Safely handle court data retrieval
+                try
+                {
+                    if (!string.IsNullOrEmpty(run.ClientId))
+                    {
+                        clientCourtList = await _clientApi.GetClientCourtsAsync(run.ClientId, accessToken, cancellationToken);
+                    }
+                }
+                catch (Exception courtEx)
+                {
+                    _logger.LogError(courtEx, "Error retrieving courts for client: {ClientId}", run.ClientId);
+                    // Continue with empty courts list
+                }
+
+                // Safe court list handling
+                var courtListData = new List<object>();
+                if (clientCourtList != null && clientCourtList.Any())
+                {
+                    courtListData = clientCourtList.Select(c => new
+                    {
+                        courtId = c.CourtId ?? "",
+                        name = c.Name ?? "Unnamed Court"
+                    }).Cast<object>().ToList();
+                }
+
+                // Transform the data to match what the view expects with safe conversions
                 var runData = new
                 {
-                    runId = run.RunId,
-                    clientId = run.ClientId,
-                    name = run.Name,
-                    runDate = run.RunDate?.ToString("yyyy-MM-dd"),
-                    startTime = run.StartTime.HasValue ? run.StartTime.Value.ToString(@"hh\:mm\:ss") : "", // Fallback to RunDate if StartTime is null
-                    endTime = run.EndTime.HasValue ? run.EndTime.Value.ToString(@"hh\:mm\:ss") : "", // Default 2 hours if not specified
-                    address = "Location not specified",
-                    city = "t",
-                    state = "t",
-                    zip = "t",
-                    playerLimit = run.PlayerLimit,
+                    runId = run.RunId ?? "",
+                    clientId = run.ClientId ?? "",
+                    name = run.Name ?? "",
+
+                    // Safe date formatting
+                    runDate = run.RunDate?.ToString("yyyy-MM-dd") ?? "",
+
+                    // Safe TimeSpan formatting - handle both TimeSpan and nullable TimeSpan
+                    startTime = FormatTimeSpan(run.StartTime),
+                    endTime = FormatTimeSpan(run.EndTime),
+
+                    // Default address fields - these seem to be hardcoded in original
+                    address ="Location not specified",
+                    city = "Not specified",
+                    state =  "Not specified",
+                    zip = "Not specified",
+
+                    // Safe numeric conversions
+                    playerLimit = run.PlayerLimit ?? 0,
                     playerCount = run.PlayerCount ?? 0,
+
+                    // Safe string assignments with defaults
                     skillLevel = run.SkillLevel ?? "Intermediate",
                     description = run.Description ?? "",
                     type = run.Type ?? "Pickup",
                     status = run.Status ?? "Active",
-                    isPublic = run.IsPublic ?? true,
                     teamType = run.TeamType ?? "Individual",
-                    courtList = clientCourtList.Select(c => new
-                    {
-                        courtId = c.CourtId,
-                        name = c.Name
-                    }).ToList(),
+
+                    // Safe boolean conversion
+                    isPublic = run.IsPublic ?? true,
+
+                    // Safe court selection - get the court ID if available
+                    courtId = GetCourtIdFromRun(run),
+
+                    courtList = courtListData,
 
                     success = true
                 };
@@ -132,7 +175,45 @@ namespace Web.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error retrieving run data for ID: {RunId}", id);
-                return Json(new { success = false, message = "Error loading run data" });
+                return Json(new { success = false, message = $"Error loading run data: {ex.Message}" });
+            }
+        }
+
+        // Helper method to safely format TimeSpan values
+        private string FormatTimeSpan(TimeSpan? timeSpan)
+        {
+            if (!timeSpan.HasValue)
+                return "";
+
+            try
+            {
+                // Format as HH:mm for HTML time input
+                return timeSpan.Value.ToString(@"hh\:mm");
+            }
+            catch (Exception)
+            {
+                return "";
+            }
+        }
+
+        // Helper method to safely get court ID from run data
+        private string GetCourtIdFromRun(dynamic run)
+        {
+            try
+            {
+                // Try different possible property names for court ID
+                if (run.CourtId != null)
+                    return run.CourtId.ToString();
+                if (run.Court?.CourtId != null)
+                    return run.Court.CourtId.ToString();
+                if (run.VenueId != null)
+                    return run.VenueId.ToString();
+
+                return "";
+            }
+            catch (Exception)
+            {
+                return "";
             }
         }
 
@@ -156,8 +237,7 @@ namespace Web.Controllers
                     profileId = p.ProfileId,
                     userName = p.UserName ?? "Unknown Player",
                     imageUrl = p.ImageURL,
-                    status = p.Status,
-                    
+                    status = p.Status ?? "Active"
                 }).ToList();
 
                 return Json(participantData);
@@ -169,8 +249,9 @@ namespace Web.Controllers
             }
         }
 
+        [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> RemoveParticipant([FromBody] string joinedRunId , string ProfileId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> RemoveParticipant([FromBody] RemoveParticipantRequest request, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -184,7 +265,7 @@ namespace Web.Controllers
                 var profileId = HttpContext.Session.GetString("ProfileId");
                 var userRole = HttpContext.Session.GetString("UserRole");
 
-                var run = await _runApi.GetRunByIdAsync(joinedRunId, accessToken, cancellationToken);
+                var run = await _runApi.GetRunByIdAsync(request.RunId, accessToken, cancellationToken);
                 if (run == null)
                 {
                     return Json(new { success = false, message = "Run not found" });
@@ -195,20 +276,20 @@ namespace Web.Controllers
                     return Json(new { success = false, message = "You do not have permission to remove participants from this run" });
                 }
 
-                await _joinedRunApi.RemoveProfileJoinRunAsync(joinedRunId, ProfileId, accessToken, cancellationToken);
+                await _joinedRunApi.RemoveProfileJoinRunAsync(request.RunId, request.ProfileId, accessToken, cancellationToken);
 
                 return Json(new { success = true });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error removing participant {ParticipantId} from run {RunId}", ProfileId, joinedRunId);
+                _logger.LogError(ex, "Error removing participant {ParticipantId} from run {RunId}", request?.ProfileId, request?.RunId);
                 return Json(new { success = false, message = "Error removing participant. Please try again." });
             }
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddParticipant([FromBody] JoinedRun request, string runId,  string profileId , CancellationToken cancellationToken = default)
+        public async Task<IActionResult> AddParticipant([FromBody] AddParticipantRequest request, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -219,7 +300,7 @@ namespace Web.Controllers
                 }
 
                 // Verify user has permission (is run creator or admin)
-                //var profileId = HttpContext.Session.GetString("ProfileId");
+                var currentProfileId = HttpContext.Session.GetString("ProfileId");
                 var userRole = HttpContext.Session.GetString("UserRole");
 
                 var run = await _runApi.GetRunByIdAsync(request.RunId, accessToken, cancellationToken);
@@ -228,7 +309,7 @@ namespace Web.Controllers
                     return Json(new { success = false, message = "Run not found" });
                 }
 
-                if (run.ProfileId != profileId && userRole != "Admin")
+                if (run.ProfileId != currentProfileId && userRole != "Admin")
                 {
                     return Json(new { success = false, message = "You do not have permission to add participants to this run" });
                 }
@@ -239,13 +320,13 @@ namespace Web.Controllers
                     return Json(new { success = false, message = "This run is already at maximum capacity" });
                 }
 
-                await _joinedRunApi.AddProfileToJoinedRunAsync(runId, profileId, accessToken, cancellationToken);
+                await _joinedRunApi.AddProfileToJoinedRunAsync(request.RunId, request.ProfileId, accessToken, cancellationToken);
 
                 return Json(new { success = true });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error adding participant to run {RunId}", request.RunId);
+                _logger.LogError(ex, "Error adding participant to run {RunId}", request?.RunId);
                 return Json(new { success = false, message = "Error adding participant. Please try again." });
             }
         }
@@ -265,6 +346,11 @@ namespace Web.Controllers
 
                 // Get run details
                 var run = await _runApi.GetRunByIdAsync(id, accessToken, cancellationToken);
+                if (run == null)
+                {
+                    TempData["Error"] = "Run not found.";
+                    return RedirectToAction("Run");
+                }
 
                 // Create view model or return view with run data
                 return View(run);
@@ -308,6 +394,32 @@ namespace Web.Controllers
                 // Set creator profile ID
                 run.ProfileId = HttpContext.Session.GetString("ProfileId");
 
+                // Set default values if not provided
+                if (run.PlayerLimit == null || run.PlayerLimit <= 0)
+                {
+                    run.PlayerLimit = 10;
+                }
+
+                if (string.IsNullOrEmpty(run.Status))
+                {
+                    run.Status = "Active";
+                }
+
+                if (string.IsNullOrEmpty(run.Type))
+                {
+                    run.Type = "Pickup";
+                }
+
+                if (string.IsNullOrEmpty(run.SkillLevel))
+                {
+                    run.SkillLevel = "Intermediate";
+                }
+
+                if (run.IsPublic == null)
+                {
+                    run.IsPublic = true;
+                }
+
                 // Create new run
                 var createdRun = await _runApi.CreateRunAsync(run, accessToken, cancellationToken);
 
@@ -340,7 +452,7 @@ namespace Web.Controllers
                 if (run == null)
                 {
                     TempData["Error"] = "Run not found.";
-                    return RedirectToAction("Index");
+                    return RedirectToAction("Run");
                 }
 
                 // Verify user is creator or admin
@@ -358,7 +470,7 @@ namespace Web.Controllers
             {
                 _logger.LogError(ex, "Error retrieving run for edit, ID: {RunId}", id);
                 TempData["Error"] = "An error occurred while retrieving the run. Please try again later.";
-                return RedirectToAction("Index");
+                return RedirectToAction("Run");
             }
         }
 
@@ -418,7 +530,7 @@ namespace Web.Controllers
                 if (run == null)
                 {
                     TempData["Error"] = "Run not found.";
-                    return RedirectToAction("Index");
+                    return RedirectToAction("Run");
                 }
 
                 // Verify user is creator or admin
@@ -434,13 +546,13 @@ namespace Web.Controllers
                 await _runApi.DeleteRunAsync(id, accessToken, cancellationToken);
 
                 TempData["Success"] = "Run deleted successfully.";
-                return RedirectToAction("Index");
+                return RedirectToAction("Run");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error deleting run: {RunId}", id);
                 TempData["Error"] = "An error occurred while deleting the run. Please try again later.";
-                return RedirectToAction("Index");
+                return RedirectToAction("Run");
             }
         }
 
@@ -488,6 +600,16 @@ namespace Web.Controllers
         }
     }
 
-    // View model for the Runs index page
-    
+    // Request models for API calls
+    public class RemoveParticipantRequest
+    {
+        public string RunId { get; set; }
+        public string ProfileId { get; set; }
+    }
+
+    public class AddParticipantRequest
+    {
+        public string RunId { get; set; }
+        public string ProfileId { get; set; }
+    }
 }
