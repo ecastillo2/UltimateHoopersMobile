@@ -71,8 +71,10 @@ namespace Web.Controllers
         }
 
         [HttpGet]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public async Task<IActionResult> GetProductData(string id, CancellationToken cancellationToken = default)
         {
+          
             try
             {
                 var accessToken = HttpContext.Session.GetString("UserToken");

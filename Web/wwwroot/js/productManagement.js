@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (statusFilter.length && categoryFilter.length && typeFilter.length) {
             setupFilters(productsTable.DataTable(), statusFilter, categoryFilter, typeFilter, priceRangeFilter, resetFiltersBtn, activeFiltersContainer);
         }
+        addCacheBusterToImageUrl(imageUrl);
     }
 
     // Function to set up filters
@@ -947,6 +948,14 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error("Error formatting date time:", e);
             return '--';
         }
+    }
+
+    function addCacheBusterToImageUrl(imageUrl) {
+        if (!imageUrl) return imageUrl;
+
+        const timestamp = Date.now();
+        const separator = imageUrl.includes('?') ? '&' : '?';
+        return `${imageUrl}${separator}v=${timestamp}`;
     }
 
     // View product button handler
