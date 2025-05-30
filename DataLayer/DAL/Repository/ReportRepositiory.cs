@@ -48,11 +48,23 @@ namespace DataLayer.DAL.Repository
                .AsNoTracking()
                .CountAsync(cancellationToken);
 
+            var runCounts = await _context.Run
+                .Where(p => p.Status == "Active")
+                .AsNoTracking()
+                .CountAsync(cancellationToken);
+
+            var usersCounts = await _context.User
+                .Where(p => p.Status == "Active")
+                .AsNoTracking()
+                .CountAsync(cancellationToken);
+
             yield return new ReportDto
             {
                 CourtsCount = courtCounts,
                 ProductsCount = productCounts,
                 ClientsCount = clientCounts,
+                RunsCount = runCounts,
+                UsersCount = usersCounts,
             };
         }
 

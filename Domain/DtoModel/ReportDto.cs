@@ -13,6 +13,8 @@ namespace Domain.DtoModel
         public int? PostCount { get; set; }
         public int? ClientsCount { get; set; }
         public int? ProductsCount { get; set; }
+        public int? RunsCount { get; set; }
+        
 
     }
 }
