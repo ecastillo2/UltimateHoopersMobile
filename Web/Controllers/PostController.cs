@@ -11,21 +11,14 @@ namespace Website.Controllers
         private readonly IPostApi _postApi;
         private readonly ILogger<PostController> _logger;
 
-        public PostController(
-            IPostApi postApi,
-            ILogger<PostController> logger)
+        public PostController(IPostApi postApi,ILogger<PostController> logger)
         {
             _postApi = postApi ?? throw new ArgumentNullException(nameof(postApi));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         [HttpGet]
-        public async Task<IActionResult> Post(
-            string cursor = null,
-            int limit = 10,
-            string direction = "next",
-            string sortBy = "StartDate",
-            CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Post(string cursor = null,int limit = 10,string direction = "next",string sortBy = "StartDate",CancellationToken cancellationToken = default)
         {
             try
             {

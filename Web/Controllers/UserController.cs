@@ -20,10 +20,7 @@ namespace Web.Controllers
         private readonly IProfileApi _profileApi;
         private readonly ILogger<UserController> _logger;
 
-        public UserController(
-            IProfileApi profileApi,
-            IUserApi userApi,
-            ILogger<UserController> logger)
+        public UserController(IProfileApi profileApi,IUserApi userApi,ILogger<UserController> logger)
         {
             _profileApi = profileApi ?? throw new ArgumentNullException(nameof(profileApi));
             _userApi = userApi ?? throw new ArgumentNullException(nameof(userApi));
@@ -31,12 +28,7 @@ namespace Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> User(
-            string cursor = null,
-            int limit = 10,
-            string direction = "next",
-            string sortBy = "CreatedDate",
-            CancellationToken cancellationToken = default)
+        public async Task<IActionResult> User(string cursor = null,int limit = 10,string direction = "next",string sortBy = "CreatedDate",CancellationToken cancellationToken = default)
         {
             try
             {

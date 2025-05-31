@@ -1,4 +1,5 @@
-﻿using Domain;
+﻿using Common.Utilities;
+using Domain;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.WindowsAzure.Storage;
@@ -15,10 +16,7 @@ namespace Web.Controllers
         private readonly IStorageApi _storageApi;
         private readonly ILogger<ProductController> _logger;
 
-        public ProductController(
-            IStorageApi storageApi,
-            IProductApi productApi,
-            ILogger<ProductController> logger)
+        public ProductController(IStorageApi storageApi,IProductApi productApi,ILogger<ProductController> logger)
         {
             _storageApi = storageApi ?? throw new ArgumentNullException(nameof(storageApi));
             _productApi = productApi ?? throw new ArgumentNullException(nameof(productApi));
@@ -26,12 +24,7 @@ namespace Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Product(
-             string cursor = null,
-             int limit = 10,
-             string direction = "next",
-             string sortBy = "Title",
-             CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Product(string cursor = null,int limit = 10,string direction = "next",string sortBy = "Title",CancellationToken cancellationToken = default)
         {
             try
             {
@@ -71,7 +64,6 @@ namespace Web.Controllers
         }
 
         [HttpGet]
-        
         public async Task<IActionResult> GetProductData(string id, CancellationToken cancellationToken = default)
         {
           
@@ -362,7 +354,7 @@ namespace Web.Controllers
                 else if (!string.IsNullOrEmpty(product.ImageURL))
                 {
                     // New URL provided - validate it
-                    if (await ValidateImageUrl(product.ImageURL))
+                    if (await Validate.ValidateImageUrl(product.ImageURL))
                     {
                         // Delete old image if it's different and is a local upload
                         if (!string.IsNullOrEmpty(existingProduct.ImageURL) &&
@@ -400,7 +392,7 @@ namespace Web.Controllers
             try
             {
                 // Validate file
-                var validationResult = ValidateImageFile(imageFile);
+                var validationResult = Validate.ValidateImageFile(imageFile);
                 if (!validationResult.IsValid)
                 {
                     return (false, null, validationResult.ErrorMessage);
@@ -437,78 +429,6 @@ namespace Web.Controllers
             {
                 _logger.LogError(ex, "Error uploading image file");
                 return (false, null, "Failed to upload image. Please try again.");
-            }
-        }
-
-        /// <summary>
-        /// Validate image file
-        /// </summary>
-        private (bool IsValid, string ErrorMessage) ValidateImageFile(IFormFile imageFile)
-        {
-            if (imageFile == null || imageFile.Length == 0)
-            {
-                return (false, "No image file provided");
-            }
-
-            // Validate file type
-            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp" };
-            var fileExtension = Path.GetExtension(imageFile.FileName).ToLowerInvariant();
-
-            if (!allowedExtensions.Contains(fileExtension))
-            {
-                return (false, "Invalid file type. Only image files are allowed (JPG, PNG, GIF, BMP, WEBP).");
-            }
-
-            // Validate file size (5MB limit)
-            const long maxFileSize = 5 * 1024 * 1024; // 5MB
-            if (imageFile.Length > maxFileSize)
-            {
-                return (false, "File size exceeds 5MB limit.");
-            }
-
-            // Validate content type
-            var allowedContentTypes = new[] {
-                "image/jpeg", "image/jpg", "image/png", "image/gif",
-                "image/bmp", "image/webp"
-            };
-
-            if (!allowedContentTypes.Contains(imageFile.ContentType.ToLowerInvariant()))
-            {
-                return (false, "Invalid content type. Only image files are allowed.");
-            }
-
-            return (true, null);
-        }
-
-        /// <summary>
-        /// Validate image URL
-        /// </summary>
-        private async Task<bool> ValidateImageUrl(string imageUrl)
-        {
-            if (string.IsNullOrEmpty(imageUrl))
-                return false;
-
-            if (!Uri.TryCreate(imageUrl, UriKind.Absolute, out var uri))
-                return false;
-
-            try
-            {
-                using var httpClient = new HttpClient();
-                httpClient.Timeout = TimeSpan.FromSeconds(10);
-
-                using var response = await httpClient.SendAsync(
-                    new HttpRequestMessage(HttpMethod.Head, uri));
-
-                if (!response.IsSuccessStatusCode)
-                    return false;
-
-                var contentType = response.Content.Headers.ContentType?.MediaType;
-                return !string.IsNullOrEmpty(contentType) && contentType.StartsWith("image/");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Error validating image URL: {ImageUrl}", imageUrl);
-                return false;
             }
         }
 
@@ -593,7 +513,7 @@ namespace Web.Controllers
                     return Json(new { success = false, message = "No URL provided" });
                 }
 
-                var isValid = await ValidateImageUrl(request.ImageUrl);
+                var isValid = await Validate.ValidateImageUrl(request.ImageUrl);
 
                 if (isValid)
                 {
@@ -636,7 +556,7 @@ namespace Web.Controllers
                     return Json(new { success = false, message = "No image file provided" });
                 }
 
-                var validationResult = ValidateImageFile(imageFile);
+                var validationResult = Validate.ValidateImageFile(imageFile);
                 if (!validationResult.IsValid)
                 {
                     return Json(new { success = false, message = validationResult.ErrorMessage });

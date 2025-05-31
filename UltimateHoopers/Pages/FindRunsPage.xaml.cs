@@ -1,4 +1,5 @@
-﻿using Domain;
+﻿using Common.Utilities;
+using Domain;
 using Domain.DtoModel;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Shapes;
@@ -690,13 +691,13 @@ namespace UltimateHoopers.Pages
                 if (privateRun.StartTime.HasValue && privateRun.EndTime.HasValue)
                 {
                     // Format TimeSpan to 12-hour format with AM/PM
-                    string startTime = FormatTimeSpanTo12Hour(privateRun.StartTime.Value);
-                    string endTime = FormatTimeSpanTo12Hour(privateRun.EndTime.Value);
+                    string startTime = DateTimeUtilities.FormatTimeSpanTo12Hour(privateRun.StartTime.Value);
+                    string endTime = DateTimeUtilities.FormatTimeSpanTo12Hour(privateRun.EndTime.Value);
                     return $"{startTime} - {endTime}";
                 }
                 else if (privateRun.StartTime.HasValue)
                 {
-                    return FormatTimeSpanTo12Hour(privateRun.StartTime.Value);
+                    return DateTimeUtilities.FormatTimeSpanTo12Hour(privateRun.StartTime.Value);
                 }
                 else
                 {
@@ -710,37 +711,10 @@ namespace UltimateHoopers.Pages
             }
         }
 
-        private string FormatTimeSpanTo12Hour(TimeSpan timeSpan)
-        {
-            try
-            {
-                // Convert TimeSpan to DateTime for easier formatting
-                DateTime dateTime = DateTime.Today.Add(timeSpan);
-
-                // Format to 12-hour time with AM/PM
-                return dateTime.ToString("h:mm tt");
-            }
-            catch (Exception ex)
-            {
-                //LogError("Error formatting TimeSpan to 12-hour format", ex);
-                return timeSpan.ToString(@"hh\:mm");
-            }
-        }
+       
 
         // Alternative: Helper method to convert TimeSpan to 24-hour format string
-        private string FormatTimeSpanTo24Hour(TimeSpan timeSpan)
-        {
-            try
-            {
-                // Format TimeSpan to 24-hour format (HH:mm)
-                return timeSpan.ToString(@"hh\:mm");
-            }
-            catch (Exception ex)
-            {
-               // LogError("Error formatting TimeSpan to 24-hour format", ex);
-                return "Time TBD";
-            }
-        }
+      
         private string GetHostName(Domain.Run privateRun)
         {
             try

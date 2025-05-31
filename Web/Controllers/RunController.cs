@@ -1,4 +1,5 @@
-﻿using Domain;
+﻿using Common.Utilities;
+using Domain;
 using Domain.DtoModel;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
@@ -151,8 +152,8 @@ namespace Web.Controllers
                     runDate = run.RunDate?.ToString("yyyy-MM-dd") ?? "",
 
                     // Safe TimeSpan formatting
-                    startTime = FormatTimeSpan(run.StartTime),
-                    endTime = FormatTimeSpan(run.EndTime),
+                    startTime = DateTimeUtilities.FormatTimeSpanTo12Hour(run.StartTime ?? TimeSpan.Zero),
+                    endTime = DateTimeUtilities.FormatTimeSpanTo12Hour(run.EndTime ?? TimeSpan.Zero),
 
                     // Address fields with defaults
                     address =  "",
@@ -272,23 +273,7 @@ namespace Web.Controllers
             }
         }
 
-        // Enhanced helper method to safely format TimeSpan values
-        private string FormatTimeSpan(TimeSpan? timeSpan)
-        {
-            if (!timeSpan.HasValue)
-                return "";
-
-            try
-            {
-                // Format as HH:mm for HTML time input
-                return timeSpan.Value.ToString(@"hh\:mm");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Error formatting TimeSpan: {TimeSpan}", timeSpan);
-                return "";
-            }
-        }
+       
 
         // Helper method to safely get court ID from run data
         private string GetCourtIdFromRun(dynamic run)
@@ -691,8 +676,8 @@ namespace Web.Controllers
                         runId = refreshedRun.RunId,
                         name = refreshedRun.Name,
                         runDate = refreshedRun.RunDate?.ToString("yyyy-MM-dd"),
-                        startTime = FormatTimeSpan(refreshedRun.StartTime),
-                        endTime = FormatTimeSpan(refreshedRun.EndTime),
+                        startTime = DateTimeUtilities.FormatTimeSpanTo12Hour(refreshedRun.StartTime ?? TimeSpan.Zero),
+                        endTime = DateTimeUtilities.FormatTimeSpanTo12Hour(refreshedRun.EndTime ?? TimeSpan.Zero),
                         playerLimit = refreshedRun.PlayerLimit,
                         playerCount = refreshedRun.PlayerCount,
                         status = refreshedRun.Status,
@@ -708,8 +693,8 @@ namespace Web.Controllers
                         runId = run.RunId,
                         name = run.Name,
                         runDate = run.RunDate?.ToString("yyyy-MM-dd"),
-                        startTime = FormatTimeSpan(run.StartTime),
-                        endTime = FormatTimeSpan(run.EndTime),
+                        startTime = DateTimeUtilities.FormatTimeSpanTo12Hour(run.StartTime ?? TimeSpan.Zero),
+                        endTime = DateTimeUtilities.FormatTimeSpanTo12Hour(run.EndTime ?? TimeSpan.Zero),
                         playerLimit = run.PlayerLimit,
                         playerCount = run.PlayerCount,
                         status = run.Status,

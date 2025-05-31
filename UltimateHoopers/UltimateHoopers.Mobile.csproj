@@ -155,6 +155,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\ApiClient\ApiClient.csproj" />
+		<ProjectReference Include="..\Common\Common.csproj" />
 		<ProjectReference Include="..\Domain\Domain.csproj" />
 	</ItemGroup>
 

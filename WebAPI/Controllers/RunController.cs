@@ -20,11 +20,13 @@ namespace WebAPI.Controllers
         }
 
         /// <summary>
-        /// Get all Runs
+        /// GetRuns
         /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpGet]
         [ProducesResponseType(typeof(IEnumerable<RunViewModelDto>), 200)]
-        public async Task<IActionResult> GetPrivateRuns(CancellationToken cancellationToken)
+        public async Task<IActionResult> GetRuns(CancellationToken cancellationToken)
         {
             try
             {
@@ -41,14 +43,15 @@ namespace WebAPI.Controllers
         }
 
         /// <summary>
-        /// Get PrivateRuns with standard pagination
+        /// Get Runs Paginated
         /// </summary>
+        /// <param name="page"></param>
+        /// <param name="pageSize"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpGet("paginated")]
         [ProducesResponseType(typeof(PaginatedResultDto<RunViewModelDto>), 200)]
-        public async Task<IActionResult> GetPrivateRunsPaginated(
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 20,
-            CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetRunsPaginated([FromQuery] int page = 1,[FromQuery] int pageSize = 20,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -80,12 +83,7 @@ namespace WebAPI.Controllers
         /// </summary>
         [HttpGet("cursor")]
         [ProducesResponseType(typeof(CursorPaginatedResultDto<RunViewModelDto>), 200)]
-        public async Task<IActionResult> GetRunsWithCursor(
-            [FromQuery] string cursor = null,
-            [FromQuery] int limit = 20,
-            [FromQuery] string direction = "next",
-            [FromQuery] string sortBy = "Points",
-            CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetRunsWithCursor([FromQuery] string cursor = null,[FromQuery] int limit = 20,[FromQuery] string direction = "next",[FromQuery] string sortBy = "Points",CancellationToken cancellationToken = default)
         {
             try
             {
@@ -139,8 +137,11 @@ namespace WebAPI.Controllers
         }
 
         /// <summary>
-        /// Get PrivateRun by ID
+        /// Get Run By RunId
         /// </summary>
+        /// <param name="id"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpGet("GetRunById/{id}")]
         [ProducesResponseType(typeof(Run), 200)]
         [ProducesResponseType(404)]
@@ -163,8 +164,11 @@ namespace WebAPI.Controllers
         }
 
         /// <summary>
-        /// Update PrivateRun
+        /// Update Run
         /// </summary>
+        /// <param name="run"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpPut("UpdateRun")]
         //[Authorize]
         [ProducesResponseType(204)]

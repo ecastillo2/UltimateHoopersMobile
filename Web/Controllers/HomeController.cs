@@ -10,9 +10,7 @@ namespace Web.Controllers
         private readonly ILogger<HomeController> _logger;
         private readonly AuthenticationService _authenticationService;
 
-        public HomeController(
-            ILogger<HomeController> logger,
-            AuthenticationService authenticationService)
+        public HomeController(ILogger<HomeController> logger,AuthenticationService authenticationService)
         {
             _logger = logger;
             _authenticationService = authenticationService ?? throw new ArgumentNullException(nameof(authenticationService));

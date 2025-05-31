@@ -9,6 +9,25 @@ namespace Common.Utilities
     /// </summary>
     public static class DateTimeUtilities
     {
+
+
+        public static string FormatTimeSpanTo12Hour(TimeSpan timeSpan)
+        {
+            try
+            {
+                // Convert TimeSpan to DateTime for easier formatting
+                DateTime dateTime = DateTime.Today.Add(timeSpan);
+
+                // Format to 12-hour time with AM/PM
+                return dateTime.ToString("h:mm tt");
+            }
+            catch (Exception ex)
+            {
+                //LogError("Error formatting TimeSpan to 12-hour format", ex);
+                return timeSpan.ToString(@"hh\:mm");
+            }
+        }
+
         /// <summary>
         /// Gets a human-readable string for the relative time between two dates
         /// </summary>

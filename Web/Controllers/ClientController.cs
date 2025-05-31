@@ -18,21 +18,14 @@ namespace Web.Controllers
         private readonly IClientApi _clientApi;
         private readonly ILogger<ClientController> _logger;
 
-        public ClientController(
-            IClientApi clientApi,
-            ILogger<ClientController> logger)
+        public ClientController(IClientApi clientApi,ILogger<ClientController> logger)
         {
             _clientApi = clientApi ?? throw new ArgumentNullException(nameof(clientApi));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         [HttpGet]
-        public async Task<IActionResult> Client(
-            string cursor = null,
-            int limit = 10,
-            string direction = "next",
-            string sortBy = "CreatedDate",
-            CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Client(string cursor = null,int limit = 10,string direction = "next",string sortBy = "CreatedDate",CancellationToken cancellationToken = default)
         {
             try
             {

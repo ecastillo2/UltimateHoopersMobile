@@ -52,10 +52,7 @@ namespace WebAPI.Controllers
         /// </summary>
         [HttpGet("paginated")]
         [ProducesResponseType(typeof(PaginatedResultDto<CourtViewModelDto>), 200)]
-        public async Task<IActionResult> GetCourtsPaginated(
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 20,
-            CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetCourtsPaginated([FromQuery] int page = 1,[FromQuery] int pageSize = 20,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -87,12 +84,7 @@ namespace WebAPI.Controllers
         /// </summary>
         [HttpGet("cursor")]
         [ProducesResponseType(typeof(CursorPaginatedResultDto<CourtViewModelDto>), 200)]
-        public async Task<IActionResult> GetProfilesWithCursor(
-            [FromQuery] string cursor = null,
-            [FromQuery] int limit = 20,
-            [FromQuery] string direction = "next",
-            [FromQuery] string sortBy = "Points",
-            CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetProfilesWithCursor([FromQuery] string cursor = null,[FromQuery] int limit = 20,[FromQuery] string direction = "next",[FromQuery] string sortBy = "Points",CancellationToken cancellationToken = default)
         {
             try
             {
