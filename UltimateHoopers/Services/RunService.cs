@@ -201,29 +201,32 @@ namespace UltimateHoopers.Services
                                     SkillLevel = item.SkillLevel,
                                     PlayerLimit = item.PlayerLimit,
                                     Name = item.Name,
-                                    ImageUrl = item.Court.ImageURL,
+                                    // Fix: Add null check for Court object
+                                    ImageUrl = item.Court?.ImageURL ?? "default_court_image.png",
                                     Court = item.Court,
-                                    JoinedRunList = item.JoinedRunProfileList,
+                                    // Fix: Add null check for JoinedRunProfileList
+                                    JoinedRunList = item.JoinedRunProfileList ?? new List<Profile>(),
                                     RunDate = item.RunDate,
                                     UserName = "test",
-                                    StartTime =   item.StartTime,
+                                    StartTime = item.StartTime,
                                     EndTime = item.EndTime,
-                                    PlayerCount = item.JoinedRunProfileList != null ? item.JoinedRunProfileList.Count : 0
-
+                                    // Fix: Add null check for JoinedRunProfileList before accessing Count
+                                    PlayerCount = item.JoinedRunProfileList?.Count ?? 0
                                 };
 
-                                // Fix URLs by ensuring they have a protocol
-                                //privateRun.PostFileURL = FixUrl(privateRun.PostFileURL);
-                                //privateRun.ThumbnailUrl = FixUrl(privateRun.ThumbnailUrl);
-                                //privateRun.ProfileImageURL = FixUrl(privateRun.ProfileImageURL);
+                                // Optional: Fix URLs by ensuring they have a protocol
+                                if (!string.IsNullOrEmpty(runs.ImageUrl))
+                                {
+                                    runs.ImageUrl = FixUrl(runs.ImageUrl);
+                                }
 
                                 run.Add(runs);
-                                //LogInfo($"Added PrivateRun: {privateRun.PrivateRunId}, URL: {privateRun.PostFileURL}, Type: {post.PostType}");
+                                LogInfo($"Added Run: {runs.RunId}, Name: {runs.Name}, PlayerCount: {runs.PlayerCount}");
                             }
                             catch (Exception ex)
                             {
-                                LogError($"Error mapping post {item.RunId}", ex);
-                                // Continue with the next post instead of failing the entire process
+                                LogError($"Error mapping run {item?.RunId ?? "unknown"}", ex);
+                                // Continue with the next item instead of failing the entire process
                             }
                         }
 

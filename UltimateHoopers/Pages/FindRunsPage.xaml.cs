@@ -610,15 +610,38 @@ namespace UltimateHoopers.Pages
 
         private RunDto ConvertRunToRun(Domain.Run privateRun)
         {
+            // Helper method to safely build address string
+            string BuildAddress(Domain.Run run)
+            {
+                if (run?.Court == null)
+                    return "Location TBD";
+
+                var addressParts = new List<string>();
+
+                if (!string.IsNullOrWhiteSpace(run.Court.Address))
+                    addressParts.Add(run.Court.Address);
+                if (!string.IsNullOrWhiteSpace(run.Court.City))
+                    addressParts.Add(run.Court.City);
+                if (!string.IsNullOrWhiteSpace(run.Court.State))
+                    addressParts.Add(run.Court.State);
+                if (!string.IsNullOrWhiteSpace(run.Court.Zip))
+                    addressParts.Add(run.Court.Zip);
+
+                return addressParts.Count > 0 ? string.Join(", ", addressParts) : "Location TBD";
+            }
+
             var run = new RunDto
             {
                 Id = privateRun.RunId ?? Guid.NewGuid().ToString(),
                 Name = privateRun.Name ?? "Basketball Run",
                 Location = privateRun.Name ?? "Court",
-                Address = $"{privateRun.Court.Address ?? ""}, {privateRun.Court.City ?? ""}, {privateRun.Court.State ?? ""}, {privateRun.Court.Zip ?? ""}".Trim(',', ' '),
+
+                // Fix: Use helper method to safely build address
+                Address = BuildAddress(privateRun),
+
                 Date = privateRun.RunDate ?? DateTime.Now.AddDays(1),
-                Time = "test",
-                HostName = "Host",
+                Time = FormatRunTime(privateRun), // Helper method for time formatting
+                HostName = GetHostName(privateRun), // Helper method to get host name
                 HostId = privateRun.ProfileId ?? "",
                 SkillLevel = privateRun.SkillLevel ?? "All Levels",
                 GameType = privateRun.TeamType ?? "5-on-5",
@@ -626,10 +649,13 @@ namespace UltimateHoopers.Pages
                 Description = privateRun.Description ?? "Come play basketball!",
                 PlayerLimit = privateRun.PlayerLimit ?? 10,
                 CurrentPlayerCount = privateRun.JoinedRunList?.Count ?? 0,
-                CourtImageUrl = privateRun.ImageUrl ?? "",
+
+                // Fix: Add null check for ImageUrl
+                CourtImageUrl = privateRun.ImageUrl ?? privateRun.Court?.ImageURL ?? "",
+
                 Cost = privateRun.Cost ?? 0,
                 Distance = Math.Round(new Random().NextDouble() * 5 + 0.5, 1),
-                
+
                 Players = new ObservableCollection<Player>()
             };
 
@@ -638,21 +664,103 @@ namespace UltimateHoopers.Pages
             {
                 foreach (var joinedRun in privateRun.JoinedRunList)
                 {
-                    run.Players.Add(new Player
+                    if (joinedRun != null) // Add null check for individual joined runs
                     {
-                        Id = joinedRun.ProfileId ?? Guid.NewGuid().ToString(),
-                        Name = joinedRun.UserName ?? "Player",
-                        Username = "@" + (joinedRun.UserName?.ToLower().Replace(" ", "") ?? "player"),
-                        ProfileImageUrl = joinedRun.ImageURL ?? "",
-                        IsHost = joinedRun.ProfileId == privateRun.ProfileId,
-                        HasJoined = true
-                    });
+                        run.Players.Add(new Player
+                        {
+                            Id = joinedRun.ProfileId ?? Guid.NewGuid().ToString(),
+                            Name = joinedRun.UserName ?? "Player",
+                            Username = "@" + (joinedRun.UserName?.ToLower().Replace(" ", "") ?? "player"),
+                            ProfileImageUrl = joinedRun.ImageURL ?? "",
+                            IsHost = joinedRun.ProfileId == privateRun.ProfileId,
+                            HasJoined = true
+                        });
+                    }
                 }
             }
 
             return run;
         }
 
+        // Helper method to format run time
+        private string FormatRunTime(Domain.Run privateRun)
+        {
+            try
+            {
+                if (privateRun.StartTime.HasValue && privateRun.EndTime.HasValue)
+                {
+                    // Format TimeSpan to 12-hour format with AM/PM
+                    string startTime = FormatTimeSpanTo12Hour(privateRun.StartTime.Value);
+                    string endTime = FormatTimeSpanTo12Hour(privateRun.EndTime.Value);
+                    return $"{startTime} - {endTime}";
+                }
+                else if (privateRun.StartTime.HasValue)
+                {
+                    return FormatTimeSpanTo12Hour(privateRun.StartTime.Value);
+                }
+                else
+                {
+                    return "Time TBD";
+                }
+            }
+            catch (Exception ex)
+            {
+                //LogError("Error formatting run time", ex);
+                return "Time TBD";
+            }
+        }
+
+        private string FormatTimeSpanTo12Hour(TimeSpan timeSpan)
+        {
+            try
+            {
+                // Convert TimeSpan to DateTime for easier formatting
+                DateTime dateTime = DateTime.Today.Add(timeSpan);
+
+                // Format to 12-hour time with AM/PM
+                return dateTime.ToString("h:mm tt");
+            }
+            catch (Exception ex)
+            {
+                //LogError("Error formatting TimeSpan to 12-hour format", ex);
+                return timeSpan.ToString(@"hh\:mm");
+            }
+        }
+
+        // Alternative: Helper method to convert TimeSpan to 24-hour format string
+        private string FormatTimeSpanTo24Hour(TimeSpan timeSpan)
+        {
+            try
+            {
+                // Format TimeSpan to 24-hour format (HH:mm)
+                return timeSpan.ToString(@"hh\:mm");
+            }
+            catch (Exception ex)
+            {
+               // LogError("Error formatting TimeSpan to 24-hour format", ex);
+                return "Time TBD";
+            }
+        }
+        private string GetHostName(Domain.Run privateRun)
+        {
+            try
+            {
+                // Try to get host name from various sources
+                if (!string.IsNullOrWhiteSpace(privateRun.UserName))
+                    return privateRun.UserName;
+
+                // You could also look up the host by ProfileId if you have access to a user service
+                // var host = await _userService.GetUserByProfileIdAsync(privateRun.ProfileId);
+                // return host?.UserName ?? "Host";
+
+                return "Host";
+            }
+            catch (Exception ex)
+            {
+                //LogError("Error getting host name", ex);
+                return "Host";
+            }
+        }
         private void LoadMockRuns()
         {
             Debug.WriteLine("=== LoadMockRuns Start ===");
