@@ -48,14 +48,13 @@ namespace Web.Controllers
 
             var counts = await _reportApi.StreamAllCountsAsync(accessToken, cancellationToken);
             var postList = await _postApi.GetPostsAsync("News",accessToken, cancellationToken);
-            var eventPosts = postList?.Where(p => p.PostType?.Equals("News", StringComparison.OrdinalIgnoreCase) == true)
-                                    .Take(4)
-                                    .ToList() ?? new List<Post>();            //var runList = await _runApi.GetRunsAsync(accessToken, cancellationToken);
+            var eventPosts = postList?.Where(p => p.PostType?.Equals("News", StringComparison.OrdinalIgnoreCase) == true).Take(4).ToList() ?? new List<Post>();
+            var runList = await _runApi.GetRunsWithCursorAsync(null, 6, "", "", accessToken, cancellationToken);
 
             var viewModel = new ReportViewModel
             {
                 reportDto = counts,
-                //RuntList = runList,
+                RunLists = runList,
                 EventList = eventPosts,
             };
 

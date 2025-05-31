@@ -10,7 +10,7 @@ namespace Website.ViewModels
     {
         // Report configuration
         public List<string> AvailableReportTypes { get; set; } = new List<string>();
-
+        public CursorPaginatedResultDto<RunDetailViewModelDto> RunLists { get; set; }
         public ReportDto? reportDto { get; set; }
         public IList<Run> RuntList { get; set; }
         public IList<Post> EventList { get; set; }

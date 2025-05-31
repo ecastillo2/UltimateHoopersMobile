@@ -1,5 +1,6 @@
 ﻿@model Website.ViewModels.ReportViewModel
-
+@inject IHttpContextAccessor HttpContextAccessor
+@inject Website.Services.AuthenticationService AuthService
 @{
     ViewData["Title"] = ViewData["UserType"] + " Dashboard";
     var userType = ViewData["UserType"]?.ToString() ?? "User";
@@ -141,8 +142,8 @@
                         <span class="fw-bold">@(userType.Substring(0, 1))</span>
                     </div>
                     <div>
-                        <h5 class="mb-0">@(isClient ? "John Client" : "Sarah Admin")</h5>
-                        <small class="text-muted">@(isClient ? "Basketball Player" : "Platform Administrator")</small>
+                        <h5 class="mb-0">@HttpContextAccessor.HttpContext.Session.GetString("UserName")</h5>
+                        <small class="text-muted">@(isClient ? "Client" : "Administrator")</small>
                     </div>
                 </div>
 
@@ -412,9 +413,9 @@
                                 <a href="#" class="text-navy text-decoration-none">View All</a>
                             </div>
                             <div class="card-body">
-                                @if (Model?.RuntList != null && Model.RuntList.Any())
+                                @if (Model?.RunLists.Items != null && Model.RunLists.Items .Any())
                                 {
-                                    @foreach (var item in Model.RuntList)
+                                    @foreach (var item in Model.RunLists.Items )
                                     {
                                         <div class="coach-item">
                                             <div class="coach-avatar">JP</div>
@@ -422,7 +423,7 @@
                                                 <h6 class="mb-0">@item.Name</h6>
                                                 <p class="text-muted small mb-0">@item.RunDate</p>
                                             </div>
-                                            <a href="#" class="btn btn-sm btn-outline-navy">View Run</a>
+                                            @* <a href="#" class="btn btn-sm btn-outline-navy">View Run</a> *@
                                         </div>
 
                                     }
@@ -445,7 +446,7 @@
                                                 <h6 class="mb-0">@item.Title</h6>
                                                 <span class="badge bg-navy">Today</span>
                                             </div>
-                                            <p class="text-muted small mb-0">@item.Title/p>
+                                            <p class="text-muted small mb-0">@item.Title</p>
                                            @*  <p class="text-muted small mb-0">5 players confirmed</p> *@
                                         </div>
 
