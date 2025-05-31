@@ -1,15 +1,25 @@
 /**
- * User Management JavaScript - Updated to use UIUtils
- * 
- * This file focuses on fixing the "TypeError: document.getElementById(...) is null" errors
- * by ensuring all DOM element references are properly checked before use.
+ * User Management JavaScript - Complete Fixed Version
  */
 
 document.addEventListener('DOMContentLoaded', function () {
+    console.log('Initializing User Management');
+
     // Initialize DataTable if the table exists
     const usersTable = $('#usersTable');
     if (usersTable.length > 0) {
-        usersTable.DataTable({
+        initializeUsersTable();
+    }
+
+    // Initialize modals and event handlers
+    initializeModalHandlers();
+    initializeFormHandlers();
+
+    console.log('User Management initialized successfully');
+
+    // ========== TABLE INITIALIZATION ==========
+    function initializeUsersTable() {
+        const table = usersTable.DataTable({
             responsive: true,
             lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
             dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip',
@@ -23,38 +33,39 @@ document.addEventListener('DOMContentLoaded', function () {
             },
             columnDefs: [
                 { className: "align-middle", targets: "_all" },
-                { orderable: false, targets: [4] } // Disable sorting on the Actions column
+                { orderable: false, targets: [4] }
             ],
-            order: [[1, 'desc']] // Sort by Sign Up Date column by default (newest first)
+            order: [[1, 'desc']]
         });
 
-        // Filter references - only initialize if elements exist
+        // Initialize filters
+        initializeTableFilters(table);
+    }
+
+    // ========== TABLE FILTERS ==========
+    function initializeTableFilters(table) {
         const statusFilter = $('#statusFilter');
         const roleFilter = $('#roleFilter');
         const signupDateFilter = $('#signupDateFilter');
         const resetFiltersBtn = $('#resetFilters');
         const activeFiltersContainer = $('#activeFilters');
 
-        if (statusFilter.length && roleFilter.length && signupDateFilter.length) {
-            setupFilters(usersTable.DataTable(), statusFilter, roleFilter, signupDateFilter, resetFiltersBtn, activeFiltersContainer);
+        if (!statusFilter.length || !roleFilter.length || !signupDateFilter.length) {
+            console.warn('Filter elements not found');
+            return;
         }
-    }
 
-    // Function to set up filters
-    function setupFilters(table, statusFilter, roleFilter, signupDateFilter, resetFiltersBtn, activeFiltersContainer) {
-        // Apply filter function
         function applyFilters() {
-            // Remove any existing custom filter to prevent stacking
-            if ($.fn.dataTable.ext.search.length > 0) {
-                $.fn.dataTable.ext.search.pop();
-            }
+            // Remove existing custom filters
+            $.fn.dataTable.ext.search = $.fn.dataTable.ext.search.filter(fn =>
+                !fn.name || fn.name !== 'userTableFilter'
+            );
 
-            // Create a new custom filter function
-            $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
-                // Only apply this filter to our usersTable
+            // Add new filter
+            const customFilter = function (settings, data, dataIndex) {
                 if (settings.nTable.id !== 'usersTable') return true;
 
-                // Skip filtering if all filters are set to 'all'
+                // Skip if all filters are 'all'
                 if (statusFilter.val() === 'all' &&
                     roleFilter.val() === 'all' &&
                     signupDateFilter.val() === 'all') {
@@ -63,165 +74,129 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 const row = $(table.row(dataIndex).node());
 
-                // Status filtering (column 2 contains the status badge)
+                // Status filtering
                 if (statusFilter.val() !== 'all') {
                     const status = data[2].toLowerCase();
-                    const statusValue = statusFilter.val().toLowerCase();
-
-                    if (!status.includes(statusValue)) {
+                    if (!status.includes(statusFilter.val().toLowerCase())) {
                         return false;
                     }
                 }
 
-                // Role filtering (column 3 contains the role)
+                // Role filtering
                 if (roleFilter.val() !== 'all') {
-                    const role = row.data('role') || data[3].toLowerCase();
-                    const roleValue = roleFilter.val().toLowerCase();
-
-                    if (role !== roleValue) {
+                    const role = (row.data('role') || data[3]).toLowerCase();
+                    if (role !== roleFilter.val().toLowerCase()) {
                         return false;
                     }
                 }
 
-                // Signup date filtering (column 1 contains the date)
+                // Date filtering
                 if (signupDateFilter.val() !== 'all') {
-                    const dateString = row.data('date') || data[1];
-                    let date;
-
-                    try {
-                        // Try to parse the date from the data attribute first
-                        date = new Date(dateString);
-                        if (isNaN(date.getTime())) {
-                            // If invalid, try to parse from the displayed date format (MM/dd/yyyy)
-                            const parts = data[1].split('/');
-                            if (parts.length === 3) {
-                                date = new Date(parts[2], parts[0] - 1, parts[1]);
-                            } else {
-                                return false; // Invalid date format
-                            }
-                        }
-                    } catch (e) {
-                        console.error("Error parsing date:", e);
+                    if (!filterByDate(row, data[1], signupDateFilter.val())) {
                         return false;
-                    }
-
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0); // Set to start of today
-
-                    const startOfWeek = new Date(today);
-                    startOfWeek.setDate(today.getDate() - today.getDay()); // Sunday
-
-                    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-                    const startOfYear = new Date(today.getFullYear(), 0, 1);
-
-                    switch (signupDateFilter.val()) {
-                        case 'today':
-                            if (date < today || date >= new Date(today.getTime() + 86400000)) {
-                                return false;
-                            }
-                            break;
-                        case 'this-week':
-                            if (date < startOfWeek) {
-                                return false;
-                            }
-                            break;
-                        case 'this-month':
-                            if (date < startOfMonth) {
-                                return false;
-                            }
-                            break;
-                        case 'this-year':
-                            if (date < startOfYear) {
-                                return false;
-                            }
-                            break;
                     }
                 }
 
-                // If we got here, the row passes all filters
                 return true;
-            });
+            };
 
-            // Redraw the table to apply filters
+            customFilter.name = 'userTableFilter';
+            $.fn.dataTable.ext.search.push(customFilter);
             table.draw();
-
-            // Update the active filters display
             updateActiveFilters();
         }
 
-        // Update the active filters display
+        function filterByDate(row, dateText, filterValue) {
+            try {
+                const dateString = row.data('date') || dateText;
+                let date = new Date(dateString);
+
+                if (isNaN(date.getTime())) {
+                    const parts = dateText.split('/');
+                    if (parts.length === 3) {
+                        date = new Date(parts[2], parts[0] - 1, parts[1]);
+                    } else {
+                        return false;
+                    }
+                }
+
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                switch (filterValue) {
+                    case 'today':
+                        return date.toDateString() === today.toDateString();
+                    case 'this-week':
+                        const startOfWeek = new Date(today);
+                        startOfWeek.setDate(today.getDate() - today.getDay());
+                        return date >= startOfWeek;
+                    case 'this-month':
+                        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                        return date >= startOfMonth;
+                    case 'this-year':
+                        const startOfYear = new Date(today.getFullYear(), 0, 1);
+                        return date >= startOfYear;
+                    default:
+                        return true;
+                }
+            } catch (e) {
+                console.error("Date filtering error:", e);
+                return false;
+            }
+        }
+
         function updateActiveFilters() {
             if (!activeFiltersContainer.length) return;
 
-            // Clear the current active filters display (except the label)
             activeFiltersContainer.find('.filter-badge, .filter-none').remove();
 
-            // Check if any filters are active
-            const hasActiveFilters =
-                statusFilter.val() !== 'all' ||
+            const hasActiveFilters = statusFilter.val() !== 'all' ||
                 roleFilter.val() !== 'all' ||
                 signupDateFilter.val() !== 'all';
 
-            // If no filters are active, show "None"
             if (!hasActiveFilters) {
-                activeFiltersContainer.append(
-                    $('<span>').addClass('text-muted filter-none').text('None')
-                );
+                activeFiltersContainer.append($('<span>').addClass('text-muted filter-none').text('None'));
                 return;
             }
 
-            // Add badges for active filters
             if (statusFilter.val() !== 'all') {
-                addFilterBadge('Status', formatFilterValue(statusFilter.val()), function () {
+                addFilterBadge('Status', formatFilterValue(statusFilter.val()), () => {
                     statusFilter.val('all');
                     applyFilters();
                 });
             }
 
             if (roleFilter.val() !== 'all') {
-                addFilterBadge('Role', formatFilterValue(roleFilter.val()), function () {
+                addFilterBadge('Role', formatFilterValue(roleFilter.val()), () => {
                     roleFilter.val('all');
                     applyFilters();
                 });
             }
 
             if (signupDateFilter.val() !== 'all') {
-                addFilterBadge('Signup Date', formatFilterValue(signupDateFilter.val()), function () {
+                addFilterBadge('Signup Date', formatFilterValue(signupDateFilter.val()), () => {
                     signupDateFilter.val('all');
                     applyFilters();
                 });
             }
         }
 
-        // Helper function to format filter values for display
-        function formatFilterValue(value) {
-            return value
-                .split('-')
-                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(' ');
-        }
-
-        // Add a filter badge to the display
         function addFilterBadge(label, value, removeCallback) {
-            const badge = $('<span>')
-                .addClass('badge bg-primary me-2 filter-badge')
-                .text(`${label}: ${value}`);
-
-            const removeBtn = $('<button>')
-                .addClass('btn-close btn-close-white ms-1')
-                .css('font-size', '0.5rem')
-                .on('click', removeCallback);
-
+            const badge = $('<span>').addClass('badge bg-primary me-2 filter-badge').text(label + ': ' + value);
+            const removeBtn = $('<button>').addClass('btn-close btn-close-white ms-1').css('font-size', '0.5rem').on('click', removeCallback);
             badge.append(removeBtn);
             activeFiltersContainer.append(badge);
         }
 
-        // Add event listeners to filters
+        function formatFilterValue(value) {
+            return value.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        }
+
+        // Event listeners
         statusFilter.on('change', applyFilters);
         roleFilter.on('change', applyFilters);
         signupDateFilter.on('change', applyFilters);
 
-        // Reset filters button
         if (resetFiltersBtn.length) {
             resetFiltersBtn.on('click', function () {
                 statusFilter.val('all');
@@ -231,142 +206,411 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
-        // Initialize with current filter values
         applyFilters();
     }
 
-    // Handle edit user modal
-    const editUserModal = document.getElementById('editUserModal');
-    if (editUserModal) {
-        editUserModal.addEventListener('show.bs.modal', function (event) {
-            const button = event.relatedTarget;
-            const userId = button.getAttribute('data-user-id');
+    // ========== MODAL HANDLERS ==========
+    function initializeModalHandlers() {
+        const editUserModal = document.getElementById('editUserModal');
+        if (editUserModal) {
+            editUserModal.addEventListener('show.bs.modal', handleEditModalShow);
+        }
 
-            // Set user ID in the user details form - check if elements exist
-            const editUserIdField = document.getElementById('editUserId');
-            if (editUserIdField) {
-                editUserIdField.value = userId;
-            }
-
-            // Set user ID in the scouting report form - check if element exists
-            const scoutingUserIdField = document.getElementById('scoutingUserId');
-            if (scoutingUserIdField) {
-                scoutingUserIdField.value = userId;
-            }
-
-            // Load user data
-            loadUserData(userId);
-
-            // Load profile data for the new profile tab
-            loadProfileData(userId);
-
-            // Load scouting report data
-            loadScoutingReport(userId);
-
-            // Set delete button user ID - check if element exists
-            const deleteUserIdField = document.getElementById('deleteUserId');
-            if (deleteUserIdField) {
-                deleteUserIdField.value = userId;
-            }
-        });
+        const deleteUserBtn = document.getElementById('deleteUserBtn');
+        if (deleteUserBtn) {
+            deleteUserBtn.addEventListener('click', handleDeleteUser);
+        }
     }
 
-    // Set up skill rating sliders
-    const skillSliders = document.querySelectorAll('.form-range');
-    skillSliders.forEach(slider => {
-        slider.addEventListener('input', function () {
-            const valueDisplay = document.getElementById(`${this.id}Value`);
-            if (valueDisplay) {
-                valueDisplay.textContent = this.value;
-            }
-        });
-    });
+    function handleEditModalShow(event) {
+        const button = event.relatedTarget;
+        const userId = button.getAttribute('data-user-id');
 
-    // Handle delete user button
-    const deleteUserBtn = document.getElementById('deleteUserBtn');
-    if (deleteUserBtn) {
-        deleteUserBtn.addEventListener('click', function () {
-            const userId = document.getElementById('editUserId')?.value;
-            if (!userId) return;
+        // Set user IDs in forms
+        safeSetValue('editUserId', userId);
+        safeSetValue('scoutingUserId', userId);
+        safeSetValue('deleteUserId', userId);
 
-            const deleteUserIdField = document.getElementById('deleteUserId');
-            if (deleteUserIdField) {
-                deleteUserIdField.value = userId;
-            }
-
-            // Hide edit modal and show delete confirmation modal
-            const editModal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
-            if (editModal) {
-                editModal.hide();
-            }
-
-            const deleteModalEl = document.getElementById('deleteUserModal');
-            if (deleteModalEl) {
-                const deleteModal = new bootstrap.Modal(deleteModalEl);
-                deleteModal.show();
-            }
-        });
+        // Load data
+        loadUserData(userId);
+        loadProfileData(userId);
+        loadScoutingReport(userId);
     }
 
-    // Function to load user data
+    function handleDeleteUser() {
+        const userId = safeGetValue('editUserId');
+        if (!userId) return;
+
+        safeSetValue('deleteUserId', userId);
+
+        const editModal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
+        if (editModal) editModal.hide();
+
+        const deleteModalEl = document.getElementById('deleteUserModal');
+        if (deleteModalEl) {
+            const deleteModal = new bootstrap.Modal(deleteModalEl);
+            deleteModal.show();
+        }
+    }
+
+    // ========== FORM HANDLERS ==========
+    function initializeFormHandlers() {
+        // Skill rating sliders
+        document.querySelectorAll('.form-range').forEach(slider => {
+            slider.addEventListener('input', function () {
+                const valueDisplay = document.getElementById(this.id + 'Value');
+                if (valueDisplay) {
+                    valueDisplay.textContent = this.value;
+                }
+            });
+        });
+
+        // Scouting form submission
+        const scoutingForm = document.getElementById('editScoutingForm');
+        if (scoutingForm) {
+            scoutingForm.addEventListener('submit', handleScoutingFormSubmit);
+        }
+    }
+
+    function handleScoutingFormSubmit(e) {
+        e.preventDefault();
+
+        const formData = new FormData(e.target);
+        const scoutingData = {};
+
+        for (const [key, value] of formData.entries()) {
+            if (['Shooting', 'BallHandling', 'Passing', 'Defense', 'Rebounding', 'Athleticism'].includes(key)) {
+                scoutingData[key] = parseInt(value);
+            } else {
+                scoutingData[key] = value;
+            }
+        }
+
+        submitScoutingReport(scoutingData);
+    }
+
+    // ========== DATA LOADING FUNCTIONS ==========
     function loadUserData(userId) {
         if (!userId || !window.appUrls?.getUserData) {
             console.error("Missing userId or API URL for loadUserData");
             return;
         }
 
-        const url = `${window.appUrls.getUserData}?id=${userId}`;
-
-        fetch(url)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
+        fetch(window.appUrls.getUserData + '?id=' + userId)
+            .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Populate form fields - check if each element exists before setting values
-                    safeSetValue('editFirstName', data.user.firstName);
-                    safeSetValue('editLastName', data.user.lastName);
-                    safeSetValue('editEmail', data.user.email);
-                    safeSetValue('editPhoneNumber', data.user.phoneNumber);
-                    safeSetValue('editAddress', data.user.address);
-                    safeSetValue('editCity', data.user.city);
-                    safeSetValue('editState', data.user.state);
-                    safeSetValue('editZip', data.user.zip);
-                    safeSetValue('editUserName', data.user.userName);
-
-                    // Select values - check if elements exist
-                    safeSetSelect('editUserRole', data.user.accessLevel);
-                    safeSetSelect('editUserStatus', data.user.status || 'Active');
-
-                    // Additional fields
-                    safeSetValue('editNotes', data.user.notes);
+                    populateUserForm(data.user);
                 } else {
-                    console.error('Error loading user data:', data.message);
-                    UIUtils.showError('Failed to load user data. Please try again.', 'Error');
-
-                    // Fallback to using row data when API fails
-                    const row = findUserRowById(userId);
-                    if (row) {
-                        populateUserFormFromRow(row);
-                    }
+                    showError('Failed to load user data: ' + (data.message || 'Unknown error'));
+                    fallbackToRowData(userId);
                 }
             })
             .catch(error => {
                 console.error('Error fetching user data:', error);
-                UIUtils.showError('Failed to load user data. Please try again.', 'Error');
-
-                // Fallback to using row data when API fails
-                const row = findUserRowById(userId);
-                if (row) {
-                    populateUserFormFromRow(row);
-                }
+                showError('Failed to load user data');
+                fallbackToRowData(userId);
             });
     }
 
-    // Helper function to safely set input value if element exists
+    function populateUserForm(user) {
+        safeSetValue('editFirstName', user.firstName);
+        safeSetValue('editLastName', user.lastName);
+        safeSetValue('editEmail', user.email);
+        safeSetValue('editPhoneNumber', user.phoneNumber);
+        safeSetValue('editAddress', user.address);
+        safeSetValue('editCity', user.city);
+        safeSetValue('editState', user.state);
+        safeSetValue('editZip', user.zip);
+        safeSetValue('editUserName', user.userName);
+        safeSetValue('editNotes', user.notes);
+
+        safeSetSelect('editUserRole', user.accessLevel);
+        safeSetSelect('editUserStatus', user.status || 'Active');
+    }
+
+    function fallbackToRowData(userId) {
+        const row = findUserRowById(userId);
+        if (row) {
+            populateUserFormFromRow(row);
+        }
+    }
+
+    function populateUserFormFromRow(row) {
+        if (!row) return;
+
+        const userInfo = row.querySelector('.d-flex.align-items-center');
+        if (!userInfo) return;
+
+        const fullNameEl = userInfo.querySelector('.text-muted.small');
+        if (fullNameEl && fullNameEl.textContent) {
+            const fullName = fullNameEl.textContent.trim().split(' ');
+            safeSetValue('editFirstName', fullName[0] || '');
+            safeSetValue('editLastName', fullName.slice(1).join(' ') || '');
+        }
+
+        if (row.cells && row.cells.length > 3) {
+            const role = row.cells[3].textContent.trim();
+            safeSetSelect('editUserRole', role);
+        }
+
+        if (row.cells && row.cells.length > 2) {
+            const statusBadge = row.cells[2].querySelector('.badge');
+            const status = statusBadge ? statusBadge.textContent.trim() : 'Active';
+            safeSetSelect('editUserStatus', status);
+        }
+    }
+
+    function findUserRowById(userId) {
+        if (!userId) return null;
+
+        const table = $('#usersTable').DataTable();
+        if (!table) return null;
+
+        const rows = table.rows().nodes();
+        for (let i = 0; i < rows.length; i++) {
+            const editButton = rows[i].querySelector('[data-user-id="' + userId + '"]');
+            if (editButton) {
+                return rows[i];
+            }
+        }
+        return null;
+    }
+
+    function loadProfileData(userId) {
+        if (!userId || !window.appUrls?.getUserProfileData) {
+            console.log("Missing userId or API URL for loadProfileData");
+            updateProfileUI(createFallbackProfile());
+            return;
+        }
+
+        fetch(window.appUrls.getUserProfileData + '?id=' + userId)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateProfileUI(data.profile);
+                    loadProfileTimeline(userId);
+                } else {
+                    console.error('Error loading profile data:', data.message);
+                    updateProfileUI(createFallbackProfile());
+                    showPlaceholderTimeline();
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching profile data:', error);
+                updateProfileUI(createFallbackProfile());
+                showPlaceholderTimeline();
+            });
+    }
+
+    function createFallbackProfile() {
+        const firstName = safeGetValue('editFirstName') || 'User';
+        const lastName = safeGetValue('editLastName') || '';
+        const fullName = (firstName + ' ' + lastName).trim();
+
+        return {
+            userName: fullName,
+            position: 'Not specified',
+            ranking: '#--',
+            starRating: '--',
+            profileImage: null,
+            playerNumber: '#--',
+            zip: '--',
+            height: '--',
+            status: 'Active',
+            record: '--',
+            followersCount: '0',
+            followingsCount: '0',
+            city: '--',
+            stats: { runsJoined: 0, runsHosted: 0, achievements: 0 }
+        };
+    }
+
+    function updateProfileUI(profile) {
+        const initials = getInitials(profile.userName);
+        safeUpdateElement('profileInitials', initials);
+        safeUpdateElement('profileUserName', profile.userName);
+        safeUpdateElement('profileNumber', profile.playerNumber);
+        safeUpdateElement('profileStatus', profile.status);
+        safeUpdateElement('profileMembership', 'Active Member');
+        safeUpdateElement('profileHeight', profile.height);
+        safeUpdateElement('profilePosition', profile.position);
+        safeUpdateElement('profileRanking', profile.ranking);
+        safeUpdateElement('profileStarRating', profile.starRating);
+        safeUpdateElement('profileRecord', profile.record);
+        safeUpdateElement('profileFollowersCount', profile.followersCount);
+        safeUpdateElement('profileFollowingsCount', profile.followingsCount);
+        safeUpdateElement('profileZip', profile.zip);
+
+        if (profile.stats) {
+            safeUpdateElement('profileRunsJoined', profile.stats.runsJoined);
+            safeUpdateElement('profileRunsHosted', profile.stats.runsHosted);
+            safeUpdateElement('profileAchievements', profile.stats.achievements);
+        }
+    }
+
+    function loadProfileTimeline(userId) {
+        if (!userId || !window.appUrls?.getUserActivity) {
+            showPlaceholderTimeline();
+            return;
+        }
+
+        fetch(window.appUrls.getUserActivity + '?id=' + userId)
+            .then(response => response.json())
+            .then(data => {
+                displayProfileTimeline(data.activities || []);
+            })
+            .catch(error => {
+                console.error('Error loading profile timeline:', error);
+                showPlaceholderTimeline();
+            });
+    }
+
+    function showPlaceholderTimeline() {
+        const timelineContainer = document.getElementById('profileTimeline');
+        if (timelineContainer) {
+            timelineContainer.innerHTML = '<div class="text-center py-4"><p class="text-muted mb-0">No activity data available.</p></div>';
+        }
+    }
+
+    function displayProfileTimeline(activities) {
+        const timelineContainer = document.getElementById('profileTimeline');
+        if (!timelineContainer) return;
+
+        if (!activities || activities.length === 0) {
+            showPlaceholderTimeline();
+            return;
+        }
+
+        let html = '';
+        activities.forEach((activity, index) => {
+            const iconClass = getActivityIcon(activity.type);
+            const timeAgo = formatTimeAgo(activity.timestamp);
+
+            html += '<div class="timeline-item mb-3">';
+            html += '<div class="d-flex">';
+            html += '<div class="timeline-icon bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px; flex-shrink: 0;">';
+            html += '<i class="bi ' + iconClass + ' small"></i>';
+            html += '</div>';
+            html += '<div class="timeline-content flex-grow-1">';
+            html += '<h6 class="mb-1">' + (activity.title || 'Activity') + '</h6>';
+            html += '<p class="text-muted small mb-1">' + (activity.description || 'No description') + '</p>';
+            html += '<small class="text-muted">' + timeAgo + '</small>';
+            html += '</div>';
+            html += '</div>';
+            html += '</div>';
+        });
+
+        timelineContainer.innerHTML = html;
+    }
+
+    function loadScoutingReport(userId) {
+        if (!userId || !window.appUrls?.getScoutingReport) {
+            populateScoutingReport({});
+            return;
+        }
+
+        fetch(window.appUrls.getScoutingReport + '?id=' + userId)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    populateScoutingReport(data.scoutingReport);
+                } else {
+                    populateScoutingReport({});
+                }
+            })
+            .catch(error => {
+                console.error('Error loading scouting report:', error);
+                populateScoutingReport({});
+            });
+    }
+
+    function populateScoutingReport(report) {
+        safeSetValue('scoutingReportId', report.scoutingReportId || '');
+        safeSetSelect('primaryPosition', report.PrimaryPosition);
+        safeSetSelect('secondaryPosition', report.SecondaryPosition);
+        safeSetSelect('playingStyle', report.PlayingStyle);
+
+        setSkillRating('shooting', report.shooting || 5);
+        setSkillRating('ballHandling', report.ballHandling || 5);
+        setSkillRating('passing', report.passing || 5);
+        setSkillRating('defense', report.defense || 5);
+        setSkillRating('rebounding', report.rebounding || 5);
+        setSkillRating('athleticism', report.athleticism || 5);
+
+        safeSetValue('strengths', report.strengths);
+        safeSetValue('weaknesses', report.weaknesses);
+        safeSetValue('scoutingNotes', report.scoutingNotes);
+
+        if (report.lastUpdated) {
+            const metadataEl = document.getElementById('evaluationMetadata');
+            const lastUpdatedEl = document.getElementById('lastUpdated');
+
+            if (metadataEl && lastUpdatedEl) {
+                lastUpdatedEl.textContent = formatDate(report.lastUpdated);
+                metadataEl.style.display = 'block';
+            }
+        }
+    }
+
+    function submitScoutingReport(data) {
+        if (!window.appUrls?.saveScoutingReport) {
+            showError('Unable to save scouting report - API not configured');
+            return;
+        }
+
+        const submitBtn = document.querySelector('#editScoutingForm button[type="submit"]');
+        const originalText = submitBtn ? submitBtn.innerHTML : '';
+
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+        }
+
+        const token = document.querySelector('input[name="__RequestVerificationToken"]');
+
+        fetch(window.appUrls.saveScoutingReport, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': token ? token.value : ''
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(result => {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+
+                if (result.success) {
+                    showSuccess('Scouting report saved successfully!');
+
+                    if (result.scoutingReport) {
+                        const metadataEl = document.getElementById('evaluationMetadata');
+                        const lastUpdatedEl = document.getElementById('lastUpdated');
+
+                        if (metadataEl && lastUpdatedEl) {
+                            lastUpdatedEl.textContent = formatDate(new Date());
+                            metadataEl.style.display = 'block';
+                        }
+                    }
+                } else {
+                    showError('Error saving scouting report: ' + (result.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error saving scouting report:', error);
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+                showError('Error saving scouting report. Please try again.');
+            });
+    }
+
+    // ========== UTILITY FUNCTIONS ==========
     function safeSetValue(elementId, value) {
         const element = document.getElementById(elementId);
         if (element) {
@@ -374,7 +618,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Helper function to safely set select option if element exists
+    function safeGetValue(elementId) {
+        const element = document.getElementById(elementId);
+        return element ? element.value : '';
+    }
+
     function safeSetSelect(elementId, value) {
         const select = document.getElementById(elementId);
         if (select && value) {
@@ -387,107 +635,89 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Helper function to find user row by ID
-    function findUserRowById(userId) {
-        if (!userId) return null;
+    function safeUpdateElement(elementId, value) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.textContent = value || '--';
+        }
+    }
 
-        const table = $('#usersTable').DataTable();
-        if (!table) return null;
+    function setSkillRating(skillName, value) {
+        const slider = document.getElementById(skillName);
+        const display = document.getElementById(skillName + 'Value');
 
-        const rows = table.rows().nodes();
-
-        for (let i = 0; i < rows.length; i++) {
-            const editButton = rows[i].querySelector(`button[data-user-id="${userId}"]`);
-            if (editButton) {
-                return rows[i];
+        if (slider) {
+            slider.value = value;
+            if (display) {
+                display.textContent = value;
             }
         }
-
-        return null;
     }
 
-    // Helper function to populate user form from table row data
-    function populateUserFormFromRow(row) {
-        if (!row) return;
-
-        const userInfo = row.querySelector('.d-flex.align-items-center');
-        if (!userInfo) return;
-
-        const nameEl = userInfo.querySelector('.fw-semibold');
-        const fullNameEl = userInfo.querySelector('.text-muted.small');
-
-        let firstName = '', lastName = '';
-        if (fullNameEl && fullNameEl.textContent) {
-            const fullName = fullNameEl.textContent.trim().split(' ');
-            firstName = fullName[0] || '';
-            lastName = fullName.slice(1).join(' ') || '';
+    function getInitials(name) {
+        if (!name) return 'U';
+        const words = name.trim().split(' ');
+        if (words.length >= 2) {
+            return (words[0][0] + words[1][0]).toUpperCase();
+        } else if (words.length === 1 && words[0].length > 0) {
+            return words[0][0].toUpperCase();
         }
+        return 'U';
+    }
 
-        safeSetValue('editFirstName', firstName);
-        safeSetValue('editLastName', lastName);
+    function getActivityIcon(type) {
+        const icons = {
+            login: 'bi-box-arrow-in-right',
+            join_run: 'bi-calendar-plus',
+            create_run: 'bi-calendar-event',
+            profile_update: 'bi-person-gear',
+            achievement: 'bi-trophy'
+        };
+        return icons[type] || 'bi-circle';
+    }
 
-        // Set role from the role column (column 3)
-        if (row.cells && row.cells.length > 3) {
-            const role = row.cells[3].textContent.trim();
-            safeSetSelect('editUserRole', role);
-        }
+    function formatTimeAgo(timestamp) {
+        try {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
 
-        // Set status from the status badge (column 2)
-        if (row.cells && row.cells.length > 2) {
-            const statusBadge = row.cells[2].querySelector('.badge');
-            const status = statusBadge ? statusBadge.textContent.trim() : 'Active';
-            safeSetSelect('editUserStatus', status);
+            if (diffInHours < 1) return 'Less than an hour ago';
+            if (diffInHours < 24) return diffInHours + ' hour' + (diffInHours > 1 ? 's' : '') + ' ago';
+
+            const diffInDays = Math.floor(diffInHours / 24);
+            if (diffInDays < 7) return diffInDays + ' day' + (diffInDays > 1 ? 's' : '') + ' ago';
+
+            const diffInWeeks = Math.floor(diffInDays / 7);
+            return diffInWeeks + ' week' + (diffInWeeks > 1 ? 's' : '') + ' ago';
+        } catch (e) {
+            return 'Recently';
         }
     }
 
-    // Function to load profile data
-    function loadProfileData(userId) {
-        if (!userId || !window.appUrls?.getUserProfileData) {
-            console.log("Missing userId or API URL for loadProfileData");
-            return;
+    function formatDate(dateString) {
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        } catch (e) {
+            return dateString;
         }
+    }
 
-        const url = `${window.appUrls.getUserProfileData}?id=${userId}`;
+    function showError(message, title) {
+        if (window.UIUtils) {
+            window.UIUtils.showError(message, title);
+        } else {
+            console.error((title || 'Error') + ': ' + message);
+            alert((title || 'Error') + ': ' + message);
+        }
+    }
 
-        fetch(url)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    updateProfileUI(data.profile);
-                    loadProfileTimeline(userId);
-                } else {
-                    console.error('Error loading profile data:', data.message);
-                    UIUtils.showError('Failed to load profile data. Please try again.', 'Error');
-
-                    // Create fallback profile from user info in the form
-                    const fallbackProfile = createFallbackProfile();
-                    updateProfileUI(fallbackProfile);
-
-                    // Show placeholder for timeline
-                    const timelineContainer = document.getElementById('profileTimeline');
-                    if (timelineContainer) {
-                        timelineContainer.innerHTML = `
-                            <div class="text-center py-4">
-                                <p class="text-muted mb-0">No activity data available.</p>
-                            </div>
-                        `;
-                    }
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching profile data:', error);
-                UIUtils.showError('Failed to load profile data. Please try again.', 'Error');
-
-                // Create fallback profile from user info in the form
-                const fallbackProfile = createFallbackProfile();
-                updateProfileUI(fallbackProfile);
-
-                // Show placeholder for timeline
-                const timelineContainer = document.getElementById('profileTimeline');
-                if (timelineContainer) {
-                    timelineContainer.innerHTML = `
+    function showSuccess(message, title) {
+        if (window.UIUtils) {
+            window.UIUtils.showSuccess(message, title);
+        } else {
+            console.log((title || 'Success') + ': ' + message);
+        }
+    }
+});
