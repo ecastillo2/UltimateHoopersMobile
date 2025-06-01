@@ -162,11 +162,12 @@
                 <table id="postsTable" class="table table-striped table-hover w-100">
                     <thead>
                         <tr>
+                           
                             <th>Post</th>
                             <th>Type</th>
                             <th>Date</th>
                             <th>Status</th>
-                            <th>Author</th>
+                           @*  <th>Author</th> *@
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -188,7 +189,7 @@
                                         <div class="post-image-cell me-3">
                                             @if (!string.IsNullOrEmpty(post.PostFileURL))
                                             {
-                                                <img src="@post.PostFileURL)" alt="@post.Title" class="post-image"
+                                                <img src="@post.ThumbnailUrl)" alt="@post.Title" class="post-image"
                                                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
                                                      loading="lazy">
                                                 <div class="post-initials" style="display: none;">
@@ -215,7 +216,7 @@
                                 <td>
                                     <span class="badge bg-success badge-pill post-status">@(post.Status ?? "Active")</span>
                                 </td>
-                                <td class="post-author">@(post.ProfileId ?? "System")</td>
+                            @*     <td class="post-author">@(post.ProfileId ?? "System")</td> *@
                                 <td>
                                     <div class="table-actions">
                                         <button type="button" class="btn btn-sm btn-outline-primary action-icon"
