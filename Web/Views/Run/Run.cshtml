@@ -215,7 +215,7 @@
         var fullLocation = string.Join(", ", locationParts);
 
         <tr data-run-type="@(run.Type?.ToLower() ?? "pickup")"
-            data-capacity-current="@(run.PlayerCount ?? 0)"
+            data-capacity-current="@(run.JoinedRunProfileList?.Count ?? 0)"
             data-capacity-max="@(run.PlayerLimit ?? 0)"
             data-run-date="@(run.RunDate?.ToString("yyyy-MM-dd") ?? "")"
             data-location="@fullLocation"
@@ -256,10 +256,10 @@
             </td>
             <td>
                 <div class="capacity-container">
-                    <div class="capacity-text">@(run.PlayerCount ?? 0)/@(run.PlayerLimit ?? 0)</div>
+                                        <div class="capacity-text">@(run.JoinedRunProfileList?.Count ?? 0)/@(run.PlayerLimit ?? 0)</div>
                     <div class="progress progress-sm" style="width: 60px;">
                         @{
-                            var percentFull = run.PlayerLimit > 0 ? ((double)(run.PlayerCount ?? 0) / run.PlayerLimit.Value) * 100 : 0;
+                                                var percentFull = run.PlayerLimit > 0 ? ((double)(run.JoinedRunProfileList?.Count ?? 0) / run.PlayerLimit.Value) * 100 : 0;
                             var progressClass = percentFull >= 85 ? "bg-warning" : "bg-primary";
                         }
                         <div class="progress-bar @progressClass" role="progressbar" style="width: @percentFull%" aria-valuenow="@percentFull" aria-valuemin="0" aria-valuemax="100"></div>

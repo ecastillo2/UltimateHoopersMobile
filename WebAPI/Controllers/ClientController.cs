@@ -1,4 +1,5 @@
 ﻿using DataLayer.DAL.Interface;
+using DataLayer.DAL.Repository;
 using Domain;
 using Domain.DtoModel;
 using Microsoft.AspNetCore.Authorization;
@@ -163,39 +164,38 @@ namespace WebAPI.Controllers
         /// <param name="model"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        [HttpPut("{id}")]
-        [Authorize]
+        [HttpPut("UpdateClient")]
+        //[Authorize]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> UpdateClient(string id, ClientUpdateModelDto model, CancellationToken cancellationToken)
+        public async Task<IActionResult> UpdateClient([FromBody] Client model, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (id != model.ClientId)
+            if (model.ClientId != model.ClientId)
                 return BadRequest("Client ID mismatch");
 
             try
             {
-                var privateRun = await _repository.GetClientByIdAsync(id, cancellationToken);
+                var products = await _repository.GetClientByIdAsync(model.ClientId, cancellationToken);
 
-                if (privateRun == null)
-                    return NotFound($"PrivateRun with ID {id} not found");
+                if (products == null)
+                    return NotFound($"Client with ID {model.ClientId} not found");
 
-                // Update PrivateRun properties from model
-                model.UpdateClient(privateRun);
 
-                var success = await _repository.UpdateClientAsync(privateRun, cancellationToken);
+
+                var success = await _repository.UpdateClientAsync(model, cancellationToken);
 
                 if (!success)
-                    return StatusCode(500, "Failed to update PrivateRun");
+                    return StatusCode(500, "Failed to update products");
 
                 return NoContent();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating profile {ProfileId}", id);
+                _logger.LogError(ex, "Error updating profile {ProfileId}", model.ClientId);
                 return StatusCode(500, "An error occurred while updating the profile");
             }
         }

@@ -85,8 +85,8 @@ namespace DataLayer.DAL.Repository
                     // When cursor provided, get posts that are older than cursor
                     // (for posts with same date, use ID for deterministic ordering)
                     query = query.Where(p =>
-                        DateTime.Parse(p.PostedDate) < cursorDate ||
-                        DateTime.Parse(p.PostedDate) == cursorDate && string.Compare(p.PostId, cursorPostId) < 0);
+                        p.PostedDate < cursorDate ||
+                        p.PostedDate == cursorDate && string.Compare(p.PostId, cursorPostId) < 0);
                 }
 
                 // Order by date descending (newest first), then by ID for stability
@@ -105,7 +105,7 @@ namespace DataLayer.DAL.Repository
                     var lastPost = posts[limit - 1];
 
                     // Create cursor from last returned post (date|id)
-                    var cursorValue = $"{DateTime.Parse(lastPost.PostedDate)}|{lastPost.PostId}";
+                    var cursorValue = $"{lastPost.PostedDate}|{lastPost.PostId}";
                     nextCursor = Convert.ToBase64String(Encoding.UTF8.GetBytes(cursorValue));
 
                     // Remove the extra item
@@ -195,9 +195,9 @@ namespace DataLayer.DAL.Repository
                     post.PostCommentCount = comments.GetValueOrDefault(post.PostId, 0);
 
                     // Calculate relative time
-                    if (DateTime.TryParse(post.PostedDate, out DateTime dateTime))
+                    if (post.PostedDate != null)
                     {
-                        post.RelativeTime = RelativeTime.GetRelativeTime(dateTime, timeZone);
+                        post.RelativeTime = RelativeTime.GetRelativeTime(post.PostedDate.Value, timeZone);
                     }
                     else
                     {
@@ -331,9 +331,9 @@ namespace DataLayer.DAL.Repository
                 }
 
                 // Calculate relative time
-                if (DateTime.TryParse(model.PostedDate, out DateTime dateTime))
+                if (model.PostedDate != null)
                 {
-                    model.RelativeTime = RelativeTime.GetRelativeTime(dateTime, timeZone);
+                    model.RelativeTime = RelativeTime.GetRelativeTime(model.PostedDate.Value, timeZone);
                 }
                 else
                 {
@@ -482,14 +482,9 @@ namespace DataLayer.DAL.Repository
                 // Process posts in parallel
                 Parallel.ForEach(query, item =>
                 {
-                    if (DateTime.TryParse(item.PostedDate, out DateTime dateTime))
-                    {
-                        item.RelativeTime = RelativeTime.GetRelativeTime(dateTime, timeZone);
-                    }
-                    else
-                    {
-                        item.RelativeTime = "Invalid Date";
-                    }
+                   
+                        item.RelativeTime = RelativeTime.GetRelativeTime(item.PostedDate.Value, timeZone);
+                 
                 });
 
                 var result = query.OrderByDescending(post => post.PostedDate).ToList();
@@ -530,9 +525,9 @@ namespace DataLayer.DAL.Repository
                 // Simplified processing for blogs - they don't need full mention processing
                 Parallel.ForEach(posts, post =>
                 {
-                    if (DateTime.TryParse(post.PostedDate, out DateTime dateTime))
+                    if (post.PostedDate != null)
                     {
-                        post.RelativeTime = RelativeTime.GetRelativeTime(dateTime, timeZone);
+                        post.RelativeTime = RelativeTime.GetRelativeTime(post.PostedDate.Value, timeZone);
                     }
                     else
                     {
@@ -708,7 +703,7 @@ namespace DataLayer.DAL.Repository
             try
             {
                 model.PostId = model.PostId ?? Guid.NewGuid().ToString();
-                model.PostedDate = DateTime.Now.ToString();
+                model.PostedDate = DateTime.UtcNow;
 
                 await _context.Post.AddAsync(model);
                 await Save();
@@ -836,9 +831,9 @@ namespace DataLayer.DAL.Repository
                 // Same simplified processing as for blogs
                 Parallel.ForEach(posts, post =>
                 {
-                    if (DateTime.TryParse(post.PostedDate, out DateTime dateTime))
+                    if (post.PostedDate != null)
                     {
-                        post.RelativeTime = RelativeTime.GetRelativeTime(dateTime, timeZone);
+                        post.RelativeTime = RelativeTime.GetRelativeTime(post.PostedDate.Value, timeZone);
                     }
                     else
                     {
@@ -882,9 +877,9 @@ namespace DataLayer.DAL.Repository
                 // Same simplified processing as for blogs and news
                 Parallel.ForEach(posts, post =>
                 {
-                    if (DateTime.TryParse(post.PostedDate, out DateTime dateTime))
+                    if (post.PostedDate != null)
                     {
-                        post.RelativeTime = RelativeTime.GetRelativeTime(dateTime, timeZone);
+                        post.RelativeTime = RelativeTime.GetRelativeTime(post.PostedDate.Value, timeZone);
                     }
                     else
                     {

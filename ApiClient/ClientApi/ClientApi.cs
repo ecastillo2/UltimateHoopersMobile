@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -167,9 +168,41 @@ namespace WebAPI.ApiClients
             }
         }
 
-        public Task<bool> UpdateClientAsync(Client run, string accessToken, CancellationToken cancellationToken = default)
+        public async Task<bool> UpdateClientAsync(Client model, string accessToken, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            try
+            {
+                // Set authentication header
+                if (!string.IsNullOrEmpty(accessToken))
+                {
+                    _httpClient.DefaultRequestHeaders.Clear();
+                    _httpClient.DefaultRequestHeaders.Authorization =
+                        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+                }
+
+                // Build request URL
+                var requestUrl = $"{_baseUrl}/api/Client/UpdateClient";
+
+                // Serialize the profile object
+                var content = JsonSerializer.Serialize(model, _jsonOptions);
+                var httpContent = new StringContent(content, System.Text.Encoding.UTF8, "application/json");
+
+                // Make the PUT request
+                var response = await _httpClient.PutAsync(requestUrl, httpContent, cancellationToken);
+
+                // Return true if successful, false otherwise
+                return response.IsSuccessStatusCode;
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"API request error: {ex.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating profile: {ex.Message}");
+                throw;
+            }
         }
     }
 }

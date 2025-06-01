@@ -197,14 +197,12 @@ namespace Web.Controllers
                 // Update client
                 await _clientApi.UpdateClientAsync(client, accessToken, cancellationToken);
 
-                TempData["Success"] = "Client updated successfully.";
-                return RedirectToAction("Client");
+                return Json(new { success = true, message = "Client saved successfully", client.Name });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating client: {ClientId}", client.ClientId);
-                TempData["Error"] = "An error occurred while updating the client. Please try again later.";
-                return View(client);
+                return Json(new { success = false, message = "Error saving client: " + ex.Message });
             }
         }
 

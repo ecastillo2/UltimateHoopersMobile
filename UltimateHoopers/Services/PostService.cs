@@ -215,7 +215,7 @@ namespace UltimateHoopers.Services
 
                                     // Add these properties for the UI with non-null defaults
                                     UserName =  "Unknown User",
-                                    RelativeTime = FormatRelativeTime(item.PostedDate),
+                                    RelativeTime = FormatRelativeTime(item.PostedDate.ToString()),
                                     ProfileImageURL = item.ThumbnailUrl ?? item.PostFileURL,
                                     PostCommentCount = 0,
                                     LikedPost = false,

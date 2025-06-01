@@ -51,7 +51,7 @@ namespace Domain.DtoModel
         public int? Hearted { get; set; }
         public int? Views { get; set; }
         public string? Shared { get; set; }
-        public string? PostedDate { get; set; }
+        public DateTime? PostedDate { get; set; }
         public string? ProfileId { get; set; }
         public string? ThumbnailUrl { get; set; }
         public string? PostType { get; set; }

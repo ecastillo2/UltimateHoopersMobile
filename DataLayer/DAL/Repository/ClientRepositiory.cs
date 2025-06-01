@@ -279,17 +279,33 @@ namespace DataLayer.DAL.Repository
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         public async Task<bool> UpdateClientAsync(
-            Client privateRun,
+            Client model,
             CancellationToken cancellationToken = default)
         {
             try
             {
-                _context.Entry(privateRun).State = EntityState.Modified;
+                // Retrieve the existing product from database
+                var existingProduct = await _context.Client
+                    .FirstOrDefaultAsync(p => p.ClientId == model.ClientId, cancellationToken);
+
+                if (existingProduct == null)
+                {
+                    return false;
+                }
+
+                // Update only the fields you want to allow updates for
+                existingProduct.Name = model.Name;
+                existingProduct.Address = model.Address;
+                existingProduct.State = model.State;
+                existingProduct.City = model.City;
+                existingProduct.Zip = model.Zip;
+                existingProduct.PhoneNumber = model.PhoneNumber;
+
                 return await SaveChangesAsync(cancellationToken) > 0;
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Error updating Client {PrivateRunId}", privateRun.ClientId);
+                _logger?.LogError(ex, "Error updating Product {ClientId}", model.ClientId);
                 throw;
             }
         }
