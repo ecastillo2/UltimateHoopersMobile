@@ -1,3 +1,8 @@
+﻿/**
+ * Client Management JavaScript - Updated with Toast Utilities
+ * Now uses utilities.js toast system instead of alert()
+ */
+
 // Initialize DataTable if the table exists
 const clientsTable = $('#clientsTable');
 if (clientsTable.length > 0) {
@@ -8,7 +13,7 @@ if (clientsTable.length > 0) {
 initializeModalHandlers();
 initializeFormHandlers();
 
-console.log('? Client Management initialized successfully');
+console.log('🎯 Client Management initialized successfully');
 
 // ========== TABLE INITIALIZATION ==========
 function initializeClientsTable() {
@@ -43,7 +48,7 @@ function initializeTableFilters(table) {
     const activeFiltersContainer = $('#activeFilters');
 
     if (!statusFilter.length || !joinDateFilter.length) {
-        console.warn('?? Filter elements not found');
+        console.warn('⚠️ Filter elements not found');
         return;
     }
 
@@ -83,7 +88,7 @@ function initializeTableFilters(table) {
 
                 return true;
             } catch (error) {
-                console.error('? Error in filter function:', error);
+                console.error('🚨 Error in filter function:', error);
                 return true;
             }
         };
@@ -130,7 +135,7 @@ function initializeTableFilters(table) {
                     return true;
             }
         } catch (e) {
-            console.error("? Date filtering error:", e);
+            console.error("🚨 Date filtering error:", e);
             return false;
         }
     }
@@ -212,11 +217,11 @@ function handleEditModalShow(event) {
     const button = event.relatedTarget;
     const clientId = button.getAttribute('data-client-id');
 
-    console.log('?? Opening edit modal for client ID:', clientId);
+    console.log('📂 Opening edit modal for client ID:', clientId);
 
     if (!clientId) {
-        console.error('? No client ID found on button');
-        showToast('Client ID is missing', 'error');
+        console.error('🚨 No client ID found on button');
+        showToast('Client ID is missing', 'error', 'Error');
         return;
     }
 
@@ -232,7 +237,7 @@ function handleEditModalShow(event) {
 }
 
 function handleEditModalHide() {
-    console.log('?? Edit modal closed, clearing forms');
+    console.log('🚪 Edit modal closed, clearing forms');
     clearAllForms();
 }
 
@@ -240,11 +245,15 @@ function handleTabSwitch(event) {
     const targetTab = event.target.getAttribute('data-bs-target');
     const clientId = document.getElementById('editClientId')?.value;
 
-    console.log('?? Switching to tab:', targetTab, 'for client:', clientId);
+    console.log('🔄 Switching to tab:', targetTab, 'for client:', clientId);
 
     if (!clientId) return;
 
     switch (targetTab) {
+        case '#details-tab-pane':
+            // Auto-populate client details when switching to Details tab
+            loadClientDetailsTab(clientId);
+            break;
         case '#courts-tab-pane':
             loadClientCourts(clientId);
             break;
@@ -311,13 +320,12 @@ function handleClientFormSubmit(e) {
         clientData[key] = value;
     }
 
-    console.log('?? Submitting client data:', clientData);
+    console.log('📤 Submitting client data:', clientData);
 
     const submitBtn = e.target.querySelector('button[type="submit"]');
-    const originalText = submitBtn ? submitBtn.innerHTML : '';
 
     if (submitBtn) {
-        setButtonLoading(submitBtn, true, 'Saving...');
+        UIUtils.setButtonLoading(submitBtn, true, 'Saving...');
     }
 
     const token = getAntiForgeryToken();
@@ -338,11 +346,11 @@ function handleClientFormSubmit(e) {
         })
         .then(result => {
             if (submitBtn) {
-                setButtonLoading(submitBtn, false);
+                UIUtils.setButtonLoading(submitBtn, false);
             }
 
             if (result.success) {
-                showToast('? ' + result.message, 'success');
+                UIUtils.showSuccess(result.message, 'Success');
 
                 // Update the table row if visible
                 updateTableRow(clientData);
@@ -353,31 +361,34 @@ function handleClientFormSubmit(e) {
                     if (modal) modal.hide();
                 }, 1000);
             } else {
-                showToast('? ' + (result.message || 'Failed to save client'), 'error');
+                UIUtils.showError(result.message || 'Failed to save client', 'Error');
             }
         })
         .catch(error => {
-            console.error('? Error saving client:', error);
+            console.error('🚨 Error saving client:', error);
             if (submitBtn) {
-                setButtonLoading(submitBtn, false);
+                UIUtils.setButtonLoading(submitBtn, false);
             }
-            showToast('?? Error saving client: ' + error.message, 'error');
+            UIUtils.showError(`Error saving client: ${error.message}`, 'Error');
         });
 }
 
 // ========== DATA LOADING FUNCTIONS ==========
 function loadClientData(clientId) {
-    console.log('?? Loading client data for ID:', clientId);
+    console.log('📥 Loading client data for ID:', clientId);
 
     if (!clientId) {
-        console.error('? No client ID provided');
+        console.error('🚨 No client ID provided');
         return;
     }
+
+    // Show loading on the modal
+    UIUtils.showElementLoading('#editClientModal .modal-content', 'Loading client data...');
 
     // Try to populate from table data first
     const row = findClientRowById(clientId);
     if (row) {
-        console.log('?? Found table row, extracting data...');
+        console.log('📋 Found table row, extracting data...');
         const tableData = extractTableData(row);
         populateFromTableData(tableData);
     }
@@ -391,25 +402,139 @@ function loadClientData(clientId) {
             return response.json();
         })
         .then(data => {
-            console.log('?? Received client data:', data);
+            console.log('📦 Received client data:', data);
+            UIUtils.hideElementLoading('#editClientModal .modal-content');
 
             if (data.success !== false) {
                 populateFromAPIData(data);
-                showToast('Client data loaded successfully', 'success');
+                UIUtils.showSuccess('Client data loaded successfully', 'Success');
             } else {
-                showToast('Failed to load complete client data: ' + (data.message || 'Unknown error'), 'warning');
+                UIUtils.showWarning(`Failed to load complete client data: ${data.message || 'Unknown error'}`, 'Warning');
             }
         })
         .catch(error => {
-            console.error('? Error loading client data:', error);
-            showToast('Error loading client data: ' + error.message, 'error');
+            console.error('🚨 Error loading client data:', error);
+            UIUtils.hideElementLoading('#editClientModal .modal-content');
+            UIUtils.showError(`Error loading client data: ${error.message}`, 'Error');
         });
+}
+
+function loadClientDetailsTab(clientId) {
+    console.log('📝 Loading client details tab for ID:', clientId);
+
+    if (!clientId) {
+        console.error('🚨 No client ID provided for details tab');
+        return;
+    }
+
+    // Check if details are already loaded (avoid unnecessary API calls)
+    const nameField = document.getElementById('editName');
+    if (nameField && nameField.value && nameField.value.trim()) {
+        console.log('✅ Client details already loaded');
+        return;
+    }
+
+    // Show loading on the details tab specifically
+    const detailsTabPane = document.getElementById('details-tab-pane');
+    if (detailsTabPane) {
+        UIUtils.showElementLoading('#details-tab-pane', 'Loading client details...');
+    }
+
+    // Load client data from API
+    fetch(`/Client/GetClientData?id=${encodeURIComponent(clientId)}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('📦 Received client details data:', data);
+
+            if (detailsTabPane) {
+                UIUtils.hideElementLoading('#details-tab-pane');
+            }
+
+            if (data.success !== false) {
+                populateClientDetailsForm(data);
+                console.log('✅ Client details populated successfully');
+            } else {
+                UIUtils.showWarning(`Failed to load client details: ${data.message || 'Unknown error'}`, 'Warning');
+                // Try to populate from table data as fallback
+                const row = findClientRowById(clientId);
+                if (row) {
+                    const tableData = extractTableData(row);
+                    populateFromTableData(tableData);
+                }
+            }
+        })
+        .catch(error => {
+            console.error('🚨 Error loading client details:', error);
+
+            if (detailsTabPane) {
+                UIUtils.hideElementLoading('#details-tab-pane');
+            }
+
+            UIUtils.showError(`Error loading client details: ${error.message}`, 'Error');
+
+            // Try to populate from table data as fallback
+            const row = findClientRowById(clientId);
+            if (row) {
+                console.log('📋 Using table data as fallback');
+                const tableData = extractTableData(row);
+                populateFromTableData(tableData);
+            }
+        });
+}
+
+function populateClientDetailsForm(data) {
+    console.log('📝 Populating client details form:', data);
+
+    try {
+        const client = data.client || data;
+
+        // Populate all form fields in the details tab
+        safeSetValue('editClientId', client.clientId);
+        safeSetValue('editClientNumber', client.clientNumber);
+        safeSetValue('editName', client.name);
+        safeSetValue('editAddress', client.address);
+        safeSetValue('editCity', client.city);
+        safeSetValue('editState', client.state);
+        safeSetValue('editZip', client.zip);
+        safeSetValue('editPhoneNumber', client.phoneNumber);
+        safeSetValue('editNotes', client.notes);
+
+        // Handle date formatting
+        if (client.createdDate) {
+            // Format date for HTML date input if needed
+            let dateValue = client.createdDate;
+            if (dateValue.includes('T')) {
+                dateValue = dateValue.split('T')[0];
+            }
+            safeSetValue('editCreatedDate', dateValue);
+        }
+
+        // Set status dropdown if available
+        if (client.status) {
+            safeSetSelect('editStatus', client.status);
+        }
+
+        // Load additional data for other tabs
+        if (data.courtList) {
+            displayClientCourts(data.courtList);
+        }
+
+        console.log('✅ Client details form populated successfully');
+    } catch (error) {
+        console.error('🚨 Error populating client details form:', error);
+        UIUtils.showError('Error populating client details form', 'Error');
+    }
 }
 
 function extractTableData(row) {
     if (!row) return {};
 
-    console.log('?? Extracting data from table row');
+    console.log('📋 Extracting data from table row');
 
     // Get data attributes
     const dataFromAttributes = {
@@ -467,7 +592,7 @@ function extractTableData(row) {
 }
 
 function populateFromTableData(data) {
-    console.log('?? Populating form from table data:', data);
+    console.log('📝 Populating form from table data:', data);
 
     try {
         safeSetValue('editClientNumber', data.clientNumber);
@@ -479,14 +604,14 @@ function populateFromTableData(data) {
         safeSetValue('editPhoneNumber', data.phoneNumber);
         safeSetValue('editCreatedDate', data.createdDate);
 
-        console.log('? Table data populated successfully');
+        console.log('✅ Table data populated successfully');
     } catch (error) {
-        console.error('? Error populating from table data:', error);
+        console.error('🚨 Error populating from table data:', error);
     }
 }
 
 function populateFromAPIData(data) {
-    console.log('?? Populating form from API data:', data);
+    console.log('📝 Populating form from API data:', data);
 
     try {
         const client = data.client || data;
@@ -511,16 +636,16 @@ function populateFromAPIData(data) {
             displayClientCourts(data.courtList);
         }
 
-        console.log('? API data populated successfully');
+        console.log('✅ API data populated successfully');
     } catch (error) {
-        console.error('? Error populating from API data:', error);
+        console.error('🚨 Error populating from API data:', error);
     }
 }
 
 function findClientRowById(clientId) {
     if (!clientId) return null;
 
-    console.log('?? Looking for row with client ID:', clientId);
+    console.log('🔍 Looking for row with client ID:', clientId);
 
     // Try different strategies to find the row
     let row = document.querySelector(`tr[data-client-id="${clientId}"]`);
@@ -542,12 +667,12 @@ function findClientRowById(clientId) {
         }
     }
 
-    console.warn('?? Row not found for client ID:', clientId);
+    console.warn('⚠️ Row not found for client ID:', clientId);
     return null;
 }
 
 function loadClientCourts(clientId) {
-    console.log('?? Loading courts for client:', clientId);
+    console.log('🏀 Loading courts for client:', clientId);
 
     const courtsTableBody = document.getElementById('courtsTableBody');
     if (!courtsTableBody) return;
@@ -570,7 +695,7 @@ function loadClientCourts(clientId) {
             }
         })
         .catch(error => {
-            console.error('? Error loading courts:', error);
+            console.error('🚨 Error loading courts:', error);
             courtsTableBody.innerHTML = `
                 <tr>
                     <td colspan="3" class="text-center py-4 text-danger">
@@ -581,7 +706,7 @@ function loadClientCourts(clientId) {
 }
 
 function loadClientUsers(clientId) {
-    console.log('?? Loading users for client:', clientId);
+    console.log('👥 Loading users for client:', clientId);
 
     const usersTableBody = document.getElementById('usersTableBody');
     if (!usersTableBody) return;
@@ -619,7 +744,7 @@ function loadClientUsers(clientId) {
 }
 
 function loadClientBusinessData(clientId) {
-    console.log('?? Loading business data for client:', clientId);
+    console.log('📊 Loading business data for client:', clientId);
 
     fetch(`/Client/GetClientBusinessData?id=${encodeURIComponent(clientId)}`)
         .then(response => response.json())
@@ -627,18 +752,18 @@ function loadClientBusinessData(clientId) {
             if (data.success) {
                 updateClientBusinessDisplay(data.business);
             } else {
-                showToast('Failed to load business data', 'warning');
+                UIUtils.showWarning('Failed to load business data', 'Warning');
             }
         })
         .catch(error => {
-            console.error('? Error loading business data:', error);
-            showToast('Error loading business data', 'error');
+            console.error('🚨 Error loading business data:', error);
+            UIUtils.showError('Error loading business data', 'Error');
         });
 }
 
 // ========== DISPLAY FUNCTIONS ==========
 function displayClientCourts(courts) {
-    console.log('?? Displaying courts:', courts);
+    console.log('🏀 Displaying courts:', courts);
     const courtsTableBody = document.getElementById('courtsTableBody');
     if (!courtsTableBody) return;
 
@@ -696,7 +821,7 @@ function displayClientCourts(courts) {
 }
 
 function displayClientUsers(users) {
-    console.log('?? Displaying users:', users);
+    console.log('👥 Displaying users:', users);
     const usersTableBody = document.getElementById('usersTableBody');
     if (!usersTableBody) return;
 
@@ -768,7 +893,7 @@ function displayClientUsers(users) {
 }
 
 function updateClientBusinessDisplay(business) {
-    console.log('?? Updating business display:', business);
+    console.log('📊 Updating business display:', business);
 
     // Update business information
     safeUpdateElement('businessName', business.businessName);
@@ -800,7 +925,7 @@ function updateClientBusinessDisplay(business) {
 
 // ========== COURT MANAGEMENT ==========
 function addClientCourt(clientId) {
-    console.log('? Adding court for client:', clientId);
+    console.log('➕ Adding court for client:', clientId);
 
     const courtName = prompt('Enter court name:');
     if (!courtName) return;
@@ -823,20 +948,20 @@ function addClientCourt(clientId) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showToast('Court added successfully', 'success');
+                UIUtils.showSuccess('Court added successfully', 'Success');
                 loadClientCourts(clientId);
             } else {
-                showToast('Error adding court: ' + (data.message || 'Unknown error'), 'error');
+                UIUtils.showError(`Error adding court: ${data.message || 'Unknown error'}`, 'Error');
             }
         })
         .catch(error => {
-            console.error('? Error adding court:', error);
-            showToast('Error adding court. Please try again.', 'error');
+            console.error('🚨 Error adding court:', error);
+            UIUtils.showError('Error adding court. Please try again.', 'Error');
         });
 }
 
 function editClientCourt(clientId, courtId) {
-    console.log('?? Editing court:', courtId, 'for client:', clientId);
+    console.log('✏️ Editing court:', courtId, 'for client:', clientId);
 
     const courtName = prompt('Enter new court name:');
     if (courtName === null) return;
@@ -860,20 +985,20 @@ function editClientCourt(clientId, courtId) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showToast('Court updated successfully', 'success');
+                UIUtils.showSuccess('Court updated successfully', 'Success');
                 loadClientCourts(clientId);
             } else {
-                showToast('Error updating court: ' + (data.message || 'Unknown error'), 'error');
+                UIUtils.showError(`Error updating court: ${data.message || 'Unknown error'}`, 'Error');
             }
         })
         .catch(error => {
-            console.error('? Error updating court:', error);
-            showToast('Error updating court. Please try again.', 'error');
+            console.error('🚨 Error updating court:', error);
+            UIUtils.showError('Error updating court. Please try again.', 'Error');
         });
 }
 
 function removeClientCourt(clientId, courtId) {
-    console.log('??? Removing court:', courtId, 'for client:', clientId);
+    console.log('🗑️ Removing court:', courtId, 'for client:', clientId);
 
     if (!confirm('Are you sure you want to remove this court?')) return;
 
@@ -890,21 +1015,21 @@ function removeClientCourt(clientId, courtId) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showToast('Court removed successfully', 'success');
+                UIUtils.showSuccess('Court removed successfully', 'Success');
                 loadClientCourts(clientId);
             } else {
-                showToast('Error removing court: ' + (data.message || 'Unknown error'), 'error');
+                UIUtils.showError(`Error removing court: ${data.message || 'Unknown error'}`, 'Error');
             }
         })
         .catch(error => {
-            console.error('? Error removing court:', error);
-            showToast('Error removing court. Please try again.', 'error');
+            console.error('🚨 Error removing court:', error);
+            UIUtils.showError('Error removing court. Please try again.', 'Error');
         });
 }
 
 // ========== USER MANAGEMENT ==========
 function addClientUser(clientId) {
-    console.log('? Adding user for client:', clientId);
+    console.log('➕ Adding user for client:', clientId);
 
     const email = prompt('Enter user email address:');
     if (!email) return;
@@ -914,20 +1039,20 @@ function addClientUser(clientId) {
         email: email
     };
 
-    showToast('User management functionality coming soon', 'info');
+    UIUtils.showInfo('User management functionality coming soon', 'Info');
 }
 
 function editClientUser(clientId, userId) {
-    console.log('?? Editing user:', userId, 'for client:', clientId);
-    showToast('User management functionality coming soon', 'info');
+    console.log('✏️ Editing user:', userId, 'for client:', clientId);
+    UIUtils.showInfo('User management functionality coming soon', 'Info');
 }
 
 function removeClientUser(clientId, userId) {
-    console.log('??? Removing user:', userId, 'for client:', clientId);
+    console.log('🗑️ Removing user:', userId, 'for client:', clientId);
 
     if (!confirm('Are you sure you want to remove this user from the client?')) return;
 
-    showToast('User management functionality coming soon', 'info');
+    UIUtils.showInfo('User management functionality coming soon', 'Info');
 }
 
 // ========== UI STATE MANAGEMENT ==========
@@ -1063,18 +1188,6 @@ function getStatusClass(status) {
     }
 }
 
-function setButtonLoading(button, loading = true, loadingText = 'Loading...') {
-    if (loading) {
-        button.dataset.originalText = button.innerHTML;
-        button.disabled = true;
-        button.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status"></span>${loadingText}`;
-    } else {
-        button.disabled = false;
-        button.innerHTML = button.dataset.originalText || button.innerHTML;
-        delete button.dataset.originalText;
-    }
-}
-
 function formatDate(dateString) {
     if (!dateString) return '--';
     try {
@@ -1082,15 +1195,6 @@ function formatDate(dateString) {
         return date.toLocaleDateString();
     } catch (e) {
         return '--';
-    }
-}
-
-function showToast(message, type = 'success', title = null) {
-    if (window.UIUtils) {
-        window.UIUtils.showToast(message, type, title);
-    } else {
-        console.log(`${type.toUpperCase()}: ${message}`);
-        alert(`${type}: ${message}`);
     }
 }
 
@@ -1106,4 +1210,4 @@ window.clientDebug = {
     loadClientBusinessData
 };
 
-console.log('?? Debug functions available: window.clientDebug');
+console.log('🐛 Debug functions available: window.clientDebug');

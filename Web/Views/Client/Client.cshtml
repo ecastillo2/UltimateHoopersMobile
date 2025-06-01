@@ -10,13 +10,11 @@
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.bootstrap5.min.css">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.bootstrap5.min.css">
     <link rel="stylesheet" type="text/css" href="~/css/management.css">
-  
 }
 
 <div class="dashboard-header">
     <div class="container">
         <h1>Client</h1>
-       @*  <p class="lead">Manage your client roster, track progress, and schedule training sessions</p> *@
     </div>
 </div>
 
@@ -389,6 +387,8 @@
     <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
     <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.bootstrap5.min.js"></script>
     <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
+
+    <!-- CRITICAL: Add utilities.js BEFORE clientManagement.js -->
+    <script type="text/javascript" src="~/js/utilities.js"></script>
     <script type="text/javascript" src="~/js/clientManagement.js"></script>
-   
 }
