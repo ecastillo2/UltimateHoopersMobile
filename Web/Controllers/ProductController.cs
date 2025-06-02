@@ -159,47 +159,84 @@ namespace Web.Controllers
                 var accessToken = HttpContext.Session.GetString("UserToken");
                 if (string.IsNullOrEmpty(accessToken))
                 {
-                    TempData["Error"] = "You must be logged in to create a product.";
-                    return RedirectToAction("Index", "Home", new { scrollTo = "login" });
+                    return Json(new { success = false, message = "You must be logged in to create a product.", requiresLogin = true });
                 }
 
+                // Validate model state
                 if (!ModelState.IsValid)
                 {
-                    return View(product);
+                    var errors = ModelState
+                        .Where(x => x.Value.Errors.Count > 0)
+                        .Select(x => new { Field = x.Key, Errors = x.Value.Errors.Select(e => e.ErrorMessage) })
+                        .ToList();
+
+                    return Json(new
+                    {
+                        success = false,
+                        message = "Please correct the validation errors.",
+                        errors = errors
+                    });
                 }
 
-                
+                // Handle image upload if provided
+                if (ImageFile != null && ImageFile.Length > 0)
+                {
+                    var imageResult = await ProcessImageUpload(ImageFile);
+                    if (imageResult.Success)
+                    {
+                        product.ImageURL = imageResult.ImageUrl;
+                    }
+                    else
+                    {
+                        return Json(new { success = false, message = imageResult.ErrorMessage });
+                    }
+                }
 
                 // Set default values
                 product.ProductId = Guid.NewGuid().ToString();
                 product.ProductNumber = UniqueIdNumber.GenerateSixDigit();
                 product.Status = product.Status ?? "Active";
                 product.Points = product.Points ?? 0;
-                product.ImageUrlName = product.ProductId+".webp";
+                product.ImageUrlName = product.ProductId + ".webp";
 
                 // Create new Product
                 var createdProduct = await _productApi.CreateProductAsync(product, accessToken, cancellationToken);
 
                 if (createdProduct != null)
                 {
-                    // Handle image upload if provided
+                    // Update storage if we have an image file
                     if (ImageFile != null && ImageFile.Length > 0)
                     {
-                       
                         await _storageApi.UpdateProductImageFileAsync(product.ProductId, ImageFile);
-
                     }
-                   
-                }
 
-                TempData["Success"] = "Product created successfully.";
-                return RedirectToAction("Details");
+                    return Json(new
+                    {
+                        success = true,
+                        message = "Product created successfully!",
+                        product = new
+                        {
+                            productId = product.ProductId,
+                            title = product.Title,
+                            productNumber = product.ProductNumber,
+                            price = product.Price,
+                            points = product.Points,
+                            status = product.Status,
+                            category = product.Category,
+                            type = product.Type,
+                            imageURL = product.ImageURL
+                        }
+                    });
+                }
+                else
+                {
+                    return Json(new { success = false, message = "Failed to create product. Please try again." });
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating product");
-                TempData["Error"] = "An error occurred while creating the product. Please try again later.";
-                return View(product);
+                _logger.LogError(ex, "Error creating product via AJAX");
+                return Json(new { success = false, message = "An error occurred while creating the product. Please try again later." });
             }
         }
 
