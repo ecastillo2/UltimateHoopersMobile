@@ -168,20 +168,7 @@ namespace Web.Controllers
                     return View(product);
                 }
 
-                // Handle image upload if provided
-                if (ImageFile != null && ImageFile.Length > 0)
-                {
-                    var imageResult = await ProcessImageUpload(ImageFile);
-                    if (imageResult.Success)
-                    {
-                        product.ImageURL = imageResult.ImageUrl;
-                    }
-                    else
-                    {
-                        TempData["Error"] = imageResult.ErrorMessage;
-                        return View(product);
-                    }
-                }
+                
 
                 // Set default values
                 product.ProductId = Guid.NewGuid().ToString();
@@ -195,7 +182,14 @@ namespace Web.Controllers
 
                 if (createdProduct != null)
                 {
-                    await _storageApi.UpdateProductImageFileAsync(product.ProductId, ImageFile);
+                    // Handle image upload if provided
+                    if (ImageFile != null && ImageFile.Length > 0)
+                    {
+                       
+                        await _storageApi.UpdateProductImageFileAsync(product.ProductId, ImageFile);
+
+                    }
+                   
                 }
 
                 TempData["Success"] = "Product created successfully.";
