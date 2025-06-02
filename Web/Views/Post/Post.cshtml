@@ -13,7 +13,155 @@
 
     <!-- TinyMCE CDN -->
     <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+    <style>
+        /* Enhanced Media Tab Styles */
+        .media-viewer {
+            background: #f8f9fa;
+            border-radius: 15px;
+            min-height: 400px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #e9ecef;
+        }
 
+        .media-content {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+        }
+
+        .media-image {
+            max-width: 100%;
+            max-height: 500px;
+            object-fit: contain;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+
+            .media-image:hover {
+                transform: scale(1.02);
+            }
+
+        .media-video {
+            max-width: 100%;
+            max-height: 500px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .media-placeholder {
+            text-align: center;
+            color: #6c757d;
+            padding: 60px 20px;
+        }
+
+            .media-placeholder i {
+                font-size: 4rem;
+                margin-bottom: 1rem;
+                opacity: 0.5;
+            }
+
+        .media-controls {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 10;
+        }
+
+        .media-control-btn {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+            .media-control-btn:hover {
+                background: rgba(0, 0, 0, 0.9);
+                color: white;
+                transform: scale(1.1);
+            }
+
+        .media-upload-area {
+            border: 2px dashed #dee2e6 !important;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+            .media-upload-area:hover {
+                border-color: var(--bs-orange) !important;
+                background: rgba(255, 107, 0, 0.05);
+                transform: translateY(-2px);
+            }
+
+            .media-upload-area.dragover {
+                border-color: var(--bs-orange) !important;
+                background: rgba(255, 107, 0, 0.1);
+                transform: scale(1.02);
+            }
+
+        /* Responsive adjustments */
+        @@media (max-width: 768px) {
+            .media-viewer
+
+        {
+            min-height: 300px;
+        }
+
+        .media-image,
+        .media-video {
+            max-height: 300px;
+        }
+
+        .media-controls {
+            top: 10px;
+            right: 10px;
+        }
+
+        .media-control-btn {
+            width: 35px;
+            height: 35px;
+        }
+
+        .media-upload-area {
+            padding: 30px 20px;
+        }
+
+        }
+
+        /* Card styling improvements */
+        .card {
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .card-header {
+            border-bottom: 1px solid #f0f0f0;
+            background: #fff !important;
+        }
+
+        /* Button styling improvements */
+        .btn-outline-primary:hover,
+        .btn-outline-secondary:hover,
+        .btn-outline-warning:hover {
+            transform: translateY(-1px);
+        }
+    </style>
     <style>
         /* TinyMCE Custom Styling */
         .tox-tinymce {
@@ -626,34 +774,39 @@
                         <div class="mt-4">
                             <div class="row">
                                 <div class="col-lg-8">
-                                    <!-- Media Viewer -->
-                                    <div class="media-viewer">
-                                        <div class="media-controls">
-                                            <button type="button" class="btn media-control-btn" id="downloadMediaBtn" title="Download">
+                                    <!-- Enhanced Media Viewer -->
+                                    <div class="media-viewer position-relative">
+                                        <div class="media-controls position-absolute" style="top: 15px; right: 15px; z-index: 10;">
+                                            <button type="button" class="btn media-control-btn me-1" id="downloadMediaBtn" title="Download">
                                                 <i class="bi bi-download"></i>
                                             </button>
-                                            <button type="button" class="btn media-control-btn" id="fullscreenMediaBtn" title="Fullscreen">
+                                            <button type="button" class="btn media-control-btn me-1" id="fullscreenMediaBtn" title="Fullscreen">
                                                 <i class="bi bi-arrows-fullscreen"></i>
                                             </button>
-                                            <button type="button" class="btn media-control-btn" id="replaceMediaBtn" title="Replace Media">
+                                            <button type="button" class="btn media-control-btn me-1" id="replaceMediaBtn" title="Replace Media">
                                                 <i class="bi bi-arrow-repeat"></i>
                                             </button>
                                         </div>
 
-                                        <div class="media-content" id="mediaContent">
+                                        <div class="media-content d-flex align-items-center justify-content-center" id="mediaContent" style="min-height: 400px; background: #f8f9fa; border-radius: 15px;">
                                             <!-- Media content will be loaded here -->
-                                            <div class="media-placeholder" id="mediaPlaceholder">
-                                                <i class="bi bi-image"></i>
-                                                <h5>No Media Attached</h5>
-                                                <p class="mb-0">Upload an image or video to see it here</p>
+                                            <div class="media-placeholder text-center" id="mediaPlaceholder">
+                                                <i class="bi bi-image text-muted" style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                                                <h5 class="text-muted">No Media Attached</h5>
+                                                <p class="text-muted mb-3">Upload an image or video to see it here</p>
+                                                <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('mediaFileInput').click()">
+                                                    <i class="bi bi-cloud-upload me-2"></i>Choose File
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <!-- Media Upload Area (hidden by default) -->
-                                    <div class="media-upload-area mt-3" id="mediaUploadArea" style="display: none;">
-                                        <i class="bi bi-cloud-upload media-upload-icon"></i>
-                                        <h5>Upload New Media</h5>
+                                    <!-- Enhanced Media Upload Area -->
+                                    <div class="media-upload-area mt-3 p-4 text-center border-2 border-dashed rounded"
+                                         id="mediaUploadArea"
+                                         style="display: none; border-color: #dee2e6; background: #f8f9fa; cursor: pointer; transition: all 0.3s ease;">
+                                        <i class="bi bi-cloud-upload text-muted mb-3" style="font-size: 3rem;"></i>
+                                        <h5 class="text-muted">Upload New Media</h5>
                                         <p class="text-muted mb-3">Drag and drop your file here, or click to browse</p>
                                         <input type="file" class="d-none" id="mediaFileInput" accept="image/*,video/*">
                                         <button type="button" class="btn btn-orange" onclick="document.getElementById('mediaFileInput').click()">
@@ -666,51 +819,104 @@
                                 </div>
 
                                 <div class="col-lg-4">
-                                    <!-- Media Information -->
-                                    <div class="media-info">
-                                        <h6 class="mb-3">
-                                            <i class="bi bi-info-circle me-2"></i>Media Information
-                                        </h6>
-
-                                        <div class="media-detail-row">
-                                            <span class="media-detail-label">Type:</span>
-                                            <span class="media-detail-value" id="mediaType">--</span>
+                                    <!-- Enhanced Media Information -->
+                                    <div class="card shadow-sm">
+                                        <div class="card-header bg-white">
+                                            <h6 class="mb-0">
+                                                <i class="bi bi-info-circle me-2"></i>Media Information
+                                            </h6>
                                         </div>
+                                        <div class="card-body">
+                                            <div class="row mb-3">
+                                                <div class="col-4">
+                                                    <small class="text-muted fw-bold">Type:</small>
+                                                </div>
+                                                <div class="col-8">
+                                                    <span id="mediaType" class="text-dark">--</span>
+                                                </div>
+                                            </div>
 
-                                        <div class="media-detail-row">
-                                            <span class="media-detail-label">File Size:</span>
-                                            <span class="media-detail-value" id="mediaSize">--</span>
-                                        </div>
+                                            <div class="row mb-3">
+                                                <div class="col-4">
+                                                    <small class="text-muted fw-bold">Size:</small>
+                                                </div>
+                                                <div class="col-8">
+                                                    <span id="mediaSize" class="text-dark">--</span>
+                                                </div>
+                                            </div>
 
-                                        <div class="media-detail-row">
-                                            <span class="media-detail-label">Dimensions:</span>
-                                            <span class="media-detail-value" id="mediaDimensions">--</span>
-                                        </div>
+                                            <div class="row mb-3">
+                                                <div class="col-4">
+                                                    <small class="text-muted fw-bold">Dimensions:</small>
+                                                </div>
+                                                <div class="col-8">
+                                                    <span id="mediaDimensions" class="text-dark">--</span>
+                                                </div>
+                                            </div>
 
-                                        <div class="media-detail-row">
-                                            <span class="media-detail-label">URL:</span>
-                                            <span class="media-detail-value" id="mediaUrl">--</span>
-                                        </div>
+                                            <div class="row mb-3">
+                                                <div class="col-12">
+                                                    <small class="text-muted fw-bold">URL:</small>
+                                                    <div class="mt-1">
+                                                        <small id="mediaUrl" class="text-break text-muted" style="word-break: break-all;">--</small>
+                                                    </div>
+                                                </div>
+                                            </div>
 
-                                        <div class="media-detail-row">
-                                            <span class="media-detail-label">Alt Text:</span>
-                                            <span class="media-detail-value">
-                                                <input type="text" class="form-control form-control-sm" id="mediaAltText" placeholder="Describe this media">
-                                            </span>
+                                            <div class="row">
+                                                <div class="col-12">
+                                                    <label for="mediaAltText" class="form-label small text-muted fw-bold">Alt Text:</label>
+                                                    <input type="text" class="form-control form-control-sm" id="mediaAltText" placeholder="Describe this media for accessibility">
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <!-- Media Actions -->
-                                    <div class="mt-3">
-                                        <button type="button" class="btn btn-outline-primary w-100 mb-2" id="editImageBtn">
-                                            <i class="bi bi-image me-2"></i>Edit Image
-                                        </button>
-                                        <button type="button" class="btn btn-outline-secondary w-100 mb-2" id="generateThumbnailBtn">
-                                            <i class="bi bi-crop me-2"></i>Generate Thumbnail
-                                        </button>
-                                        <button type="button" class="btn btn-outline-warning w-100 mb-2" id="removeMediaBtn">
-                                            <i class="bi bi-trash me-2"></i>Remove Media
-                                        </button>
+                                    <!-- Enhanced Media Actions -->
+                                    <div class="card shadow-sm mt-3">
+                                        <div class="card-header bg-white">
+                                            <h6 class="mb-0">
+                                                <i class="bi bi-tools me-2"></i>Media Actions
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="d-grid gap-2">
+                                                <button type="button" class="btn btn-outline-primary" id="editImageBtn">
+                                                    <i class="bi bi-image me-2"></i>Edit Image
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary" id="generateThumbnailBtn">
+                                                    <i class="bi bi-crop me-2"></i>Generate Thumbnail
+                                                </button>
+                                                <button type="button" class="btn btn-outline-warning" id="removeMediaBtn">
+                                                    <i class="bi bi-trash me-2"></i>Remove Media
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Media Statistics -->
+                                    <div class="card shadow-sm mt-3">
+                                        <div class="card-header bg-white">
+                                            <h6 class="mb-0">
+                                                <i class="bi bi-bar-chart me-2"></i>Media Performance
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row text-center">
+                                                <div class="col-6">
+                                                    <div class="border rounded p-2">
+                                                        <h6 class="mb-1 text-primary" id="mediaViews">0</h6>
+                                                        <small class="text-muted">Views</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="border rounded p-2">
+                                                        <h6 class="mb-1 text-success" id="mediaEngagement">0%</h6>
+                                                        <small class="text-muted">Engagement</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

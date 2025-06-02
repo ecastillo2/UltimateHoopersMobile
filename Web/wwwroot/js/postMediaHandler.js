@@ -1,10 +1,10 @@
 ﻿/**
- * Post Media Handler JavaScript
- * Handles media display, upload, and management in the post modal
+ * Enhanced Post Media Handler JavaScript
+ * Updated to better integrate with post data and handle various media types
  */
 
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('🎬 Initializing Post Media Handler');
+    console.log('🎬 Initializing Enhanced Post Media Handler');
 
     let currentMediaData = null;
     let isFullscreen = false;
@@ -16,10 +16,10 @@ document.addEventListener('DOMContentLoaded', function () {
         initializeMediaControls();
         initializeMediaUpload();
         initializeTabSwitching();
-        console.log('✅ Media tab initialized');
+        console.log('✅ Enhanced media tab initialized');
     }
 
-    // ========== MEDIA CONTROLS ==========
+    // ========== ENHANCED MEDIA CONTROLS ==========
     function initializeMediaControls() {
         // Download button
         const downloadBtn = document.getElementById('downloadMediaBtn');
@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // ========== MEDIA UPLOAD ==========
+    // ========== ENHANCED MEDIA UPLOAD ==========
     function initializeMediaUpload() {
         const uploadArea = document.getElementById('mediaUploadArea');
         const fileInput = document.getElementById('mediaFileInput');
@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function () {
         uploadArea.addEventListener('drop', handleDrop);
         uploadArea.addEventListener('click', () => fileInput.click());
 
-        console.log('📤 Media upload initialized');
+        console.log('📤 Enhanced media upload initialized');
     }
 
     function handleDragOver(e) {
@@ -130,6 +130,9 @@ document.addEventListener('DOMContentLoaded', function () {
         // Hide upload area, show media
         hideMediaUpload();
 
+        // Update the post form with new media
+        updatePostFormWithNewMedia(file);
+
         // Show success message
         if (window.UIUtils) {
             window.UIUtils.showSuccess(`${file.name} uploaded successfully!`, 'Upload Complete');
@@ -139,8 +142,8 @@ document.addEventListener('DOMContentLoaded', function () {
     function validateMediaFile(file) {
         const maxSize = 10 * 1024 * 1024; // 10MB
         const allowedTypes = [
-            'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
-            'video/mp4', 'video/webm', 'video/ogg'
+            'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp',
+            'video/mp4', 'video/webm', 'video/ogg', 'video/avi', 'video/mov'
         ];
 
         if (file.size > maxSize) {
@@ -152,7 +155,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (!allowedTypes.includes(file.type)) {
             if (window.UIUtils) {
-                window.UIUtils.showError('File type not supported. Please use JPG, PNG, GIF, MP4, or WebM.', 'Invalid File Type');
+                window.UIUtils.showError('File type not supported. Please use JPG, PNG, GIF, MP4, WebM, or other supported formats.', 'Invalid File Type');
             }
             return false;
         }
@@ -160,7 +163,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return true;
     }
 
-    // ========== MEDIA DISPLAY ==========
+    // ========== ENHANCED MEDIA DISPLAY ==========
     function createMediaPreview(file) {
         const mediaContent = document.getElementById('mediaContent');
         if (!mediaContent) return;
@@ -182,7 +185,8 @@ document.addEventListener('DOMContentLoaded', function () {
             url: fileURL,
             type: file.type.startsWith('image/') ? 'image' : 'video',
             name: file.name,
-            size: file.size
+            size: file.size,
+            isNew: true
         };
     }
 
@@ -194,10 +198,25 @@ document.addEventListener('DOMContentLoaded', function () {
         img.alt = filename;
         img.className = 'media-image';
         img.loading = 'lazy';
+        img.style.cursor = 'pointer';
+
+        // Add click handler for fullscreen
+        img.addEventListener('click', () => {
+            toggleFullscreen();
+        });
 
         img.onload = function () {
             // Update dimensions info
             updateMediaDimensions(this.naturalWidth, this.naturalHeight);
+
+            // Add hover effect
+            this.addEventListener('mouseenter', function () {
+                this.style.transform = 'scale(1.02)';
+            });
+
+            this.addEventListener('mouseleave', function () {
+                this.style.transform = 'scale(1)';
+            });
         };
 
         img.onerror = function () {
@@ -206,7 +225,7 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         mediaContent.appendChild(img);
-        console.log('🖼️ Image preview created');
+        console.log('🖼️ Enhanced image preview created');
     }
 
     function createVideoPreview(url, filename) {
@@ -221,6 +240,9 @@ document.addEventListener('DOMContentLoaded', function () {
         video.onloadedmetadata = function () {
             // Update dimensions info
             updateMediaDimensions(this.videoWidth, this.videoHeight);
+
+            // Update file size info if available
+            updateMediaSize(currentMediaData?.size);
         };
 
         video.onerror = function () {
@@ -229,7 +251,7 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         mediaContent.appendChild(video);
-        console.log('🎥 Video preview created');
+        console.log('🎥 Enhanced video preview created');
     }
 
     function loadExistingMedia(mediaUrl, mediaType) {
@@ -238,7 +260,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        console.log('📱 Loading existing media:', mediaUrl);
+        console.log('📱 Loading existing media:', mediaUrl, 'Type:', mediaType);
 
         const mediaContent = document.getElementById('mediaContent');
         if (!mediaContent) return;
@@ -248,20 +270,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Determine media type if not provided
         if (!mediaType) {
-            const extension = mediaUrl.split('.').pop().toLowerCase();
-            if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension)) {
-                mediaType = 'image';
-            } else if (['mp4', 'webm', 'ogg'].includes(extension)) {
-                mediaType = 'video';
-            } else {
-                mediaType = 'image'; // Default to image
-            }
+            mediaType = determineMediaTypeFromUrl(mediaUrl);
         }
 
-        if (mediaType === 'image' || mediaType.startsWith('image/')) {
-            createImagePreview(mediaUrl, 'Post Image');
-        } else if (mediaType === 'video' || mediaType.startsWith('video/')) {
+        // Create appropriate media element
+        if (mediaType === 'video' || mediaType.startsWith('video/')) {
             createVideoPreview(mediaUrl, 'Post Video');
+        } else {
+            // Default to image
+            createImagePreview(mediaUrl, 'Post Image');
         }
 
         // Update media info for existing media
@@ -275,6 +292,24 @@ document.addEventListener('DOMContentLoaded', function () {
             name: getFilenameFromUrl(mediaUrl),
             isExisting: true
         };
+
+        console.log('✅ Existing media loaded successfully');
+    }
+
+    function determineMediaTypeFromUrl(url) {
+        const extension = url.split('.').pop().toLowerCase().split('?')[0];
+
+        const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
+        const videoExtensions = ['mp4', 'webm', 'ogg', 'avi', 'mov', 'wmv'];
+
+        if (videoExtensions.includes(extension)) {
+            return 'video';
+        } else if (imageExtensions.includes(extension)) {
+            return 'image';
+        }
+
+        // Default to image
+        return 'image';
     }
 
     function showNoMediaPlaceholder() {
@@ -283,15 +318,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
         mediaContent.innerHTML = `
             <div class="media-placeholder" id="mediaPlaceholder">
-                <i class="bi bi-image"></i>
+                <i class="bi bi-image" style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.5;"></i>
                 <h5>No Media Attached</h5>
                 <p class="mb-0">Upload an image or video to see it here</p>
+                <button type="button" class="btn btn-outline-primary mt-3" onclick="document.getElementById('mediaFileInput').click()">
+                    <i class="bi bi-cloud-upload me-2"></i>Choose File
+                </button>
             </div>
         `;
 
         // Clear media info
         clearMediaInfo();
         currentMediaData = null;
+
+        // Show upload area
+        showMediaUpload();
     }
 
     function showMediaError(message) {
@@ -300,14 +341,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
         mediaContent.innerHTML = `
             <div class="media-placeholder text-danger">
-                <i class="bi bi-exclamation-triangle"></i>
+                <i class="bi bi-exclamation-triangle" style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.5;"></i>
                 <h5>Media Error</h5>
                 <p class="mb-0">${message}</p>
+                <button type="button" class="btn btn-outline-danger mt-3" onclick="window.PostMediaHandler.showNoMediaPlaceholder()">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Try Again
+                </button>
             </div>
         `;
     }
 
-    // ========== MEDIA INFO MANAGEMENT ==========
+    // ========== ENHANCED MEDIA INFO MANAGEMENT ==========
     function updateMediaInfo(file) {
         // Update type
         const typeElement = document.getElementById('mediaType');
@@ -317,21 +361,20 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Update size
-        const sizeElement = document.getElementById('mediaSize');
-        if (sizeElement) {
-            sizeElement.textContent = formatFileSize(file.size);
-        }
+        updateMediaSize(file.size);
 
-        // Update URL (will be set after upload)
+        // Update URL (will be temporary blob URL)
         const urlElement = document.getElementById('mediaUrl');
         if (urlElement) {
-            urlElement.textContent = 'Uploading...';
+            urlElement.textContent = 'New upload (not saved yet)';
+            urlElement.title = file.name;
         }
 
-        // Clear alt text
+        // Set alt text from file name
         const altTextInput = document.getElementById('mediaAltText');
         if (altTextInput) {
-            altTextInput.value = '';
+            const altText = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, ' ');
+            altTextInput.value = altText;
         }
     }
 
@@ -339,7 +382,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Update type
         const typeElement = document.getElementById('mediaType');
         if (typeElement) {
-            const displayType = type.startsWith('image/') ? 'Image' : 'Video';
+            const displayType = type.startsWith('image/') || type === 'image' ? 'Image' : 'Video';
             typeElement.textContent = displayType;
         }
 
@@ -360,6 +403,20 @@ document.addEventListener('DOMContentLoaded', function () {
         const dimensionsElement = document.getElementById('mediaDimensions');
         if (dimensionsElement) {
             dimensionsElement.textContent = 'Loading...';
+        }
+
+        // Set alt text from post title if available
+        const altTextInput = document.getElementById('mediaAltText');
+        const postTitle = document.getElementById('editTitle')?.value;
+        if (altTextInput && postTitle) {
+            altTextInput.value = postTitle;
+        }
+    }
+
+    function updateMediaSize(sizeInBytes) {
+        const sizeElement = document.getElementById('mediaSize');
+        if (sizeElement && sizeInBytes) {
+            sizeElement.textContent = formatFileSize(sizeInBytes);
         }
     }
 
@@ -385,7 +442,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // ========== MEDIA ACTIONS ==========
+    // ========== ENHANCED MEDIA ACTIONS ==========
     function downloadMedia() {
         if (!currentMediaData) {
             if (window.UIUtils) {
@@ -426,13 +483,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 mediaElement.msRequestFullscreen();
             }
             isFullscreen = true;
-
-            // Update button icon
-            const fullscreenBtn = document.getElementById('fullscreenMediaBtn');
-            if (fullscreenBtn) {
-                fullscreenBtn.innerHTML = '<i class="bi bi-fullscreen-exit"></i>';
-                fullscreenBtn.title = 'Exit Fullscreen';
-            }
         } else {
             // Exit fullscreen
             if (document.exitFullscreen) {
@@ -443,13 +493,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.msExitFullscreen();
             }
             isFullscreen = false;
-
-            // Update button icon
-            const fullscreenBtn = document.getElementById('fullscreenMediaBtn');
-            if (fullscreenBtn) {
-                fullscreenBtn.innerHTML = '<i class="bi bi-arrows-fullscreen"></i>';
-                fullscreenBtn.title = 'Fullscreen';
-            }
         }
     }
 
@@ -520,6 +563,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 fileInput.value = '';
             }
 
+            // Clear the main form media fields
+            const imageUrlField = document.getElementById('editImageURL');
+            if (imageUrlField) {
+                imageUrlField.value = '';
+            }
+
+            // Clear preview in details tab
+            const currentImage = document.getElementById('currentImage');
+            const placeholder = document.getElementById('currentImagePlaceholder');
+            if (currentImage && placeholder) {
+                currentImage.style.display = 'none';
+                placeholder.style.display = 'flex';
+            }
+
             if (window.UIUtils) {
                 window.UIUtils.showSuccess('Media removed successfully', 'Removed');
             }
@@ -540,6 +597,31 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // ========== ENHANCED FORM INTEGRATION ==========
+    function updatePostFormWithNewMedia(file) {
+        // Create a data URL for immediate preview in details tab
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const dataUrl = e.target.result;
+
+            // Update the image URL field (temporary)
+            const imageUrlField = document.getElementById('editImageURL');
+            if (imageUrlField) {
+                imageUrlField.value = 'new-upload:' + file.name;
+            }
+
+            // Update preview in details tab
+            const currentImage = document.getElementById('currentImage');
+            const placeholder = document.getElementById('currentImagePlaceholder');
+            if (currentImage && placeholder) {
+                currentImage.src = dataUrl;
+                currentImage.style.display = 'block';
+                placeholder.style.display = 'none';
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+
     // ========== TAB SWITCHING ==========
     function initializeTabSwitching() {
         const mediaTab = document.getElementById('post-media-tab');
@@ -552,25 +634,32 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function loadMediaForCurrentPost() {
-        // Try to get media URL from the current post data
-        const imageUrlField = document.getElementById('editImageURL');
-        const currentImage = document.getElementById('currentImage');
+        // Get media URL from various sources
+        const mediaUrl = getCurrentPostMediaUrl();
 
-        let mediaUrl = null;
-
-        // Check various sources for media URL
-        if (imageUrlField && imageUrlField.value) {
-            mediaUrl = imageUrlField.value;
-        } else if (currentImage && currentImage.src && !currentImage.src.includes('data:')) {
-            mediaUrl = currentImage.src;
-        }
-
-        if (mediaUrl) {
-            loadExistingMedia(mediaUrl);
+        if (mediaUrl && !mediaUrl.startsWith('new-upload:')) {
+            const mediaType = determineMediaTypeFromUrl(mediaUrl);
+            loadExistingMedia(mediaUrl, mediaType);
         } else {
             showNoMediaPlaceholder();
-            showMediaUpload();
         }
+    }
+
+    function getCurrentPostMediaUrl() {
+        // Try to get media URL from form fields
+        const imageUrlField = document.getElementById('editImageURL');
+        if (imageUrlField && imageUrlField.value && !imageUrlField.value.startsWith('new-upload:')) {
+            return imageUrlField.value;
+        }
+
+        // Try to get from current image preview
+        const currentImage = document.getElementById('currentImage');
+        if (currentImage && currentImage.src && !currentImage.src.startsWith('data:') && !currentImage.src.startsWith('blob:')) {
+            return currentImage.src;
+        }
+
+        // Try global storage
+        return window.currentPostMediaUrl || null;
     }
 
     // ========== UTILITY FUNCTIONS ==========
@@ -585,7 +674,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function getFilenameFromUrl(url) {
-        return url.split('/').pop().split('?')[0] || 'media-file';
+        try {
+            return url.split('/').pop().split('?')[0] || 'media-file';
+        } catch (e) {
+            return 'media-file';
+        }
     }
 
     // ========== FULLSCREEN EVENT LISTENERS ==========
@@ -600,13 +693,16 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // ========== PUBLIC API ==========
+    // ========== ENHANCED PUBLIC API ==========
     window.PostMediaHandler = {
         loadExistingMedia,
         showNoMediaPlaceholder,
         getCurrentMediaData: () => currentMediaData,
-        clearMedia: removeMedia
+        clearMedia: removeMedia,
+        updateMediaFromPost: loadMediaForCurrentPost,
+        determineMediaTypeFromUrl,
+        validateMediaFile
     };
 
-    console.log('✅ Post Media Handler initialized successfully');
+    console.log('✅ Enhanced Post Media Handler initialized successfully');
 });
