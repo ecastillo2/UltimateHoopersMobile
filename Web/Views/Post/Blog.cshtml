@@ -269,12 +269,7 @@
                             <input type="text" class="form-control" id="addTitle" name="Title" required>
                         </div>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-md-12">
-                            <label for="addDescription" class="form-label">Description</label>
-                            <textarea class="form-control" id="addDescription" name="Description" rows="2" placeholder="Brief description or summary"></textarea>
-                        </div>
-                    </div>
+                   
                     <div class="row mb-3">
                         <div class="col-md-12">
                             <label for="addContent" class="form-label">Content <span class="text-danger">*</span></label>
@@ -301,16 +296,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="addStartDate" class="form-label">Start Date</label>
-                            <input type="datetime-local" class="form-control" id="addStartDate" name="StartDate">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="addEndDate" class="form-label">End Date</label>
-                            <input type="datetime-local" class="form-control" id="addEndDate" name="EndDate">
-                        </div>
-                    </div>
+                   
                     <div class="row mb-3">
                         <div class="col-md-12">
                             <label for="addImageFile" class="form-label">Upload Image</label>
@@ -401,7 +387,7 @@
                            
 
                             <div class="row mb-3">
-                                <div class="col-md-4">
+                                <div class="col-md-6">
                                     <label for="editPostType" class="form-label">Post Type <span class="text-danger">*</span></label>
                                     <select class="form-select" id="editPostType" name="PostType" required>
                                         <option value="">Select Type</option>
@@ -411,7 +397,7 @@
                                         <option value="General">General</option>
                                     </select>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-6">
                                     <label for="editStatus" class="form-label">Status</label>
                                     <select class="form-select" id="editStatus" name="Status">
                                         <option value="Active">Active</option>
@@ -419,7 +405,26 @@
                                         <option value="Archived">Archived</option>
                                     </select>
                                 </div>
+
                                 
+                                
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="editType" class="form-label"> Type <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="editType" name="Type" required>
+                                        <option value="">Select Type</option>
+                                        <option value="News">News</option>
+                                        <option value="Announcement">Announcement</option>
+                                        <option value="Event">Event</option>
+                                        <option value="General">General</option>
+                                    </select>
+                                </div>
+                               
+
+
+
                             </div>
 
 
