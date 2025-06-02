@@ -243,7 +243,6 @@ namespace WebAPI.Controllers
         }
 
 
-
         /// <summary>
         /// Check if a profile is already invited to a run
         /// </summary>

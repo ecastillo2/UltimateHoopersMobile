@@ -1,18 +1,10 @@
 ﻿using DataLayer.Context;
-using DataLayer.DAL;
 using DataLayer.DAL.Interface;
-using DataLayer.DAL.Repository;
 using Domain;
 using Domain.DtoModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-
 
 namespace WebAPI.Controllers
 {
@@ -31,19 +23,18 @@ namespace WebAPI.Controllers
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-
-
         /// <summary>
-        /// Get users with cursor-based pagination for efficient scrolling
+        /// Get Users With Cursor
         /// </summary>
+        /// <param name="cursor"></param>
+        /// <param name="limit"></param>
+        /// <param name="direction"></param>
+        /// <param name="sortBy"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpGet("cursor")]
         [ProducesResponseType(typeof(CursorPaginatedResultDto<UserDetailViewModelDto>), 200)]
-        public async Task<IActionResult> GetUsersWithCursor(
-            [FromQuery] string cursor = null,
-            [FromQuery] int limit = 20,
-            [FromQuery] string direction = "next",
-            [FromQuery] string sortBy = "Points",
-            CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetUsersWithCursor([FromQuery] string cursor = null,[FromQuery] int limit = 20,[FromQuery] string direction = "next",[FromQuery] string sortBy = "Points",CancellationToken cancellationToken = default)
         {
             try
             {
@@ -171,11 +162,12 @@ namespace WebAPI.Controllers
             }
         }
 
-
-
         /// <summary>
-        /// Get User by ID
+        /// Get User By Id
         /// </summary>
+        /// <param name="id"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(UserDetailViewModelDto), 200)]
         [ProducesResponseType(404)]
@@ -197,10 +189,12 @@ namespace WebAPI.Controllers
             }
         }
 
-
         /// <summary>
-        /// Get User by ID
+        /// Get Profile By UserId
         /// </summary>
+        /// <param name="id"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpGet("{id}/profile")]
         [ProducesResponseType(typeof(Profile), 200)]
         [ProducesResponseType(404)]
@@ -223,8 +217,11 @@ namespace WebAPI.Controllers
         }
 
         /// <summary>
-        /// Get User by ID
+        /// Get Profile Scouting Report ByU serId
         /// </summary>
+        /// <param name="id"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpGet("{id}/Scoutingreport")]
         [ProducesResponseType(typeof(ScoutingReport), 200)]
         [ProducesResponseType(404)]
@@ -249,6 +246,10 @@ namespace WebAPI.Controllers
         /// <summary>
         /// Update User
         /// </summary>
+        /// <param name="id"></param>
+        /// <param name="model"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpPut("{id}")]
         [Authorize]
         [ProducesResponseType(204)]

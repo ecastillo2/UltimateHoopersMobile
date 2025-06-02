@@ -20,7 +20,7 @@ namespace WebAPI.Controllers
         }
 
         /// <summary>
-        /// GetRuns
+        /// Get Runs
         /// </summary>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
@@ -79,8 +79,14 @@ namespace WebAPI.Controllers
         }
 
         /// <summary>
-        /// Get profiles with cursor-based pagination for efficient scrolling
+        /// Get Runs With Cursor
         /// </summary>
+        /// <param name="cursor"></param>
+        /// <param name="limit"></param>
+        /// <param name="direction"></param>
+        /// <param name="sortBy"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpGet("cursor")]
         [ProducesResponseType(typeof(CursorPaginatedResultDto<RunViewModelDto>), 200)]
         public async Task<IActionResult> GetRunsWithCursor([FromQuery] string cursor = null,[FromQuery] int limit = 20,[FromQuery] string direction = "next",[FromQuery] string sortBy = "Points",CancellationToken cancellationToken = default)
@@ -176,9 +182,6 @@ namespace WebAPI.Controllers
         [ProducesResponseType(404)]
         public async Task<IActionResult> UpdateRun([FromBody] Run run, CancellationToken cancellationToken)
         {
-           
-
-           
 
             try
             {
@@ -186,8 +189,6 @@ namespace WebAPI.Controllers
 
                 if (privateRun == null)
                     return NotFound($"PrivateRun with ID {run.RunId} not found");
-
-                
 
                 var success = await _runRepository.UpdateRunAsync(run, cancellationToken);
 
@@ -202,10 +203,6 @@ namespace WebAPI.Controllers
                 return StatusCode(500, "An error occurred while updating the profile");
             }
         }
-
-
-
-
 
     }
 }

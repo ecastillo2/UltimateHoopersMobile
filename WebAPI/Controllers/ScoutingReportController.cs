@@ -1,9 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using DataLayer.DAL;
 using Domain;
 using Microsoft.AspNetCore.Authorization;
 using System.Net;
-using DataLayer.DAL.Context;
 using DataLayer.DAL.Interface;
 using DataLayer.Context;
 using DataLayer.DAL.Repository;
@@ -11,7 +9,7 @@ using DataLayer.DAL.Repository;
 namespace WebAPI.Controllers
 {
     /// <summary>
-    /// Court Controller
+    /// Scouting Report Controller
     /// </summary>
     [Route("api/[controller]")]
     [Authorize]
@@ -22,7 +20,7 @@ namespace WebAPI.Controllers
         private readonly IConfiguration _configuration;
 
         /// <summary>
-        /// ScoutingReport Controller
+        /// Scouting Report Controller
         /// </summary>
         /// <param name="context"></param>
         /// <param name="configuration"></param>
@@ -34,12 +32,10 @@ namespace WebAPI.Controllers
 
         }
 
-        
-
         /// <summary>
-        /// Get Court By Id
+        /// Get Scouting Report By Id
         /// </summary>
-        /// <param name="tagId"></param>
+        /// <param name="scoutingReportId"></param>
         /// <returns></returns>
         //[Authorize]
         [HttpGet("GetScoutingReportById")]
@@ -56,12 +52,10 @@ namespace WebAPI.Controllers
 
         }
 
-       
-
         /// <summary>
-        /// Update User
+        /// Update Scouting Report
         /// </summary>
-        /// <param name="user"></param>
+        /// <param name="scoutingReport"></param>
         /// <returns></returns>
         [HttpPost("UpdateScoutingReport")]
         public async Task UpdateScoutingReport([FromBody] ScoutingReport scoutingReport)
@@ -80,9 +74,9 @@ namespace WebAPI.Controllers
         }
 
         /// <summary>
-        /// Delete ScoutingReport
+        /// Delete Court
         /// </summary>
-        /// <param name="tagId"></param>
+        /// <param name="scoutingReportId"></param>
         /// <returns></returns>
         [HttpDelete("DeleteCourt")]
         public async Task<HttpResponseMessage> DeleteScoutingReport(string scoutingReportId)

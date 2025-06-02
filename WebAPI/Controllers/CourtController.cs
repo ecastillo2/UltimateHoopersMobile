@@ -1,15 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using DataLayer.DAL;
-using DataLayer.DAL.Interface;
-using Domain;
+﻿using DataLayer.DAL.Interface;
 using Domain.DtoModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
 
 namespace WebAPI.Controllers
 {
@@ -27,8 +19,10 @@ namespace WebAPI.Controllers
         }
 
         /// <summary>
-        /// Get all Courts
+        /// GetC ourts
         /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpGet]
         [ProducesResponseType(typeof(IEnumerable<CourtViewModelDto>), 200)]
         public async Task<IActionResult> GetCourts(CancellationToken cancellationToken)
@@ -48,8 +42,12 @@ namespace WebAPI.Controllers
         }
 
         /// <summary>
-        /// Get Courts with standard pagination
+        /// Get Courts Paginated
         /// </summary>
+        /// <param name="page"></param>
+        /// <param name="pageSize"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpGet("paginated")]
         [ProducesResponseType(typeof(PaginatedResultDto<CourtViewModelDto>), 200)]
         public async Task<IActionResult> GetCourtsPaginated([FromQuery] int page = 1,[FromQuery] int pageSize = 20,CancellationToken cancellationToken = default)
@@ -80,8 +78,14 @@ namespace WebAPI.Controllers
         }
 
         /// <summary>
-        /// Get profiles with cursor-based pagination for efficient scrolling
+        /// Get Profiles With Cursor
         /// </summary>
+        /// <param name="cursor"></param>
+        /// <param name="limit"></param>
+        /// <param name="direction"></param>
+        /// <param name="sortBy"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpGet("cursor")]
         [ProducesResponseType(typeof(CursorPaginatedResultDto<CourtViewModelDto>), 200)]
         public async Task<IActionResult> GetProfilesWithCursor([FromQuery] string cursor = null,[FromQuery] int limit = 20,[FromQuery] string direction = "next",[FromQuery] string sortBy = "Points",CancellationToken cancellationToken = default)
@@ -140,8 +144,12 @@ namespace WebAPI.Controllers
 
 
         /// <summary>
-        /// Update Court
+        /// UpdateC ourt
         /// </summary>
+        /// <param name="id"></param>
+        /// <param name="model"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpPut("{id}")]
         [Authorize]
         [ProducesResponseType(204)]

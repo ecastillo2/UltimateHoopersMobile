@@ -1,7 +1,6 @@
 ﻿using DataLayer.DAL.Interface;
 using Domain;
 using Domain.DtoModel;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebAPI.Controllers
@@ -42,20 +41,12 @@ namespace WebAPI.Controllers
             }
         }
 
-
-
-
         /// <summary>
-        /// Get productss with cursor-based pagination for efficient scrolling
+        /// Get products with cursor-based pagination for efficient scrolling
         /// </summary>
         [HttpGet("cursor")]
         [ProducesResponseType(typeof(CursorPaginatedResultDto<ProductViewModelDto>), 200)]
-        public async Task<IActionResult> GetProductsWithCursor(
-            [FromQuery] string cursor = null,
-            [FromQuery] int limit = 20,
-            [FromQuery] string direction = "next",
-            [FromQuery] string sortBy = "Points",
-            CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetProductsWithCursor([FromQuery] string cursor = null,[FromQuery] int limit = 20,[FromQuery] string direction = "next",[FromQuery] string sortBy = "Points",CancellationToken cancellationToken = default)
         {
             try
             {
@@ -132,7 +123,6 @@ namespace WebAPI.Controllers
                 return StatusCode(500, "An error occurred while retrieving the Product");
             }
         }
-
 
         /// <summary>
         /// Update products
