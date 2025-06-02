@@ -1,10 +1,11 @@
 ﻿/**
- * Complete Enhanced Product Management JavaScript
+ * Complete Enhanced Product Management JavaScript with Full AJAX Support
  * Includes both Edit and Add Product functionality with file upload support
+ * All AJAX operations, form submissions, and UI interactions
  */
 
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('🚀 Initializing Complete Enhanced Product Management');
+    console.log('🚀 Initializing Complete Enhanced Product Management with AJAX');
 
     // Initialize components
     initializeDataTable();
@@ -24,34 +25,78 @@ document.addEventListener('DOMContentLoaded', function () {
         testTableDataExtraction,
         testAddProduct,
         clearAddForm,
-        validateAddForm
+        validateAddForm,
+        submitEditForm,
+        submitAddForm
     };
 
     // Verify API configuration
     checkAPIConfiguration();
 
-    console.log('✅ Complete Enhanced Product Management loaded successfully');
+    console.log('✅ Complete Enhanced Product Management with AJAX loaded successfully');
 
-    // ========== EDIT PRODUCT MODAL HANDLERS ==========
+    // ========== DATATABLE INITIALIZATION ==========
+    function initializeDataTable() {
+        const tableElement = $('#productsTable');
+        if (tableElement.length > 0) {
+            tableElement.DataTable({
+                responsive: true,
+                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+                dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip',
+                language: {
+                    search: "_INPUT_",
+                    searchPlaceholder: "Search products...",
+                    lengthMenu: "Show _MENU_ products per page",
+                    info: "Showing _START_ to _END_ of _TOTAL_ products",
+                    infoEmpty: "Showing 0 to 0 of 0 products",
+                    infoFiltered: "(filtered from _MAX_ total products)"
+                },
+                columnDefs: [
+                    { className: "align-middle", targets: "_all" },
+                    { orderable: false, targets: [5] }
+                ],
+                order: [[0, 'asc']]
+            });
+            console.log('📊 DataTable initialized');
+        }
+    }
 
-    /**
-     * Enhanced modal show handler with better debugging
-     */
+    // ========== MODAL INITIALIZATION ==========
+    function initializeModals() {
+        const editProductModal = document.getElementById('editProductModal');
+        if (editProductModal) {
+            editProductModal.addEventListener('show.bs.modal', handleEditModalShow);
+            editProductModal.addEventListener('hidden.bs.modal', handleEditModalHide);
+
+            // Tab switching handlers
+            const tabButtons = editProductModal.querySelectorAll('button[data-bs-toggle="tab"]');
+            tabButtons.forEach(button => {
+                button.addEventListener('shown.bs.tab', handleTabSwitch);
+            });
+
+            console.log('📝 Edit modal event handlers initialized');
+        }
+
+        // Delete button handler
+        const deleteProductBtn = document.getElementById('deleteProductBtn');
+        if (deleteProductBtn) {
+            deleteProductBtn.addEventListener('click', handleDeleteProduct);
+        }
+    }
+
     function handleEditModalShow(event) {
         const button = event.relatedTarget;
         const productId = button.getAttribute('data-product-id');
 
         console.log('📂 Opening edit modal for product ID:', productId);
-        console.log('📂 Button element:', button);
 
         if (!productId) {
             console.error('🚨 No product ID found on button');
-            console.log('Available data attributes:', Array.from(button.attributes).map(attr => `${attr.name}="${attr.value}"`));
-            showToast('Error: Product ID is missing', 'error');
+            UIUtils.showError('Product ID is missing', 'Error');
             return;
         }
 
-        // Set product ID in all forms
+        // Set product IDs in forms
         setProductIdInForms(productId);
 
         // Clear previous data
@@ -60,13 +105,52 @@ document.addEventListener('DOMContentLoaded', function () {
         // Show loading state immediately
         showLoadingState();
 
-        // Load product data with enhanced debugging
+        // Load product data
         loadProductDataEnhanced(productId);
     }
 
-    /**
-     * Enhanced product data loading with better error handling
-     */
+    function handleEditModalHide() {
+        console.log('🚪 Closing edit modal');
+        clearAllForms();
+        hideLoadingState();
+    }
+
+    function handleTabSwitch(event) {
+        const targetTab = event.target.getAttribute('data-bs-target');
+        const productId = document.getElementById('editProductId')?.value;
+
+        console.log('🔄 Switching to tab:', targetTab, 'for product:', productId);
+
+        if (!productId) return;
+
+        switch (targetTab) {
+            case '#product-info-tab-pane':
+                loadProductInfo(productId);
+                break;
+            case '#inventory-tab-pane':
+                loadInventoryData(productId);
+                break;
+        }
+    }
+
+    function handleDeleteProduct() {
+        const productId = document.getElementById('editProductId')?.value;
+        if (!productId) return;
+
+        const deleteField = document.getElementById('deleteProductId');
+        if (deleteField) {
+            deleteField.value = productId;
+        }
+
+        // Hide edit modal and show delete confirmation
+        const editModal = bootstrap.Modal.getInstance(document.getElementById('editProductModal'));
+        if (editModal) editModal.hide();
+
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteProductModal'));
+        deleteModal.show();
+    }
+
+    // ========== PRODUCT DATA LOADING ==========
     function loadProductDataEnhanced(productId) {
         console.log('📥 Loading product data for ID:', productId);
 
@@ -81,13 +165,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (row) {
             console.log('📋 Found table row, extracting data...');
             const tableData = extractTableData(row);
-            console.log('📦 Extracted table data:', tableData);
             populateFromTableData(tableData);
-            console.log('✅ Table data populated successfully');
-        } else {
-            console.warn('⚠️ No table row found for product ID:', productId);
-            // Try alternative approach - search all rows
-            tryFindRowAlternative(productId);
         }
 
         // Step 2: Always call API for complete data if available
@@ -96,13 +174,10 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
             console.error('🚨 GetProductData API URL not configured');
             hideLoadingState();
-            showToast('API not configured. Only table data available.', 'warning');
+            UIUtils.showWarning('API not configured. Only table data available.', 'Warning');
         }
     }
 
-    /**
-     * Enhanced API call with better error handling
-     */
     function callGetProductDataAPIEnhanced(productId) {
         const url = `${window.appUrls.getProductData}?id=${encodeURIComponent(productId)}`;
         console.log('🌐 Calling API:', url);
@@ -118,7 +193,6 @@ document.addEventListener('DOMContentLoaded', function () {
         })
             .then(response => {
                 console.log('📡 API Response status:', response.status);
-                console.log('📡 API Response headers:', Object.fromEntries(response.headers.entries()));
 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -132,22 +206,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (data && data.success !== false) {
                     console.log('✅ API call successful, populating form');
                     populateFromAPIDataEnhanced(data);
-                    showToast('Product data loaded successfully', 'success');
+                    UIUtils.showSuccess('Product data loaded successfully');
                 } else {
                     console.error('🚨 API returned error:', data?.message || 'Unknown error');
-                    showToast(data?.message || 'Failed to load complete product data', 'warning');
+                    UIUtils.showWarning(data?.message || 'Failed to load complete product data');
                 }
             })
             .catch(error => {
                 console.error('💥 API Error:', error);
                 hideLoadingState();
-                showToast(`API Error: ${error.message}. Using table data only.`, 'warning');
+                UIUtils.showWarning(`API Error: ${error.message}. Using table data only.`);
             });
     }
 
-    /**
-     * Enhanced table data extraction
-     */
     function extractTableData(row) {
         if (!row) return {};
 
@@ -168,11 +239,8 @@ document.addEventListener('DOMContentLoaded', function () {
             type: row.getAttribute('data-type')
         };
 
-        console.log('📊 Data from attributes:', dataFromAttributes);
-
         // Method 2: Try extracting from cell content as fallback
         const cells = row.querySelectorAll('td');
-        console.log('📊 Found cells:', cells.length);
 
         if (cells.length >= 5) {
             // Extract from the product column (first column)
@@ -180,21 +248,11 @@ document.addEventListener('DOMContentLoaded', function () {
             const titleElement = productCell.querySelector('.product-title, .fw-semibold');
             const numberElement = productCell.querySelector('.product-number, .text-muted.small');
 
-            // Extract from price column
-            const priceCell = cells[1];
-            const priceText = priceCell.textContent.replace('$', '').trim();
-
-            // Extract from points column
-            const pointsCell = cells[2];
-            const pointsText = pointsCell.textContent.trim();
-
-            // Extract from status column
-            const statusCell = cells[3];
-            const statusElement = statusCell.querySelector('.badge, .product-status');
-
-            // Extract from category column
-            const categoryCell = cells[4];
-            const categoryText = categoryCell.textContent.trim();
+            // Extract from other columns
+            const priceText = cells[1]?.textContent.replace('$', '').trim();
+            const pointsText = cells[2]?.textContent.trim();
+            const statusElement = cells[3]?.querySelector('.badge, .product-status');
+            const categoryText = cells[4]?.textContent.trim();
 
             const dataFromCells = {
                 title: titleElement?.textContent?.trim() || dataFromAttributes.title,
@@ -204,8 +262,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 status: statusElement?.textContent?.trim() || dataFromAttributes.status,
                 category: categoryText || dataFromAttributes.category
             };
-
-            console.log('📊 Data from cells:', dataFromCells);
 
             // Merge data, preferring attributes but falling back to cell content
             return {
@@ -217,9 +273,6 @@ document.addEventListener('DOMContentLoaded', function () {
         return dataFromAttributes;
     }
 
-    /**
-     * Enhanced form population from table data
-     */
     function populateFromTableData(data) {
         console.log('📝 Populating form from table data:', data);
 
@@ -262,9 +315,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    /**
-     * Enhanced API data population
-     */
     function populateFromAPIDataEnhanced(data) {
         console.log('🌐 Populating form from API data:', data);
 
@@ -312,51 +362,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    /**
-     * Try alternative methods to find the row
-     */
-    function tryFindRowAlternative(productId) {
-        console.log('🔍 Trying alternative row finding methods for ID:', productId);
-
-        // Method 1: Search all buttons with data-product-id
-        const allButtons = document.querySelectorAll('button[data-product-id]');
-        console.log('🔍 Found buttons with data-product-id:', allButtons.length);
-
-        for (const button of allButtons) {
-            if (button.getAttribute('data-product-id') === productId) {
-                const row = button.closest('tr');
-                if (row) {
-                    console.log('✅ Found row via button search');
-                    const tableData = extractTableData(row);
-                    populateFromTableData(tableData);
-                    return;
-                }
-            }
-        }
-
-        // Method 2: Search DataTable if available
-        if (window.$ && $.fn.dataTable && $.fn.dataTable.isDataTable('#productsTable')) {
-            const table = $('#productsTable').DataTable();
-            const rows = table.rows().nodes();
-
-            for (let i = 0; i < rows.length; i++) {
-                const row = rows[i];
-                const button = row.querySelector(`[data-product-id="${productId}"]`);
-                if (button) {
-                    console.log('✅ Found row via DataTable search');
-                    const tableData = extractTableData(row);
-                    populateFromTableData(tableData);
-                    return;
-                }
-            }
-        }
-
-        console.warn('⚠️ Could not find row using any method');
-    }
-
-    /**
-     * Enhanced row finding with multiple strategies
-     */
     function findProductRowById(productId) {
         if (!productId) return null;
 
@@ -365,7 +370,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Strategy 1: Direct row attribute search
         let row = document.querySelector(`tr[data-product-id="${productId}"]`);
         if (row) {
-            console.log('✅ Found row by data-product-id (Strategy 1)');
+            console.log('✅ Found row by data-product-id');
             return row;
         }
 
@@ -374,7 +379,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (button) {
             row = button.closest('tr');
             if (row) {
-                console.log('✅ Found row via button (Strategy 2)');
+                console.log('✅ Found row via button');
                 return row;
             }
         }
@@ -386,7 +391,7 @@ document.addEventListener('DOMContentLoaded', function () {
             for (const tr of allRows) {
                 const editBtn = tr.querySelector(`[data-product-id="${productId}"]`);
                 if (editBtn) {
-                    console.log('✅ Found row via table body search (Strategy 3)');
+                    console.log('✅ Found row via table body search');
                     return tr;
                 }
             }
@@ -396,15 +401,154 @@ document.addEventListener('DOMContentLoaded', function () {
         return null;
     }
 
+    // ========== FORM SUBMISSION HANDLERS ==========
+    function initializeForms() {
+        console.log('📝 Initializing form handlers...');
+
+        // Edit Product Form
+        const editProductForm = document.getElementById('editProductForm');
+        if (editProductForm) {
+            editProductForm.addEventListener('submit', handleEditFormSubmit);
+            console.log('✅ Edit form handler attached');
+        }
+
+        // Add Product Form
+        const addProductForm = document.getElementById('addProductForm');
+        if (addProductForm) {
+            addProductForm.addEventListener('submit', handleAddFormSubmit);
+            console.log('✅ Add form handler attached');
+        }
+    }
+
+    function handleEditFormSubmit(e) {
+        e.preventDefault();
+        console.log('📤 Edit form submitted');
+
+        if (!validateEditProductForm()) {
+            return false;
+        }
+
+        submitEditForm(e.target);
+    }
+
+    function handleAddFormSubmit(e) {
+        e.preventDefault();
+        console.log('📤 Add form submitted');
+
+        if (!validateAddProductForm()) {
+            return false;
+        }
+
+        submitAddForm(e.target);
+    }
+
+    function submitEditForm(form) {
+        console.log('🚀 Submitting edit product form via AJAX');
+
+        const formData = new FormData(form);
+        const submitBtn = form.querySelector('button[type="submit"]');
+
+        // Set button loading state
+        UIUtils.setButtonLoading(submitBtn, true, 'Saving...');
+
+        // Get anti-forgery token
+        const token = getAntiForgeryToken();
+
+        fetch('/Product/Edit', {
+            method: 'POST',
+            headers: {
+                'RequestVerificationToken': token
+            },
+            body: formData
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(result => {
+                UIUtils.setButtonLoading(submitBtn, false);
+
+                if (result.success) {
+                    UIUtils.showSuccess(result.message || 'Product updated successfully!');
+
+                    // Update the table row if visible
+                    updateTableRow(result.product || getFormData(form));
+
+                    // Close modal after short delay
+                    setTimeout(() => {
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('editProductModal'));
+                        if (modal) modal.hide();
+                    }, 1000);
+                } else {
+                    UIUtils.showError(result.message || 'Failed to update product');
+                }
+            })
+            .catch(error => {
+                console.error('🚨 Error updating product:', error);
+                UIUtils.setButtonLoading(submitBtn, false);
+                UIUtils.showError(`Error updating product: ${error.message}`);
+            });
+    }
+
+    function submitAddForm(form) {
+        console.log('🚀 Submitting add product form via AJAX');
+
+        const formData = new FormData(form);
+        const submitBtn = form.querySelector('button[type="submit"]');
+
+        // Set button loading state
+        UIUtils.setButtonLoading(submitBtn, true, 'Adding Product...');
+
+        // Get anti-forgery token
+        const token = getAntiForgeryToken();
+
+        fetch('/Product/Create', {
+            method: 'POST',
+            headers: {
+                'RequestVerificationToken': token
+            },
+            body: formData
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(result => {
+                UIUtils.setButtonLoading(submitBtn, false);
+
+                if (result.success) {
+                    UIUtils.showSuccess(result.message || 'Product created successfully!');
+
+                    // Clear form
+                    clearAddForm();
+
+                    // Close modal after short delay
+                    setTimeout(() => {
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('addProductModal'));
+                        if (modal) modal.hide();
+
+                        // Refresh page to show new product
+                        location.reload();
+                    }, 1500);
+                } else {
+                    UIUtils.showError(result.message || 'Failed to create product');
+                }
+            })
+            .catch(error => {
+                console.error('🚨 Error creating product:', error);
+                UIUtils.setButtonLoading(submitBtn, false);
+                UIUtils.showError(`Error creating product: ${error.message}`);
+            });
+    }
+
     // ========== ADD PRODUCT MODAL FUNCTIONALITY ==========
-
-    /**
-     * Initialize Add Product Modal with file upload functionality
-     */
     function initializeAddProductModal() {
-        console.log('🎯 Initializing Add Product Modal with File Upload');
+        console.log('🎯 Initializing Add Product Modal');
 
-        // Get modal and form elements
         const addModal = document.getElementById('addProductModal');
         const addForm = document.getElementById('addProductForm');
         const fileInput = document.getElementById('addImageFile');
@@ -422,7 +566,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 const file = e.target.files[0];
                 if (file) {
                     handleFileSelection(file);
-                    // Clear URL input when file is selected
                     if (urlInput) urlInput.value = '';
                 }
             });
@@ -434,12 +577,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 const url = this.value.trim();
                 if (url) {
                     handleUrlInput(url);
-                    // Clear file input when URL is provided
                     if (fileInput) fileInput.value = '';
                 }
             });
 
-            // Real-time URL validation
             urlInput.addEventListener('input', function () {
                 const url = this.value.trim();
                 if (url && !isValidImageUrl(url)) {
@@ -474,28 +615,9 @@ document.addEventListener('DOMContentLoaded', function () {
             clearAddForm();
         });
 
-        // Form submission handler
-        addForm.addEventListener('submit', function (e) {
-            if (!validateAddProductForm()) {
-                e.preventDefault();
-                return false;
-            }
-
-            console.log('📤 Submitting add product form');
-            const submitBtn = this.querySelector('button[type="submit"]');
-            if (submitBtn) {
-                setButtonLoading(submitBtn, true, 'Adding Product...');
-            }
-
-            showToast('Creating product...', 'info');
-        });
-
         console.log('✅ Add product modal initialized');
     }
 
-    /**
-     * Setup drag and drop functionality
-     */
     function setupDragAndDrop(fileInputArea, fileInput, urlInput) {
         fileInputArea.addEventListener('dragover', function (e) {
             e.preventDefault();
@@ -519,110 +641,104 @@ document.addEventListener('DOMContentLoaded', function () {
                     handleFileSelection(file);
                     if (urlInput) urlInput.value = '';
                 } else {
-                    showToast('Please drop an image file', 'error');
+                    UIUtils.showError('Please drop an image file');
                 }
             }
         });
     }
 
-    /**
-     * Handle file selection for add product modal
-     */
     function handleFileSelection(file) {
-        console.log('📁 File selected:', file.name, 'Size:', formatFileSize(file.size));
+        console.log('📁 File selected:', file.name);
 
-        // Validate file
         if (!validateImageFile(file)) {
             return;
         }
 
-        // Create preview
         const reader = new FileReader();
         reader.onload = function (e) {
             updateImagePreview(e.target.result, 'add');
-            showToast(`Image "${file.name}" loaded successfully`, 'success');
+            UIUtils.showSuccess(`Image "${file.name}" loaded successfully`);
         };
         reader.onerror = function () {
-            showToast('Error reading file. Please try again.', 'error');
+            UIUtils.showError('Error reading file. Please try again.');
         };
         reader.readAsDataURL(file);
     }
 
-    /**
-     * Handle URL input for add product modal
-     */
     function handleUrlInput(url) {
         console.log('🔗 URL entered:', url);
 
-        // Basic URL validation
         if (!isValidImageUrl(url)) {
-            showToast('Please enter a valid image URL', 'warning');
+            UIUtils.showWarning('Please enter a valid image URL');
             return;
         }
 
-        // Show loading state
         setPlaceholderLoading('add');
 
-        // Test if the image loads
         const testImg = new Image();
         testImg.onload = function () {
             updateImagePreview(url, 'add');
-            showToast('Image loaded from URL successfully', 'success');
+            UIUtils.showSuccess('Image loaded from URL successfully');
         };
         testImg.onerror = function () {
             resetPlaceholder('add');
-            showToast('Failed to load image from URL. Please check the URL and try again.', 'error');
+            UIUtils.showError('Failed to load image from URL. Please check the URL and try again.');
         };
         testImg.src = url;
     }
 
-    /**
-     * Validate image file
-     */
-    function validateImageFile(file) {
-        const maxSize = 5 * 1024 * 1024; // 5MB
-        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
+    // ========== VALIDATION FUNCTIONS ==========
+    function validateEditProductForm() {
+        const errors = [];
 
-        if (file.size > maxSize) {
-            showToast(`File size (${formatFileSize(file.size)}) must be less than 5MB`, 'error');
-            return false;
+        const title = document.getElementById('editTitle')?.value?.trim();
+        const price = document.getElementById('editPrice')?.value;
+        const type = document.getElementById('editType')?.value;
+        const category = document.getElementById('editCategory')?.value;
+
+        if (!title) {
+            errors.push('Product title is required');
+            markFieldInvalid('editTitle');
+        } else {
+            markFieldValid('editTitle');
         }
 
-        if (!allowedTypes.includes(file.type.toLowerCase())) {
-            showToast('File type not supported. Please use JPG, PNG, GIF, WebP, or BMP.', 'error');
+        if (!price || isNaN(parseFloat(price)) || parseFloat(price) < 0) {
+            errors.push('Valid price is required');
+            markFieldInvalid('editPrice');
+        } else {
+            markFieldValid('editPrice');
+        }
+
+        if (!type) {
+            errors.push('Product type is required');
+            markFieldInvalid('editType');
+        } else {
+            markFieldValid('editType');
+        }
+
+        if (!category) {
+            errors.push('Product category is required');
+            markFieldInvalid('editCategory');
+        } else {
+            markFieldValid('editCategory');
+        }
+
+        if (errors.length > 0) {
+            UIUtils.showError('Please fix the following errors:\n• ' + errors.join('\n• '));
             return false;
         }
 
         return true;
     }
 
-    /**
-     * Validate image URL
-     */
-    function isValidImageUrl(url) {
-        try {
-            new URL(url);
-            const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
-            const urlLower = url.toLowerCase();
-            return imageExtensions.some(ext => urlLower.includes(ext)) ||
-                url.includes('image') ||
-                url.includes('img') ||
-                /\/(photo|picture|pic)\//i.test(url);
-        } catch {
-            return false;
-        }
-    }
-
-    /**
-     * Validate Add Product Form
-     */
     function validateAddProductForm() {
+        const errors = [];
+
         const title = document.getElementById('addTitle')?.value?.trim();
         const price = document.getElementById('addPrice')?.value;
         const type = document.getElementById('addType')?.value;
         const category = document.getElementById('addCategory')?.value;
-
-        const errors = [];
 
         if (!title) {
             errors.push('Product title is required');
@@ -653,18 +769,45 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (errors.length > 0) {
-            showToast('Please fix the following errors:\n• ' + errors.join('\n• '), 'error');
+            UIUtils.showError('Please fix the following errors:\n• ' + errors.join('\n• '));
             return false;
         }
 
         return true;
     }
 
-    // ========== IMAGE PREVIEW FUNCTIONS ==========
+    function validateImageFile(file) {
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
 
-    /**
-     * Update image preview for both add and edit modals
-     */
+        if (file.size > maxSize) {
+            UIUtils.showError(`File size (${formatFileSize(file.size)}) must be less than 5MB`);
+            return false;
+        }
+
+        if (!allowedTypes.includes(file.type.toLowerCase())) {
+            UIUtils.showError('File type not supported. Please use JPG, PNG, GIF, WebP, or BMP.');
+            return false;
+        }
+
+        return true;
+    }
+
+    function isValidImageUrl(url) {
+        try {
+            new URL(url);
+            const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
+            const urlLower = url.toLowerCase();
+            return imageExtensions.some(ext => urlLower.includes(ext)) ||
+                url.includes('image') ||
+                url.includes('img') ||
+                /\/(photo|picture|pic)\//i.test(url);
+        } catch {
+            return false;
+        }
+    }
+
+    // ========== IMAGE PREVIEW FUNCTIONS ==========
     function updateImagePreview(src, modalType = 'edit') {
         const prefix = modalType === 'add' ? 'add' : 'current';
         const previewImg = document.getElementById(`${prefix === 'add' ? 'addPreview' : 'current'}Image`);
@@ -675,13 +818,11 @@ document.addEventListener('DOMContentLoaded', function () {
             previewImg.style.display = 'block';
             placeholder.style.display = 'none';
 
-            // Add image preview container styling
             const container = document.getElementById(`${prefix === 'add' ? 'add' : 'current'}ImagePreview`);
             if (container) {
                 container.classList.add('has-image');
             }
 
-            // Add image load animation
             previewImg.style.opacity = '0';
             previewImg.style.transform = 'scale(0.8)';
 
@@ -695,9 +836,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    /**
-     * Clear image preview for both add and edit modals
-     */
     function clearImagePreview(modalType = 'edit') {
         console.log(`🧹 Clearing ${modalType} image preview`);
 
@@ -705,7 +843,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const fileInput = document.getElementById(`${prefix}ImageFile`);
         const urlInput = document.getElementById(`${prefix}ImageURL`);
 
-        // Clear inputs
         if (fileInput) fileInput.value = '';
         if (urlInput) {
             urlInput.value = '';
@@ -713,12 +850,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         resetPlaceholder(modalType);
-        showToast('Image cleared', 'info');
+        UIUtils.showInfo('Image cleared');
     }
 
-    /**
-     * Reset placeholder to default state
-     */
     function resetPlaceholder(modalType = 'edit') {
         const prefix = modalType === 'add' ? 'add' : 'current';
         const previewImg = document.getElementById(`${prefix === 'add' ? 'addPreview' : 'current'}Image`);
@@ -729,7 +863,6 @@ document.addEventListener('DOMContentLoaded', function () {
             previewImg.style.display = 'none';
             placeholder.style.display = 'flex';
 
-            // Reset placeholder content
             const placeholderText = modalType === 'add' ? 'Image Preview' : 'Current Image';
             const placeholderSubtext = modalType === 'add' ? 'No image selected' : 'No image uploaded';
 
@@ -740,16 +873,12 @@ document.addEventListener('DOMContentLoaded', function () {
             `;
         }
 
-        // Remove container styling
         const container = document.getElementById(`${prefix === 'add' ? 'add' : 'current'}ImagePreview`);
         if (container) {
             container.classList.remove('has-image');
         }
     }
 
-    /**
-     * Set placeholder to loading state
-     */
     function setPlaceholderLoading(modalType = 'edit') {
         const prefix = modalType === 'add' ? 'add' : 'current';
         const placeholder = document.getElementById(`${prefix === 'add' ? 'add' : 'current'}ImagePlaceholder`);
@@ -763,135 +892,21 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // ========== DATATABLE INITIALIZATION ==========
-
-    /**
-     * Initialize DataTable
-     */
-    function initializeDataTable() {
-        const tableElement = $('#productsTable');
-        if (tableElement.length > 0) {
-            tableElement.DataTable({
-                responsive: true,
-                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
-                dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip',
-                language: {
-                    search: "_INPUT_",
-                    searchPlaceholder: "Search products...",
-                    lengthMenu: "Show _MENU_ products per page",
-                    info: "Showing _START_ to _END_ of _TOTAL_ products",
-                    infoEmpty: "Showing 0 to 0 of 0 products",
-                    infoFiltered: "(filtered from _MAX_ total products)"
-                },
-                columnDefs: [
-                    { className: "align-middle", targets: "_all" },
-                    { orderable: false, targets: [5] }
-                ],
-                order: [[0, 'asc']]
-            });
-            console.log('📊 DataTable initialized');
-        }
-    }
-
-    // ========== MODAL INITIALIZATION ==========
-
-    /**
-     * Initialize modal event handlers
-     */
-    function initializeModals() {
-        const editProductModal = document.getElementById('editProductModal');
-        if (editProductModal) {
-            editProductModal.addEventListener('show.bs.modal', handleEditModalShow);
-            editProductModal.addEventListener('hidden.bs.modal', handleEditModalHide);
-
-            // Tab switching handlers
-            const tabButtons = editProductModal.querySelectorAll('button[data-bs-toggle="tab"]');
-            tabButtons.forEach(button => {
-                button.addEventListener('shown.bs.tab', handleTabSwitch);
-            });
-
-            console.log('📝 Edit modal event handlers initialized');
-        }
-
-        // Delete button handler
-        const deleteProductBtn = document.getElementById('deleteProductBtn');
-        if (deleteProductBtn) {
-            deleteProductBtn.addEventListener('click', handleDeleteProduct);
-        }
-    }
-
-    /**
-     * Handle edit modal hide event
-     */
-    function handleEditModalHide() {
-        console.log('🚪 Closing edit modal');
-        clearAllForms();
-        hideLoadingState();
-    }
-
-    /**
-     * Handle tab switching
-     */
-    function handleTabSwitch(event) {
-        const targetTab = event.target.getAttribute('data-bs-target');
-        const productId = document.getElementById('editProductId')?.value;
-
-        console.log('🔄 Switching to tab:', targetTab, 'for product:', productId);
-
-        if (!productId) return;
-
-        switch (targetTab) {
-            case '#product-info-tab-pane':
-                loadProductInfo(productId);
-                break;
-            case '#inventory-tab-pane':
-                loadInventoryData(productId);
-                break;
-        }
-    }
-
-    /**
-     * Handle delete product
-     */
-    function handleDeleteProduct() {
-        const productId = document.getElementById('editProductId')?.value;
-        if (!productId) return;
-
-        const deleteField = document.getElementById('deleteProductId');
-        if (deleteField) {
-            deleteField.value = productId;
-        }
-
-        // Hide edit modal and show delete confirmation
-        const editModal = bootstrap.Modal.getInstance(document.getElementById('editProductModal'));
-        if (editModal) editModal.hide();
-
-        const deleteModal = new bootstrap.Modal(document.getElementById('deleteProductModal'));
-        deleteModal.show();
-    }
-
-    /**
-     * Load product info for the Product Info tab
-     */
+    // ========== TAB LOADING FUNCTIONS ==========
     function loadProductInfo(productId) {
         console.log('📊 Loading product info for:', productId);
 
-        // Check if already loaded
         const currentTitle = document.getElementById('productInfoTitle')?.textContent;
         if (currentTitle && currentTitle !== '--' && currentTitle !== 'Product') {
             console.log('✅ Product info already loaded');
             return;
         }
 
-        // Call API if available
         if (window.appUrls?.getProductData) {
             callGetProductDataAPIEnhanced(productId);
         }
     }
 
-    /**
-     * Load inventory data for the Inventory tab
-     */
     function loadInventoryData(productId) {
         console.log('📦 Loading inventory data for:', productId);
 
@@ -901,23 +916,17 @@ document.addEventListener('DOMContentLoaded', function () {
         safeSetValue('reorderLevel', 10);
     }
 
-    /**
-     * Update product info display
-     */
     function updateProductInfoDisplay(data) {
         console.log('📊 Updating product info display');
 
-        // Avatar and basic info
         const initials = getProductInitials(data.Title || data.title);
         safeUpdateElement('productInfoInitials', initials);
         safeUpdateElement('productInfoTitle', data.Title || data.title || 'Product');
         safeUpdateElement('productInfoNumber', data.ProductNumber || data.productNumber || 'No SKU');
 
-        // Badges
         safeUpdateElement('productInfoStatus', data.Status || data.status || 'Active');
         safeUpdateElement('productInfoCategory', data.Category || data.category || 'No Category');
 
-        // Detailed information
         safeUpdateElement('productInfoTitleDetail', data.Title || data.title || '--');
         safeUpdateElement('productInfoPrice', formatPrice(data.Price || data.price));
         safeUpdateElement('productInfoPoints', (data.Points || data.points)?.toString() || '0');
@@ -933,10 +942,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ========== FORM MANAGEMENT ==========
-
-    /**
-     * Set product ID in all relevant form fields
-     */
     function setProductIdInForms(productId) {
         const idFields = ['editProductId', 'deleteProductId'];
         idFields.forEach(fieldId => {
@@ -948,18 +953,12 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    /**
-     * Clear all forms
-     */
     function clearAllForms() {
         clearProductDetailsForm();
         clearProductInfoDisplay();
         clearInventoryForm();
     }
 
-    /**
-     * Clear add product form
-     */
     function clearAddForm() {
         console.log('🧹 Clearing add product form');
 
@@ -967,7 +966,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (form) {
             form.reset();
 
-            // Clear any validation classes
             const inputs = form.querySelectorAll('.is-invalid, .is-valid');
             inputs.forEach(input => {
                 input.classList.remove('is-invalid', 'is-valid');
@@ -977,9 +975,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    /**
-     * Clear product details form
-     */
     function clearProductDetailsForm() {
         const fields = [
             'editTitle', 'editProductNumber', 'editDescription',
@@ -998,9 +993,6 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('🧹 Product details form cleared');
     }
 
-    /**
-     * Clear product info display
-     */
     function clearProductInfoDisplay() {
         const elements = [
             'productInfoInitials', 'productInfoTitle', 'productInfoNumber',
@@ -1012,9 +1004,6 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('🧹 Product info display cleared');
     }
 
-    /**
-     * Clear inventory form
-     */
     function clearInventoryForm() {
         const fields = ['stockQuantity', 'lowStockThreshold', 'reorderLevel'];
         fields.forEach(field => safeSetValue(field, ''));
@@ -1022,15 +1011,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ========== UI STATE MANAGEMENT ==========
-
-    /**
-     * Show loading state
-     */
     function showLoadingState() {
         const modal = document.getElementById('editProductModal');
         if (!modal) return;
 
-        // Create overlay if it doesn't exist
         let overlay = modal.querySelector('.modal-loading-overlay');
         if (!overlay) {
             overlay = document.createElement('div');
@@ -1046,38 +1030,27 @@ document.addEventListener('DOMContentLoaded', function () {
             modal.querySelector('.modal-content').appendChild(overlay);
         }
 
-        // Disable form elements
         const formElements = modal.querySelectorAll('input, select, textarea, button[type="submit"]');
         formElements.forEach(el => el.disabled = true);
 
         console.log('⏳ Loading state shown');
     }
 
-    /**
-     * Hide loading state
-     */
     function hideLoadingState() {
         const modal = document.getElementById('editProductModal');
         if (!modal) return;
 
-        // Remove overlay
         const overlay = modal.querySelector('.modal-loading-overlay');
         if (overlay) {
             overlay.remove();
         }
 
-        // Enable form elements
         const formElements = modal.querySelectorAll('input, select, textarea, button[type="submit"]');
         formElements.forEach(el => el.disabled = false);
 
         console.log('✅ Loading state hidden');
     }
 
-    // ========== VALIDATION AND FEEDBACK ==========
-
-    /**
-     * Mark field as invalid
-     */
     function markFieldInvalid(fieldId) {
         const field = document.getElementById(fieldId);
         if (field) {
@@ -1086,9 +1059,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    /**
-     * Mark field as valid
-     */
     function markFieldValid(fieldId) {
         const field = document.getElementById(fieldId);
         if (field) {
@@ -1097,27 +1067,59 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    /**
-     * Set button loading state
-     */
-    function setButtonLoading(button, loading, text = 'Loading...') {
-        if (!button) return;
+    // ========== TABLE UPDATE FUNCTIONS ==========
+    function updateTableRow(productData) {
+        const row = findProductRowById(productData.ProductId || productData.productId);
+        if (row) {
+            // Update title
+            const titleEl = row.querySelector('.product-title, .fw-semibold');
+            if (titleEl) titleEl.textContent = productData.Title || productData.title;
 
-        if (loading) {
-            button.dataset.originalText = button.innerHTML;
-            button.disabled = true;
-            button.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>${text}`;
-        } else {
-            button.disabled = false;
-            button.innerHTML = button.dataset.originalText || button.innerHTML;
+            // Update price
+            const priceCell = row.cells[1];
+            if (priceCell) {
+                priceCell.textContent = formatPrice(productData.Price || productData.price);
+            }
+
+            // Update points
+            const pointsCell = row.cells[2];
+            if (pointsCell) {
+                pointsCell.textContent = (productData.Points || productData.points)?.toString() || '0';
+            }
+
+            // Update status
+            const statusCell = row.cells[3];
+            const statusBadge = statusCell?.querySelector('.badge');
+            if (statusBadge) {
+                statusBadge.textContent = productData.Status || productData.status || 'Active';
+            }
+
+            // Update category
+            const categoryCell = row.cells[4];
+            if (categoryCell) {
+                categoryCell.textContent = productData.Category || productData.category || 'N/A';
+            }
+
+            console.log('✅ Table row updated');
         }
     }
 
-    // ========== UTILITY FUNCTIONS ==========
+    function getFormData(form) {
+        const formData = new FormData(form);
+        const data = {};
+        for (const [key, value] of formData.entries()) {
+            data[key] = value;
+        }
+        return data;
+    }
 
-    /**
-     * Check API configuration
-     */
+    // ========== FILTER INITIALIZATION ==========
+    function initializeFilters() {
+        console.log('🔍 Filters initialized');
+        // Filter implementation can be added here if needed
+    }
+
+    // ========== UTILITY FUNCTIONS ==========
     function checkAPIConfiguration() {
         console.log('🔧 Checking API configuration...');
 
@@ -1137,9 +1139,6 @@ document.addEventListener('DOMContentLoaded', function () {
         return true;
     }
 
-    /**
-     * Test function for GetProductData API
-     */
     function testGetProductData(productId) {
         if (!productId) {
             console.log('Usage: testGetProductData("your-product-id")');
@@ -1150,9 +1149,6 @@ document.addEventListener('DOMContentLoaded', function () {
         callGetProductDataAPIEnhanced(productId);
     }
 
-    /**
-     * Test table data extraction
-     */
     function testTableDataExtraction(productId) {
         console.log('🧪 Testing table data extraction for:', productId);
         const row = findProductRowById(productId);
@@ -1165,6 +1161,12 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('❌ Row not found');
             return null;
         }
+    }
+
+    function testAddProduct() {
+        console.log('🧪 Testing add product functionality');
+        const addModal = new bootstrap.Modal(document.getElementById('addProductModal'));
+        addModal.show();
     }
 
     // Helper functions
@@ -1229,55 +1231,8 @@ document.addEventListener('DOMContentLoaded', function () {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
-    function addCacheBuster(url) {
-        if (!url) return url;
-        const separator = url.includes('?') ? '&' : '?';
-        return `${url}${separator}v=${Date.now()}`;
-    }
-
-    function showToast(message, type = 'success') {
-        console.log(`${type}: ${message}`);
-
-        // Use UIUtils if available, otherwise fallback to console/alert
-        if (window.UIUtils) {
-            window.UIUtils.showToast(message, type);
-        } else {
-            // Fallback: simple alert for critical errors
-            if (type === 'error') {
-                alert('Error: ' + message);
-            } else {
-                console.log(`${type}: ${message}`);
-            }
-        }
-    }
-
-    // ========== FILTER INITIALIZATION ==========
-
-    /**
-     * Initialize filters
-     */
-    function initializeFilters() {
-        console.log('🔍 Filters initialized');
-        // Add filter implementation if needed
-    }
-
-    /**
-     * Initialize form handlers
-     */
-    function initializeForms() {
-        console.log('📝 Form handlers initialized');
-        // Add additional form handlers if needed
-    }
-
-    // ========== DEBUG FUNCTIONS ==========
-
-    /**
-     * Test add product functionality
-     */
-    function testAddProduct() {
-        console.log('🧪 Testing add product functionality');
-        const addModal = new bootstrap.Modal(document.getElementById('addProductModal'));
-        addModal.show();
+    function getAntiForgeryToken() {
+        return document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
     }
 
     // Expose main functions for global access
@@ -1288,7 +1243,9 @@ document.addEventListener('DOMContentLoaded', function () {
     window.testGetProductData = testGetProductData;
     window.clearAddForm = clearAddForm;
     window.validateAddForm = validateAddProductForm;
+    window.submitEditForm = submitEditForm;
+    window.submitAddForm = submitAddForm;
 
-    console.log('🎯 Complete Enhanced Product Management JavaScript fully loaded');
+    console.log('🎯 Complete Enhanced Product Management JavaScript with AJAX fully loaded');
     console.log('🧪 Debug functions available: window.productDebug');
 });

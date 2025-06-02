@@ -17,7 +17,7 @@ namespace Web.Controllers
         private readonly IStorageApi _storageApi;
         private readonly ILogger<ProductController> _logger;
 
-        public ProductController(IStorageApi storageApi,IProductApi productApi,ILogger<ProductController> logger)
+        public ProductController(IStorageApi storageApi, IProductApi productApi, ILogger<ProductController> logger)
         {
             _storageApi = storageApi ?? throw new ArgumentNullException(nameof(storageApi));
             _productApi = productApi ?? throw new ArgumentNullException(nameof(productApi));
@@ -25,7 +25,7 @@ namespace Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Product(string cursor = null,int limit = 10,string direction = "next",string sortBy = "Title",CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Product(string cursor = null, int limit = 10, string direction = "next", string sortBy = "Title", CancellationToken cancellationToken = default)
         {
             try
             {
@@ -67,13 +67,17 @@ namespace Web.Controllers
         [HttpGet]
         public async Task<IActionResult> GetProductData(string id, CancellationToken cancellationToken = default)
         {
-          
             try
             {
                 var accessToken = HttpContext.Session.GetString("UserToken");
                 if (string.IsNullOrEmpty(accessToken))
                 {
-                    return Json(new { success = false, message = "Unauthorized" });
+                    return Json(new { success = false, message = "Authentication required" });
+                }
+
+                if (string.IsNullOrEmpty(id))
+                {
+                    return Json(new { success = false, message = "Product ID is required" });
                 }
 
                 var product = await _productApi.GetProductByIdAsync(id, accessToken, cancellationToken);
@@ -84,18 +88,21 @@ namespace Web.Controllers
 
                 var productData = new
                 {
-                    productId = product.ProductId,
-                    Title = product.Title,
-                    Description = product.Description,
-                    Price = product.Price,
-                    Points = product.Points,
-                    Type = product.Type,
-                    Category = product.Category,
-                    Status = product.Status,
-                    ImageURL = product.ImageURL,
-                    ProductNumber = product.ProductNumber,
-                    Tag = product.Tag,
-                    success = true
+                    success = true,
+                    product = new
+                    {
+                        productId = product.ProductId,
+                        title = product.Title,
+                        description = product.Description,
+                        price = product.Price,
+                        points = product.Points,
+                        type = product.Type,
+                        category = product.Category,
+                        status = product.Status,
+                        imageURL = product.ImageURL,
+                        productNumber = product.ProductNumber,
+                        tag = product.Tag
+                    }
                 };
 
                 return Json(productData);
@@ -103,7 +110,7 @@ namespace Web.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error retrieving product data for ID: {productId}", id);
-                return Json(new { success = false, message = "Error loading product data" });
+                return Json(new { success = false, message = "Error loading product data: " + ex.Message });
             }
         }
 
@@ -155,48 +162,77 @@ namespace Web.Controllers
         {
             try
             {
-                // Get the access token from session
                 var accessToken = HttpContext.Session.GetString("UserToken");
                 if (string.IsNullOrEmpty(accessToken))
                 {
-                    return Json(new { success = false, message = "You must be logged in to create a product.", requiresLogin = true });
+                    return Json(new { success = false, message = "Authentication required", requiresLogin = true });
                 }
 
-                // Validate model state
-                if (!ModelState.IsValid)
+                // Enhanced validation
+                var validationResult = ValidateProduct(product);
+                if (!validationResult.IsValid)
                 {
-                    var errors = ModelState
-                        .Where(x => x.Value.Errors.Count > 0)
-                        .Select(x => new { Field = x.Key, Errors = x.Value.Errors.Select(e => e.ErrorMessage) })
-                        .ToList();
-
-                    return Json(new
-                    {
-                        success = false,
-                        message = "Please correct the validation errors.",
-                        errors = errors
-                    });
+                    return Json(new { success = false, message = validationResult.ErrorMessage, field = validationResult.Field });
                 }
 
-               
+                // Validate image file if provided
+                if (ImageFile != null)
+                {
+                    var fileValidation = ValidateImageFile(ImageFile);
+                    if (!fileValidation.IsValid)
+                    {
+                        return Json(new { success = false, message = fileValidation.ErrorMessage });
+                    }
+                }
 
                 // Set default values
                 product.ProductId = Guid.NewGuid().ToString();
                 product.ProductNumber = UniqueIdNumber.GenerateSixDigit();
                 product.Status = product.Status ?? "Active";
                 product.Points = product.Points ?? 0;
-                product.ImageUrlName = product.ProductId + ".webp";
 
-                // Create new Product
+                // Handle image file upload
+                string imageUrl = null;
+                if (ImageFile != null && ImageFile.Length > 0)
+                {
+                    try
+                    {
+                        product.ImageUrlName = product.ProductId + Path.GetExtension(ImageFile.FileName).ToLower();
+                        var uploadResult = await _storageApi.UpdateProductImageFileAsync(product.ProductId, ImageFile);
+
+                        if (uploadResult)
+                        {
+                            // Set the image URL - you may need to construct this based on your storage configuration
+                            imageUrl = $"/api/storage/product/{product.ImageUrlName}"; // Adjust based on your storage setup
+                            product.ImageURL = imageUrl;
+                        }
+                        else
+                        {
+                            return Json(new { success = false, message = "Failed to upload image. Please try again." });
+                        }
+                    }
+                    catch (Exception uploadEx)
+                    {
+                        _logger.LogError(uploadEx, "Error uploading image for product: {ProductId}", product.ProductId);
+                        return Json(new { success = false, message = "Error uploading image: " + uploadEx.Message });
+                    }
+                }
+                else if (!string.IsNullOrEmpty(product.ImageURL))
+                {
+                    // Validate image URL if provided
+                    var urlValidation = await ValidateImageUrl(product.ImageURL);
+                    if (!urlValidation.IsValid)
+                    {
+                        return Json(new { success = false, message = urlValidation.ErrorMessage });
+                    }
+                }
+
+                // Create product
                 var createdProduct = await _productApi.CreateProductAsync(product, accessToken, cancellationToken);
 
                 if (createdProduct != null)
                 {
-                    // Update storage if we have an image file
-                    if (ImageFile != null && ImageFile.Length > 0)
-                    {
-                        await _storageApi.UpdateProductImageFileAsync(product.ProductId, ImageFile);
-                    }
+                    _logger.LogInformation("Product created successfully: {ProductId}", product.ProductId);
 
                     return Json(new
                     {
@@ -212,7 +248,9 @@ namespace Web.Controllers
                             status = product.Status,
                             category = product.Category,
                             type = product.Type,
-                            imageURL = product.ImageURL
+                            imageURL = product.ImageURL,
+                            description = product.Description,
+                            tag = product.Tag
                         }
                     });
                 }
@@ -223,8 +261,8 @@ namespace Web.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating product via AJAX");
-                return Json(new { success = false, message = "An error occurred while creating the product. Please try again later." });
+                _logger.LogError(ex, "Error creating product");
+                return Json(new { success = false, message = "An error occurred while creating the product: " + ex.Message });
             }
         }
 
@@ -257,232 +295,124 @@ namespace Web.Controllers
             }
         }
 
-        /// <summary>
-        /// Enhanced Edit method that handles image updates comprehensively
-        /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(Product product, IFormFile ImageFile, bool RemoveImage = false, CancellationToken cancellationToken = default)
         {
             try
             {
-                // Get the access token from session
                 var accessToken = HttpContext.Session.GetString("UserToken");
                 if (string.IsNullOrEmpty(accessToken))
                 {
-                    TempData["Error"] = "You must be logged in to edit a product.";
-                    return RedirectToAction("Index", "Home", new { scrollTo = "login" });
+                    return Json(new { success = false, message = "Authentication required", requiresLogin = true });
                 }
 
-                //if (!ModelState.IsValid)
-                //{
-                //    return View(product);
-                //}
+                if (string.IsNullOrEmpty(product.ProductId))
+                {
+                    return Json(new { success = false, message = "Product ID is required" });
+                }
 
-                // Get the existing product to preserve current image if no new image is provided
+                // Enhanced validation
+                var validationResult = ValidateProduct(product);
+                if (!validationResult.IsValid)
+                {
+                    return Json(new { success = false, message = validationResult.ErrorMessage, field = validationResult.Field });
+                }
+
+                // Get existing product
                 var existingProduct = await _productApi.GetProductByIdAsync(product.ProductId, accessToken, cancellationToken);
                 if (existingProduct == null)
                 {
-                    TempData["Error"] = "Product not found.";
-                    return RedirectToAction("Product");
+                    return Json(new { success = false, message = "Product not found" });
                 }
 
-                // Handle image removal
+                // Handle image operations
+                string imageUrl = existingProduct.ImageURL;
+
                 if (RemoveImage)
                 {
-                    // Delete from blob storage if it's a blob URL
-                    //if (!string.IsNullOrEmpty(existingProduct.ImageURL) && IsBlobStorageUrl(existingProduct.ImageURL))
-                    //{
-                    //    await DeleteBlobImage(existingProduct.ImageURL);
-                    //}
-
+                    // Remove image
+                    imageUrl = null;
                     product.ImageURL = null;
                 }
                 else if (ImageFile != null && ImageFile.Length > 0)
                 {
-                    // Handle new file upload
-                    var imageResult = await _storageApi.UpdateProductImageFileAsync(product.ProductId,ImageFile); 
-                    if (imageResult)
+                    // Validate and upload new image
+                    var fileValidation = ValidateImageFile(ImageFile);
+                    if (!fileValidation.IsValid)
                     {
-                        // Delete old image if it exists and is in blob storage
-                        //if (!string.IsNullOrEmpty(existingProduct.ImageURL) && IsBlobStorageUrl(existingProduct.ImageURL))
-                        //{
-                        //    await DeleteBlobImage(existingProduct.ImageURL);
-                        //}
-
-                       // product.ImageURL = imageResult.ImageUrl;
+                        return Json(new { success = false, message = fileValidation.ErrorMessage });
                     }
-                    else
+
+                    try
                     {
-                        TempData["Error"] = "Error";
-                        return View(product);
+                        var uploadResult = await _storageApi.UpdateProductImageFileAsync(product.ProductId, ImageFile);
+                        if (uploadResult)
+                        {
+                            imageUrl = $"/api/storage/product/{product.ProductId}{Path.GetExtension(ImageFile.FileName).ToLower()}";
+                            product.ImageURL = imageUrl;
+                        }
+                        else
+                        {
+                            return Json(new { success = false, message = "Failed to upload image. Please try again." });
+                        }
+                    }
+                    catch (Exception uploadEx)
+                    {
+                        _logger.LogError(uploadEx, "Error uploading image for product: {ProductId}", product.ProductId);
+                        return Json(new { success = false, message = "Error uploading image: " + uploadEx.Message });
                     }
                 }
-                else if (string.IsNullOrEmpty(product.ImageURL))
+                else if (!string.IsNullOrEmpty(product.ImageURL) && product.ImageURL != existingProduct.ImageURL)
                 {
-                    // No new image provided and no URL specified, keep existing image
+                    // Validate new image URL
+                    var urlValidation = await ValidateImageUrl(product.ImageURL);
+                    if (!urlValidation.IsValid)
+                    {
+                        return Json(new { success = false, message = urlValidation.ErrorMessage });
+                    }
+                    imageUrl = product.ImageURL;
+                }
+                else
+                {
+                    // Keep existing image
                     product.ImageURL = existingProduct.ImageURL;
                 }
 
                 // Set default values
                 product.Status = product.Status ?? "Active";
                 product.Points = product.Points ?? 0;
+                product.ProductNumber = existingProduct.ProductNumber; // Preserve original product number
 
                 // Update product
                 await _productApi.UpdateProductAsync(product, accessToken, cancellationToken);
 
-                TempData["Success"] = "Product updated successfully.";
-                return RedirectToAction("Product");
+                _logger.LogInformation("Product updated successfully: {ProductId}", product.ProductId);
+
+                return Json(new
+                {
+                    success = true,
+                    message = "Product updated successfully!",
+                    product = new
+                    {
+                        productId = product.ProductId,
+                        title = product.Title,
+                        productNumber = product.ProductNumber,
+                        price = product.Price,
+                        points = product.Points,
+                        status = product.Status,
+                        category = product.Category,
+                        type = product.Type,
+                        imageURL = product.ImageURL,
+                        description = product.Description,
+                        tag = product.Tag
+                    }
+                });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating Product: {ProductId}", product.ProductId);
-                TempData["Error"] = "An error occurred while updating the Product. Please try again later.";
-                return View(product);
-            }
-        }
-
-        /// <summary>
-        /// Comprehensive image update handling
-        /// </summary>
-        private async Task HandleImageUpdate(Product product, Product existingProduct, IFormFile imageFile, bool removeImage)
-        {
-            try
-            {
-                // Handle image removal
-                if (removeImage)
-                {
-                    await DeleteExistingImage(existingProduct.ImageURL);
-                    product.ImageURL = null;
-                    _logger.LogInformation("Image removed for product {ProductId}", product.ProductId);
-                    return;
-                }
-
-                // Handle new file upload
-                if (imageFile != null && imageFile.Length > 0)
-                {
-                    var imageResult = await ProcessImageUpload(imageFile);
-                    if (imageResult.Success)
-                    {
-                        // Delete old image if it exists and is a local upload
-                        if (!string.IsNullOrEmpty(existingProduct.ImageURL))
-                        {
-                            await DeleteExistingImage(existingProduct.ImageURL);
-                        }
-
-                        product.ImageURL = imageResult.ImageUrl;
-                        _logger.LogInformation("New image uploaded for product {ProductId}: {ImageUrl}",
-                            product.ProductId, product.ImageURL);
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException(imageResult.ErrorMessage);
-                    }
-                }
-                else if (!string.IsNullOrEmpty(product.ImageURL))
-                {
-                    // New URL provided - validate it
-                    if (await Validate.ValidateImageUrl(product.ImageURL))
-                    {
-                        // Delete old image if it's different and is a local upload
-                        if (!string.IsNullOrEmpty(existingProduct.ImageURL) &&
-                            existingProduct.ImageURL != product.ImageURL)
-                        {
-                            await DeleteExistingImage(existingProduct.ImageURL);
-                        }
-
-                        _logger.LogInformation("Image URL updated for product {ProductId}: {ImageUrl}",
-                            product.ProductId, product.ImageURL);
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("The provided image URL is not valid or accessible.");
-                    }
-                }
-                else
-                {
-                    // No new image provided, keep existing
-                    product.ImageURL = existingProduct.ImageURL;
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error handling image update for product {ProductId}", product.ProductId);
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Process image file upload
-        /// </summary>
-        private async Task<(bool Success, string ImageUrl, string ErrorMessage)> ProcessImageUpload(IFormFile imageFile)
-        {
-            try
-            {
-                // Validate file
-                var validationResult = Validate.ValidateImageFile(imageFile);
-                if (!validationResult.IsValid)
-                {
-                    return (false, null, validationResult.ErrorMessage);
-                }
-
-                // Generate unique filename
-                var fileExtension = Path.GetExtension(imageFile.FileName).ToLowerInvariant();
-                var fileName = $"{Guid.NewGuid()}{fileExtension}";
-
-                // Define upload path
-                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "products");
-
-                // Create directory if it doesn't exist
-                if (!Directory.Exists(uploadsFolder))
-                {
-                    Directory.CreateDirectory(uploadsFolder);
-                }
-
-                var filePath = Path.Combine(uploadsFolder, fileName);
-
-                // Save file
-                using (var fileStream = new FileStream(filePath, FileMode.Create))
-                {
-                    await imageFile.CopyToAsync(fileStream);
-                }
-
-                // Generate URL
-                var imageUrl = $"/uploads/products/{fileName}";
-
-                _logger.LogInformation("Image uploaded successfully: {ImageUrl}", imageUrl);
-                return (true, imageUrl, null);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error uploading image file");
-                return (false, null, "Failed to upload image. Please try again.");
-            }
-        }
-
-        /// <summary>
-        /// Delete existing image file
-        /// </summary>
-        private async Task DeleteExistingImage(string imageUrl)
-        {
-            if (string.IsNullOrEmpty(imageUrl) || !imageUrl.StartsWith("/uploads/products/"))
-                return;
-
-            try
-            {
-                var fileName = Path.GetFileName(imageUrl);
-                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "products", fileName);
-
-                if (System.IO.File.Exists(filePath))
-                {
-                    await Task.Run(() => System.IO.File.Delete(filePath));
-                    _logger.LogInformation("Deleted image file: {FilePath}", filePath);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Could not delete image file: {ImageUrl}", imageUrl);
-                // Don't throw - this is not critical
+                _logger.LogError(ex, "Error updating Product: {ProductId}", product?.ProductId);
+                return Json(new { success = false, message = "An error occurred while updating the product: " + ex.Message });
             }
         }
 
@@ -507,14 +437,14 @@ namespace Web.Controllers
                     return RedirectToAction("Product");
                 }
 
-                // Delete associated image file
-                if (!string.IsNullOrEmpty(product.ImageURL))
-                {
-                    await DeleteExistingImage(product.ImageURL);
-                }
-
                 // Delete product
                 await _productApi.DeleteProductAsync(id, accessToken, cancellationToken);
+
+                // Note: You might want to also clean up the image from storage here
+                // if (!string.IsNullOrEmpty(product.ImageURL))
+                // {
+                //     await _storageApi.DeleteProductImageAsync(product.ProductId);
+                // }
 
                 TempData["Success"] = "Product deleted successfully.";
                 return RedirectToAction("Product");
@@ -527,9 +457,6 @@ namespace Web.Controllers
             }
         }
 
-        /// <summary>
-        /// API endpoint for AJAX image validation
-        /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ValidateImageUrl([FromBody] ValidateImageUrlRequest request, CancellationToken cancellationToken = default)
@@ -541,9 +468,9 @@ namespace Web.Controllers
                     return Json(new { success = false, message = "No URL provided" });
                 }
 
-                var isValid = await Validate.ValidateImageUrl(request.ImageUrl);
+                var validation = await ValidateImageUrl(request.ImageUrl);
 
-                if (isValid)
+                if (validation.IsValid)
                 {
                     return Json(new
                     {
@@ -554,7 +481,7 @@ namespace Web.Controllers
                 }
                 else
                 {
-                    return Json(new { success = false, message = "Invalid or inaccessible image URL" });
+                    return Json(new { success = false, message = validation.ErrorMessage });
                 }
             }
             catch (Exception ex)
@@ -564,9 +491,6 @@ namespace Web.Controllers
             }
         }
 
-        /// <summary>
-        /// Handles product image upload via AJAX
-        /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UploadImage(IFormFile imageFile, string productId, CancellationToken cancellationToken = default)
@@ -584,17 +508,19 @@ namespace Web.Controllers
                     return Json(new { success = false, message = "No image file provided" });
                 }
 
-                var validationResult = Validate.ValidateImageFile(imageFile);
+                var validationResult = ValidateImageFile(imageFile);
                 if (!validationResult.IsValid)
                 {
                     return Json(new { success = false, message = validationResult.ErrorMessage });
                 }
 
-                var uploadResult = await ProcessImageUpload(imageFile);
-                if (!uploadResult.Success)
+                var uploadResult = await _storageApi.UpdateProductImageFileAsync(productId, imageFile);
+                if (!uploadResult)
                 {
-                    return Json(new { success = false, message = uploadResult.ErrorMessage });
+                    return Json(new { success = false, message = "Failed to upload image" });
                 }
+
+                var imageUrl = $"/api/storage/product/{productId}{Path.GetExtension(imageFile.FileName).ToLower()}";
 
                 // Update product with new image URL if productId is provided
                 if (!string.IsNullOrEmpty(productId))
@@ -604,13 +530,7 @@ namespace Web.Controllers
                         var product = await _productApi.GetProductByIdAsync(productId, accessToken, cancellationToken);
                         if (product != null)
                         {
-                            // Delete old image if it exists
-                            if (!string.IsNullOrEmpty(product.ImageURL))
-                            {
-                                await DeleteExistingImage(product.ImageURL);
-                            }
-
-                            product.ImageURL = uploadResult.ImageUrl;
+                            product.ImageURL = imageUrl;
                             await _productApi.UpdateProductAsync(product, accessToken, cancellationToken);
                         }
                     }
@@ -625,7 +545,7 @@ namespace Web.Controllers
                 {
                     success = true,
                     message = "Image uploaded successfully",
-                    imageUrl = uploadResult.ImageUrl
+                    imageUrl = imageUrl
                 });
             }
             catch (Exception ex)
@@ -634,5 +554,159 @@ namespace Web.Controllers
                 return Json(new { success = false, message = "Failed to upload image. Please try again." });
             }
         }
+
+        // ========== VALIDATION METHODS ==========
+
+        private ValidationResult ValidateProduct(Product product)
+        {
+            if (string.IsNullOrWhiteSpace(product.Title))
+            {
+                return new ValidationResult { IsValid = false, ErrorMessage = "Product title is required", Field = "Title" };
+            }
+
+            if (product.Title.Length > 100)
+            {
+                return new ValidationResult { IsValid = false, ErrorMessage = "Product title cannot exceed 100 characters", Field = "Title" };
+            }
+
+            if (product.Price.HasValue && product.Price < 0)
+            {
+                return new ValidationResult { IsValid = false, ErrorMessage = "Price cannot be negative", Field = "Price" };
+            }
+
+            if (product.Points.HasValue && product.Points < 0)
+            {
+                return new ValidationResult { IsValid = false, ErrorMessage = "Points cannot be negative", Field = "Points" };
+            }
+
+            if (string.IsNullOrWhiteSpace(product.Type))
+            {
+                return new ValidationResult { IsValid = false, ErrorMessage = "Product type is required", Field = "Type" };
+            }
+
+            if (string.IsNullOrWhiteSpace(product.Category))
+            {
+                return new ValidationResult { IsValid = false, ErrorMessage = "Product category is required", Field = "Category" };
+            }
+
+            return new ValidationResult { IsValid = true };
+        }
+
+        private ValidationResult ValidateImageFile(IFormFile file)
+        {
+            const int maxFileSize = 5 * 1024 * 1024; // 5MB
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp" };
+            var allowedContentTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp", "image/bmp" };
+
+            if (file.Length > maxFileSize)
+            {
+                return new ValidationResult
+                {
+                    IsValid = false,
+                    ErrorMessage = $"File size ({FormatFileSize(file.Length)}) exceeds maximum allowed size (5MB)"
+                };
+            }
+
+            var extension = Path.GetExtension(file.FileName)?.ToLowerInvariant();
+            if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
+            {
+                return new ValidationResult
+                {
+                    IsValid = false,
+                    ErrorMessage = "Invalid file type. Allowed types: JPG, PNG, GIF, WebP, BMP"
+                };
+            }
+
+            if (!allowedContentTypes.Contains(file.ContentType.ToLowerInvariant()))
+            {
+                return new ValidationResult
+                {
+                    IsValid = false,
+                    ErrorMessage = "Invalid file content type. Please upload a valid image file."
+                };
+            }
+
+            return new ValidationResult { IsValid = true };
+        }
+
+        private async Task<ValidationResult> ValidateImageUrl(string imageUrl)
+        {
+            if (string.IsNullOrWhiteSpace(imageUrl))
+            {
+                return new ValidationResult { IsValid = false, ErrorMessage = "Image URL is required" };
+            }
+
+            if (!Uri.TryCreate(imageUrl, UriKind.Absolute, out Uri uri))
+            {
+                return new ValidationResult { IsValid = false, ErrorMessage = "Invalid URL format" };
+            }
+
+            // Check if URL points to an image based on extension
+            var path = uri.AbsolutePath.ToLowerInvariant();
+            var imageExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp" };
+
+            if (!imageExtensions.Any(ext => path.EndsWith(ext)))
+            {
+                return new ValidationResult { IsValid = false, ErrorMessage = "URL does not appear to point to a valid image file" };
+            }
+
+            try
+            {
+                using var httpClient = new HttpClient();
+                httpClient.Timeout = TimeSpan.FromSeconds(10);
+
+                var response = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Head, uri));
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return new ValidationResult { IsValid = false, ErrorMessage = "Image URL is not accessible" };
+                }
+
+                var contentType = response.Content.Headers.ContentType?.MediaType?.ToLowerInvariant();
+                if (!string.IsNullOrEmpty(contentType) && !contentType.StartsWith("image/"))
+                {
+                    return new ValidationResult { IsValid = false, ErrorMessage = "URL does not point to an image" };
+                }
+
+                return new ValidationResult { IsValid = true };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error validating image URL: {ImageUrl}", imageUrl);
+                return new ValidationResult { IsValid = false, ErrorMessage = "Could not validate image URL. Please check the URL and try again." };
+            }
+        }
+
+        private string FormatFileSize(long bytes)
+        {
+            const int scale = 1024;
+            string[] orders = { "B", "KB", "MB", "GB" };
+
+            long max = (long)Math.Pow(scale, orders.Length - 1);
+
+            foreach (string order in orders)
+            {
+                if (bytes > max)
+                    return string.Format("{0:0.##} {1}", decimal.Divide(bytes, max), order);
+
+                max /= scale;
+            }
+
+            return "0 B";
+        }
+
+        // ========== HELPER CLASSES ==========
+
+        private class ValidationResult
+        {
+            public bool IsValid { get; set; }
+            public string ErrorMessage { get; set; }
+            public string Field { get; set; }
+        }
+    }
+
+    public class ValidateImageUrlRequest
+    {
+        public string ImageUrl { get; set; }
     }
 }
