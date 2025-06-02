@@ -155,7 +155,7 @@
     </div>
 
     <!-- DataTable -->
-    @if (Model?.PostList != null && Model.PostList.Any())
+    @if (Model?.Posts != null && Model.Posts.Any())
     {
         <div class="card shadow-sm">
             <div class="card-body">
@@ -172,7 +172,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var post in Model.PostList)
+                        @foreach (var post in Model.Posts)
                         {
                             <tr data-status="@(post.Status?.ToLower() ?? "active")"
                                 data-type="@(post.PostType?.ToLower() ?? "general")"

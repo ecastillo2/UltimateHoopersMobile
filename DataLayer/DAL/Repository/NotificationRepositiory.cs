@@ -98,7 +98,7 @@ namespace DataLayer.DAL.Repository
                         // Convert Date to Relative Time
                         if (DateTime.TryParse(item.CreatedDate, out DateTime dateTime))
                         {
-                            item.RelativeTime = RelativeTime.GetRelativeTime(dateTime, "America/New_York");
+                            item.RelativeTime = RelativeTime.GetRelativeTime(dateTime);
                         }
                         else
                         {
@@ -194,7 +194,7 @@ namespace DataLayer.DAL.Repository
                         // Convert Date to Relative Time
                         if (DateTime.TryParse(query.CreatedDate, out DateTime dateTime))
                         {
-                        query.RelativeTime = RelativeTime.GetRelativeTime(dateTime, "America/New_York");
+                        query.RelativeTime = RelativeTime.GetRelativeTime(dateTime);
                         }
                         else
                         {

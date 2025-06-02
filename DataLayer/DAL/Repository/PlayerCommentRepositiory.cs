@@ -113,7 +113,7 @@ namespace DataLayer.DAL.Repository
                             DateTime now = DateTime.Now;
 
                             // Call the method to get the "ago" string
-                            item.RelativeTime = RelativeTime.GetRelativeTime(dateTime, timeZone);
+                            item.RelativeTime = RelativeTime.GetRelativeTime(dateTime);
                         }
                         else
                         {

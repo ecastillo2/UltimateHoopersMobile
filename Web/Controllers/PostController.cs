@@ -18,7 +18,7 @@ namespace Website.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Post(string cursor = null,int limit = 10,string direction = "next",string sortBy = "StartDate",CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Post(string postType, string cursor = null,int limit = 10,string direction = "next",string sortBy = "StartDate",CancellationToken cancellationToken = default)
         {
             try
             {
@@ -35,26 +35,13 @@ namespace Website.Controllers
                 var profileId = HttpContext.Session.GetString("ProfileId");
 
                 // Get runs with cursor pagination
-                var result = await _postApi.GetPostsWithCursorAsync(
-                    cursor: cursor,
-                    limit: limit,
-                    direction: direction,
-                    sortBy: sortBy,
-                    accessToken: accessToken,
-                    cancellationToken: cancellationToken);
+                var result = await _postApi.GetPostsAsync( postType, accessToken,cancellationToken = default);
 
                 // Create view model
                 var viewModel = new PostsViewModel
                 {
-                    Posts = result.Items,
-                    NextCursor = result.NextCursor,
-                    //PreviousCursor = result.PreviousCursor,
-                    //HasMore = result.HasMore,
-                    //TotalCount = result.TotalCount,
-                    //CurrentLimit = limit,
-                    CurrentSortBy = sortBy,
-                    //UserRole = userRole,
-                    //ProfileId = profileId
+                    PostList = result,
+                 
                 };
 
                 return View(viewModel);

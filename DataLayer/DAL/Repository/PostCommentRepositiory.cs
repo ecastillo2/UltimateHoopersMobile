@@ -76,7 +76,7 @@ namespace DataLayer.DAL.Repository
                         TimeSpan timeDifference = now - dateTime;
 
                         // Call the method to get the "ago" string
-                        string result = RelativeTime.GetRelativeTime(dateTime, userTimeZoneId);
+                        string result = RelativeTime.GetRelativeTime(dateTime);
 
                         item.RelativeTime = result;
                        
@@ -132,7 +132,7 @@ namespace DataLayer.DAL.Repository
                         TimeSpan timeDifference = now - dateTime;
 
                         // Call the method to get the "ago" string
-                        string result = RelativeTime.GetRelativeTime(dateTime, userTimeZoneId);
+                        string result = RelativeTime.GetRelativeTime(dateTime);
 
                         item.RelativeTime = result;
                     }

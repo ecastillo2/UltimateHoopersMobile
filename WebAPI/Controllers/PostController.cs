@@ -93,8 +93,8 @@ namespace WebAPI.Controllers
         {
             try
             {
-                var timeZone = Request.Headers.TryGetValue("TimeZone", out var tz) ? tz.ToString() : "America/New_York";
-                var posts = await _repository.GetPosts(postType, timeZone);
+                
+                var posts = await _repository.GetPosts(postType);
                 return Ok(posts);
             }
             catch (Exception ex)
@@ -107,27 +107,7 @@ namespace WebAPI.Controllers
             }
         }
 
-        /// <summary>
-        /// Get Blogs
-        /// </summary>
-        [HttpGet("GetBlogs")]
-        public async Task<ActionResult<IEnumerable<Post>>> GetBlogs()
-        {
-            try
-            {
-                var timeZone = Request.Headers.TryGetValue("TimeZone", out var tz) ? tz.ToString() : "America/New_York";
-                var posts = await _repository.GetBlogs(timeZone);
-                return Ok(posts);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, new
-                {
-                    Message = "An error occurred while retrieving the blogs. Please try again later.",
-                    Error = ex.Message
-                });
-            }
-        }
+       
 
         /// <summary>
         /// Get posts by profile ID
@@ -140,7 +120,7 @@ namespace WebAPI.Controllers
             try
             {
                 var timeZone = Request.Headers.TryGetValue("TimeZone", out var tz) ? tz.ToString() : "America/New_York";
-                var posts = await _repository.GetPostsByProfileId(profileId, timeZone);
+                var posts = await _repository.GetPostsByProfileId(profileId);
                 return Ok(posts);
             }
             catch (Exception ex)
@@ -164,7 +144,7 @@ namespace WebAPI.Controllers
             try
             {
                 var timeZone = Request.Headers.TryGetValue("TimeZone", out var tz) ? tz.ToString() : "America/New_York";
-                var post = await _repository.GetPostById(id, timeZone);
+                var post = await _repository.GetPostById(id);
 
                 if (post == null)
                     return NotFound();
@@ -365,7 +345,7 @@ namespace WebAPI.Controllers
             try
             {
                 var timeZone = Request.Headers.TryGetValue("TimeZone", out var tz) ? tz.ToString() : "America/New_York";
-                var posts = await _repository.GetPostsWithTagByTagId(tagId, timeZone);
+                var posts = await _repository.GetPostsWithTagByTagId(tagId);
                 return Ok(posts);
             }
             catch (Exception ex)
@@ -390,7 +370,7 @@ namespace WebAPI.Controllers
             try
             {
                 var timeZone = Request.Headers.TryGetValue("TimeZone", out var tz) ? tz.ToString() : "America/New_York";
-                var posts = await _repository.GetSavedPostsByProfileId(profileId, timeZone);
+                var posts = await _repository.GetSavedPostsByProfileId(profileId);
                 return Ok(posts);
             }
             catch (Exception ex)
@@ -414,7 +394,7 @@ namespace WebAPI.Controllers
             try
             {
                 var timeZone = Request.Headers.TryGetValue("TimeZone", out var tz) ? tz.ToString() : "America/New_York";
-                var posts = await _repository.GetPostsMentionProfileId(profileId, timeZone);
+                var posts = await _repository.GetPostsMentionProfileId(profileId);
                 return Ok(posts);
             }
             catch (Exception ex)

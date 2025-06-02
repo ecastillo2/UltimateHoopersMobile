@@ -16,7 +16,7 @@ namespace DataLayer.DAL.Interface
         /// <summary>
         /// Get all posts with timezone for relative time calculation
         /// </summary>
-        Task<List<Post>> GetPosts(string posttype,string timezone);
+        Task<List<Post>> GetPosts(string posttype);
 
         /// <summary>
         /// Get posts with cursor-based pagination optimized for mobile scrolling
@@ -40,22 +40,9 @@ namespace DataLayer.DAL.Interface
         /// <summary>
         /// Get all posts including draft and archived posts
         /// </summary>
-        Task<List<Post>> GetAllPosts(string timezone);
+        Task<List<Post>> GetAllPosts();
 
-        /// <summary>
-        /// Get blog-type posts
-        /// </summary>
-        Task<List<Post>> GetBlogs(string timezone);
-
-        /// <summary>
-        /// Get news-type posts
-        /// </summary>
-        Task<List<Post>> GetHoopNews(string timezone);
-
-        /// <summary>
-        /// Get event-type posts
-        /// </summary>
-        Task<List<Post>> GetEvents(string timezone);
+       
 
         /// <summary>
         /// Get all publicly visible posts
@@ -65,32 +52,32 @@ namespace DataLayer.DAL.Interface
         /// <summary>
         /// Get posts created by a specific profile
         /// </summary>
-        Task<List<Post>> GetPostsByProfileId(string profileId, string timezone);
+        Task<List<Post>> GetPostsByProfileId(string profileId);
 
         /// <summary>
         /// Get posts that mention a specific profile
         /// </summary>
-        Task<List<Post>> GetPostsMentionProfileId(string profileId, string timezone);
+        Task<List<Post>> GetPostsMentionProfileId(string profileId);
 
         /// <summary>
         /// Get posts with a specific tag
         /// </summary>
-        Task<List<Post>> GetPostsWithTagByTagId(string tagId, string timezone);
+        Task<List<Post>> GetPostsWithTagByTagId(string tagId);
 
         /// <summary>
         /// Get posts saved by a specific profile
         /// </summary>
-        Task<List<Post>> GetSavedPostsByProfileId(string profileId, string timezone);
+        Task<List<Post>> GetSavedPostsByProfileId(string profileId);
 
         /// <summary>
         /// Get a post by its ID with all related data
         /// </summary>
-        Task<Post> GetPostById(string postId, string timeZone);
+        Task<Post> GetPostById(string postId);
 
         /// <summary>
         /// Get a post by its ID with all details (alias for GetPostById)
         /// </summary>
-        Task<Post> GetPostByIdWithDetailsAsync(string postId, string timeZone);
+        Task<Post> GetPostByIdWithDetailsAsync(string postId);
 
         /// <summary>
         /// Insert a new post

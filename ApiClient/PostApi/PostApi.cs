@@ -52,22 +52,7 @@ namespace WebAPI.ApiClients
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
             return JsonSerializer.Deserialize<List<Post>>(content, _jsonOptions);
         }
-        /// <summary>
-        /// Get all posts
-        /// </summary>
-        public async Task<List<Post>> GetNewsPostsAsync(string accessToken, CancellationToken cancellationToken = default)
-        {
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-            var response = await _httpClient.GetAsync($"{_baseUrl}/api/Post/GetNewsPosts", cancellationToken);
-            response.EnsureSuccessStatusCode();
-
-            var content = await response.Content.ReadAsStringAsync(cancellationToken);
-            return JsonSerializer.Deserialize<List<Post>>(content, _jsonOptions);
-        }
-
-
-
+       
         /// <summary>
         /// Get post by ID
         /// </summary>
@@ -127,8 +112,6 @@ namespace WebAPI.ApiClients
             var response = await _httpClient.DeleteAsync($"{_baseUrl}/api/Post/DeletePost?postId={postId}", cancellationToken);
             return response.IsSuccessStatusCode;
         }
-
-       
 
         public async Task<CursorPaginatedResultDto<PostViewModelDto>> GetPostsWithCursorAsync(string cursor = null, int limit = 20, string direction = "next", string sortBy = "Points", string accessToken = null, CancellationToken cancellationToken = default)
         {

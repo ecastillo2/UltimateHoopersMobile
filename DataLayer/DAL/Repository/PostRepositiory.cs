@@ -113,7 +113,7 @@ namespace DataLayer.DAL.Repository
                 }
 
                 // Enrich posts with essential details
-                await EnrichPostsWithBasicDetailsAsync(posts, timeZone);
+                await EnrichPostsWithBasicDetailsAsync(posts);
 
                 return (posts, nextCursor, hasMore);
             }
@@ -139,7 +139,7 @@ namespace DataLayer.DAL.Repository
         /// <summary>
         /// Enrich posts with essential details for display
         /// </summary>
-        private async Task EnrichPostsWithBasicDetailsAsync(List<Post> posts, string timeZone)
+        private async Task EnrichPostsWithBasicDetailsAsync(List<Post> posts)
         {
             if (posts == null || !posts.Any())
                 return;
@@ -197,7 +197,7 @@ namespace DataLayer.DAL.Repository
                     // Calculate relative time
                     if (post.PostedDate != null)
                     {
-                        post.RelativeTime = RelativeTime.GetRelativeTime(post.PostedDate.Value, timeZone);
+                        post.RelativeTime = RelativeTime.GetRelativeTime(post.PostedDate.Value);
                     }
                     else
                     {
@@ -217,7 +217,7 @@ namespace DataLayer.DAL.Repository
         /// <summary>
         /// Get Post By Id with optimized queries
         /// </summary>
-        public async Task<Post> GetPostById(string postId, string timeZone)
+        public async Task<Post> GetPostById(string postId)
         {
             try
             {
@@ -286,7 +286,7 @@ namespace DataLayer.DAL.Repository
                             UserName = commentProfile?.UserName,
                             ProfileImageURL = commentProfile?.ImageURL,
                             RelativeTime = DateTime.TryParse(pc.PostCommentDate?.ToString(), out DateTime commentDate)
-                                ? RelativeTime.GetRelativeTime(commentDate, timeZone)
+                                ? RelativeTime.GetRelativeTime(commentDate)
                                 : "Invalid Date"
                         };
                     }).ToList();
@@ -333,7 +333,7 @@ namespace DataLayer.DAL.Repository
                 // Calculate relative time
                 if (model.PostedDate != null)
                 {
-                    model.RelativeTime = RelativeTime.GetRelativeTime(model.PostedDate.Value, timeZone);
+                    model.RelativeTime = RelativeTime.GetRelativeTime(model.PostedDate.Value);
                 }
                 else
                 {
@@ -382,7 +382,7 @@ namespace DataLayer.DAL.Repository
                 var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
                 // Load related data efficiently
-                await EnrichPostsWithBasicDetailsAsync(posts, timeZone);
+                await EnrichPostsWithBasicDetailsAsync(posts);
 
                 return (posts, totalCount, totalPages);
             }
@@ -396,17 +396,11 @@ namespace DataLayer.DAL.Repository
         /// <summary>
         /// Get all posts with optimized queries
         /// </summary>
-        public async Task<List<Post>> GetPosts(string postType,string timeZone)
+        public async Task<List<Post>> GetPosts(string postType)
         {
             try
             {
-                // Check cache first
-                string cacheKey = $"AllPosts_{timeZone}";
-                if (TryGetFromCache(cacheKey, out List<Post> cachedPosts))
-                {
-                    return cachedPosts;
-                }
-
+               
                 // Fetch posts using EF Core, filtering for PostType = "User"
                 var posts = await _context.Post
                     .AsNoTracking()
@@ -415,10 +409,10 @@ namespace DataLayer.DAL.Repository
                     .ToListAsync();
 
                 // Process common data for posts
-                await EnrichPostsWithBasicDetailsAsync(posts, timeZone);
+                await EnrichPostsWithBasicDetailsAsync(posts);
 
                 // Cache the results
-                AddToCache(cacheKey, posts);
+               // AddToCache(cacheKey, posts);
 
                 return posts;
             }
@@ -432,12 +426,12 @@ namespace DataLayer.DAL.Repository
         /// <summary>
         /// Get posts by profile ID
         /// </summary>
-        public async Task<List<Post>> GetPostsByProfileId(string profileId, string timeZone)
+        public async Task<List<Post>> GetPostsByProfileId(string profileId)
         {
             try
             {
                 // Cache key for this specific profile's posts
-                string cacheKey = $"ProfilePosts_{profileId}_{timeZone}";
+                string cacheKey = $"ProfilePosts_{profileId}";
                 if (TryGetFromCache(cacheKey, out List<Post> cachedPosts))
                 {
                     return cachedPosts;
@@ -483,7 +477,7 @@ namespace DataLayer.DAL.Repository
                 Parallel.ForEach(query, item =>
                 {
                    
-                        item.RelativeTime = RelativeTime.GetRelativeTime(item.PostedDate.Value, timeZone);
+                        item.RelativeTime = RelativeTime.GetRelativeTime(item.PostedDate.Value);
                  
                 });
 
@@ -501,52 +495,7 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        /// <summary>
-        /// Get blogs with optimized query
-        /// </summary>
-        public async Task<List<Post>> GetBlogs(string timeZone)
-        {
-            try
-            {
-                // Cache key for blogs
-                string cacheKey = $"Blogs_{timeZone}";
-                if (TryGetFromCache(cacheKey, out List<Post> cachedPosts))
-                {
-                    return cachedPosts;
-                }
-
-                // Use EF Core to fetch blog posts
-                var posts = await _context.Post
-                    .AsNoTracking()
-                    .Where(p => p.PostType == "Blog" && p.Status == "Active")
-                    .OrderByDescending(p => p.PostedDate)
-                    .ToListAsync();
-
-                // Simplified processing for blogs - they don't need full mention processing
-                Parallel.ForEach(posts, post =>
-                {
-                    if (post.PostedDate != null)
-                    {
-                        post.RelativeTime = RelativeTime.GetRelativeTime(post.PostedDate.Value, timeZone);
-                    }
-                    else
-                    {
-                        post.RelativeTime = "Unknown";
-                    }
-                });
-
-                // Cache the results
-                AddToCache(cacheKey, posts);
-
-                return posts;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error getting blogs: {ex.Message}");
-                return new List<Post>();
-            }
-        }
-
+       
         /// <summary>
         /// Cache helpers
         /// </summary>
@@ -802,103 +751,12 @@ namespace DataLayer.DAL.Repository
         /// <summary>
         /// Get post by id with details - alias for existing method to match interface
         /// </summary>
-        public async Task<Post> GetPostByIdWithDetailsAsync(string postId, string timeZone)
+        public async Task<Post> GetPostByIdWithDetailsAsync(string postId)
         {
-            return await GetPostById(postId, timeZone);
+            return await GetPostById(postId);
         }
 
-        /// <summary>
-        /// Get hoop news with optimized query
-        /// </summary>
-        public async Task<List<Post>> GetHoopNews(string timeZone)
-        {
-            try
-            {
-                // Cache key for hoop news
-                string cacheKey = $"HoopNews_{timeZone}";
-                if (TryGetFromCache(cacheKey, out List<Post> cachedPosts))
-                {
-                    return cachedPosts;
-                }
-
-                // Use EF Core to fetch hoop news posts
-                var posts = await _context.Post
-                    .AsNoTracking()
-                    .Where(p => p.PostType == "HoopNews" && p.Status == "Active")
-                    .OrderByDescending(p => p.PostedDate)
-                    .ToListAsync();
-
-                // Same simplified processing as for blogs
-                Parallel.ForEach(posts, post =>
-                {
-                    if (post.PostedDate != null)
-                    {
-                        post.RelativeTime = RelativeTime.GetRelativeTime(post.PostedDate.Value, timeZone);
-                    }
-                    else
-                    {
-                        post.RelativeTime = "Unknown";
-                    }
-                });
-
-                // Cache the results
-                AddToCache(cacheKey, posts);
-
-                return posts;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error getting hoop news: {ex.Message}");
-                return new List<Post>();
-            }
-        }
-
-        /// <summary>
-        /// Get events with optimized query
-        /// </summary>
-        public async Task<List<Post>> GetEvents(string timeZone)
-        {
-            try
-            {
-                // Cache key for events
-                string cacheKey = $"Events_{timeZone}";
-                if (TryGetFromCache(cacheKey, out List<Post> cachedPosts))
-                {
-                    return cachedPosts;
-                }
-
-                // Use EF Core to fetch event posts
-                var posts = await _context.Post
-                    .AsNoTracking()
-                    .Where(p => p.PostType == "Event" && p.Status == "Active")
-                    .OrderByDescending(p => p.PostedDate)
-                    .ToListAsync();
-
-                // Same simplified processing as for blogs and news
-                Parallel.ForEach(posts, post =>
-                {
-                    if (post.PostedDate != null)
-                    {
-                        post.RelativeTime = RelativeTime.GetRelativeTime(post.PostedDate.Value, timeZone);
-                    }
-                    else
-                    {
-                        post.RelativeTime = "Unknown";
-                    }
-                });
-
-                // Cache the results
-                AddToCache(cacheKey, posts);
-
-                return posts;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error getting events: {ex.Message}");
-                return new List<Post>();
-            }
-        }
-
+      
         /// <summary>
         /// Get public posts with optimized entity queries
         /// </summary>
@@ -967,7 +825,7 @@ namespace DataLayer.DAL.Repository
         /// <summary>
         /// Get posts that mention a specific profile
         /// </summary>
-        public async Task<List<Post>> GetPostsMentionProfileId(string profileId, string timeZone)
+        public async Task<List<Post>> GetPostsMentionProfileId(string profileId)
         {
             try
             {
@@ -980,7 +838,7 @@ namespace DataLayer.DAL.Repository
                 // Process common data for these posts
                 if (posts.Any())
                 {
-                    await EnrichPostsWithBasicDetailsAsync(posts, timeZone);
+                    await EnrichPostsWithBasicDetailsAsync(posts);
                 }
 
                 return posts.OrderByDescending(p => p.PostedDate).ToList();
@@ -995,7 +853,7 @@ namespace DataLayer.DAL.Repository
         /// <summary>
         /// Get posts with a specific tag
         /// </summary>
-        public async Task<List<Post>> GetPostsWithTagByTagId(string tagId, string timeZone)
+        public async Task<List<Post>> GetPostsWithTagByTagId(string tagId)
         {
             try
             {
@@ -1020,7 +878,7 @@ namespace DataLayer.DAL.Repository
                 // Process common data for these posts
                 if (posts.Any())
                 {
-                    await EnrichPostsWithBasicDetailsAsync(posts, timeZone);
+                    await EnrichPostsWithBasicDetailsAsync(posts);
                 }
 
                 return posts.OrderByDescending(p => p.PostedDate).ToList();
@@ -1035,7 +893,7 @@ namespace DataLayer.DAL.Repository
         /// <summary>
         /// Get posts saved by a specific profile
         /// </summary>
-        public async Task<List<Post>> GetSavedPostsByProfileId(string profileId, string timeZone)
+        public async Task<List<Post>> GetSavedPostsByProfileId(string profileId)
         {
             try
             {
@@ -1056,7 +914,7 @@ namespace DataLayer.DAL.Repository
                     .ToListAsync();
 
                 // Process common data for these posts
-                await EnrichPostsWithBasicDetailsAsync(posts, timeZone);
+                await EnrichPostsWithBasicDetailsAsync(posts);
 
                 return posts.OrderByDescending(p => p.PostedDate).ToList();
             }
@@ -1070,7 +928,7 @@ namespace DataLayer.DAL.Repository
         /// <summary>
         /// Get all posts including drafts and archived
         /// </summary>
-        public async Task<List<Post>> GetAllPosts(string timeZone)
+        public async Task<List<Post>> GetAllPosts()
         {
             try
             {
@@ -1083,7 +941,7 @@ namespace DataLayer.DAL.Repository
                     return new List<Post>();
 
                 // Process posts with basic details
-                await EnrichPostsWithBasicDetailsAsync(posts, timeZone);
+                await EnrichPostsWithBasicDetailsAsync(posts);
 
                 return posts.OrderByDescending(post => post.PostedDate).ToList();
             }

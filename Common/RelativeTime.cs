@@ -4,27 +4,17 @@ namespace Common
     public static class RelativeTime
     {
         /// <summary>
-        /// Get Relative Time
+        /// Get Relative Time without  conversion
         /// </summary>
         /// <param name="postDate"></param>
-        /// <param name="userTimeZoneId"></param>
         /// <returns></returns>
-        public static string GetRelativeTime(DateTime postDate, string userTimeZoneId)
+        public static string GetRelativeTime(DateTime postDate)
         {
-            // Get the user's time zone
-            TimeZoneInfo userTimeZone = TimeZoneInfo.FindSystemTimeZoneById(userTimeZoneId);
+            // Get the current time
+            DateTime currentTime = DateTime.Now;
 
-            // Convert postDate to UTC if it's not already in UTC
-            DateTime postDateUtc = TimeZoneInfo.ConvertTimeToUtc(postDate, userTimeZone);
-
-            // Convert the UTC postDate to the user's local time
-            DateTime postDateInUserTimeZone = TimeZoneInfo.ConvertTimeFromUtc(postDateUtc, userTimeZone);
-
-            // Get the current UTC time and convert it to the user's local time
-            DateTime currentUserTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, userTimeZone);
-
-            // Calculate the time difference from the user's current time
-            TimeSpan timeDifference = currentUserTime.Subtract(postDateInUserTimeZone);
+            // Calculate the time difference
+            TimeSpan timeDifference = currentTime.Subtract(postDate);
 
             // Check if the event was in the future (just in case)
             if (timeDifference.TotalSeconds < 0)
@@ -49,9 +39,10 @@ namespace Common
             }
             else
             {
-                // For dates older than a week, return the actual date in user's local format
-                return postDateInUserTimeZone.ToString("MMM dd, yy");
+                // For dates older than a week, return the actual date
+                return postDate.ToString("MMM dd, yy");
             }
         }
+
     }
 }

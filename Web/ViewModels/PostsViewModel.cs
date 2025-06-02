@@ -1,4 +1,5 @@
-﻿using Domain.DtoModel;
+﻿using Domain;
+using Domain.DtoModel;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -10,6 +11,8 @@ namespace Website.ViewModels
         public List<PostViewModelDto> Posts { get; set; } = new List<PostViewModelDto>();
 
         // Pagination properties
+
+        public IList<Post> PostList { get; set; }
         public bool HasNextPage { get; set; }
         public bool HasPreviousPage { get; set; }
         public string NextCursor { get; set; }
