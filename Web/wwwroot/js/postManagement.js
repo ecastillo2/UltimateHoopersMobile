@@ -1,10 +1,10 @@
 ﻿/**
- * Enhanced Post Management JavaScript with Fixed Post Details Population
- * Fixes: Remove content textbox and ensure proper rich text editor population
+ * Enhanced Post Management JavaScript with Rich Text Caption Field
+ * Content and PostText removed - Caption is now the rich text field
  */
 
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('🚀 Initializing Enhanced Post Management with Rich Text Editor');
+    console.log('🚀 Initializing Post Management with Rich Text Caption');
 
     // Rich text editor instances storage
     let richTextEditors = {
@@ -19,11 +19,11 @@ document.addEventListener('DOMContentLoaded', function () {
     initializeForms();
     initializeRichTextEditors();
 
-    console.log('✅ Enhanced Post Management with Rich Text initialized successfully');
+    console.log('✅ Post Management with Rich Text Caption initialized successfully');
 
     // ========== RICH TEXT EDITOR INITIALIZATION ==========
     function initializeRichTextEditors() {
-        console.log('📝 Initializing TinyMCE rich text editors...');
+        console.log('📝 Initializing TinyMCE rich text editors for caption fields...');
 
         // Common TinyMCE configuration
         const commonConfig = {
@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 p { margin-bottom: 0.75rem; }
                 ul, ol { margin-bottom: 0.75rem; }
             `,
-            placeholder: 'Edit your post content here...',
+            placeholder: 'Write your post content here...',
             skin: 'oxide',
             content_css: 'default',
             branding: false,
@@ -74,19 +74,38 @@ document.addEventListener('DOMContentLoaded', function () {
             ]
         };
 
-        // Initialize edit post editor (more critical since it's used when modal opens)
-        return initializeEditRichTextEditor(commonConfig);
+        // Initialize Add Post Caption Editor
+        tinymce.init({
+            ...commonConfig,
+            selector: '#addCaption',
+            setup: function (editor) {
+                editor.on('init', function () {
+                    console.log('✅ Add post caption rich text editor initialized');
+                    richTextEditors.add = editor;
+                });
+
+                editor.on('change', function () {
+                    validateForm('addPostForm');
+                });
+            }
+        }).catch(error => {
+            console.error('❌ Failed to initialize add post caption editor:', error);
+            fallbackToTextarea('addCaption');
+        });
+
+        // Initialize Edit Post Caption Editor
+        return initializeEditCaptionEditor(commonConfig);
     }
 
-    function initializeEditRichTextEditor(config) {
-        console.log('📝 Initializing edit post rich text editor...');
+    function initializeEditCaptionEditor(config) {
+        console.log('📝 Initializing edit post caption rich text editor...');
 
         return tinymce.init({
             ...config,
-            selector: '#editPostText',
+            selector: '#editCaption',
             setup: function (editor) {
                 editor.on('init', function () {
-                    console.log('✅ Edit post rich text editor initialized');
+                    console.log('✅ Edit post caption rich text editor initialized');
                     richTextEditors.edit = editor;
 
                     // Trigger content refresh if modal is already open
@@ -95,7 +114,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         console.log('📝 Modal already open, refreshing content');
                         const currentContent = editor.getContent();
                         if (!currentContent || currentContent.trim() === '') {
-                            // Try to get content from data attributes or API again
                             const postId = safeGetValue('editPostId');
                             if (postId) {
                                 refreshPostContent(postId);
@@ -111,12 +129,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }).then(function (editors) {
             if (editors && editors.length > 0) {
                 richTextEditors.edit = editors[0];
-                console.log('✅ Edit rich text editor setup complete');
+                console.log('✅ Edit caption rich text editor setup complete');
             }
             return editors;
         }).catch(error => {
-            console.error('❌ Failed to initialize edit post rich text editor:', error);
-            fallbackToTextarea('editPostText');
+            console.error('❌ Failed to initialize edit post caption editor:', error);
+            fallbackToTextarea('editCaption');
             return null;
         });
     }
@@ -135,7 +153,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ========== RICH TEXT CONTENT MANAGEMENT ==========
     function getRichTextContent(editorId) {
-        const editorKey = editorId === 'addPostText' ? 'add' : 'edit';
+        const editorKey = editorId === 'addCaption' ? 'add' : 'edit';
         const editor = richTextEditors[editorKey];
 
         if (editor && editor.getContent) {
@@ -153,7 +171,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function setRichTextContent(editorId, content) {
         console.log(`📝 Setting rich text content for ${editorId}:`, content ? content.substring(0, 100) + '...' : 'empty');
 
-        const editorKey = editorId === 'addPostText' ? 'add' : 'edit';
+        const editorKey = editorId === 'addCaption' ? 'add' : 'edit';
         const editor = richTextEditors[editorKey];
 
         if (editor && editor.setContent) {
@@ -390,17 +408,16 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('📝 Populating form from enhanced table data:', data);
 
         try {
-            // Basic text fields with fallbacks
+            // Basic text fields
             safeSetValue('editTitle', data.title);
-            safeSetValue('editCaption', data.caption);
 
-            // Rich text content - handle HTML content properly
-            const content = data.postText || data.content || data.caption || '';
-            console.log('📝 Setting rich text content from table data:', content.substring(0, 100) + '...');
+            // Rich text caption content - prioritize postText, then caption
+            const content = data.postText || data.caption || '';
+            console.log('📝 Setting rich text caption from table data:', content.substring(0, 100) + '...');
 
             // Wait a bit for editor to be ready, then set content
             setTimeout(() => {
-                setRichTextContent('editPostText', content);
+                setRichTextContent('editCaption', content);
             }, 200);
 
             // Image handling with multiple sources
@@ -420,7 +437,7 @@ document.addEventListener('DOMContentLoaded', function () {
             safeSetSelect('editStatus', capitalizeFirst(data.status) || 'Active');
             safeSetSelect('editPostType', capitalizeFirst(data.type || data.postType) || 'News');
 
-            console.log('✅ Enhanced table data with rich text populated successfully');
+            console.log('✅ Enhanced table data with rich text caption populated successfully');
         } catch (error) {
             console.error('💥 Error populating from table data:', error);
         }
@@ -433,21 +450,21 @@ document.addEventListener('DOMContentLoaded', function () {
             // Handle different possible data structures
             const postData = data.post || data;
 
-            // Basic information with multiple property name fallbacks
+            // Basic information
             safeSetValue('editTitle', postData.title || postData.Title);
-            safeSetValue('editCaption', postData.caption || postData.Caption || postData.description || postData.Description);
 
-            // Rich text content - handle HTML content properly
-            const content = postData.content || postData.Content || postData.postText || postData.PostText || '';
-            console.log('📝 Setting rich text content from API data:', content.substring(0, 100) + '...');
+            // Rich text caption content - prioritize PostText/content, then caption
+            const content = postData.content || postData.Content || postData.postText || postData.PostText ||
+                postData.caption || postData.Caption || postData.description || postData.Description || '';
+            console.log('📝 Setting rich text caption from API data:', content.substring(0, 100) + '...');
 
             // Ensure editor is ready before setting content
             if (richTextEditors.edit && richTextEditors.edit.initialized) {
-                setRichTextContent('editPostText', content);
+                setRichTextContent('editCaption', content);
             } else {
                 // Retry after a short delay
                 setTimeout(() => {
-                    setRichTextContent('editPostText', content);
+                    setRichTextContent('editCaption', content);
                 }, 300);
             }
 
@@ -468,7 +485,7 @@ document.addEventListener('DOMContentLoaded', function () {
             safeSetSelect('editPostType', postData.postType || postData.PostType || 'News');
             safeSetSelect('editStatus', postData.status || postData.Status || 'Active');
 
-            console.log('✅ Enhanced API data with rich text populated successfully');
+            console.log('✅ Enhanced API data with rich text caption populated successfully');
 
             // Update Post Info tab with comprehensive API data
             updatePostInfoDisplayEnhanced(postData);
@@ -532,17 +549,17 @@ document.addEventListener('DOMContentLoaded', function () {
         const form = document.getElementById(formId);
         if (!form) return false;
 
-        // Get rich text content and ensure it's included in form data
-        const contentFieldId = formId === 'addPostForm' ? 'addPostText' : 'editPostText';
-        const richTextContent = getRichTextContent(contentFieldId);
+        // Get rich text content from caption field and ensure it's included in form data
+        const captionFieldId = formId === 'addPostForm' ? 'addCaption' : 'editCaption';
+        const richTextContent = getRichTextContent(captionFieldId);
 
         // Update the textarea with rich text content for form submission
-        const contentField = document.getElementById(contentFieldId);
-        if (contentField) {
-            contentField.value = richTextContent;
+        const captionField = document.getElementById(captionFieldId);
+        if (captionField) {
+            captionField.value = richTextContent;
         }
 
-        console.log(`✅ Rich text content prepared for submission: ${richTextContent.substring(0, 100)}...`);
+        console.log(`✅ Rich text caption content prepared for submission: ${richTextContent.substring(0, 100)}...`);
 
         // Validate form
         return validateForm(formId);
@@ -562,16 +579,9 @@ document.addEventListener('DOMContentLoaded', function () {
             isValid = false;
         }
 
-        // Validate caption
-        const captionField = form.querySelector('[name="Caption"]');
-        if (!captionField?.value?.trim()) {
-            errors.push('Caption is required');
-            isValid = false;
-        }
-
-        // Validate rich text content
-        const contentFieldId = formId === 'addPostForm' ? 'addPostText' : 'editPostText';
-        const richTextContent = getRichTextContent(contentFieldId);
+        // Validate rich text caption content
+        const captionFieldId = formId === 'addPostForm' ? 'addCaption' : 'editCaption';
+        const richTextContent = getRichTextContent(captionFieldId);
 
         // Strip HTML tags for validation
         const textContent = richTextContent.replace(/<[^>]*>/g, '').trim();
@@ -724,13 +734,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function clearPostDetailsForm() {
         const fields = [
-            'editTitle', 'editCaption', 'editImageURL', 'editPostedDate'
+            'editTitle', 'editImageURL', 'editPostedDate'
         ];
 
         fields.forEach(field => safeSetValue(field, ''));
 
-        // Clear rich text content
-        clearRichTextContent('editPostText');
+        // Clear rich text caption content
+        clearRichTextContent('editCaption');
 
         const selects = ['editPostType', 'editStatus'];
         selects.forEach(select => {
@@ -739,7 +749,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         updateImagePreview('');
-        console.log('🧹 Post details form with rich text cleared');
+        console.log('🧹 Post details form with rich text caption cleared');
     }
 
     function clearPostInfoDisplay() {

@@ -67,6 +67,11 @@ namespace Website.Controllers
                     return Json(new { success = false, message = "Authentication required" });
                 }
 
+                if (string.IsNullOrEmpty(id))
+                {
+                    return Json(new { success = false, message = "Post ID is required" });
+                }
+
                 // Get post details
                 var post = await _postApi.GetPostByIdAsync(id, accessToken, cancellationToken);
                 if (post == null)
@@ -85,15 +90,19 @@ namespace Website.Controllers
                         caption = post.Caption,
                         content = post.PostText, // Rich text content
                         description = post.Caption, // Use caption as description
+                        postText = post.PostText, // Also include as postText for compatibility
                         postType = post.PostType,
+                        type = post.Type, // Include both for compatibility
                         status = post.Status,
                         imageURL = post.PostFileURL,
+                        imageUrl = post.PostFileURL, // Include both cases
                         thumbnailURL = post.ThumbnailUrl,
-                        postedDate = post.PostedDate?.ToString("yyyy-MM-ddTHH:mm") ?? "",
+                        thumbnailUrl = post.ThumbnailUrl, // Include both cases
+                        postedDate = post.PostedDate?.ToString("yyyy-MM-ddTHH:mm:ss") ?? "",
                         profileId = post.ProfileId,
                         author = post.ProfileId ?? "System",
                         isActive = post.Status?.ToLower() == "active",
-                        createdDate = post.PostedDate?.ToString("yyyy-MM-ddTHH:mm") ?? "",
+                        createdDate = post.PostedDate?.ToString("yyyy-MM-ddTHH:mm:ss") ?? "",
                         views = GetRandomViews(),
                         likes = GetRandomLikes(),
                         comments = GetRandomComments(),
@@ -114,6 +123,7 @@ namespace Website.Controllers
                     }
                 };
 
+                _logger.LogInformation("Successfully retrieved post data for ID: {PostId}", id);
                 return Json(postData);
             }
             catch (Exception ex)
@@ -136,12 +146,30 @@ namespace Website.Controllers
                     return RedirectToAction("Index", "Home", new { scrollTo = "login" });
                 }
 
+                if (string.IsNullOrEmpty(id))
+                {
+                    TempData["Error"] = "Invalid post ID.";
+                    return RedirectToAction("Post");
+                }
+
                 // Get post details
                 var post = await _postApi.GetPostByIdAsync(id, accessToken, cancellationToken);
                 if (post == null)
                 {
                     TempData["Error"] = "Post not found.";
                     return RedirectToAction("Post");
+                }
+
+                // Increment view count (if you have this functionality)
+                try
+                {
+                    // You can add view tracking here if needed
+                    _logger.LogInformation("Post {PostId} viewed by user {UserId}", id, HttpContext.Session.GetString("ProfileId"));
+                }
+                catch (Exception viewEx)
+                {
+                    _logger.LogWarning(viewEx, "Failed to increment view count for post {PostId}", id);
+                    // Continue anyway - this shouldn't prevent showing the post
                 }
 
                 return View(post);
@@ -170,7 +198,7 @@ namespace Website.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Post post, IFormFile ImageFile, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Create(Post post, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -195,31 +223,15 @@ namespace Website.Controllers
                     return View(post);
                 }
 
-                if (string.IsNullOrWhiteSpace(GetPlainTextFromHtml(post.PostText ?? "")))
+                if (string.IsNullOrWhiteSpace(post.Caption))
                 {
-                    TempData["Error"] = "Post content is required.";
+                    TempData["Error"] = "Post caption is required.";
                     return View(post);
                 }
 
                 // Set default values
                 post.Status = post.Status ?? "Active";
                 post.PostedDate = post.PostedDate ?? DateTime.UtcNow;
-
-                // Handle image upload if provided
-                if (ImageFile != null && ImageFile.Length > 0)
-                {
-                    var imageResult = await ProcessImageUpload(ImageFile);
-                    if (imageResult.Success)
-                    {
-                        post.PostFileURL = imageResult.ImageUrl;
-                        post.ThumbnailUrl = imageResult.ImageUrl; // For now, use same URL
-                    }
-                    else
-                    {
-                        TempData["Error"] = imageResult.ErrorMessage;
-                        return View(post);
-                    }
-                }
 
                 // Create new post
                 var createdPost = await _postApi.CreatePostAsync(post, accessToken, cancellationToken);
@@ -277,7 +289,7 @@ namespace Website.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Post post, IFormFile ImageFile, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Edit(Post post, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -305,7 +317,11 @@ namespace Website.Controllers
                     return Json(new { success = false, message = "You do not have permission to edit this post" });
                 }
 
-                // Process rich text content
+                // Process rich text content if it's from PostText field
+                if (!string.IsNullOrEmpty(post.PostText))
+                {
+                    post.Caption = post.PostText; // Use PostText as Caption if provided
+                }
                 post = ProcessRichTextContent(post);
 
                 // Validate required fields
@@ -314,35 +330,10 @@ namespace Website.Controllers
                     return Json(new { success = false, message = "Post title is required" });
                 }
 
-                if (string.IsNullOrWhiteSpace(GetPlainTextFromHtml(post.PostText ?? "")))
+                if (string.IsNullOrWhiteSpace(post.Caption))
                 {
-                    return Json(new { success = false, message = "Post content is required" });
+                    return Json(new { success = false, message = "Post caption is required" });
                 }
-
-                // Handle image upload if provided
-                if (ImageFile != null && ImageFile.Length > 0)
-                {
-                    var imageResult = await ProcessImageUpload(ImageFile);
-                    if (imageResult.Success)
-                    {
-                        post.PostFileURL = imageResult.ImageUrl;
-                        post.ThumbnailUrl = imageResult.ImageUrl;
-                    }
-                    else
-                    {
-                        return Json(new { success = false, message = imageResult.ErrorMessage });
-                    }
-                }
-                else
-                {
-                    // Keep existing image URLs if no new image
-                    post.PostFileURL = existingPost.PostFileURL;
-                    post.ThumbnailUrl = existingPost.ThumbnailUrl;
-                }
-
-                // Preserve original metadata
-                post.ProfileId = existingPost.ProfileId;
-                post.PostedDate = existingPost.PostedDate;
 
                 // Update post via API
                 await _postApi.UpdatePostAsync(post, accessToken, cancellationToken);
@@ -417,7 +408,7 @@ namespace Website.Controllers
         /// <returns>Post with processed content</returns>
         private Post ProcessRichTextContent(Post post)
         {
-            if (string.IsNullOrEmpty(post.PostText))
+            if (string.IsNullOrEmpty(post.Caption))
             {
                 return post;
             }
@@ -425,22 +416,17 @@ namespace Website.Controllers
             try
             {
                 // Clean up the HTML content
-                var cleanedContent = CleanHtmlContent(post.PostText);
+                var cleanedContent = CleanHtmlContent(post.Caption);
 
                 // Store the cleaned HTML content
-                post.PostText = cleanedContent;
+                post.Caption = cleanedContent;
+                post.PostText = cleanedContent; // Also set PostText for consistency
 
                 // Generate plain text preview for search/indexing
                 var plainText = GetPlainTextFromHtml(cleanedContent);
 
-                // If caption is empty, generate it from content
-                if (string.IsNullOrEmpty(post.Caption) && !string.IsNullOrEmpty(plainText))
-                {
-                    post.Caption = GetPlainTextPreview(plainText, 200);
-                }
-
                 _logger.LogInformation("Processed rich text content for post. Original length: {OriginalLength}, Cleaned length: {CleanedLength}",
-                    post.PostText.Length, cleanedContent.Length);
+                    post.Caption?.Length ?? 0, cleanedContent.Length);
 
                 return post;
             }
@@ -520,17 +506,20 @@ namespace Website.Controllers
             if (string.IsNullOrEmpty(text))
                 return string.Empty;
 
-            if (text.Length <= maxLength)
-                return text;
+            // First convert HTML to plain text
+            var plainText = GetPlainTextFromHtml(text);
+
+            if (plainText.Length <= maxLength)
+                return plainText;
 
             // Find the last space before the max length to avoid cutting words
-            int lastSpace = text.LastIndexOf(' ', maxLength);
+            int lastSpace = plainText.LastIndexOf(' ', maxLength);
             if (lastSpace > 0 && lastSpace > maxLength - 20) // Only use if it's reasonably close to maxLength
             {
-                return text.Substring(0, lastSpace) + "...";
+                return plainText.Substring(0, lastSpace) + "...";
             }
 
-            return text.Substring(0, maxLength) + "...";
+            return plainText.Substring(0, maxLength) + "...";
         }
 
         /// <summary>
@@ -554,93 +543,6 @@ namespace Website.Controllers
 
             return richTextIndicators.Any(indicator =>
                 content.Contains(indicator, StringComparison.OrdinalIgnoreCase));
-        }
-
-        #endregion
-
-        #region Image Processing
-
-        /// <summary>
-        /// Process image file upload
-        /// </summary>
-        private async Task<(bool Success, string ImageUrl, string ErrorMessage)> ProcessImageUpload(IFormFile imageFile)
-        {
-            try
-            {
-                // Validate file
-                var validationResult = ValidateImageFile(imageFile);
-                if (!validationResult.IsValid)
-                {
-                    return (false, null, validationResult.ErrorMessage);
-                }
-
-                // Generate unique filename
-                var fileExtension = Path.GetExtension(imageFile.FileName).ToLowerInvariant();
-                var fileName = $"{Guid.NewGuid()}{fileExtension}";
-
-                // Define upload path
-                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "posts");
-
-                // Create directory if it doesn't exist
-                if (!Directory.Exists(uploadsFolder))
-                {
-                    Directory.CreateDirectory(uploadsFolder);
-                }
-
-                var filePath = Path.Combine(uploadsFolder, fileName);
-
-                // Save file
-                using (var fileStream = new FileStream(filePath, FileMode.Create))
-                {
-                    await imageFile.CopyToAsync(fileStream);
-                }
-
-                // Generate URL
-                var imageUrl = $"/uploads/posts/{fileName}";
-
-                _logger.LogInformation("Image uploaded successfully: {ImageUrl}", imageUrl);
-                return (true, imageUrl, null);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error uploading image file");
-                return (false, null, "Failed to upload image. Please try again.");
-            }
-        }
-
-        /// <summary>
-        /// Validate uploaded image file
-        /// </summary>
-        private (bool IsValid, string ErrorMessage) ValidateImageFile(IFormFile file)
-        {
-            if (file == null || file.Length == 0)
-            {
-                return (false, "No file provided");
-            }
-
-            // Check file size (5MB limit)
-            if (file.Length > 5 * 1024 * 1024)
-            {
-                return (false, "File size must be less than 5MB");
-            }
-
-            // Check file extension
-            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp" };
-            var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
-
-            if (!allowedExtensions.Contains(fileExtension))
-            {
-                return (false, "Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed");
-            }
-
-            // Check content type
-            var allowedContentTypes = new[] { "image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp" };
-            if (!allowedContentTypes.Contains(file.ContentType.ToLowerInvariant()))
-            {
-                return (false, "Invalid file type");
-            }
-
-            return (true, null);
         }
 
         #endregion
