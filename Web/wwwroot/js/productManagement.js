@@ -1,16 +1,17 @@
-/**
- * Enhanced Product Management JavaScript
- * Auto-populates product details form with improved error handling and debugging
+﻿/**
+ * Complete Enhanced Product Management JavaScript
+ * Includes both Edit and Add Product functionality with file upload support
  */
 
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('? Enhanced Product Management JavaScript initialized');
+    console.log('🚀 Initializing Complete Enhanced Product Management');
 
     // Initialize components
     initializeDataTable();
     initializeModals();
     initializeFilters();
     initializeForms();
+    initializeAddProductModal();
 
     // Enhanced debugging
     window.productDebug = {
@@ -20,11 +21,18 @@ document.addEventListener('DOMContentLoaded', function () {
         populateFromTableData,
         populateFromAPIData,
         checkAPIConfiguration,
-        testTableDataExtraction
+        testTableDataExtraction,
+        testAddProduct,
+        clearAddForm,
+        validateAddForm
     };
 
     // Verify API configuration
     checkAPIConfiguration();
+
+    console.log('✅ Complete Enhanced Product Management loaded successfully');
+
+    // ========== EDIT PRODUCT MODAL HANDLERS ==========
 
     /**
      * Enhanced modal show handler with better debugging
@@ -33,13 +41,13 @@ document.addEventListener('DOMContentLoaded', function () {
         const button = event.relatedTarget;
         const productId = button.getAttribute('data-product-id');
 
-        console.log('?? Opening edit modal for product ID:', productId);
-        console.log('?? Button element:', button);
+        console.log('📂 Opening edit modal for product ID:', productId);
+        console.log('📂 Button element:', button);
 
         if (!productId) {
-            console.error('? No product ID found on button');
+            console.error('🚨 No product ID found on button');
             console.log('Available data attributes:', Array.from(button.attributes).map(attr => `${attr.name}="${attr.value}"`));
-            showToast('Error', 'Product ID is missing', 'danger');
+            showToast('Error: Product ID is missing', 'error');
             return;
         }
 
@@ -60,10 +68,10 @@ document.addEventListener('DOMContentLoaded', function () {
      * Enhanced product data loading with better error handling
      */
     function loadProductDataEnhanced(productId) {
-        console.log('?? Loading product data for ID:', productId);
+        console.log('📥 Loading product data for ID:', productId);
 
         if (!productId) {
-            console.error('? No product ID provided');
+            console.error('🚨 No product ID provided');
             hideLoadingState();
             return;
         }
@@ -71,13 +79,13 @@ document.addEventListener('DOMContentLoaded', function () {
         // Step 1: Try to populate from table data immediately
         const row = findProductRowById(productId);
         if (row) {
-            console.log('? Found table row, extracting data...');
+            console.log('📋 Found table row, extracting data...');
             const tableData = extractTableData(row);
-            console.log('?? Extracted table data:', tableData);
+            console.log('📦 Extracted table data:', tableData);
             populateFromTableData(tableData);
-            console.log('? Table data populated successfully');
+            console.log('✅ Table data populated successfully');
         } else {
-            console.warn('?? No table row found for product ID:', productId);
+            console.warn('⚠️ No table row found for product ID:', productId);
             // Try alternative approach - search all rows
             tryFindRowAlternative(productId);
         }
@@ -86,9 +94,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (window.appUrls?.getProductData) {
             callGetProductDataAPIEnhanced(productId);
         } else {
-            console.error('? GetProductData API URL not configured');
+            console.error('🚨 GetProductData API URL not configured');
             hideLoadingState();
-            showToast('Warning', 'API not configured. Only table data available.', 'warning');
+            showToast('API not configured. Only table data available.', 'warning');
         }
     }
 
@@ -97,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function () {
      */
     function callGetProductDataAPIEnhanced(productId) {
         const url = `${window.appUrls.getProductData}?id=${encodeURIComponent(productId)}`;
-        console.log('?? Calling API:', url);
+        console.log('🌐 Calling API:', url);
 
         fetch(url, {
             method: 'GET',
@@ -109,8 +117,8 @@ document.addEventListener('DOMContentLoaded', function () {
             credentials: 'same-origin'
         })
             .then(response => {
-                console.log('?? API Response status:', response.status);
-                console.log('?? API Response headers:', Object.fromEntries(response.headers.entries()));
+                console.log('📡 API Response status:', response.status);
+                console.log('📡 API Response headers:', Object.fromEntries(response.headers.entries()));
 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -118,22 +126,22 @@ document.addEventListener('DOMContentLoaded', function () {
                 return response.json();
             })
             .then(data => {
-                console.log('?? API Response data:', data);
+                console.log('📦 API Response data:', data);
                 hideLoadingState();
 
                 if (data && data.success !== false) {
-                    console.log('? API call successful, populating form');
+                    console.log('✅ API call successful, populating form');
                     populateFromAPIDataEnhanced(data);
-                    showToast('Success', 'Product data loaded successfully', 'success');
+                    showToast('Product data loaded successfully', 'success');
                 } else {
-                    console.error('? API returned error:', data?.message || 'Unknown error');
-                    showToast('Warning', data?.message || 'Failed to load complete product data', 'warning');
+                    console.error('🚨 API returned error:', data?.message || 'Unknown error');
+                    showToast(data?.message || 'Failed to load complete product data', 'warning');
                 }
             })
             .catch(error => {
-                console.error('?? API Error:', error);
+                console.error('💥 API Error:', error);
                 hideLoadingState();
-                showToast('Warning', `API Error: ${error.message}. Using table data only.`, 'warning');
+                showToast(`API Error: ${error.message}. Using table data only.`, 'warning');
             });
     }
 
@@ -143,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function extractTableData(row) {
         if (!row) return {};
 
-        console.log('?? Extracting data from row:', row);
+        console.log('📋 Extracting data from row:', row);
 
         // Method 1: Try data attributes
         const dataFromAttributes = {
@@ -160,11 +168,11 @@ document.addEventListener('DOMContentLoaded', function () {
             type: row.getAttribute('data-type')
         };
 
-        console.log('?? Data from attributes:', dataFromAttributes);
+        console.log('📊 Data from attributes:', dataFromAttributes);
 
         // Method 2: Try extracting from cell content as fallback
         const cells = row.querySelectorAll('td');
-        console.log('?? Found cells:', cells.length);
+        console.log('📊 Found cells:', cells.length);
 
         if (cells.length >= 5) {
             // Extract from the product column (first column)
@@ -197,7 +205,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 category: categoryText || dataFromAttributes.category
             };
 
-            console.log('?? Data from cells:', dataFromCells);
+            console.log('📊 Data from cells:', dataFromCells);
 
             // Merge data, preferring attributes but falling back to cell content
             return {
@@ -213,7 +221,7 @@ document.addEventListener('DOMContentLoaded', function () {
      * Enhanced form population from table data
      */
     function populateFromTableData(data) {
-        console.log('?? Populating form from table data:', data);
+        console.log('📝 Populating form from table data:', data);
 
         try {
             // Basic text fields
@@ -225,7 +233,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Image handling
             if (data.imageUrl) {
                 safeSetValue('editImageURL', data.imageUrl);
-                updateImagePreview(data.imageUrl);
+                updateImagePreview(data.imageUrl, 'edit');
             }
 
             // Numeric fields with validation
@@ -248,9 +256,9 @@ document.addEventListener('DOMContentLoaded', function () {
             safeSetSelect('editCategory', capitalizeFirst(data.category));
             safeSetSelect('editType', capitalizeFirst(data.type));
 
-            console.log('? Table data populated successfully');
+            console.log('✅ Table data populated successfully');
         } catch (error) {
-            console.error('?? Error populating from table data:', error);
+            console.error('💥 Error populating from table data:', error);
         }
     }
 
@@ -258,7 +266,7 @@ document.addEventListener('DOMContentLoaded', function () {
      * Enhanced API data population
      */
     function populateFromAPIDataEnhanced(data) {
-        console.log('?? Populating form from API data:', data);
+        console.log('🌐 Populating form from API data:', data);
 
         try {
             // Handle different possible data structures
@@ -274,7 +282,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const imageUrl = productData.ImageURL || productData.imageURL || productData.imageUrl;
             if (imageUrl) {
                 safeSetValue('editImageURL', imageUrl);
-                updateImagePreview(imageUrl);
+                updateImagePreview(imageUrl, 'edit');
             }
 
             // Numeric fields with validation
@@ -295,12 +303,12 @@ document.addEventListener('DOMContentLoaded', function () {
             safeSetSelect('editCategory', productData.Category || productData.category);
             safeSetSelect('editStatus', productData.Status || productData.status);
 
-            console.log('? API data populated successfully');
+            console.log('✅ API data populated successfully');
 
             // Update Product Info tab
             updateProductInfoDisplay(productData);
         } catch (error) {
-            console.error('?? Error populating from API data:', error);
+            console.error('💥 Error populating from API data:', error);
         }
     }
 
@@ -308,17 +316,17 @@ document.addEventListener('DOMContentLoaded', function () {
      * Try alternative methods to find the row
      */
     function tryFindRowAlternative(productId) {
-        console.log('?? Trying alternative row finding methods for ID:', productId);
+        console.log('🔍 Trying alternative row finding methods for ID:', productId);
 
         // Method 1: Search all buttons with data-product-id
         const allButtons = document.querySelectorAll('button[data-product-id]');
-        console.log('?? Found buttons with data-product-id:', allButtons.length);
+        console.log('🔍 Found buttons with data-product-id:', allButtons.length);
 
         for (const button of allButtons) {
             if (button.getAttribute('data-product-id') === productId) {
                 const row = button.closest('tr');
                 if (row) {
-                    console.log('? Found row via button search');
+                    console.log('✅ Found row via button search');
                     const tableData = extractTableData(row);
                     populateFromTableData(tableData);
                     return;
@@ -335,7 +343,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const row = rows[i];
                 const button = row.querySelector(`[data-product-id="${productId}"]`);
                 if (button) {
-                    console.log('? Found row via DataTable search');
+                    console.log('✅ Found row via DataTable search');
                     const tableData = extractTableData(row);
                     populateFromTableData(tableData);
                     return;
@@ -343,79 +351,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        console.warn('?? Could not find row using any method');
-    }
-
-    /**
-     * Enhanced image preview with error handling
-     */
-    function updateImagePreview(imageUrl) {
-        const currentImage = document.getElementById('currentImage');
-        const placeholder = document.getElementById('currentImagePlaceholder');
-
-        if (!currentImage || !placeholder) {
-            console.warn('?? Image preview elements not found');
-            return;
-        }
-
-        if (imageUrl?.trim()) {
-            const img = new Image();
-            img.onload = function () {
-                currentImage.src = addCacheBuster(imageUrl);
-                currentImage.style.display = 'block';
-                placeholder.style.display = 'none';
-                console.log('??? Image preview updated successfully');
-            };
-            img.onerror = function () {
-                console.warn('?? Failed to load image, showing placeholder');
-                currentImage.style.display = 'none';
-                placeholder.style.display = 'flex';
-            };
-            img.src = imageUrl;
-        } else {
-            currentImage.style.display = 'none';
-            placeholder.style.display = 'flex';
-            console.log('??? Image preview cleared');
-        }
-    }
-
-    /**
-     * Check API configuration
-     */
-    function checkAPIConfiguration() {
-        console.log('?? Checking API configuration...');
-
-        if (!window.appUrls) {
-            console.error('? window.appUrls is not defined');
-            return false;
-        }
-
-        console.log('?? Available API URLs:', window.appUrls);
-
-        if (!window.appUrls.getProductData) {
-            console.error('? getProductData URL not configured');
-            return false;
-        }
-
-        console.log('? API configuration OK');
-        return true;
-    }
-
-    /**
-     * Test table data extraction
-     */
-    function testTableDataExtraction(productId) {
-        console.log('?? Testing table data extraction for:', productId);
-        const row = findProductRowById(productId);
-        if (row) {
-            console.log('? Found row:', row);
-            const data = extractTableData(row);
-            console.log('?? Extracted data:', data);
-            return data;
-        } else {
-            console.log('? Row not found');
-            return null;
-        }
+        console.warn('⚠️ Could not find row using any method');
     }
 
     /**
@@ -424,12 +360,12 @@ document.addEventListener('DOMContentLoaded', function () {
     function findProductRowById(productId) {
         if (!productId) return null;
 
-        console.log('?? Looking for row with product ID:', productId);
+        console.log('🔍 Looking for row with product ID:', productId);
 
         // Strategy 1: Direct row attribute search
         let row = document.querySelector(`tr[data-product-id="${productId}"]`);
         if (row) {
-            console.log('? Found row by data-product-id (Strategy 1)');
+            console.log('✅ Found row by data-product-id (Strategy 1)');
             return row;
         }
 
@@ -438,7 +374,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (button) {
             row = button.closest('tr');
             if (row) {
-                console.log('? Found row via button (Strategy 2)');
+                console.log('✅ Found row via button (Strategy 2)');
                 return row;
             }
         }
@@ -450,15 +386,384 @@ document.addEventListener('DOMContentLoaded', function () {
             for (const tr of allRows) {
                 const editBtn = tr.querySelector(`[data-product-id="${productId}"]`);
                 if (editBtn) {
-                    console.log('? Found row via table body search (Strategy 3)');
+                    console.log('✅ Found row via table body search (Strategy 3)');
                     return tr;
                 }
             }
         }
 
-        console.warn('?? Row not found for product ID:', productId);
+        console.warn('⚠️ Row not found for product ID:', productId);
         return null;
     }
+
+    // ========== ADD PRODUCT MODAL FUNCTIONALITY ==========
+
+    /**
+     * Initialize Add Product Modal with file upload functionality
+     */
+    function initializeAddProductModal() {
+        console.log('🎯 Initializing Add Product Modal with File Upload');
+
+        // Get modal and form elements
+        const addModal = document.getElementById('addProductModal');
+        const addForm = document.getElementById('addProductForm');
+        const fileInput = document.getElementById('addImageFile');
+        const urlInput = document.getElementById('addImageURL');
+        const clearBtn = document.getElementById('clearAddImage');
+
+        if (!addModal || !addForm) {
+            console.warn('⚠️ Add product modal elements not found');
+            return;
+        }
+
+        // File input change handler
+        if (fileInput) {
+            fileInput.addEventListener('change', function (e) {
+                const file = e.target.files[0];
+                if (file) {
+                    handleFileSelection(file);
+                    // Clear URL input when file is selected
+                    if (urlInput) urlInput.value = '';
+                }
+            });
+        }
+
+        // URL input change handler
+        if (urlInput) {
+            urlInput.addEventListener('blur', function () {
+                const url = this.value.trim();
+                if (url) {
+                    handleUrlInput(url);
+                    // Clear file input when URL is provided
+                    if (fileInput) fileInput.value = '';
+                }
+            });
+
+            // Real-time URL validation
+            urlInput.addEventListener('input', function () {
+                const url = this.value.trim();
+                if (url && !isValidImageUrl(url)) {
+                    this.classList.add('is-invalid');
+                } else {
+                    this.classList.remove('is-invalid');
+                }
+            });
+        }
+
+        // Clear image button
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function () {
+                clearImagePreview('add');
+            });
+        }
+
+        // Drag and drop functionality
+        const fileInputArea = fileInput?.parentElement;
+        if (fileInputArea) {
+            setupDragAndDrop(fileInputArea, fileInput, urlInput);
+        }
+
+        // Modal show/hide handlers
+        addModal.addEventListener('show.bs.modal', function () {
+            console.log('📝 Opening add product modal');
+            clearAddForm();
+        });
+
+        addModal.addEventListener('hidden.bs.modal', function () {
+            console.log('🚪 Closing add product modal');
+            clearAddForm();
+        });
+
+        // Form submission handler
+        addForm.addEventListener('submit', function (e) {
+            if (!validateAddProductForm()) {
+                e.preventDefault();
+                return false;
+            }
+
+            console.log('📤 Submitting add product form');
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                setButtonLoading(submitBtn, true, 'Adding Product...');
+            }
+
+            showToast('Creating product...', 'info');
+        });
+
+        console.log('✅ Add product modal initialized');
+    }
+
+    /**
+     * Setup drag and drop functionality
+     */
+    function setupDragAndDrop(fileInputArea, fileInput, urlInput) {
+        fileInputArea.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            this.classList.add('drag-over');
+        });
+
+        fileInputArea.addEventListener('dragleave', function (e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+        });
+
+        fileInputArea.addEventListener('drop', function (e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type.startsWith('image/')) {
+                    fileInput.files = files;
+                    handleFileSelection(file);
+                    if (urlInput) urlInput.value = '';
+                } else {
+                    showToast('Please drop an image file', 'error');
+                }
+            }
+        });
+    }
+
+    /**
+     * Handle file selection for add product modal
+     */
+    function handleFileSelection(file) {
+        console.log('📁 File selected:', file.name, 'Size:', formatFileSize(file.size));
+
+        // Validate file
+        if (!validateImageFile(file)) {
+            return;
+        }
+
+        // Create preview
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            updateImagePreview(e.target.result, 'add');
+            showToast(`Image "${file.name}" loaded successfully`, 'success');
+        };
+        reader.onerror = function () {
+            showToast('Error reading file. Please try again.', 'error');
+        };
+        reader.readAsDataURL(file);
+    }
+
+    /**
+     * Handle URL input for add product modal
+     */
+    function handleUrlInput(url) {
+        console.log('🔗 URL entered:', url);
+
+        // Basic URL validation
+        if (!isValidImageUrl(url)) {
+            showToast('Please enter a valid image URL', 'warning');
+            return;
+        }
+
+        // Show loading state
+        setPlaceholderLoading('add');
+
+        // Test if the image loads
+        const testImg = new Image();
+        testImg.onload = function () {
+            updateImagePreview(url, 'add');
+            showToast('Image loaded from URL successfully', 'success');
+        };
+        testImg.onerror = function () {
+            resetPlaceholder('add');
+            showToast('Failed to load image from URL. Please check the URL and try again.', 'error');
+        };
+        testImg.src = url;
+    }
+
+    /**
+     * Validate image file
+     */
+    function validateImageFile(file) {
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
+
+        if (file.size > maxSize) {
+            showToast(`File size (${formatFileSize(file.size)}) must be less than 5MB`, 'error');
+            return false;
+        }
+
+        if (!allowedTypes.includes(file.type.toLowerCase())) {
+            showToast('File type not supported. Please use JPG, PNG, GIF, WebP, or BMP.', 'error');
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Validate image URL
+     */
+    function isValidImageUrl(url) {
+        try {
+            new URL(url);
+            const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
+            const urlLower = url.toLowerCase();
+            return imageExtensions.some(ext => urlLower.includes(ext)) ||
+                url.includes('image') ||
+                url.includes('img') ||
+                /\/(photo|picture|pic)\//i.test(url);
+        } catch {
+            return false;
+        }
+    }
+
+    /**
+     * Validate Add Product Form
+     */
+    function validateAddProductForm() {
+        const title = document.getElementById('addTitle')?.value?.trim();
+        const price = document.getElementById('addPrice')?.value;
+        const type = document.getElementById('addType')?.value;
+        const category = document.getElementById('addCategory')?.value;
+
+        const errors = [];
+
+        if (!title) {
+            errors.push('Product title is required');
+            markFieldInvalid('addTitle');
+        } else {
+            markFieldValid('addTitle');
+        }
+
+        if (!price || isNaN(parseFloat(price)) || parseFloat(price) < 0) {
+            errors.push('Valid price is required');
+            markFieldInvalid('addPrice');
+        } else {
+            markFieldValid('addPrice');
+        }
+
+        if (!type) {
+            errors.push('Product type is required');
+            markFieldInvalid('addType');
+        } else {
+            markFieldValid('addType');
+        }
+
+        if (!category) {
+            errors.push('Product category is required');
+            markFieldInvalid('addCategory');
+        } else {
+            markFieldValid('addCategory');
+        }
+
+        if (errors.length > 0) {
+            showToast('Please fix the following errors:\n• ' + errors.join('\n• '), 'error');
+            return false;
+        }
+
+        return true;
+    }
+
+    // ========== IMAGE PREVIEW FUNCTIONS ==========
+
+    /**
+     * Update image preview for both add and edit modals
+     */
+    function updateImagePreview(src, modalType = 'edit') {
+        const prefix = modalType === 'add' ? 'add' : 'current';
+        const previewImg = document.getElementById(`${prefix === 'add' ? 'addPreview' : 'current'}Image`);
+        const placeholder = document.getElementById(`${prefix === 'add' ? 'add' : 'current'}ImagePlaceholder`);
+
+        if (previewImg && placeholder) {
+            previewImg.src = src;
+            previewImg.style.display = 'block';
+            placeholder.style.display = 'none';
+
+            // Add image preview container styling
+            const container = document.getElementById(`${prefix === 'add' ? 'add' : 'current'}ImagePreview`);
+            if (container) {
+                container.classList.add('has-image');
+            }
+
+            // Add image load animation
+            previewImg.style.opacity = '0';
+            previewImg.style.transform = 'scale(0.8)';
+
+            setTimeout(() => {
+                previewImg.style.transition = 'all 0.3s ease';
+                previewImg.style.opacity = '1';
+                previewImg.style.transform = 'scale(1)';
+            }, 50);
+
+            console.log(`🖼️ ${modalType} image preview updated`);
+        }
+    }
+
+    /**
+     * Clear image preview for both add and edit modals
+     */
+    function clearImagePreview(modalType = 'edit') {
+        console.log(`🧹 Clearing ${modalType} image preview`);
+
+        const prefix = modalType === 'add' ? 'add' : 'edit';
+        const fileInput = document.getElementById(`${prefix}ImageFile`);
+        const urlInput = document.getElementById(`${prefix}ImageURL`);
+
+        // Clear inputs
+        if (fileInput) fileInput.value = '';
+        if (urlInput) {
+            urlInput.value = '';
+            urlInput.classList.remove('is-invalid');
+        }
+
+        resetPlaceholder(modalType);
+        showToast('Image cleared', 'info');
+    }
+
+    /**
+     * Reset placeholder to default state
+     */
+    function resetPlaceholder(modalType = 'edit') {
+        const prefix = modalType === 'add' ? 'add' : 'current';
+        const previewImg = document.getElementById(`${prefix === 'add' ? 'addPreview' : 'current'}Image`);
+        const placeholder = document.getElementById(`${prefix === 'add' ? 'add' : 'current'}ImagePlaceholder`);
+
+        if (previewImg && placeholder) {
+            previewImg.src = '';
+            previewImg.style.display = 'none';
+            placeholder.style.display = 'flex';
+
+            // Reset placeholder content
+            const placeholderText = modalType === 'add' ? 'Image Preview' : 'Current Image';
+            const placeholderSubtext = modalType === 'add' ? 'No image selected' : 'No image uploaded';
+
+            placeholder.innerHTML = `
+                <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
+                <p class="text-muted mt-2 mb-0">${placeholderText}</p>
+                <small class="text-muted">${placeholderSubtext}</small>
+            `;
+        }
+
+        // Remove container styling
+        const container = document.getElementById(`${prefix === 'add' ? 'add' : 'current'}ImagePreview`);
+        if (container) {
+            container.classList.remove('has-image');
+        }
+    }
+
+    /**
+     * Set placeholder to loading state
+     */
+    function setPlaceholderLoading(modalType = 'edit') {
+        const prefix = modalType === 'add' ? 'add' : 'current';
+        const placeholder = document.getElementById(`${prefix === 'add' ? 'add' : 'current'}ImagePlaceholder`);
+
+        if (placeholder) {
+            placeholder.innerHTML = `
+                <i class="bi bi-hourglass-split text-muted" style="font-size: 3rem;"></i>
+                <p class="text-muted mt-2 mb-0">Loading Image...</p>
+                <small class="text-muted">Please wait</small>
+            `;
+        }
+    }
+
+    // ========== DATATABLE INITIALIZATION ==========
 
     /**
      * Initialize DataTable
@@ -484,9 +789,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 ],
                 order: [[0, 'asc']]
             });
-            console.log('? DataTable initialized');
+            console.log('📊 DataTable initialized');
         }
     }
+
+    // ========== MODAL INITIALIZATION ==========
 
     /**
      * Initialize modal event handlers
@@ -503,7 +810,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 button.addEventListener('shown.bs.tab', handleTabSwitch);
             });
 
-            console.log('? Modal event handlers initialized');
+            console.log('📝 Edit modal event handlers initialized');
         }
 
         // Delete button handler
@@ -517,7 +824,7 @@ document.addEventListener('DOMContentLoaded', function () {
      * Handle edit modal hide event
      */
     function handleEditModalHide() {
-        console.log('?? Closing edit modal');
+        console.log('🚪 Closing edit modal');
         clearAllForms();
         hideLoadingState();
     }
@@ -529,7 +836,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const targetTab = event.target.getAttribute('data-bs-target');
         const productId = document.getElementById('editProductId')?.value;
 
-        console.log('?? Switching to tab:', targetTab, 'for product:', productId);
+        console.log('🔄 Switching to tab:', targetTab, 'for product:', productId);
 
         if (!productId) return;
 
@@ -544,38 +851,35 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     /**
-     * Set product ID in all relevant form fields
+     * Handle delete product
      */
-    function setProductIdInForms(productId) {
-        const idFields = ['editProductId', 'deleteProductId'];
-        idFields.forEach(fieldId => {
-            const field = document.getElementById(fieldId);
-            if (field) {
-                field.value = productId;
-                console.log(`? Set ${fieldId} to:`, productId);
-            }
-        });
-    }
+    function handleDeleteProduct() {
+        const productId = document.getElementById('editProductId')?.value;
+        if (!productId) return;
 
-    /**
-     * Clear all forms
-     */
-    function clearAllForms() {
-        clearProductDetailsForm();
-        clearProductInfoDisplay();
-        clearInventoryForm();
+        const deleteField = document.getElementById('deleteProductId');
+        if (deleteField) {
+            deleteField.value = productId;
+        }
+
+        // Hide edit modal and show delete confirmation
+        const editModal = bootstrap.Modal.getInstance(document.getElementById('editProductModal'));
+        if (editModal) editModal.hide();
+
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteProductModal'));
+        deleteModal.show();
     }
 
     /**
      * Load product info for the Product Info tab
      */
     function loadProductInfo(productId) {
-        console.log('?? Loading product info for:', productId);
+        console.log('📊 Loading product info for:', productId);
 
         // Check if already loaded
         const currentTitle = document.getElementById('productInfoTitle')?.textContent;
         if (currentTitle && currentTitle !== '--' && currentTitle !== 'Product') {
-            console.log('? Product info already loaded');
+            console.log('✅ Product info already loaded');
             return;
         }
 
@@ -589,7 +893,7 @@ document.addEventListener('DOMContentLoaded', function () {
      * Load inventory data for the Inventory tab
      */
     function loadInventoryData(productId) {
-        console.log('?? Loading inventory data for:', productId);
+        console.log('📦 Loading inventory data for:', productId);
 
         // For now, populate with mock data
         safeSetValue('stockQuantity', Math.floor(Math.random() * 100));
@@ -601,7 +905,7 @@ document.addEventListener('DOMContentLoaded', function () {
      * Update product info display
      */
     function updateProductInfoDisplay(data) {
-        console.log('?? Updating product info display');
+        console.log('📊 Updating product info display');
 
         // Avatar and basic info
         const initials = getProductInitials(data.Title || data.title);
@@ -625,8 +929,99 @@ document.addEventListener('DOMContentLoaded', function () {
         safeUpdateElement('productInfoViews', Math.floor(Math.random() * 1000));
         safeUpdateElement('productInfoRating', (Math.random() * 5).toFixed(1));
 
-        console.log('? Product info display updated');
+        console.log('✅ Product info display updated');
     }
+
+    // ========== FORM MANAGEMENT ==========
+
+    /**
+     * Set product ID in all relevant form fields
+     */
+    function setProductIdInForms(productId) {
+        const idFields = ['editProductId', 'deleteProductId'];
+        idFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                field.value = productId;
+                console.log(`✅ Set ${fieldId} to:`, productId);
+            }
+        });
+    }
+
+    /**
+     * Clear all forms
+     */
+    function clearAllForms() {
+        clearProductDetailsForm();
+        clearProductInfoDisplay();
+        clearInventoryForm();
+    }
+
+    /**
+     * Clear add product form
+     */
+    function clearAddForm() {
+        console.log('🧹 Clearing add product form');
+
+        const form = document.getElementById('addProductForm');
+        if (form) {
+            form.reset();
+
+            // Clear any validation classes
+            const inputs = form.querySelectorAll('.is-invalid, .is-valid');
+            inputs.forEach(input => {
+                input.classList.remove('is-invalid', 'is-valid');
+            });
+
+            clearImagePreview('add');
+        }
+    }
+
+    /**
+     * Clear product details form
+     */
+    function clearProductDetailsForm() {
+        const fields = [
+            'editTitle', 'editProductNumber', 'editDescription',
+            'editPrice', 'editPoints', 'editTag', 'editImageURL'
+        ];
+
+        fields.forEach(field => safeSetValue(field, ''));
+
+        const selects = ['editType', 'editCategory', 'editStatus'];
+        selects.forEach(select => {
+            const element = document.getElementById(select);
+            if (element) element.selectedIndex = 0;
+        });
+
+        updateImagePreview('', 'edit');
+        console.log('🧹 Product details form cleared');
+    }
+
+    /**
+     * Clear product info display
+     */
+    function clearProductInfoDisplay() {
+        const elements = [
+            'productInfoInitials', 'productInfoTitle', 'productInfoNumber',
+            'productInfoStatus', 'productInfoCategory', 'productInfoTitleDetail',
+            'productInfoPrice', 'productInfoPoints', 'productInfoType', 'productInfoTag'
+        ];
+
+        elements.forEach(elementId => safeUpdateElement(elementId, '--'));
+        console.log('🧹 Product info display cleared');
+    }
+
+    /**
+     * Clear inventory form
+     */
+    function clearInventoryForm() {
+        const fields = ['stockQuantity', 'lowStockThreshold', 'reorderLevel'];
+        fields.forEach(field => safeSetValue(field, ''));
+        console.log('🧹 Inventory form cleared');
+    }
+
+    // ========== UI STATE MANAGEMENT ==========
 
     /**
      * Show loading state
@@ -655,7 +1050,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const formElements = modal.querySelectorAll('input, select, textarea, button[type="submit"]');
         formElements.forEach(el => el.disabled = true);
 
-        console.log('? Loading state shown');
+        console.log('⏳ Loading state shown');
     }
 
     /**
@@ -675,85 +1070,71 @@ document.addEventListener('DOMContentLoaded', function () {
         const formElements = modal.querySelectorAll('input, select, textarea, button[type="submit"]');
         formElements.forEach(el => el.disabled = false);
 
-        console.log('? Loading state hidden');
+        console.log('✅ Loading state hidden');
+    }
+
+    // ========== VALIDATION AND FEEDBACK ==========
+
+    /**
+     * Mark field as invalid
+     */
+    function markFieldInvalid(fieldId) {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.classList.add('is-invalid');
+            field.classList.remove('is-valid');
+        }
     }
 
     /**
-     * Clear product details form
+     * Mark field as valid
      */
-    function clearProductDetailsForm() {
-        const fields = [
-            'editTitle', 'editProductNumber', 'editDescription',
-            'editPrice', 'editPoints', 'editTag', 'editImageURL'
-        ];
-
-        fields.forEach(field => safeSetValue(field, ''));
-
-        const selects = ['editType', 'editCategory', 'editStatus'];
-        selects.forEach(select => {
-            const element = document.getElementById(select);
-            if (element) element.selectedIndex = 0;
-        });
-
-        updateImagePreview('');
-        console.log('?? Product details form cleared');
+    function markFieldValid(fieldId) {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.classList.remove('is-invalid');
+            field.classList.add('is-valid');
+        }
     }
 
     /**
-     * Clear product info display
+     * Set button loading state
      */
-    function clearProductInfoDisplay() {
-        const elements = [
-            'productInfoInitials', 'productInfoTitle', 'productInfoNumber',
-            'productInfoStatus', 'productInfoCategory', 'productInfoTitleDetail',
-            'productInfoPrice', 'productInfoPoints', 'productInfoType', 'productInfoTag'
-        ];
+    function setButtonLoading(button, loading, text = 'Loading...') {
+        if (!button) return;
 
-        elements.forEach(elementId => safeUpdateElement(elementId, '--'));
-        console.log('?? Product info display cleared');
+        if (loading) {
+            button.dataset.originalText = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>${text}`;
+        } else {
+            button.disabled = false;
+            button.innerHTML = button.dataset.originalText || button.innerHTML;
+        }
     }
 
-    /**
-     * Clear inventory form
-     */
-    function clearInventoryForm() {
-        const fields = ['stockQuantity', 'lowStockThreshold', 'reorderLevel'];
-        fields.forEach(field => safeSetValue(field, ''));
-        console.log('?? Inventory form cleared');
-    }
+    // ========== UTILITY FUNCTIONS ==========
 
     /**
-     * Handle delete product
+     * Check API configuration
      */
-    function handleDeleteProduct() {
-        const productId = document.getElementById('editProductId')?.value;
-        if (!productId) return;
+    function checkAPIConfiguration() {
+        console.log('🔧 Checking API configuration...');
 
-        const deleteField = document.getElementById('deleteProductId');
-        if (deleteField) {
-            deleteField.value = productId;
+        if (!window.appUrls) {
+            console.error('🚨 window.appUrls is not defined');
+            return false;
         }
 
-        // Hide edit modal and show delete confirmation
-        const editModal = bootstrap.Modal.getInstance(document.getElementById('editProductModal'));
-        if (editModal) editModal.hide();
+        console.log('🔧 Available API URLs:', window.appUrls);
 
-        const deleteModal = new bootstrap.Modal(document.getElementById('deleteProductModal'));
-        deleteModal.show();
-    }
+        if (!window.appUrls.getProductData) {
+            console.error('🚨 getProductData URL not configured');
+            return false;
+        }
 
-    /**
-     * Initialize filters
-     */
-    function initializeFilters() {
-        console.log('?? Filters initialized');
-    }
-
-    /**
-     * Initialize form handlers
-     */
-    function initializeForms() {
-        console.log('?? Form handlers initialized');
+        console.log('✅ API configuration OK');
+        return true;
     }
 
     /**
@@ -765,8 +1146,25 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        console.log('?? Testing GetProductData with ID:', productId);
+        console.log('🧪 Testing GetProductData with ID:', productId);
         callGetProductDataAPIEnhanced(productId);
+    }
+
+    /**
+     * Test table data extraction
+     */
+    function testTableDataExtraction(productId) {
+        console.log('🧪 Testing table data extraction for:', productId);
+        const row = findProductRowById(productId);
+        if (row) {
+            console.log('✅ Found row:', row);
+            const data = extractTableData(row);
+            console.log('📦 Extracted data:', data);
+            return data;
+        } else {
+            console.log('❌ Row not found');
+            return null;
+        }
     }
 
     // Helper functions
@@ -775,7 +1173,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (element) {
             element.value = value || '';
         } else {
-            console.warn(`?? Element ${elementId} not found`);
+            console.warn(`⚠️ Element ${elementId} not found`);
         }
     }
 
@@ -785,12 +1183,12 @@ document.addEventListener('DOMContentLoaded', function () {
             for (let i = 0; i < select.options.length; i++) {
                 if (select.options[i].value.toLowerCase() === value.toLowerCase()) {
                     select.selectedIndex = i;
-                    console.log(`? Set ${elementId} to: ${value}`);
+                    console.log(`✅ Set ${elementId} to: ${value}`);
                     break;
                 }
             }
         } else if (!select) {
-            console.warn(`?? Select element ${elementId} not found`);
+            console.warn(`⚠️ Select element ${elementId} not found`);
         }
     }
 
@@ -799,7 +1197,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (element) {
             element.textContent = value || '--';
         } else {
-            console.warn(`?? Element ${elementId} not found`);
+            console.warn(`⚠️ Element ${elementId} not found`);
         }
     }
 
@@ -823,68 +1221,74 @@ document.addEventListener('DOMContentLoaded', function () {
         return isNaN(numPrice) ? '--' : `$${numPrice.toFixed(2)}`;
     }
 
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
     function addCacheBuster(url) {
         if (!url) return url;
         const separator = url.includes('?') ? '&' : '?';
         return `${url}${separator}v=${Date.now()}`;
     }
 
-    function showToast(title, message, type = 'success') {
-        console.log(`${type.toUpperCase()}: ${title} - ${message}`);
+    function showToast(message, type = 'success') {
+        console.log(`${type}: ${message}`);
 
-        // Create toast container if it doesn't exist
-        let container = document.querySelector('.toast-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
-            container.style.zIndex = '9999';
-            document.body.appendChild(container);
-        }
-
-        // Create toast
-        const toastId = `toast-${Date.now()}`;
-        const iconClass = {
-            'success': 'bi-check-circle',
-            'danger': 'bi-exclamation-triangle',
-            'warning': 'bi-exclamation-triangle',
-            'info': 'bi-info-circle'
-        }[type] || 'bi-info-circle';
-
-        const toastHtml = `
-            <div id="${toastId}" class="toast align-items-center text-white bg-${type} border-0" role="alert">
-                <div class="d-flex">
-                    <div class="toast-body">
-                        <i class="bi ${iconClass} me-2"></i>
-                        <strong>${title}:</strong> ${message}
-                    </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-                </div>
-            </div>
-        `;
-
-        container.insertAdjacentHTML('beforeend', toastHtml);
-
-        // Initialize and show toast
-        const toastElement = document.getElementById(toastId);
-        if (toastElement && typeof bootstrap !== 'undefined' && bootstrap.Toast) {
-            const toast = new bootstrap.Toast(toastElement, {
-                autohide: type !== 'danger',
-                delay: 5000
-            });
-            toast.show();
-
-            toastElement.addEventListener('hidden.bs.toast', () => {
-                toastElement.remove();
-            });
+        // Use UIUtils if available, otherwise fallback to console/alert
+        if (window.UIUtils) {
+            window.UIUtils.showToast(message, type);
+        } else {
+            // Fallback: simple alert for critical errors
+            if (type === 'error') {
+                alert('Error: ' + message);
+            } else {
+                console.log(`${type}: ${message}`);
+            }
         }
     }
 
-    // Expose functions for global access
+    // ========== FILTER INITIALIZATION ==========
+
+    /**
+     * Initialize filters
+     */
+    function initializeFilters() {
+        console.log('🔍 Filters initialized');
+        // Add filter implementation if needed
+    }
+
+    /**
+     * Initialize form handlers
+     */
+    function initializeForms() {
+        console.log('📝 Form handlers initialized');
+        // Add additional form handlers if needed
+    }
+
+    // ========== DEBUG FUNCTIONS ==========
+
+    /**
+     * Test add product functionality
+     */
+    function testAddProduct() {
+        console.log('🧪 Testing add product functionality');
+        const addModal = new bootstrap.Modal(document.getElementById('addProductModal'));
+        addModal.show();
+    }
+
+    // Expose main functions for global access
     window.loadProductData = loadProductDataEnhanced;
     window.populateFromTableData = populateFromTableData;
     window.populateFromAPIData = populateFromAPIDataEnhanced;
     window.findProductRowById = findProductRowById;
     window.testGetProductData = testGetProductData;
+    window.clearAddForm = clearAddForm;
+    window.validateAddForm = validateAddProductForm;
 
-    console.log('? Enhanced Product Management JavaScript fully loaded');
+    console.log('🎯 Complete Enhanced Product Management JavaScript fully loaded');
+    console.log('🧪 Debug functions available: window.productDebug');
 });

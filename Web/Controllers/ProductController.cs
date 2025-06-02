@@ -1,4 +1,5 @@
-﻿using Common.Utilities;
+﻿using Common;
+using Common.Utilities;
 using Domain;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -183,8 +184,11 @@ namespace Web.Controllers
                 }
 
                 // Set default values
+                product.ProductId = Guid.NewGuid().ToString();
+                product.ProductNumber = UniqueIdNumber.GenerateSixDigit();
                 product.Status = product.Status ?? "Active";
                 product.Points = product.Points ?? 0;
+                product.ImageUrlName = product.ProductId+".webp";
 
                 // Create new Product
                 var createdProduct = await _productApi.CreateProductAsync(product, accessToken, cancellationToken);

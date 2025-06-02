@@ -97,6 +97,30 @@ namespace WebAPI.Controllers
             }
         }
 
+
+        /// <summary>
+        /// Create a new post
+        /// </summary>
+        /// <param name="post">Post to create</param>
+        /// <returns>Created post</returns>
+        [HttpPost]
+        //[Authorize]
+        public async Task<ActionResult<Post>> Product([FromBody] Product product)
+        {
+            try
+            {
+                await _repository.InsertProduct(product);
+
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error Adding Product ");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while retrieving the joined run" });
+            }
+        }
+
         /// <summary>
         /// Get products By Id
         /// </summary>

@@ -17,5 +17,6 @@ namespace Domain
         public int? Points { get; set; }
         public decimal? Price { get; set; }
         public decimal? DiscountPrice { get; set; }
+        public string? ImageUrlName { get; set; }
     }
 }

@@ -17,11 +17,13 @@ namespace DataLayer.DAL.Repository
         private readonly ILogger<ProductRepository> _logger;
         private readonly IConfiguration _configuration;
         private bool _disposed = false;
+        private readonly string _blobBaseUrl;
 
         public ProductRepository(ApplicationContext context, IConfiguration configuration, ILogger<ProductRepository> logger = null)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _blobBaseUrl = configuration["BlobStorage:ImageBaseUrl"] ?? "https://ultimatehoopersapi.azurewebsites.net";
             _logger = logger;
         }
 
@@ -185,11 +187,31 @@ namespace DataLayer.DAL.Repository
             }
         }
 
+        /// <summary>
+        /// AddProfileToJoinedRunAsync
+        /// </summary>
+        /// <param name="profileId"></param>
+        /// <param name="runId"></param>
+        /// <returns></returns>
+        public async Task InsertProduct(Product model, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+
+                model.ImageURL = $"{_blobBaseUrl}{model.ProductId}";
 
 
+                // Add to context and save
+                await _context.Product.AddAsync(model);
+                await SaveChangesAsync();
 
+                _logger?.LogInformation("Successfully inserted Product with ID: {JoinedRunId}", model.ProductId);
+            }
+            catch (Exception ex)
+            {
 
-
+            }
+        }
 
         /// <summary>
         /// Update Client Async

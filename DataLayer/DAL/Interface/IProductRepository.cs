@@ -55,14 +55,23 @@ namespace DataLayer.DAL.Interface
             string privateRunId,
             CancellationToken cancellationToken = default);
 
-       
+        /// <summary>
+        /// Insert Product
+        /// </summary>
+        /// <param name="product"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        Task InsertProduct(Product product,CancellationToken cancellationToken = default);
+
+
 
         /// <summary>
-        /// Update a profile
+        /// Update Product Async
         /// </summary>
-        Task<bool> UpdateProductAsync(
-            Product product,
-            CancellationToken cancellationToken = default);
+        /// <param name="product"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        Task<bool> UpdateProductAsync(Product product,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Batch update multiple Run at once
