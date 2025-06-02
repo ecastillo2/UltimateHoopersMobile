@@ -178,19 +178,7 @@ namespace Web.Controllers
                     });
                 }
 
-                // Handle image upload if provided
-                if (ImageFile != null && ImageFile.Length > 0)
-                {
-                    var imageResult = await ProcessImageUpload(ImageFile);
-                    if (imageResult.Success)
-                    {
-                        product.ImageURL = imageResult.ImageUrl;
-                    }
-                    else
-                    {
-                        return Json(new { success = false, message = imageResult.ErrorMessage });
-                    }
-                }
+               
 
                 // Set default values
                 product.ProductId = Guid.NewGuid().ToString();

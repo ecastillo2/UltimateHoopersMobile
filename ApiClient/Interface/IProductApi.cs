@@ -57,7 +57,7 @@ namespace WebAPI.ApiClients
         /// <param name="accessToken"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<Response> CreateProductAsync(Product product, string accessToken, CancellationToken cancellationToken = default);
+        Task<HttpResponseMessage> CreateProductAsync(Product product, string accessToken, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Update Client Async

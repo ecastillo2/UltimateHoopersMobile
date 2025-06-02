@@ -70,7 +70,7 @@ namespace WebAPI.ApiClients
         /// <summary>
         /// Create a new Product
         /// </summary>
-        public async Task<Response> CreateProductAsync(Product model, string accessToken, CancellationToken cancellationToken = default)
+        public async Task<HttpResponseMessage> CreateProductAsync(Product model, string accessToken, CancellationToken cancellationToken = default)
         {
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
@@ -83,9 +83,9 @@ namespace WebAPI.ApiClients
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
-            var result = JsonSerializer.Deserialize<Response>(content, _jsonOptions);
+            //var result = JsonSerializer.Deserialize<Response>(content, _jsonOptions);
 
-            return result;
+            return response;
         }
 
         /// <summary>
