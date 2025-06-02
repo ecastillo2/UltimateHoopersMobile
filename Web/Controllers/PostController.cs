@@ -28,7 +28,7 @@ namespace Website.Controllers
                 var accessToken = HttpContext.Session.GetString("UserToken");
                 if (string.IsNullOrEmpty(accessToken))
                 {
-                    TempData["Error"] = "You must be logged in to view runs.";
+                    TempData["Error"] = "You must be logged in to view posts.";
                     return RedirectToAction("Index", "Home", new { scrollTo = "login" });
                 }
 
@@ -36,8 +36,8 @@ namespace Website.Controllers
                 var userRole = HttpContext.Session.GetString("UserRole");
                 var profileId = HttpContext.Session.GetString("ProfileId");
 
-                // Get runs with cursor pagination
-                var result = await _postApi.GetPostsAsync(postType, accessToken, cancellationToken = default);
+                // Get posts with cursor pagination
+                var result = await _postApi.GetPostsAsync(postType, accessToken, cancellationToken);
 
                 // Create view model
                 var viewModel = new PostsViewModel
@@ -49,8 +49,8 @@ namespace Website.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving runs");
-                TempData["Error"] = "An error occurred while retrieving runs. Please try again later.";
+                _logger.LogError(ex, "Error retrieving posts");
+                TempData["Error"] = "An error occurred while retrieving posts. Please try again later.";
                 return RedirectToAction("Dashboard", "Dashboard");
             }
         }
@@ -123,7 +123,6 @@ namespace Website.Controllers
             }
         }
 
-
         [HttpGet]
         public async Task<IActionResult> Details(string id, CancellationToken cancellationToken = default)
         {
@@ -133,25 +132,25 @@ namespace Website.Controllers
                 var accessToken = HttpContext.Session.GetString("UserToken");
                 if (string.IsNullOrEmpty(accessToken))
                 {
-                    TempData["Error"] = "You must be logged in to view run details.";
+                    TempData["Error"] = "You must be logged in to view post details.";
                     return RedirectToAction("Index", "Home", new { scrollTo = "login" });
                 }
 
-                // Get run details
-                var run = await _postApi.GetPostByIdAsync(id, accessToken, cancellationToken);
-                if (run == null)
+                // Get post details
+                var post = await _postApi.GetPostByIdAsync(id, accessToken, cancellationToken);
+                if (post == null)
                 {
-                    TempData["Error"] = "Run not found.";
-                    return RedirectToAction("Index");
+                    TempData["Error"] = "Post not found.";
+                    return RedirectToAction("Post");
                 }
 
-                return View(run);
+                return View(post);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving run details for ID: {RunId}", id);
-                TempData["Error"] = "An error occurred while retrieving run details. Please try again later.";
-                return RedirectToAction("Index");
+                _logger.LogError(ex, "Error retrieving post details for ID: {PostId}", id);
+                TempData["Error"] = "An error occurred while retrieving post details. Please try again later.";
+                return RedirectToAction("Post");
             }
         }
 
@@ -162,16 +161,16 @@ namespace Website.Controllers
             var accessToken = HttpContext.Session.GetString("UserToken");
             if (string.IsNullOrEmpty(accessToken))
             {
-                TempData["Error"] = "You must be logged in to create a run.";
+                TempData["Error"] = "You must be logged in to create a post.";
                 return RedirectToAction("Index", "Home", new { scrollTo = "login" });
             }
 
-            return View(new Run());
+            return View(new Post());
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Post post, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Create(Post post, IFormFile ImageFile, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -206,6 +205,22 @@ namespace Website.Controllers
                 post.Status = post.Status ?? "Active";
                 post.PostedDate = post.PostedDate ?? DateTime.UtcNow;
 
+                // Handle image upload if provided
+                if (ImageFile != null && ImageFile.Length > 0)
+                {
+                    var imageResult = await ProcessImageUpload(ImageFile);
+                    if (imageResult.Success)
+                    {
+                        post.PostFileURL = imageResult.ImageUrl;
+                        post.ThumbnailUrl = imageResult.ImageUrl; // For now, use same URL
+                    }
+                    else
+                    {
+                        TempData["Error"] = imageResult.ErrorMessage;
+                        return View(post);
+                    }
+                }
+
                 // Create new post
                 var createdPost = await _postApi.CreatePostAsync(post, accessToken, cancellationToken);
 
@@ -229,40 +244,40 @@ namespace Website.Controllers
                 var accessToken = HttpContext.Session.GetString("UserToken");
                 if (string.IsNullOrEmpty(accessToken))
                 {
-                    TempData["Error"] = "You must be logged in to edit a run.";
+                    TempData["Error"] = "You must be logged in to edit a post.";
                     return RedirectToAction("Index", "Home", new { scrollTo = "login" });
                 }
 
-                // Get run details
-                var run = await _postApi.GetPostByIdAsync(id, accessToken, cancellationToken);
-                if (run == null)
+                // Get post details
+                var post = await _postApi.GetPostByIdAsync(id, accessToken, cancellationToken);
+                if (post == null)
                 {
-                    TempData["Error"] = "Run not found.";
-                    return RedirectToAction("Index");
+                    TempData["Error"] = "Post not found.";
+                    return RedirectToAction("Post");
                 }
 
                 // Verify user is creator or admin
                 var profileId = HttpContext.Session.GetString("ProfileId");
                 var userRole = HttpContext.Session.GetString("UserRole");
-                if (run.ProfileId != profileId && userRole != "Admin")
+                if (post.ProfileId != profileId && userRole != "Admin")
                 {
-                    TempData["Error"] = "You do not have permission to edit this run.";
+                    TempData["Error"] = "You do not have permission to edit this post.";
                     return RedirectToAction("Details", new { id = id });
                 }
 
-                return View(run);
+                return View(post);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving run for edit, ID: {RunId}", id);
-                TempData["Error"] = "An error occurred while retrieving the run. Please try again later.";
-                return RedirectToAction("Index");
+                _logger.LogError(ex, "Error retrieving post for edit, ID: {PostId}", id);
+                TempData["Error"] = "An error occurred while retrieving the post. Please try again later.";
+                return RedirectToAction("Post");
             }
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Post post, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Edit(Post post, IFormFile ImageFile, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -304,6 +319,31 @@ namespace Website.Controllers
                     return Json(new { success = false, message = "Post content is required" });
                 }
 
+                // Handle image upload if provided
+                if (ImageFile != null && ImageFile.Length > 0)
+                {
+                    var imageResult = await ProcessImageUpload(ImageFile);
+                    if (imageResult.Success)
+                    {
+                        post.PostFileURL = imageResult.ImageUrl;
+                        post.ThumbnailUrl = imageResult.ImageUrl;
+                    }
+                    else
+                    {
+                        return Json(new { success = false, message = imageResult.ErrorMessage });
+                    }
+                }
+                else
+                {
+                    // Keep existing image URLs if no new image
+                    post.PostFileURL = existingPost.PostFileURL;
+                    post.ThumbnailUrl = existingPost.ThumbnailUrl;
+                }
+
+                // Preserve original metadata
+                post.ProfileId = existingPost.ProfileId;
+                post.PostedDate = existingPost.PostedDate;
+
                 // Update post via API
                 await _postApi.UpdatePostAsync(post, accessToken, cancellationToken);
 
@@ -333,38 +373,38 @@ namespace Website.Controllers
                 var accessToken = HttpContext.Session.GetString("UserToken");
                 if (string.IsNullOrEmpty(accessToken))
                 {
-                    TempData["Error"] = "You must be logged in to delete a run.";
+                    TempData["Error"] = "You must be logged in to delete a post.";
                     return RedirectToAction("Index", "Home", new { scrollTo = "login" });
                 }
 
-                // Get run details first to check permissions
-                var run = await _postApi.GetPostByIdAsync(id, accessToken, cancellationToken);
-                if (run == null)
+                // Get post details first to check permissions
+                var post = await _postApi.GetPostByIdAsync(id, accessToken, cancellationToken);
+                if (post == null)
                 {
-                    TempData["Error"] = "Run not found.";
-                    return RedirectToAction("Index");
+                    TempData["Error"] = "Post not found.";
+                    return RedirectToAction("Post");
                 }
 
                 // Verify user is creator or admin
                 var profileId = HttpContext.Session.GetString("ProfileId");
                 var userRole = HttpContext.Session.GetString("UserRole");
-                if (run.ProfileId != profileId && userRole != "Admin")
+                if (post.ProfileId != profileId && userRole != "Admin")
                 {
-                    TempData["Error"] = "You do not have permission to delete this run.";
+                    TempData["Error"] = "You do not have permission to delete this post.";
                     return RedirectToAction("Details", new { id = id });
                 }
 
-                // Delete run
+                // Delete post
                 await _postApi.DeletePostAsync(id, accessToken, cancellationToken);
 
-                TempData["Success"] = "Run deleted successfully.";
-                return RedirectToAction("Index");
+                TempData["Success"] = "Post deleted successfully.";
+                return RedirectToAction("Post");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting run: {RunId}", id);
-                TempData["Error"] = "An error occurred while deleting the run. Please try again later.";
-                return RedirectToAction("Index");
+                _logger.LogError(ex, "Error deleting post: {PostId}", id);
+                TempData["Error"] = "An error occurred while deleting the post. Please try again later.";
+                return RedirectToAction("Post");
             }
         }
 
@@ -514,6 +554,93 @@ namespace Website.Controllers
 
             return richTextIndicators.Any(indicator =>
                 content.Contains(indicator, StringComparison.OrdinalIgnoreCase));
+        }
+
+        #endregion
+
+        #region Image Processing
+
+        /// <summary>
+        /// Process image file upload
+        /// </summary>
+        private async Task<(bool Success, string ImageUrl, string ErrorMessage)> ProcessImageUpload(IFormFile imageFile)
+        {
+            try
+            {
+                // Validate file
+                var validationResult = ValidateImageFile(imageFile);
+                if (!validationResult.IsValid)
+                {
+                    return (false, null, validationResult.ErrorMessage);
+                }
+
+                // Generate unique filename
+                var fileExtension = Path.GetExtension(imageFile.FileName).ToLowerInvariant();
+                var fileName = $"{Guid.NewGuid()}{fileExtension}";
+
+                // Define upload path
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "posts");
+
+                // Create directory if it doesn't exist
+                if (!Directory.Exists(uploadsFolder))
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+
+                var filePath = Path.Combine(uploadsFolder, fileName);
+
+                // Save file
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await imageFile.CopyToAsync(fileStream);
+                }
+
+                // Generate URL
+                var imageUrl = $"/uploads/posts/{fileName}";
+
+                _logger.LogInformation("Image uploaded successfully: {ImageUrl}", imageUrl);
+                return (true, imageUrl, null);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error uploading image file");
+                return (false, null, "Failed to upload image. Please try again.");
+            }
+        }
+
+        /// <summary>
+        /// Validate uploaded image file
+        /// </summary>
+        private (bool IsValid, string ErrorMessage) ValidateImageFile(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return (false, "No file provided");
+            }
+
+            // Check file size (5MB limit)
+            if (file.Length > 5 * 1024 * 1024)
+            {
+                return (false, "File size must be less than 5MB");
+            }
+
+            // Check file extension
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp" };
+            var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
+
+            if (!allowedExtensions.Contains(fileExtension))
+            {
+                return (false, "Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed");
+            }
+
+            // Check content type
+            var allowedContentTypes = new[] { "image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp" };
+            if (!allowedContentTypes.Contains(file.ContentType.ToLowerInvariant()))
+            {
+                return (false, "Invalid file type");
+            }
+
+            return (true, null);
         }
 
         #endregion

@@ -14,8 +14,6 @@
     <!-- TinyMCE CDN -->
     <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
 
-    <!-- 4. Enhanced CSS for Rich Text Editor -->
-
     <style>
         /* TinyMCE Custom Styling */
         .tox-tinymce {
@@ -86,18 +84,6 @@
             min-height: 300px;
         }
 
-        /* Responsive adjustments */
-        @@media (max-width: 768px) {
-            .tox-tinymce
-
-        {
-            min-height: 250px !important;
-        }
-
-        }
-    </style>
-    
-    <style>
         .modal-loading-overlay {
             position: absolute;
             top: 0;
@@ -154,6 +140,16 @@
             padding: 0.25em 0.5em;
             border-radius: 0.25rem;
         }
+
+        /* Responsive adjustments */
+        @@media (max-width: 768px) {
+            .tox-tinymce
+
+        {
+            min-height: 250px !important;
+        }
+
+        }
     </style>
 }
 
@@ -199,9 +195,8 @@
                         <select class="form-select" id="typeFilter">
                             <option value="all" selected>All Types</option>
                             <option value="news">News</option>
-                            <option value="announcement">Announcement</option>
+                            <option value="user">User</option>
                             <option value="event">Event</option>
-                            <option value="general">General</option>
                         </select>
                     </div>
                     <div class="col-md-3">
@@ -249,12 +244,9 @@
                 <table id="postsTable" class="table table-striped table-hover w-100">
                     <thead>
                         <tr>
-                           
                             <th>Post</th>
-                            
                             <th>Date</th>
                             <th>Status</th>
-                           @*  <th>Author</th> *@
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -268,12 +260,9 @@
                                 data-post-id="@post.PostId"
                                 data-title="@post.Title"
                                 data-caption="@post.Caption"
-                               
-                                
+                                data-post-text="@post.PostText"
                                 data-image-url="@post.PostFileURL"
                                 data-thumbnail-url="@post.ThumbnailUrl"
-                             
-                              
                                 data-posted-date="@(post.PostedDate?.ToString("yyyy-MM-ddTHH:mm") ?? "")">
                                 <td>
                                     <div class="d-flex align-items-center">
@@ -300,12 +289,10 @@
                                         </div>
                                     </div>
                                 </td>
-                            
                                 <td class="post-date">@(post.PostedDate?.ToString("MM/dd/yyyy") ?? "N/A")</td>
                                 <td>
                                     <span class="badge bg-success badge-pill post-status">@(post.Status ?? "Active")</span>
                                 </td>
-                            @*     <td class="post-author">@(post.ProfileId ?? "System")</td> *@
                                 <td>
                                     <div class="table-actions">
                                         <button type="button" class="btn btn-sm btn-outline-primary action-icon"
@@ -358,13 +345,21 @@
                             <input type="text" class="form-control" id="addTitle" name="Title" required>
                         </div>
                     </div>
-                    
+
                     <div class="row mb-3">
                         <div class="col-md-12">
                             <label for="addCaption" class="form-label">Caption <span class="text-danger">*</span></label>
-                            <textarea class="form-control" id="addCaption" name="Caption" rows="5" placeholder="Full post caption" required></textarea>
+                            <textarea class="form-control" id="addCaption" name="Caption" rows="3" placeholder="Brief description or summary" required></textarea>
                         </div>
                     </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="addPostText" class="form-label">Content <span class="text-danger">*</span></label>
+                            <textarea class="form-control rich-text-editor" id="addPostText" name="PostText" rows="8" required></textarea>
+                        </div>
+                    </div>
+
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="addPostType" class="form-label">Post Type <span class="text-danger">*</span></label>
@@ -373,7 +368,6 @@
                                 <option value="News">News</option>
                                 <option value="User">User</option>
                                 <option value="Event">Event</option>
-                               
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -386,7 +380,7 @@
                             </select>
                         </div>
                     </div>
-             
+
                     <div class="row mb-3">
                         <div class="col-md-12">
                             <label for="addImageFile" class="form-label">Upload Image</label>
@@ -472,12 +466,17 @@
                                 </div>
                             </div>
 
-                         
-
                             <div class="row mb-3">
                                 <div class="col-md-12">
                                     <label for="editCaption" class="form-label">Caption <span class="text-danger">*</span></label>
-                                    <textarea class="form-control" id="editCaption" name="Caption" rows="6" required></textarea>
+                                    <textarea class="form-control" id="editCaption" name="Caption" rows="3" required></textarea>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label for="editPostText" class="form-label">Content <span class="text-danger">*</span></label>
+                                    <textarea class="form-control rich-text-editor" id="editPostText" name="PostText" rows="8" required></textarea>
                                 </div>
                             </div>
 
@@ -485,10 +484,10 @@
                                 <div class="col-md-4">
                                     <label for="editPostType" class="form-label">Post Type <span class="text-danger">*</span></label>
                                     <select class="form-select" id="editPostType" name="PostType" required>
-                                      <option value="">Select Type</option>
-                                <option value="News">News</option>
-                                <option value="User">User</option>
-                                <option value="Event">Event</option>
+                                        <option value="">Select Type</option>
+                                        <option value="News">News</option>
+                                        <option value="User">User</option>
+                                        <option value="Event">Event</option>
                                     </select>
                                 </div>
                                 <div class="col-md-4">
@@ -500,10 +499,7 @@
                                         <option value="Archived">Archived</option>
                                     </select>
                                 </div>
-                                
                             </div>
-
-                           
 
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -548,7 +544,6 @@
                                                     <span class="text-muted">Created:</span>
                                                     <span id="postInfoCreated">--</span>
                                                 </li>
-                                               
                                             </ul>
                                         </div>
                                     </div>

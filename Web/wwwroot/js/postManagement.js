@@ -1,6 +1,6 @@
 ﻿/**
  * Enhanced Post Management JavaScript with TinyMCE Rich Text Editor
- * Includes proper initialization, data handling, and cleanup for rich text content
+ * Complete implementation with proper initialization, data handling, and cleanup
  */
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -19,26 +19,6 @@ document.addEventListener('DOMContentLoaded', function () {
     initializeForms();
     initializeRichTextEditors();
 
-    // Debug functions
-    window.postDebug = {
-        loadPostData,
-        testGetPostData,
-        findPostRowById,
-        populateFromTableData,
-        populateFromAPIData,
-        checkAPIConfiguration,
-        testTableDataExtraction,
-        updatePostInfoDisplay,
-        loadPostDetailsTab,
-        extractEnhancedTableData,
-        getRichTextContent,
-        setRichTextContent,
-        richTextEditors
-    };
-
-    // Verify API configuration
-    checkAPIConfiguration();
-
     console.log('✅ Enhanced Post Management with Rich Text initialized successfully');
 
     // ========== RICH TEXT EDITOR INITIALIZATION ==========
@@ -46,92 +26,6 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('📝 Initializing TinyMCE rich text editors...');
 
         // Common TinyMCE configuration
-        const commonConfig = {
-            height: 300,
-            menubar: false,
-            plugins: [
-                'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-                'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                'insertdatetime', 'media', 'table', 'help', 'wordcount', 'emoticons'
-            ],
-            toolbar: 'undo redo | blocks | bold italic forecolor backcolor | ' +
-                'alignleft aligncenter alignright alignjustify | ' +
-                'bullist numlist outdent indent | removeformat | help | ' +
-                'link image media | code preview fullscreen',
-            content_style: `
-                body { 
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-                    font-size: 14px; 
-                    line-height: 1.6;
-                    margin: 1rem;
-                }
-                h1, h2, h3, h4, h5, h6 { margin-top: 1rem; margin-bottom: 0.5rem; }
-                p { margin-bottom: 0.75rem; }
-                ul, ol { margin-bottom: 0.75rem; }
-            `,
-            placeholder: 'Start writing your content here...',
-            skin: 'oxide',
-            content_css: 'default',
-            branding: false,
-            promotion: false,
-            resize: 'vertical',
-            browser_spellcheck: true,
-            contextmenu: 'link image table',
-            // Image handling
-            images_upload_handler: function (blobInfo, success, failure) {
-                // Handle image uploads here if needed
-                console.log('📷 Image upload requested:', blobInfo.filename());
-
-                // For now, just convert to data URL
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    success(e.target.result);
-                };
-                reader.readAsDataURL(blobInfo.blob());
-            },
-            // Paste handling
-            paste_data_images: true,
-            paste_as_text: false,
-            // Link handling
-            link_assume_external_targets: true,
-            target_list: [
-                { title: 'New window', value: '_blank' },
-                { title: 'Same window', value: '_self' }
-            ]
-        };
-
-        // Initialize Add Post Editor
-        tinymce.init({
-            ...commonConfig,
-            selector: '#addContent',
-            setup: function (editor) {
-                editor.on('init', function () {
-                    console.log('✅ Add post rich text editor initialized');
-                    richTextEditors.add = editor;
-                });
-
-                editor.on('change', function () {
-                    // Trigger form validation if needed
-                    validateForm('addPostForm');
-                });
-            }
-        }).catch(error => {
-            console.error('❌ Failed to initialize add post rich text editor:', error);
-            fallbackToTextarea('addContent');
-        });
-
-        // Initialize Edit Post Editor (will be done when modal opens)
-        // We'll initialize this dynamically when the edit modal is shown
-    }
-
-    function initializeEditRichTextEditor() {
-        console.log('📝 Initializing edit post rich text editor...');
-
-        if (richTextEditors.edit) {
-            console.log('✅ Edit rich text editor already initialized');
-            return Promise.resolve(richTextEditors.edit);
-        }
-
         const commonConfig = {
             height: 300,
             menubar: false,
@@ -165,7 +59,6 @@ document.addEventListener('DOMContentLoaded', function () {
             contextmenu: 'link image table',
             images_upload_handler: function (blobInfo, success, failure) {
                 console.log('📷 Image upload requested:', blobInfo.filename());
-
                 const reader = new FileReader();
                 reader.onload = function (e) {
                     success(e.target.result);
@@ -183,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         return tinymce.init({
             ...commonConfig,
-            selector: '#editContent',
+            selector: '#editPostText',
             setup: function (editor) {
                 editor.on('init', function () {
                     console.log('✅ Edit post rich text editor initialized');
@@ -196,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }).catch(error => {
             console.error('❌ Failed to initialize edit post rich text editor:', error);
-            fallbackToTextarea('editContent');
+            fallbackToTextarea('editPostText');
             return null;
         });
     }
@@ -207,13 +100,15 @@ document.addEventListener('DOMContentLoaded', function () {
         if (textarea) {
             textarea.rows = 8;
             textarea.placeholder = 'Rich text editor failed to load. You can still enter content here.';
-            UIUtils.showWarning('Rich text editor failed to load. Using basic text input.', 'Warning');
+            if (window.UIUtils) {
+                window.UIUtils.showWarning('Rich text editor failed to load. Using basic text input.', 'Warning');
+            }
         }
     }
 
     // ========== RICH TEXT CONTENT MANAGEMENT ==========
     function getRichTextContent(editorId) {
-        const editorKey = editorId === 'addContent' ? 'add' : 'edit';
+        const editorKey = editorId === 'addPostText' ? 'add' : 'edit';
         const editor = richTextEditors[editorKey];
 
         if (editor) {
@@ -221,7 +116,6 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log(`📖 Got rich text content from ${editorId}:`, content.substring(0, 100) + '...');
             return content;
         } else {
-            // Fallback to textarea value
             const textarea = document.getElementById(editorId);
             const content = textarea ? textarea.value : '';
             console.log(`📖 Got fallback content from ${editorId}:`, content.substring(0, 100) + '...');
@@ -232,14 +126,13 @@ document.addEventListener('DOMContentLoaded', function () {
     function setRichTextContent(editorId, content) {
         console.log(`📝 Setting rich text content for ${editorId}:`, content ? content.substring(0, 100) + '...' : 'empty');
 
-        const editorKey = editorId === 'addContent' ? 'add' : 'edit';
+        const editorKey = editorId === 'addPostText' ? 'add' : 'edit';
         const editor = richTextEditors[editorKey];
 
         if (editor) {
             editor.setContent(content || '');
             console.log(`✅ Rich text content set for ${editorId}`);
         } else {
-            // Fallback to textarea
             const textarea = document.getElementById(editorId);
             if (textarea) {
                 textarea.value = content || '';
@@ -253,7 +146,7 @@ document.addEventListener('DOMContentLoaded', function () {
         setRichTextContent(editorId, '');
     }
 
-    // ========== ENHANCED MODAL HANDLERS ==========
+    // ========== MODAL HANDLERS ==========
     function handleEditModalShow(event) {
         const button = event.relatedTarget;
         const postId = button.getAttribute('data-post-id');
@@ -262,7 +155,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (!postId) {
             console.error('❌ No post ID found on button');
-            UIUtils.showError('Post ID is missing', 'Error');
+            if (window.UIUtils) {
+                window.UIUtils.showError('Post ID is missing', 'Error');
+            }
             return;
         }
 
@@ -290,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Clean up edit rich text editor to prevent memory leaks
         if (richTextEditors.edit) {
             try {
-                tinymce.get('editContent')?.remove();
+                tinymce.get('editPostText')?.remove();
                 richTextEditors.edit = null;
                 console.log('🧹 Edit rich text editor cleaned up');
             } catch (error) {
@@ -299,308 +194,23 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // ========== ENHANCED FORM POPULATION WITH RICH TEXT ==========
-    function populateFromTableData(data) {
-        console.log('📝 Populating form from enhanced table data:', data);
+    function handleDeletePost() {
+        const postId = safeGetValue('editPostId');
+        if (!postId) return;
 
-        try {
-            // Basic text fields with fallbacks
-            safeSetValue('editTitle', data.title);
-            safeSetValue('editDescription', data.description || data.caption);
+        safeSetValue('deletePostId', postId);
 
-            // Rich text content - handle HTML content properly
-            const content = data.content || data.description || data.caption || '';
-            setRichTextContent('editContent', content);
+        const editModal = bootstrap.Modal.getInstance(document.getElementById('editPostModal'));
+        if (editModal) editModal.hide();
 
-            // Image handling with multiple sources
-            const imageUrl = data.imageUrl || data.thumbnailUrl;
-            if (imageUrl) {
-                safeSetValue('editImageURL', imageUrl);
-                updateImagePreview(imageUrl);
-            }
-
-            // Date fields with proper formatting
-            if (data.startDate || data.date || data.postedDate) {
-                const dateToUse = data.startDate || data.postedDate || data.date;
-                safeSetValue('editStartDate', formatDateForInput(dateToUse));
-                safeSetValue('editPostedDate', formatDateForInput(dateToUse));
-            }
-            if (data.endDate) {
-                safeSetValue('editEndDate', formatDateForInput(data.endDate));
-            }
-
-            // Select fields with proper capitalization
-            safeSetSelect('editStatus', capitalizeFirst(data.status) || 'Active');
-            safeSetSelect('editPostType', capitalizeFirst(data.type || data.postType) || 'General');
-            safeSetSelect('editType', capitalizeFirst(data.type || data.postType) || 'General');
-
-            console.log('✅ Enhanced table data with rich text populated successfully');
-        } catch (error) {
-            console.error('💥 Error populating from table data:', error);
+        const deleteModalEl = document.getElementById('deletePostModal');
+        if (deleteModalEl) {
+            const deleteModal = new bootstrap.Modal(deleteModalEl);
+            deleteModal.show();
         }
     }
 
-    function populateFromAPIDataEnhanced(data) {
-        console.log('🌐 Populating form from enhanced API data:', data);
-
-        try {
-            // Handle different possible data structures
-            const postData = data.post || data;
-
-            // Basic information with multiple property name fallbacks
-            safeSetValue('editTitle', postData.title || postData.Title);
-            safeSetValue('editDescription', postData.description || postData.Description || postData.caption || postData.Caption);
-
-            // Rich text content - handle HTML content properly
-            const content = postData.content || postData.Content || postData.description || postData.Description || '';
-            setRichTextContent('editContent', content);
-
-            // Image handling with multiple sources
-            const imageUrl = postData.imageURL || postData.ImageURL || postData.imageUrl || postData.thumbnailURL || postData.thumbnailUrl;
-            if (imageUrl) {
-                safeSetValue('editImageURL', imageUrl);
-                updateImagePreview(imageUrl);
-            }
-
-            // Date fields with proper formatting
-            const startDate = postData.startDate || postData.StartDate || postData.postedDate || postData.PostedDate;
-            if (startDate) {
-                safeSetValue('editStartDate', formatDateForInput(startDate));
-                safeSetValue('editPostedDate', formatDateForInput(startDate));
-            }
-
-            const endDate = postData.endDate || postData.EndDate;
-            if (endDate) {
-                safeSetValue('editEndDate', formatDateForInput(endDate));
-            }
-
-            // Select fields
-            safeSetSelect('editPostType', postData.postType || postData.PostType || 'General');
-            safeSetSelect('editType', postData.type || postData.Type || postData.postType || postData.PostType || 'General');
-            safeSetSelect('editStatus', postData.status || postData.Status || 'Active');
-
-            console.log('✅ Enhanced API data with rich text populated successfully');
-
-            // Update Post Info tab with comprehensive API data
-            updatePostInfoDisplayEnhanced(postData);
-        } catch (error) {
-            console.error('💥 Error populating from API data:', error);
-        }
-    }
-
-    function populatePostDetailsForm(data) {
-        console.log('📝 Populating post details form with rich text:', data);
-
-        try {
-            const postData = data.post || data;
-
-            // Populate all form fields in the details tab
-            safeSetValue('editPostId', postData.postId || postData.PostId);
-            safeSetValue('editTitle', postData.title || postData.Title);
-            safeSetValue('editDescription', postData.description || postData.Description || postData.caption || postData.Caption);
-
-            // Rich text content
-            const content = postData.content || postData.Content || postData.description || postData.Description || '';
-            setRichTextContent('editContent', content);
-
-            // Image handling
-            const imageUrl = postData.imageURL || postData.ImageURL || postData.imageUrl || postData.thumbnailURL || postData.thumbnailUrl;
-            if (imageUrl) {
-                safeSetValue('editImageURL', imageUrl);
-                updateImagePreview(imageUrl);
-            }
-
-            // Date fields
-            const postedDate = postData.postedDate || postData.PostedDate || postData.startDate || postData.StartDate || postData.date;
-            if (postedDate) {
-                safeSetValue('editPostedDate', formatDateForInput(postedDate));
-                safeSetValue('editStartDate', formatDateForInput(postedDate));
-            }
-
-            const endDate = postData.endDate || postData.EndDate;
-            if (endDate) {
-                safeSetValue('editEndDate', formatDateForInput(endDate));
-            }
-
-            // Select fields
-            safeSetSelect('editPostType', postData.postType || postData.PostType || postData.type || postData.Type || 'General');
-            safeSetSelect('editType', postData.type || postData.Type || postData.postType || postData.PostType || 'General');
-            safeSetSelect('editStatus', postData.status || postData.Status || 'Active');
-
-            console.log('✅ Post details form with rich text populated successfully');
-        } catch (error) {
-            console.error('🚨 Error populating post details form with rich text:', error);
-            UIUtils.showError('Error populating post details form', 'Error');
-        }
-    }
-
-    // ========== ENHANCED FORM SUBMISSION ==========
-    function handleFormSubmission(formId) {
-        console.log(`📤 Handling form submission for: ${formId}`);
-
-        const form = document.getElementById(formId);
-        if (!form) return;
-
-        // Get rich text content and ensure it's included in form data
-        const contentFieldId = formId === 'addPostForm' ? 'addContent' : 'editContent';
-        const richTextContent = getRichTextContent(contentFieldId);
-
-        // Update the hidden field or textarea with rich text content
-        const contentField = document.getElementById(contentFieldId);
-        if (contentField) {
-            contentField.value = richTextContent;
-        }
-
-        console.log(`✅ Rich text content prepared for submission: ${richTextContent.substring(0, 100)}...`);
-
-        // Continue with normal form submission
-        return true;
-    }
-
-    // ========== FORM VALIDATION ==========
-    function validateForm(formId) {
-        const form = document.getElementById(formId);
-        if (!form) return true;
-
-        let isValid = true;
-        const errors = [];
-
-        // Validate title
-        const titleField = form.querySelector('[name="Title"]');
-        if (!titleField?.value?.trim()) {
-            errors.push('Title is required');
-            isValid = false;
-        }
-
-        // Validate rich text content
-        const contentFieldId = formId === 'addPostForm' ? 'addContent' : 'editContent';
-        const richTextContent = getRichTextContent(contentFieldId);
-
-        // Strip HTML tags for validation
-        const textContent = richTextContent.replace(/<[^>]*>/g, '').trim();
-        if (!textContent) {
-            errors.push('Content is required');
-            isValid = false;
-        }
-
-        // Show validation errors
-        if (!isValid) {
-            UIUtils.showError('Please fix the following errors:\n• ' + errors.join('\n• '), 'Validation Error');
-        }
-
-        return isValid;
-    }
-
-    // ========== CLEANUP FUNCTIONS ==========
-    function clearAllForms() {
-        clearPostDetailsForm();
-        clearPostInfoDisplay();
-        clearAnalyticsForm();
-    }
-
-    function clearPostDetailsForm() {
-        const fields = [
-            'editTitle', 'editDescription', 'editImageURL',
-            'editStartDate', 'editEndDate', 'editPostedDate'
-        ];
-
-        fields.forEach(field => safeSetValue(field, ''));
-
-        // Clear rich text content
-        clearRichTextContent('editContent');
-
-        const selects = ['editPostType', 'editType', 'editStatus'];
-        selects.forEach(select => {
-            const element = document.getElementById(select);
-            if (element) element.selectedIndex = 0;
-        });
-
-        updateImagePreview('');
-        console.log('🧹 Post details form with rich text cleared');
-    }
-
-    // ========== INITIALIZATION FUNCTIONS ==========
-    function initializeDataTable() {
-        const tableElement = $('#postsTable');
-        if (tableElement.length > 0) {
-            tableElement.DataTable({
-                responsive: true,
-                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
-                dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip',
-                language: {
-                    search: "_INPUT_",
-                    searchPlaceholder: "Search posts...",
-                    lengthMenu: "Show _MENU_ posts per page",
-                    info: "Showing _START_ to _END_ of _TOTAL_ posts",
-                    infoEmpty: "Showing 0 to 0 of 0 posts",
-                    infoFiltered: "(filtered from _MAX_ total posts)"
-                },
-                columnDefs: [
-                    { className: "align-middle", targets: "_all" },
-                    { orderable: false, targets: [-1] }
-                ],
-                order: [[2, 'desc']]
-            });
-            console.log('📊 DataTable initialized');
-        }
-    }
-
-    function initializeModals() {
-        const editPostModal = document.getElementById('editPostModal');
-        if (editPostModal) {
-            editPostModal.addEventListener('show.bs.modal', handleEditModalShow);
-            editPostModal.addEventListener('hidden.bs.modal', handleEditModalHide);
-
-            // Tab switching handlers
-            const tabButtons = editPostModal.querySelectorAll('button[data-bs-toggle="tab"]');
-            tabButtons.forEach(button => {
-                button.addEventListener('shown.bs.tab', handleTabSwitch);
-            });
-
-            console.log('📝 Modal event handlers initialized');
-        }
-
-        // Delete button handler
-        const deletePostBtn = document.getElementById('deletePostBtn');
-        if (deletePostBtn) {
-            deletePostBtn.addEventListener('click', handleDeletePost);
-        }
-    }
-
-    function initializeForms() {
-        console.log('📝 Form handlers initialized');
-
-        // Add form submission handlers
-        const addPostForm = document.getElementById('addPostForm');
-        if (addPostForm) {
-            addPostForm.addEventListener('submit', function (e) {
-                if (!handleFormSubmission('addPostForm') || !validateForm('addPostForm')) {
-                    e.preventDefault();
-                    return false;
-                }
-            });
-        }
-
-        const editPostForm = document.getElementById('editPostForm');
-        if (editPostForm) {
-            editPostForm.addEventListener('submit', function (e) {
-                if (!handleFormSubmission('editPostForm') || !validateForm('editPostForm')) {
-                    e.preventDefault();
-                    return false;
-                }
-            });
-        }
-    }
-
-    function initializeFilters() {
-        console.log('🔍 Filters initialized');
-    }
-
-    // ========== OTHER REQUIRED FUNCTIONS ==========
-    // Include all the other functions from the previous implementation
-    // (loadPostDataEnhanced, extractEnhancedTableData, findPostRowById, etc.)
-    // These remain the same as in the previous artifact
-
+    // ========== DATA LOADING FUNCTIONS ==========
     function loadPostDataEnhanced(postId) {
         console.log('📥 Loading enhanced post data for ID:', postId);
 
@@ -625,7 +235,6 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('✅ Table data populated successfully');
         } else {
             console.warn('⚠️ No table row found for post ID:', postId);
-            tryFindRowAlternative(postId);
         }
 
         // Step 2: Always call API for complete and accurate data
@@ -634,17 +243,754 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
             console.error('❌ GetPostData API URL not configured');
             hideLoadingState();
-            UIUtils.showWarning('API not configured. Only table data available.', 'Warning');
+            if (window.UIUtils) {
+                window.UIUtils.showWarning('API not configured. Only table data available.', 'Warning');
+            }
         }
     }
 
-    // ... Include all other utility functions from the previous implementation ...
-    // (These are the same as before, just ensuring rich text content is handled properly)
+    function callGetPostDataAPIEnhanced(postId) {
+        const url = `${window.appUrls.getPostData}?id=${encodeURIComponent(postId)}`;
+        console.log('🌐 Calling API:', url);
 
-    // Export functions for debugging
-    window.loadPostData = loadPostDataEnhanced;
-    window.getRichTextContent = getRichTextContent;
-    window.setRichTextContent = setRichTextContent;
+        fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        })
+            .then(response => {
+                console.log('📡 API Response status:', response.status);
 
-    console.log('✅ Enhanced Post Management with Rich Text Editor fully loaded');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('📦 API Response data:', data);
+                hideLoadingState();
+
+                if (data && data.success !== false) {
+                    console.log('✅ API call successful, populating form');
+                    populateFromAPIDataEnhanced(data);
+                    if (window.UIUtils) {
+                        window.UIUtils.showSuccess('Post data loaded successfully', 'Success');
+                    }
+                } else {
+                    console.error('❌ API returned error:', data?.message || 'Unknown error');
+                    if (window.UIUtils) {
+                        window.UIUtils.showWarning(data?.message || 'Failed to load complete post data', 'Warning');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('💥 API Error:', error);
+                hideLoadingState();
+                if (window.UIUtils) {
+                    window.UIUtils.showWarning(`API Error: ${error.message}. Using table data only.`, 'Warning');
+                }
+            });
+    }
+
+    function extractEnhancedTableData(row) {
+        if (!row) return {};
+
+        console.log('📋 Extracting enhanced data from row:', row);
+
+        // Get data attributes with fallbacks
+        const dataFromAttributes = {
+            postId: row.getAttribute('data-post-id'),
+            title: row.getAttribute('data-title'),
+            caption: row.getAttribute('data-caption'),
+            postText: row.getAttribute('data-post-text'),
+            imageUrl: row.getAttribute('data-image-url'),
+            thumbnailUrl: row.getAttribute('data-thumbnail-url'),
+            status: row.getAttribute('data-status'),
+            type: row.getAttribute('data-type'),
+            postType: row.getAttribute('data-type'),
+            author: row.getAttribute('data-author'),
+            date: row.getAttribute('data-date'),
+            postedDate: row.getAttribute('data-posted-date')
+        };
+
+        console.log('📊 Enhanced data from attributes:', dataFromAttributes);
+
+        // Extract from cell content as fallback
+        const cells = row.querySelectorAll('td');
+        if (cells.length >= 3) {
+            // Extract from the post column (first column)
+            const postCell = cells[0];
+            const titleElement = postCell.querySelector('.post-title, .fw-semibold');
+            const descriptionElement = postCell.querySelector('.post-description, .text-muted.small');
+
+            // Extract from date column
+            const dateCell = cells[1];
+            const dateText = dateCell.textContent.trim();
+
+            // Extract from status column
+            const statusCell = cells[2];
+            const statusElement = statusCell.querySelector('.badge, .post-status');
+
+            const dataFromCells = {
+                title: titleElement?.textContent?.trim() || dataFromAttributes.title,
+                caption: descriptionElement?.textContent?.trim() || dataFromAttributes.caption,
+                date: dateText || dataFromAttributes.date,
+                status: statusElement?.textContent?.trim() || dataFromAttributes.status
+            };
+
+            console.log('📊 Data from cells:', dataFromCells);
+
+            // Merge data, preferring attributes but falling back to cell content
+            return {
+                ...dataFromCells,
+                ...Object.fromEntries(Object.entries(dataFromAttributes).filter(([_, v]) => v != null))
+            };
+        }
+
+        return dataFromAttributes;
+    }
+
+    function populateFromTableData(data) {
+        console.log('📝 Populating form from enhanced table data:', data);
+
+        try {
+            // Basic text fields with fallbacks
+            safeSetValue('editTitle', data.title);
+            safeSetValue('editCaption', data.caption);
+
+            // Rich text content - handle HTML content properly
+            const content = data.postText || data.content || data.caption || '';
+            setRichTextContent('editPostText', content);
+
+            // Image handling with multiple sources
+            const imageUrl = data.imageUrl || data.thumbnailUrl;
+            if (imageUrl) {
+                safeSetValue('editImageURL', imageUrl);
+                updateImagePreview(imageUrl);
+            }
+
+            // Date fields with proper formatting
+            if (data.postedDate || data.date) {
+                const dateToUse = data.postedDate || data.date;
+                safeSetValue('editPostedDate', formatDateForInput(dateToUse));
+            }
+
+            // Select fields with proper capitalization
+            safeSetSelect('editStatus', capitalizeFirst(data.status) || 'Active');
+            safeSetSelect('editPostType', capitalizeFirst(data.type || data.postType) || 'News');
+
+            console.log('✅ Enhanced table data with rich text populated successfully');
+        } catch (error) {
+            console.error('💥 Error populating from table data:', error);
+        }
+    }
+
+    function populateFromAPIDataEnhanced(data) {
+        console.log('🌐 Populating form from enhanced API data:', data);
+
+        try {
+            // Handle different possible data structures
+            const postData = data.post || data;
+
+            // Basic information with multiple property name fallbacks
+            safeSetValue('editTitle', postData.title || postData.Title);
+            safeSetValue('editCaption', postData.caption || postData.Caption || postData.description || postData.Description);
+
+            // Rich text content - handle HTML content properly
+            const content = postData.content || postData.Content || postData.postText || postData.PostText || '';
+            setRichTextContent('editPostText', content);
+
+            // Image handling with multiple sources
+            const imageUrl = postData.imageURL || postData.ImageURL || postData.imageUrl || postData.thumbnailURL || postData.thumbnailUrl;
+            if (imageUrl) {
+                safeSetValue('editImageURL', imageUrl);
+                updateImagePreview(imageUrl);
+            }
+
+            // Date fields with proper formatting
+            const postedDate = postData.postedDate || postData.PostedDate || postData.createdDate || postData.CreatedDate;
+            if (postedDate) {
+                safeSetValue('editPostedDate', formatDateForInput(postedDate));
+            }
+
+            // Select fields
+            safeSetSelect('editPostType', postData.postType || postData.PostType || 'News');
+            safeSetSelect('editStatus', postData.status || postData.Status || 'Active');
+
+            console.log('✅ Enhanced API data with rich text populated successfully');
+
+            // Update Post Info tab with comprehensive API data
+            updatePostInfoDisplayEnhanced(postData);
+        } catch (error) {
+            console.error('💥 Error populating from API data:', error);
+        }
+    }
+
+    function updatePostInfoDisplayEnhanced(postData) {
+        console.log('📊 Updating enhanced post info display');
+
+        // Avatar and basic info
+        const initials = getPostInitials(postData.title || postData.Title);
+        safeUpdateElement('postInfoInitials', initials);
+        safeUpdateElement('postInfoTitle', postData.title || postData.Title || 'Post');
+        safeUpdateElement('postInfoType', postData.postType || postData.PostType || 'General');
+
+        // Badges
+        safeUpdateElement('postInfoStatus', postData.status || postData.Status || 'Active');
+        safeUpdateElement('postInfoPostType', postData.postType || postData.PostType || 'General');
+
+        // Detailed information
+        safeUpdateElement('postInfoTitleDetail', postData.title || postData.Title || '--');
+        safeUpdateElement('postInfoAuthor', postData.author || postData.profileId || postData.ProfileId || 'System');
+        safeUpdateElement('postInfoCreated', formatDate(postData.postedDate || postData.PostedDate || postData.createdDate));
+
+        // Statistics
+        safeUpdateElement('postInfoViews', postData.views || 0);
+        safeUpdateElement('postInfoLikes', postData.likes || 0);
+        safeUpdateElement('postInfoComments', postData.comments || 0);
+
+        // Analytics tab
+        safeSetValue('totalViews', postData.views || 0);
+        safeSetValue('totalLikes', postData.likes || 0);
+        safeSetValue('totalComments', postData.comments || 0);
+        safeSetValue('totalShares', postData.shares || 0);
+
+        console.log('✅ Enhanced post info display updated');
+    }
+
+    function updatePostInfoDisplayFromTableData(tableData) {
+        console.log('📋 Updating post info display from table data');
+
+        const initials = getPostInitials(tableData.title);
+        safeUpdateElement('postInfoInitials', initials);
+        safeUpdateElement('postInfoTitle', tableData.title || 'Post');
+        safeUpdateElement('postInfoType', tableData.type || tableData.postType || 'General');
+        safeUpdateElement('postInfoStatus', tableData.status || 'Active');
+        safeUpdateElement('postInfoPostType', tableData.type || tableData.postType || 'General');
+        safeUpdateElement('postInfoTitleDetail', tableData.title || '--');
+        safeUpdateElement('postInfoAuthor', tableData.author || 'System');
+        safeUpdateElement('postInfoCreated', formatDate(tableData.date || tableData.postedDate));
+
+        console.log('✅ Post info display updated from table data');
+    }
+
+    // ========== FORM SUBMISSION ==========
+    function handleFormSubmission(formId) {
+        console.log(`📤 Handling form submission for: ${formId}`);
+
+        const form = document.getElementById(formId);
+        if (!form) return false;
+
+        // Get rich text content and ensure it's included in form data
+        const contentFieldId = formId === 'addPostForm' ? 'addPostText' : 'editPostText';
+        const richTextContent = getRichTextContent(contentFieldId);
+
+        // Update the textarea with rich text content for form submission
+        const contentField = document.getElementById(contentFieldId);
+        if (contentField) {
+            contentField.value = richTextContent;
+        }
+
+        console.log(`✅ Rich text content prepared for submission: ${richTextContent.substring(0, 100)}...`);
+
+        // Validate form
+        return validateForm(formId);
+    }
+
+    function validateForm(formId) {
+        const form = document.getElementById(formId);
+        if (!form) return true;
+
+        let isValid = true;
+        const errors = [];
+
+        // Validate title
+        const titleField = form.querySelector('[name="Title"]');
+        if (!titleField?.value?.trim()) {
+            errors.push('Title is required');
+            isValid = false;
+        }
+
+        // Validate caption
+        const captionField = form.querySelector('[name="Caption"]');
+        if (!captionField?.value?.trim()) {
+            errors.push('Caption is required');
+            isValid = false;
+        }
+
+        // Validate rich text content
+        const contentFieldId = formId === 'addPostForm' ? 'addPostText' : 'editPostText';
+        const richTextContent = getRichTextContent(contentFieldId);
+
+        // Strip HTML tags for validation
+        const textContent = richTextContent.replace(/<[^>]*>/g, '').trim();
+        if (!textContent) {
+            errors.push('Content is required');
+            isValid = false;
+        }
+
+        // Validate post type
+        const postTypeField = form.querySelector('[name="PostType"]');
+        if (!postTypeField?.value?.trim()) {
+            errors.push('Post type is required');
+            isValid = false;
+        }
+
+        // Show validation errors
+        if (!isValid && window.UIUtils) {
+            window.UIUtils.showError('Please fix the following errors:\n• ' + errors.join('\n• '), 'Validation Error');
+        }
+
+        return isValid;
+    }
+
+    // ========== UTILITY FUNCTIONS ==========
+    function findPostRowById(postId) {
+        if (!postId) return null;
+
+        console.log('🔍 Looking for row with post ID:', postId);
+
+        // Strategy 1: Direct row attribute search
+        let row = document.querySelector(`tr[data-post-id="${postId}"]`);
+        if (row) {
+            console.log('✅ Found row by data-post-id');
+            return row;
+        }
+
+        // Strategy 2: Button-based search
+        const button = document.querySelector(`button[data-post-id="${postId}"]`);
+        if (button) {
+            row = button.closest('tr');
+            if (row) {
+                console.log('✅ Found row via button');
+                return row;
+            }
+        }
+
+        // Strategy 3: Search within table body
+        const tableBody = document.querySelector('#postsTable tbody');
+        if (tableBody) {
+            const allRows = tableBody.querySelectorAll('tr');
+            for (const tr of allRows) {
+                const editBtn = tr.querySelector(`[data-post-id="${postId}"]`);
+                if (editBtn) {
+                    console.log('✅ Found row via table body search');
+                    return tr;
+                }
+            }
+        }
+
+        console.warn('⚠️ Row not found for post ID:', postId);
+        return null;
+    }
+
+    function setPostIdInForms(postId) {
+        const idFields = ['editPostId', 'deletePostId'];
+        idFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                field.value = postId;
+                console.log(`✅ Set ${fieldId} to:`, postId);
+            }
+        });
+    }
+
+    function updateImagePreview(imageUrl) {
+        const currentImage = document.getElementById('currentImage');
+        const placeholder = document.getElementById('currentImagePlaceholder');
+
+        if (!currentImage || !placeholder) {
+            console.warn('⚠️ Image preview elements not found');
+            return;
+        }
+
+        if (imageUrl?.trim()) {
+            const img = new Image();
+            img.onload = function () {
+                currentImage.src = addCacheBuster(imageUrl);
+                currentImage.style.display = 'block';
+                placeholder.style.display = 'none';
+                console.log('✅ Image preview updated successfully');
+            };
+            img.onerror = function () {
+                console.warn('⚠️ Failed to load image, showing placeholder');
+                currentImage.style.display = 'none';
+                placeholder.style.display = 'flex';
+            };
+            img.src = imageUrl;
+        } else {
+            currentImage.style.display = 'none';
+            placeholder.style.display = 'flex';
+            console.log('✅ Image preview cleared');
+        }
+    }
+
+    function showLoadingState() {
+        const modal = document.getElementById('editPostModal');
+        if (!modal) return;
+
+        let overlay = modal.querySelector('.modal-loading-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.className = 'modal-loading-overlay';
+            overlay.innerHTML = `
+                <div class="text-center">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <div class="text-muted">Loading post data...</div>
+                </div>
+            `;
+            modal.querySelector('.modal-content').appendChild(overlay);
+        }
+
+        const formElements = modal.querySelectorAll('input, select, textarea, button[type="submit"]');
+        formElements.forEach(el => el.disabled = true);
+
+        console.log('⏳ Loading state shown');
+    }
+
+    function hideLoadingState() {
+        const modal = document.getElementById('editPostModal');
+        if (!modal) return;
+
+        const overlay = modal.querySelector('.modal-loading-overlay');
+        if (overlay) {
+            overlay.remove();
+        }
+
+        const formElements = modal.querySelectorAll('input, select, textarea, button[type="submit"]');
+        formElements.forEach(el => el.disabled = false);
+
+        console.log('✅ Loading state hidden');
+    }
+
+    function clearAllForms() {
+        clearPostDetailsForm();
+        clearPostInfoDisplay();
+        clearAnalyticsForm();
+    }
+
+    function clearPostDetailsForm() {
+        const fields = [
+            'editTitle', 'editCaption', 'editImageURL', 'editPostedDate'
+        ];
+
+        fields.forEach(field => safeSetValue(field, ''));
+
+        // Clear rich text content
+        clearRichTextContent('editPostText');
+
+        const selects = ['editPostType', 'editStatus'];
+        selects.forEach(select => {
+            const element = document.getElementById(select);
+            if (element) element.selectedIndex = 0;
+        });
+
+        updateImagePreview('');
+        console.log('🧹 Post details form with rich text cleared');
+    }
+
+    function clearPostInfoDisplay() {
+        const elements = [
+            'postInfoInitials', 'postInfoTitle', 'postInfoType',
+            'postInfoStatus', 'postInfoPostType', 'postInfoTitleDetail',
+            'postInfoAuthor', 'postInfoCreated'
+        ];
+
+        elements.forEach(elementId => safeUpdateElement(elementId, '--'));
+        console.log('🧹 Post info display cleared');
+    }
+
+    function clearAnalyticsForm() {
+        const fields = ['totalViews', 'totalLikes', 'totalComments', 'totalShares'];
+        fields.forEach(field => safeSetValue(field, '0'));
+        console.log('🧹 Analytics form cleared');
+    }
+
+    // ========== INITIALIZATION FUNCTIONS ==========
+    function initializeDataTable() {
+        const tableElement = $('#postsTable');
+        if (tableElement.length > 0) {
+            tableElement.DataTable({
+                responsive: true,
+                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+                dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip',
+                language: {
+                    search: "_INPUT_",
+                    searchPlaceholder: "Search posts...",
+                    lengthMenu: "Show _MENU_ posts per page",
+                    info: "Showing _START_ to _END_ of _TOTAL_ posts",
+                    infoEmpty: "Showing 0 to 0 of 0 posts",
+                    infoFiltered: "(filtered from _MAX_ total posts)"
+                },
+                columnDefs: [
+                    { className: "align-middle", targets: "_all" },
+                    { orderable: false, targets: [-1] }
+                ],
+                order: [[1, 'desc']]
+            });
+            console.log('📊 DataTable initialized');
+        }
+    }
+
+    function initializeModals() {
+        const editPostModal = document.getElementById('editPostModal');
+        if (editPostModal) {
+            editPostModal.addEventListener('show.bs.modal', handleEditModalShow);
+            editPostModal.addEventListener('hidden.bs.modal', handleEditModalHide);
+
+            console.log('📝 Modal event handlers initialized');
+        }
+
+        // Delete button handler
+        const deletePostBtn = document.getElementById('deletePostBtn');
+        if (deletePostBtn) {
+            deletePostBtn.addEventListener('click', handleDeletePost);
+        }
+    }
+
+    function initializeForms() {
+        console.log('📝 Form handlers initialized');
+
+        // Add form submission handlers
+        const addPostForm = document.getElementById('addPostForm');
+        if (addPostForm) {
+            addPostForm.addEventListener('submit', function (e) {
+                if (!handleFormSubmission('addPostForm')) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        }
+
+        const editPostForm = document.getElementById('editPostForm');
+        if (editPostForm) {
+            editPostForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                if (!handleFormSubmission('editPostForm')) {
+                    return false;
+                }
+
+                // Handle AJAX submission for edit form
+                handleEditFormSubmission(this);
+            });
+        }
+    }
+
+    function handleEditFormSubmission(form) {
+        const formData = new FormData(form);
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+
+        if (window.UIUtils) {
+            window.UIUtils.setButtonLoading(submitBtn, true, 'Saving...');
+        }
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (window.UIUtils) {
+                    window.UIUtils.setButtonLoading(submitBtn, false);
+                }
+
+                if (data.success) {
+                    if (window.UIUtils) {
+                        window.UIUtils.showSuccess(data.message, 'Success');
+                    }
+
+                    setTimeout(() => {
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('editPostModal'));
+                        if (modal) modal.hide();
+                        location.reload(); // Refresh to show updated data
+                    }, 1000);
+                } else {
+                    if (window.UIUtils) {
+                        window.UIUtils.showError(data.message || 'Failed to save post', 'Error');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error saving post:', error);
+                if (window.UIUtils) {
+                    window.UIUtils.setButtonLoading(submitBtn, false);
+                    window.UIUtils.showError('Error saving post: ' + error.message, 'Error');
+                }
+            });
+    }
+
+    function initializeFilters() {
+        console.log('🔍 Filters initialized');
+        // Initialize filter functionality here if needed
+    }
+
+    // ========== HELPER FUNCTIONS ==========
+    function safeSetValue(elementId, value) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.value = value || '';
+        }
+    }
+
+    function safeGetValue(elementId) {
+        const element = document.getElementById(elementId);
+        return element ? element.value : '';
+    }
+
+    function safeSetSelect(elementId, value) {
+        const select = document.getElementById(elementId);
+        if (select && value) {
+            for (let i = 0; i < select.options.length; i++) {
+                if (select.options[i].value.toLowerCase() === value.toLowerCase()) {
+                    select.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+    }
+
+    function safeUpdateElement(elementId, value) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.textContent = value || '--';
+        }
+    }
+
+    function capitalizeFirst(str) {
+        if (!str) return str;
+        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    }
+
+    function getPostInitials(title) {
+        if (!title) return 'P';
+        const words = title.split(' ');
+        if (words.length >= 2) {
+            return (words[0][0] + words[1][0]).toUpperCase();
+        }
+        return title[0].toUpperCase();
+    }
+
+    function formatDate(dateString) {
+        if (!dateString) return '--';
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString();
+        } catch (e) {
+            return '--';
+        }
+    }
+
+    function formatDateForInput(dateString) {
+        if (!dateString) return '';
+        try {
+            const date = new Date(dateString);
+            return date.toISOString().split('T')[0];
+        } catch (e) {
+            return '';
+        }
+    }
+
+    function addCacheBuster(url) {
+        if (!url) return url;
+        const separator = url.includes('?') ? '&' : '?';
+        return `${url}${separator}v=${Date.now()}`;
+    }
+
+    // Debug functions for testing
+    window.postDebug = {
+        loadPostDataEnhanced,
+        findPostRowById,
+        populateFromTableData,
+        populateFromAPIDataEnhanced,
+        extractEnhancedTableData,
+        getRichTextContent,
+        setRichTextContent,
+        richTextEditors
+    };
+
+    console.log('🐛 Debug functions available: window.postDebug');
+}); ',
+'insertdatetime', 'media', 'table', 'help', 'wordcount', 'emoticons'
+            ],
+toolbar: 'undo redo | blocks | bold italic forecolor backcolor | ' +
+    'alignleft aligncenter alignright alignjustify | ' +
+    'bullist numlist outdent indent | removeformat | help | ' +
+    'link image media | code preview fullscreen',
+    content_style: `
+                body { 
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+                    font-size: 14px; 
+                    line-height: 1.6;
+                    margin: 1rem;
+                }
+                h1, h2, h3, h4, h5, h6 { margin-top: 1rem; margin-bottom: 0.5rem; }
+                p { margin-bottom: 0.75rem; }
+                ul, ol { margin-bottom: 0.75rem; }
+            `,
+        placeholder: 'Start writing your content here...',
+            skin: 'oxide',
+                content_css: 'default',
+                    branding: false,
+                        promotion: false,
+                            resize: 'vertical',
+                                browser_spellcheck: true,
+                                    contextmenu: 'link image table',
+                                        images_upload_handler: function (blobInfo, success, failure) {
+                                            console.log('📷 Image upload requested:', blobInfo.filename());
+                                            const reader = new FileReader();
+                                            reader.onload = function (e) {
+                                                success(e.target.result);
+                                            };
+                                            reader.readAsDataURL(blobInfo.blob());
+                                        },
+paste_data_images: true,
+    paste_as_text: false,
+        link_assume_external_targets: true,
+            target_list: [
+                { title: 'New window', value: '_blank' },
+                { title: 'Same window', value: '_self' }
+            ]
+        };
+
+// Initialize Add Post Editor
+tinymce.init({
+    ...commonConfig,
+    selector: '#addPostText',
+    setup: function (editor) {
+        editor.on('init', function () {
+            console.log('✅ Add post rich text editor initialized');
+            richTextEditors.add = editor;
+        });
+
+        editor.on('change', function () {
+            validateForm('addPostForm');
+        });
+    }
+}).catch(error => {
+    console.error('❌ Failed to initialize add post rich text editor:', error);
+    fallbackToTextarea('addPostText');
 });
+    }
+
+function initializeEditRichTextEditor() {
+    console.log('📝 Initializing edit post rich text editor...');
+
+    if (richTextEditors.edit) {
+        console.log('✅ Edit rich text editor already initialized');
+        return Promise.resolve(richTextEditors.edit);
+    }
+
+    const commonConfig = {
+        height: 300,
+        menubar: false,
+        plugins: [
+            'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+            'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen
