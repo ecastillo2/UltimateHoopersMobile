@@ -85,6 +85,7 @@
             align-items: center;
             justify-content: center;
             transition: all 0.3s ease;
+            margin-left: 5px;
         }
 
             .media-control-btn:hover {
@@ -101,6 +102,11 @@
             background: #f8f9fa;
             transition: all 0.3s ease;
             cursor: pointer;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
             .media-upload-area:hover {
@@ -115,54 +121,38 @@
                 transform: scale(1.02);
             }
 
-        /* Responsive adjustments */
-        @@media (max-width: 768px) {
-            .media-viewer
-
-        {
-            min-height: 300px;
+        .media-update-progress {
+            width: 100%;
+            height: 4px;
+            background-color: #e9ecef;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 1rem;
+            display: none;
         }
 
-        .media-image,
-        .media-video {
-            max-height: 300px;
+        .media-update-progress-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--bs-orange), #ff8533);
+            border-radius: 2px;
+            transition: width 0.3s ease;
         }
 
-        .media-controls {
-            top: 10px;
-            right: 10px;
+        .media-info-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
 
-        .media-control-btn {
-            width: 35px;
-            height: 35px;
+        .media-actions-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
 
-        .media-upload-area {
-            padding: 30px 20px;
-        }
-
-        }
-
-        /* Card styling improvements */
-        .card {
-            border: none;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .card-header {
-            border-bottom: 1px solid #f0f0f0;
-            background: #fff !important;
-        }
-
-        /* Button styling improvements */
-        .btn-outline-primary:hover,
-        .btn-outline-secondary:hover,
-        .btn-outline-warning:hover {
-            transform: translateY(-1px);
-        }
-    </style>
-    <style>
         /* TinyMCE Custom Styling */
         .tox-tinymce {
             border-radius: 0.375rem !important;
@@ -175,61 +165,6 @@
 
         .tox-editor-header {
             border-bottom: 1px solid #dee2e6 !important;
-        }
-
-        /* Loading state for rich text editor */
-        .rich-text-loading {
-            position: relative;
-            min-height: 200px;
-            background-color: #f8f9fa;
-            border: 1px solid #ced4da;
-            border-radius: 0.375rem;
-        }
-
-            .rich-text-loading::before {
-                content: "Loading rich text editor...";
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                color: #6c757d;
-                font-size: 0.875rem;
-            }
-
-        /* Content preview styling */
-        .post-content-preview {
-            max-height: 150px;
-            overflow-y: auto;
-            border: 1px solid #dee2e6;
-            border-radius: 0.375rem;
-            padding: 0.75rem;
-            background-color: #f8f9fa;
-            font-size: 0.875rem;
-        }
-
-            .post-content-preview h1,
-            .post-content-preview h2,
-            .post-content-preview h3,
-            .post-content-preview h4,
-            .post-content-preview h5,
-            .post-content-preview h6 {
-                margin-top: 0.5rem;
-                margin-bottom: 0.5rem;
-            }
-
-            .post-content-preview p {
-                margin-bottom: 0.5rem;
-            }
-
-            .post-content-preview ul,
-            .post-content-preview ol {
-                margin-bottom: 0.5rem;
-                padding-left: 1.5rem;
-            }
-
-        /* Modal adjustments for rich text editor */
-        .modal-xl .rich-text-editor {
-            min-height: 300px;
         }
 
         .modal-loading-overlay {
@@ -289,139 +224,6 @@
             border-radius: 0.25rem;
         }
 
-        /* NEW: Media Tab Styles */
-        .media-viewer {
-            background: #f8f9fa;
-            border-radius: 15px;
-            min-height: 400px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .media-content {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .media-image {
-            max-width: 100%;
-            max-height: 500px;
-            object-fit: contain;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-        }
-
-            .media-image:hover {
-                transform: scale(1.05);
-            }
-
-        .media-video {
-            max-width: 100%;
-            max-height: 500px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .media-placeholder {
-            text-align: center;
-            color: #6c757d;
-            padding: 60px 20px;
-        }
-
-            .media-placeholder i {
-                font-size: 4rem;
-                margin-bottom: 1rem;
-                opacity: 0.5;
-            }
-
-        .media-controls {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            z-index: 10;
-        }
-
-        .media-control-btn {
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-left: 5px;
-            transition: all 0.3s ease;
-        }
-
-            .media-control-btn:hover {
-                background: rgba(0, 0, 0, 0.9);
-                color: white;
-                transform: scale(1.1);
-            }
-
-        .media-info {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        }
-
-        .media-detail-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
-        }
-
-            .media-detail-row:last-child {
-                border-bottom: none;
-            }
-
-        .media-detail-label {
-            font-weight: 600;
-            color: #6c757d;
-        }
-
-        .media-detail-value {
-            color: #495057;
-        }
-
-        /* Media upload area styling */
-        .media-upload-area {
-            border: 2px dashed #dee2e6;
-            border-radius: 15px;
-            padding: 40px;
-            text-align: center;
-            background: #f8f9fa;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-            .media-upload-area:hover {
-                border-color: var(--primary-color);
-                background: rgba(255, 107, 0, 0.05);
-            }
-
-            .media-upload-area.dragover {
-                border-color: var(--primary-color);
-                background: rgba(255, 107, 0, 0.1);
-                transform: scale(1.02);
-            }
-
-        .media-upload-icon {
-            font-size: 3rem;
-            color: #6c757d;
-            margin-bottom: 1rem;
-        }
-
         /* Responsive adjustments */
         @@media (max-width: 768px) {
             .media-viewer
@@ -430,10 +232,7 @@
             min-height: 300px;
         }
 
-        .media-image {
-            max-height: 300px;
-        }
-
+        .media-image,
         .media-video {
             max-height: 300px;
         }
@@ -448,6 +247,30 @@
             height: 35px;
         }
 
+        .media-upload-area {
+            padding: 30px 20px;
+            min-height: 150px;
+        }
+
+        }
+
+        /* Enhanced upload states */
+        .media-upload-success {
+            border-color: #198754 !important;
+            background: rgba(25, 135, 84, 0.1) !important;
+        }
+
+        .media-upload-error {
+            border-color: #dc3545 !important;
+            background: rgba(220, 53, 69, 0.1) !important;
+        }
+
+        .media-file-info {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            border-left: 4px solid var(--bs-orange);
         }
     </style>
 }
@@ -692,7 +515,7 @@
     </div>
 </div>
 
-<!-- Enhanced Edit Post Modal with Media Tab -->
+<!-- Enhanced Edit Post Modal with Media Update -->
 <div class="modal fade" id="editPostModal" tabindex="-1" aria-labelledby="editPostModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
@@ -706,7 +529,9 @@
                         <button class="nav-link active" id="post-details-tab" data-bs-toggle="tab" data-bs-target="#post-details-tab-pane" type="button" role="tab">Post Details</button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="post-media-tab" data-bs-toggle="tab" data-bs-target="#post-media-tab-pane" type="button" role="tab">Media</button>
+                        <button class="nav-link" id="post-media-tab" data-bs-toggle="tab" data-bs-target="#post-media-tab-pane" type="button" role="tab">
+                            <i class="bi bi-camera me-1"></i>Media
+                        </button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="post-info-tab" data-bs-toggle="tab" data-bs-target="#post-info-tab-pane" type="button" role="tab">Post Info</button>
@@ -721,6 +546,8 @@
                         <form id="editPostForm" method="post" action="@Url.Action("Edit", "Post")" enctype="multipart/form-data" class="mt-4">
                             @Html.AntiForgeryToken()
                             <input type="hidden" id="editPostId" name="PostId" value="" />
+                            <input type="hidden" id="editImageURL" name="ImageURL" value="" />
+                            <input type="hidden" id="editNewMediaUploaded" name="NewMediaUploaded" value="false" />
 
                             <!-- Basic Post Information -->
                             <div class="row mb-3">
@@ -761,50 +588,65 @@
                                 </div>
                             </div>
 
+                            <!-- Basic Media Upload (for backwards compatibility) -->
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label class="form-label">Quick Media Upload</label>
+                                    <input type="file" class="form-control" id="editImageFile" name="ImageFile" accept="image/*,video/*">
+                                    <div class="form-text">Use the Media tab for advanced media management, or quickly replace media here.</div>
+                                </div>
+                            </div>
+
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                                 <button type="button" class="btn btn-danger me-auto" id="deletePostBtn">Delete Post</button>
-                                <button type="submit" class="btn btn-orange">Save Changes</button>
+                                <button type="submit" class="btn btn-orange">
+                                    <span class="save-btn-text">Save Changes</span>
+                                    <span class="save-btn-spinner spinner-border spinner-border-sm ms-2" style="display: none;"></span>
+                                </button>
                             </div>
                         </form>
                     </div>
 
-                    <!-- NEW: Media Tab -->
+                    <!-- Enhanced Media Tab -->
                     <div class="tab-pane fade" id="post-media-tab-pane" role="tabpanel">
                         <div class="mt-4">
                             <div class="row">
                                 <div class="col-lg-8">
                                     <!-- Enhanced Media Viewer -->
-                                    <div class="media-viewer position-relative">
-                                        <div class="media-controls position-absolute" style="top: 15px; right: 15px; z-index: 10;">
-                                            <button type="button" class="btn media-control-btn me-1" id="downloadMediaBtn" title="Download">
+                                    <div class="media-viewer">
+                                        <div class="media-controls">
+                                            <button type="button" class="btn media-control-btn" id="downloadMediaBtn" title="Download Media">
                                                 <i class="bi bi-download"></i>
                                             </button>
-                                            <button type="button" class="btn media-control-btn me-1" id="fullscreenMediaBtn" title="Fullscreen">
+                                            <button type="button" class="btn media-control-btn" id="fullscreenMediaBtn" title="View Fullscreen">
                                                 <i class="bi bi-arrows-fullscreen"></i>
                                             </button>
-                                            <button type="button" class="btn media-control-btn me-1" id="replaceMediaBtn" title="Replace Media">
+                                            <button type="button" class="btn media-control-btn" id="replaceMediaBtn" title="Replace Media">
                                                 <i class="bi bi-arrow-repeat"></i>
                                             </button>
                                         </div>
 
-                                        <div class="media-content d-flex align-items-center justify-content-center" id="mediaContent" style="min-height: 400px; background: #f8f9fa; border-radius: 15px;">
+                                        <div class="media-content" id="mediaContent">
                                             <!-- Media content will be loaded here -->
-                                            <div class="media-placeholder text-center" id="mediaPlaceholder">
-                                                <i class="bi bi-image text-muted" style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-                                                <h5 class="text-muted">No Media Attached</h5>
-                                                <p class="text-muted mb-3">Upload an image or video to see it here</p>
+                                            <div class="media-placeholder" id="mediaPlaceholder">
+                                                <i class="bi bi-image text-muted"></i>
+                                                <h5 class="mt-3">No Media Attached</h5>
+                                                <p class="mb-3">Upload an image or video to enhance your post</p>
                                                 <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('mediaFileInput').click()">
                                                     <i class="bi bi-cloud-upload me-2"></i>Choose File
                                                 </button>
                                             </div>
                                         </div>
+
+                                        <!-- Upload Progress -->
+                                        <div class="media-update-progress" id="mediaUpdateProgress">
+                                            <div class="media-update-progress-bar" id="mediaUpdateProgressBar"></div>
+                                        </div>
                                     </div>
 
                                     <!-- Enhanced Media Upload Area -->
-                                    <div class="media-upload-area mt-3 p-4 text-center border-2 border-dashed rounded"
-                                         id="mediaUploadArea"
-                                         style="display: none; border-color: #dee2e6; background: #f8f9fa; cursor: pointer; transition: all 0.3s ease;">
+                                    <div class="media-upload-area mt-3" id="mediaUploadArea" style="display: none;">
                                         <i class="bi bi-cloud-upload text-muted mb-3" style="font-size: 3rem;"></i>
                                         <h5 class="text-muted">Upload New Media</h5>
                                         <p class="text-muted mb-3">Drag and drop your file here, or click to browse</p>
@@ -812,90 +654,101 @@
                                         <button type="button" class="btn btn-orange" onclick="document.getElementById('mediaFileInput').click()">
                                             <i class="bi bi-plus-circle me-2"></i>Choose File
                                         </button>
-                                        <div class="mt-2">
+                                        <div class="mt-3">
                                             <small class="text-muted">Supported: JPG, PNG, GIF, MP4, WebM. Max size: 10MB</small>
+                                        </div>
+                                    </div>
+
+                                    <!-- Media File Info -->
+                                    <div class="media-file-info" id="mediaFileInfo" style="display: none;">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-file-earmark-check text-success me-3" style="font-size: 1.5rem;"></i>
+                                            <div class="flex-grow-1">
+                                                <div class="fw-semibold" id="mediaFileName">New file ready</div>
+                                                <div class="text-muted small" id="mediaFileSize">File size</div>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" id="cancelMediaUpload">
+                                                <i class="bi bi-x"></i>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div class="col-lg-4">
-                                    <!-- Enhanced Media Information -->
-                                    <div class="card shadow-sm">
-                                        <div class="card-header bg-white">
-                                            <h6 class="mb-0">
-                                                <i class="bi bi-info-circle me-2"></i>Media Information
-                                            </h6>
+                                    <!-- Media Information Card -->
+                                    <div class="media-info-card mb-3">
+                                        <h6 class="mb-3">
+                                            <i class="bi bi-info-circle me-2"></i>Media Information
+                                        </h6>
+
+                                        <div class="row mb-2">
+                                            <div class="col-4">
+                                                <small class="text-muted fw-bold">Type:</small>
+                                            </div>
+                                            <div class="col-8">
+                                                <span id="mediaType" class="text-dark">--</span>
+                                            </div>
                                         </div>
-                                        <div class="card-body">
-                                            <div class="row mb-3">
-                                                <div class="col-4">
-                                                    <small class="text-muted fw-bold">Type:</small>
-                                                </div>
-                                                <div class="col-8">
-                                                    <span id="mediaType" class="text-dark">--</span>
+
+                                        <div class="row mb-2">
+                                            <div class="col-4">
+                                                <small class="text-muted fw-bold">Size:</small>
+                                            </div>
+                                            <div class="col-8">
+                                                <span id="mediaSize" class="text-dark">--</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="row mb-2">
+                                            <div class="col-4">
+                                                <small class="text-muted fw-bold">Dimensions:</small>
+                                            </div>
+                                            <div class="col-8">
+                                                <span id="mediaDimensions" class="text-dark">--</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="row mb-3">
+                                            <div class="col-12">
+                                                <small class="text-muted fw-bold">URL:</small>
+                                                <div class="mt-1">
+                                                    <small id="mediaUrl" class="text-break text-muted" style="word-break: break-all;">--</small>
                                                 </div>
                                             </div>
+                                        </div>
 
-                                            <div class="row mb-3">
-                                                <div class="col-4">
-                                                    <small class="text-muted fw-bold">Size:</small>
-                                                </div>
-                                                <div class="col-8">
-                                                    <span id="mediaSize" class="text-dark">--</span>
-                                                </div>
-                                            </div>
-
-                                            <div class="row mb-3">
-                                                <div class="col-4">
-                                                    <small class="text-muted fw-bold">Dimensions:</small>
-                                                </div>
-                                                <div class="col-8">
-                                                    <span id="mediaDimensions" class="text-dark">--</span>
-                                                </div>
-                                            </div>
-
-                                            <div class="row mb-3">
-                                                <div class="col-12">
-                                                    <small class="text-muted fw-bold">URL:</small>
-                                                    <div class="mt-1">
-                                                        <small id="mediaUrl" class="text-break text-muted" style="word-break: break-all;">--</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="row">
-                                                <div class="col-12">
-                                                    <label for="mediaAltText" class="form-label small text-muted fw-bold">Alt Text:</label>
-                                                    <input type="text" class="form-control form-control-sm" id="mediaAltText" placeholder="Describe this media for accessibility">
-                                                </div>
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <label for="mediaAltText" class="form-label small text-muted fw-bold">Alt Text:</label>
+                                                <input type="text" class="form-control form-control-sm" id="mediaAltText" placeholder="Describe this media for accessibility">
                                             </div>
                                         </div>
                                     </div>
 
-                                    <!-- Enhanced Media Actions -->
-                                    <div class="card shadow-sm mt-3">
-                                        <div class="card-header bg-white">
-                                            <h6 class="mb-0">
-                                                <i class="bi bi-tools me-2"></i>Media Actions
-                                            </h6>
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="d-grid gap-2">
-                                                <button type="button" class="btn btn-outline-primary" id="editImageBtn">
-                                                    <i class="bi bi-image me-2"></i>Edit Image
-                                                </button>
-                                                <button type="button" class="btn btn-outline-secondary" id="generateThumbnailBtn">
-                                                    <i class="bi bi-crop me-2"></i>Generate Thumbnail
-                                                </button>
-                                                <button type="button" class="btn btn-outline-warning" id="removeMediaBtn">
-                                                    <i class="bi bi-trash me-2"></i>Remove Media
-                                                </button>
-                                            </div>
+                                    <!-- Media Actions Card -->
+                                    <div class="media-actions-card mb-3">
+                                        <h6 class="mb-3">
+                                            <i class="bi bi-tools me-2"></i>Media Actions
+                                        </h6>
+                                        <div class="d-grid gap-2">
+                                            <button type="button" class="btn btn-outline-primary btn-sm" id="editImageBtn">
+                                                <i class="bi bi-image me-2"></i>Edit Image
+                                            </button>
+                                            <button type="button" class="btn btn-outline-secondary btn-sm" id="generateThumbnailBtn">
+                                                <i class="bi bi-crop me-2"></i>Generate Thumbnail
+                                            </button>
+                                            <button type="button" class="btn btn-outline-warning btn-sm" id="removeMediaBtn">
+                                                <i class="bi bi-trash me-2"></i>Remove Media
+                                            </button>
+                                            <hr>
+                                            <button type="button" class="btn btn-success btn-sm" id="applyMediaChangesBtn" style="display: none;">
+                                                <i class="bi bi-check-circle me-2"></i>Apply Changes
+                                            </button>
                                         </div>
                                     </div>
 
-                                    <!-- Media Statistics -->
-                                    <div class="card shadow-sm mt-3">
+                                    <!-- Media Performance -->
+                                    <div class="card">
                                         <div class="card-header bg-white">
                                             <h6 class="mb-0">
                                                 <i class="bi bi-bar-chart me-2"></i>Media Performance
@@ -1069,7 +922,557 @@
     <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.bootstrap5.min.js"></script>
     <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
 
-    <!-- Enhanced Post Management Script with Media Tab -->
+    <!-- Enhanced Post Management Script with Media Update -->
     <script type="text/javascript" src="~/js/postManagement.js"></script>
     <script type="text/javascript" src="~/js/postMediaHandler.js"></script>
+
+    <!-- Enhanced Media Update JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('🎬 Initializing Enhanced Media Update Functionality');
+
+            let pendingMediaFile = null;
+            let currentMediaUrl = null;
+
+            // Initialize media upload handlers
+            initializeMediaUploadHandlers();
+            initializeMediaActions();
+            initializeFormIntegration();
+
+            function initializeMediaUploadHandlers() {
+                const mediaFileInput = document.getElementById('mediaFileInput');
+                const mediaUploadArea = document.getElementById('mediaUploadArea');
+                const editImageFile = document.getElementById('editImageFile');
+
+                // Media file input change
+                if (mediaFileInput) {
+                    mediaFileInput.addEventListener('change', handleMediaFileSelect);
+                }
+
+                // Quick upload in details tab
+                if (editImageFile) {
+                    editImageFile.addEventListener('change', handleQuickMediaUpload);
+                }
+
+                // Drag and drop on upload area
+                if (mediaUploadArea) {
+                    mediaUploadArea.addEventListener('dragover', handleDragOver);
+                    mediaUploadArea.addEventListener('dragleave', handleDragLeave);
+                    mediaUploadArea.addEventListener('drop', handleDrop);
+                    mediaUploadArea.addEventListener('click', () => mediaFileInput?.click());
+                }
+
+                console.log('✅ Media upload handlers initialized');
+            }
+
+            function initializeMediaActions() {
+                // Replace media button
+                const replaceBtn = document.getElementById('replaceMediaBtn');
+                if (replaceBtn) {
+                    replaceBtn.addEventListener('click', showMediaUploadArea);
+                }
+
+                // Remove media button
+                const removeBtn = document.getElementById('removeMediaBtn');
+                if (removeBtn) {
+                    removeBtn.addEventListener('click', removeCurrentMedia);
+                }
+
+                // Apply changes button
+                const applyBtn = document.getElementById('applyMediaChangesBtn');
+                if (applyBtn) {
+                    applyBtn.addEventListener('click', applyMediaChanges);
+                }
+
+                // Cancel upload button
+                const cancelBtn = document.getElementById('cancelMediaUpload');
+                if (cancelBtn) {
+                    cancelBtn.addEventListener('click', cancelPendingUpload);
+                }
+
+                // Download button
+                const downloadBtn = document.getElementById('downloadMediaBtn');
+                if (downloadBtn) {
+                    downloadBtn.addEventListener('click', downloadCurrentMedia);
+                }
+
+                console.log('✅ Media action handlers initialized');
+            }
+
+            function initializeFormIntegration() {
+                const editPostForm = document.getElementById('editPostForm');
+                if (editPostForm) {
+                    editPostForm.addEventListener('submit', handleFormSubmissionWithMedia);
+                }
+
+                console.log('✅ Form integration initialized');
+            }
+
+            // Event Handlers
+            function handleMediaFileSelect(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    handleNewMediaFile(file);
+                }
+            }
+
+            function handleQuickMediaUpload(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    // Switch to media tab and handle upload
+                    const mediaTab = document.getElementById('post-media-tab');
+                    if (mediaTab) {
+                        mediaTab.click();
+                        setTimeout(() => handleNewMediaFile(file), 100);
+                    }
+                }
+            }
+
+            function handleDragOver(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.currentTarget.classList.add('dragover');
+            }
+
+            function handleDragLeave(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.currentTarget.classList.remove('dragover');
+            }
+
+            function handleDrop(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.currentTarget.classList.remove('dragover');
+
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleNewMediaFile(files[0]);
+                }
+            }
+
+            function handleNewMediaFile(file) {
+                console.log('📁 Processing new media file:', file.name);
+
+                // Validate file
+                if (!validateMediaFile(file)) {
+                    return;
+                }
+
+                // Store pending file
+                pendingMediaFile = file;
+
+                // Show preview
+                createMediaPreview(file);
+
+                // Update UI
+                showMediaFileInfo(file);
+                hideMediaUploadArea();
+                showApplyChangesButton();
+
+                // Update form fields
+                updateHiddenFields(file);
+
+                console.log('✅ Media file processed successfully');
+            }
+
+            function validateMediaFile(file) {
+                const maxSize = 10 * 1024 * 1024; // 10MB
+                const allowedTypes = [
+                    'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp',
+                    'video/mp4', 'video/webm', 'video/ogg', 'video/avi', 'video/mov'
+                ];
+
+                if (file.size > maxSize) {
+                    showMediaError('File size must be less than 10MB');
+                    return false;
+                }
+
+                if (!allowedTypes.includes(file.type)) {
+                    showMediaError('File type not supported. Please use JPG, PNG, GIF, MP4, WebM, or other supported formats.');
+                    return false;
+                }
+
+                return true;
+            }
+
+            function createMediaPreview(file) {
+                const mediaContent = document.getElementById('mediaContent');
+                if (!mediaContent) return;
+
+                const fileURL = URL.createObjectURL(file);
+
+                // Clear existing content
+                mediaContent.innerHTML = '';
+
+                if (file.type.startsWith('image/')) {
+                    const img = document.createElement('img');
+                    img.src = fileURL;
+                    img.alt = file.name;
+                    img.className = 'media-image';
+                    img.style.cursor = 'pointer';
+
+                    img.onload = function() {
+                        updateMediaInfo(file, this.naturalWidth, this.naturalHeight);
+                    };
+
+                    img.onclick = function() {
+                        showFullscreenMedia(fileURL);
+                    };
+
+                    mediaContent.appendChild(img);
+                } else if (file.type.startsWith('video/')) {
+                    const video = document.createElement('video');
+                    video.src = fileURL;
+                    video.className = 'media-video';
+                    video.controls = true;
+                    video.preload = 'metadata';
+
+                    video.onloadedmetadata = function() {
+                        updateMediaInfo(file, this.videoWidth, this.videoHeight);
+                    };
+
+                    mediaContent.appendChild(video);
+                }
+
+                console.log('🖼️ Media preview created');
+            }
+
+            function updateMediaInfo(file, width = null, height = null) {
+                // Update type
+                const typeElement = document.getElementById('mediaType');
+                if (typeElement) {
+                    const type = file.type.startsWith('image/') ? 'Image' : 'Video';
+                    typeElement.textContent = `${type} (${file.type})`;
+                }
+
+                // Update size
+                const sizeElement = document.getElementById('mediaSize');
+                if (sizeElement) {
+                    sizeElement.textContent = formatFileSize(file.size);
+                }
+
+                // Update dimensions
+                if (width && height) {
+                    const dimensionsElement = document.getElementById('mediaDimensions');
+                    if (dimensionsElement) {
+                        dimensionsElement.textContent = `${width} × ${height}`;
+                    }
+                }
+
+                // Update URL
+                const urlElement = document.getElementById('mediaUrl');
+                if (urlElement) {
+                    urlElement.textContent = 'New upload (pending save)';
+                }
+
+                // Set alt text
+                const altTextInput = document.getElementById('mediaAltText');
+                if (altTextInput) {
+                    const altText = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, ' ');
+                    altTextInput.value = altText;
+                }
+            }
+
+            function showMediaFileInfo(file) {
+                const fileInfo = document.getElementById('mediaFileInfo');
+                const fileName = document.getElementById('mediaFileName');
+                const fileSize = document.getElementById('mediaFileSize');
+
+                if (fileInfo && fileName && fileSize) {
+                    fileName.textContent = file.name;
+                    fileSize.textContent = formatFileSize(file.size);
+                    fileInfo.style.display = 'block';
+                }
+            }
+
+            function updateHiddenFields(file) {
+                const newMediaInput = document.getElementById('editNewMediaUploaded');
+                if (newMediaInput) {
+                    newMediaInput.value = 'true';
+                }
+
+                // Clear existing image URL since we have a new file
+                const imageUrlInput = document.getElementById('editImageURL');
+                if (imageUrlInput) {
+                    imageUrlInput.value = '';
+                }
+            }
+
+            function showMediaUploadArea() {
+                const uploadArea = document.getElementById('mediaUploadArea');
+                if (uploadArea) {
+                    uploadArea.style.display = 'flex';
+                }
+            }
+
+            function hideMediaUploadArea() {
+                const uploadArea = document.getElementById('mediaUploadArea');
+                if (uploadArea) {
+                    uploadArea.style.display = 'none';
+                }
+            }
+
+            function showApplyChangesButton() {
+                const applyBtn = document.getElementById('applyMediaChangesBtn');
+                if (applyBtn) {
+                    applyBtn.style.display = 'block';
+                }
+            }
+
+            function hideApplyChangesButton() {
+                const applyBtn = document.getElementById('applyMediaChangesBtn');
+                if (applyBtn) {
+                    applyBtn.style.display = 'none';
+                }
+            }
+
+            function removeCurrentMedia() {
+                if (confirm('Are you sure you want to remove the current media? This action cannot be undone.')) {
+                    // Clear media display
+                    showNoMediaPlaceholder();
+
+                    // Clear form fields
+                    clearMediaFormFields();
+
+                    // Clear pending file
+                    pendingMediaFile = null;
+                    currentMediaUrl = null;
+
+                    // Show upload area
+                    showMediaUploadArea();
+                    hideApplyChangesButton();
+
+                    // Hide file info
+                    const fileInfo = document.getElementById('mediaFileInfo');
+                    if (fileInfo) {
+                        fileInfo.style.display = 'none';
+                    }
+
+                    showMediaSuccess('Media removed successfully');
+                }
+            }
+
+            function applyMediaChanges() {
+                if (pendingMediaFile) {
+                    // In a real implementation, you might upload the file here
+                    // For now, we'll prepare it for form submission
+
+                    showMediaSuccess('Media changes will be applied when you save the post');
+                    hideApplyChangesButton();
+
+                    // Update the quick upload field for form submission
+                    const editImageFile = document.getElementById('editImageFile');
+                    if (editImageFile) {
+                        // Create a new FileList with our pending file
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(pendingMediaFile);
+                        editImageFile.files = dataTransfer.files;
+                    }
+                }
+            }
+
+            function cancelPendingUpload() {
+                pendingMediaFile = null;
+
+                const fileInfo = document.getElementById('mediaFileInfo');
+                if (fileInfo) {
+                    fileInfo.style.display = 'none';
+                }
+
+                // Restore previous media or show placeholder
+                if (currentMediaUrl) {
+                    loadExistingMedia(currentMediaUrl);
+                } else {
+                    showNoMediaPlaceholder();
+                    showMediaUploadArea();
+                }
+
+                hideApplyChangesButton();
+                clearMediaFormFields();
+            }
+
+            function downloadCurrentMedia() {
+                const mediaElement = document.querySelector('.media-image, .media-video');
+                if (mediaElement && mediaElement.src) {
+                    const link = document.createElement('a');
+                    link.href = mediaElement.src;
+                    link.download = 'post-media';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                    showMediaSuccess('Download started');
+                }
+            }
+
+            function loadExistingMedia(mediaUrl) {
+                currentMediaUrl = mediaUrl;
+                const mediaContent = document.getElementById('mediaContent');
+
+                if (!mediaContent || !mediaUrl) {
+                    showNoMediaPlaceholder();
+                    return;
+                }
+
+                // Determine media type
+                const isVideo = /\.(mp4|webm|ogg|avi|mov)$/i.test(mediaUrl);
+
+                mediaContent.innerHTML = '';
+
+                if (isVideo) {
+                    const video = document.createElement('video');
+                    video.src = mediaUrl;
+                    video.className = 'media-video';
+                    video.controls = true;
+                    video.preload = 'metadata';
+                    mediaContent.appendChild(video);
+                } else {
+                    const img = document.createElement('img');
+                    img.src = mediaUrl;
+                    img.alt = 'Post Media';
+                    img.className = 'media-image';
+                    img.style.cursor = 'pointer';
+                    img.onclick = () => showFullscreenMedia(mediaUrl);
+                    mediaContent.appendChild(img);
+                }
+
+                updateExistingMediaInfo(mediaUrl);
+                hideMediaUploadArea();
+            }
+
+            function updateExistingMediaInfo(mediaUrl) {
+                const typeElement = document.getElementById('mediaType');
+                const urlElement = document.getElementById('mediaUrl');
+
+                if (typeElement) {
+                    const isVideo = /\.(mp4|webm|ogg|avi|mov)$/i.test(mediaUrl);
+                    typeElement.textContent = isVideo ? 'Video' : 'Image';
+                }
+
+                if (urlElement) {
+                    const shortUrl = mediaUrl.length > 50 ? mediaUrl.substring(0, 47) + '...' : mediaUrl;
+                    urlElement.textContent = shortUrl;
+                    urlElement.title = mediaUrl;
+                }
+            }
+
+            function showNoMediaPlaceholder() {
+                const mediaContent = document.getElementById('mediaContent');
+                if (mediaContent) {
+                    mediaContent.innerHTML = `
+                        <div class="media-placeholder" id="mediaPlaceholder">
+                            <i class="bi bi-image text-muted"></i>
+                            <h5 class="mt-3">No Media Attached</h5>
+                            <p class="mb-3">Upload an image or video to enhance your post</p>
+                            <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('mediaFileInput').click()">
+                                <i class="bi bi-cloud-upload me-2"></i>Choose File
+                            </button>
+                        </div>
+                    `;
+                }
+
+                clearMediaInfo();
+            }
+
+            function clearMediaInfo() {
+                const elements = ['mediaType', 'mediaSize', 'mediaDimensions', 'mediaUrl'];
+                elements.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.textContent = '--';
+                    }
+                });
+
+                const altTextInput = document.getElementById('mediaAltText');
+                if (altTextInput) {
+                    altTextInput.value = '';
+                }
+            }
+
+            function clearMediaFormFields() {
+                const inputs = ['editImageURL', 'editNewMediaUploaded', 'editImageFile'];
+                inputs.forEach(id => {
+                    const input = document.getElementById(id);
+                    if (input) {
+                        if (input.type === 'file') {
+                            input.value = '';
+                        } else {
+                            input.value = input.type === 'checkbox' ? 'false' : '';
+                        }
+                    }
+                });
+            }
+
+            function handleFormSubmissionWithMedia(event) {
+                const saveBtn = event.target.querySelector('button[type="submit"]');
+                const saveBtnText = saveBtn?.querySelector('.save-btn-text');
+                const saveBtnSpinner = saveBtn?.querySelector('.save-btn-spinner');
+
+                if (saveBtn && saveBtnText && saveBtnSpinner) {
+                    saveBtn.disabled = true;
+                    saveBtnText.textContent = 'Saving...';
+                    saveBtnSpinner.style.display = 'inline-block';
+                }
+
+                // The form will handle the actual submission
+                // Media file will be included via the editImageFile input
+            }
+
+            function showFullscreenMedia(mediaUrl) {
+                const lightbox = document.createElement('div');
+                lightbox.style.cssText = `
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                    background: rgba(0, 0, 0, 0.9); z-index: 9999;
+                    display: flex; align-items: center; justify-content: center;
+                    cursor: pointer;
+                `;
+
+                const media = document.createElement('img');
+                media.src = mediaUrl;
+                media.style.cssText = 'max-width: 90%; max-height: 90%; object-fit: contain;';
+
+                lightbox.appendChild(media);
+                document.body.appendChild(lightbox);
+
+                lightbox.addEventListener('click', () => document.body.removeChild(lightbox));
+            }
+
+            // Utility Functions
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            function showMediaSuccess(message) {
+                if (window.UIUtils) {
+                    window.UIUtils.showSuccess(message);
+                } else {
+                    console.log('Success:', message);
+                }
+            }
+
+            function showMediaError(message) {
+                if (window.UIUtils) {
+                    window.UIUtils.showError(message);
+                } else {
+                    console.error('Error:', message);
+                }
+            }
+
+            // Export for external access
+            window.MediaUpdateHandler = {
+                loadExistingMedia,
+                showNoMediaPlaceholder,
+                handleNewMediaFile,
+                removeCurrentMedia,
+                applyMediaChanges
+            };
+
+            console.log('✅ Enhanced Media Update Functionality initialized');
+        });
+    </script>
 }
