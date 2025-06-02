@@ -338,6 +338,7 @@
             </div>
             <form id="addPostForm" method="post" action="@Url.Action("Create", "Post")" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
+                <!-- Updated Add Post Modal Body -->
                 <div class="modal-body">
                     <div class="row mb-3">
                         <div class="col-md-12">
@@ -346,17 +347,12 @@
                         </div>
                     </div>
 
+                    <!-- Rich Text Caption Field (Replaces both Caption and Content) -->
                     <div class="row mb-3">
                         <div class="col-md-12">
-                            <label for="addCaption" class="form-label">Caption <span class="text-danger">*</span></label>
-                            <textarea class="form-control" id="addCaption" name="Caption" rows="3" placeholder="Brief description or summary" required></textarea>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-12">
-                            <label for="addPostText" class="form-label">Content <span class="text-danger">*</span></label>
-                            <textarea class="form-control rich-text-editor" id="addPostText" name="PostText" rows="8" required></textarea>
+                            <label for="addCaption" class="form-label">Content <span class="text-danger">*</span></label>
+                            <textarea class="form-control rich-text-editor" id="addCaption" name="Caption" rows="8" required></textarea>
+                            <div class="form-text">This will be used as both the caption and main content for the post.</div>
                         </div>
                     </div>
 
@@ -420,6 +416,7 @@
                 </ul>
                 <div class="tab-content" id="editPostTabContent">
                     <!-- Post Details Tab -->
+                    <!-- Updated Post Details Tab - Remove Content, Add Rich Text to Caption -->
                     <div class="tab-pane fade show active" id="post-details-tab-pane" role="tabpanel">
                         <form id="editPostForm" method="post" action="@Url.Action("Edit", "Post")" enctype="multipart/form-data" class="mt-4">
                             @Html.AntiForgeryToken()
@@ -466,20 +463,16 @@
                                 </div>
                             </div>
 
+                            <!-- Rich Text Caption Field (Replaces both Caption and Content) -->
                             <div class="row mb-3">
                                 <div class="col-md-12">
-                                    <label for="editCaption" class="form-label">Caption <span class="text-danger">*</span></label>
-                                    <textarea class="form-control" id="editCaption" name="Caption" rows="3" required></textarea>
+                                    <label for="editCaption" class="form-label">Content <span class="text-danger">*</span></label>
+                                    <textarea class="form-control rich-text-editor" id="editCaption" name="Caption" rows="8" required></textarea>
+                                    <div class="form-text">This will be used as both the caption and main content for the post.</div>
                                 </div>
                             </div>
 
-                            <div class="row mb-3">
-                                <div class="col-md-12">
-                                    <label for="editPostText" class="form-label">Content <span class="text-danger">*</span></label>
-                                    <textarea class="form-control rich-text-editor" id="editPostText" name="PostText" rows="8" required></textarea>
-                                </div>
-                            </div>
-
+                            <!-- Post Type and Status -->
                             <div class="row mb-3">
                                 <div class="col-md-4">
                                     <label for="editPostType" class="form-label">Post Type <span class="text-danger">*</span></label>

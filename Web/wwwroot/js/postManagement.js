@@ -1,6 +1,6 @@
 ﻿/**
- * Enhanced Post Management JavaScript with TinyMCE Rich Text Editor
- * Complete implementation with proper initialization, data handling, and cleanup
+ * Enhanced Post Management JavaScript with Fixed Post Details Population
+ * Fixes: Remove content textbox and ensure proper rich text editor population
  */
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -74,19 +74,46 @@ document.addEventListener('DOMContentLoaded', function () {
             ]
         };
 
+        // Initialize edit post editor (more critical since it's used when modal opens)
+        return initializeEditRichTextEditor(commonConfig);
+    }
+
+    function initializeEditRichTextEditor(config) {
+        console.log('📝 Initializing edit post rich text editor...');
+
         return tinymce.init({
-            ...commonConfig,
+            ...config,
             selector: '#editPostText',
             setup: function (editor) {
                 editor.on('init', function () {
                     console.log('✅ Edit post rich text editor initialized');
                     richTextEditors.edit = editor;
+
+                    // Trigger content refresh if modal is already open
+                    const modal = document.getElementById('editPostModal');
+                    if (modal && modal.classList.contains('show')) {
+                        console.log('📝 Modal already open, refreshing content');
+                        const currentContent = editor.getContent();
+                        if (!currentContent || currentContent.trim() === '') {
+                            // Try to get content from data attributes or API again
+                            const postId = safeGetValue('editPostId');
+                            if (postId) {
+                                refreshPostContent(postId);
+                            }
+                        }
+                    }
                 });
 
                 editor.on('change', function () {
                     validateForm('editPostForm');
                 });
             }
+        }).then(function (editors) {
+            if (editors && editors.length > 0) {
+                richTextEditors.edit = editors[0];
+                console.log('✅ Edit rich text editor setup complete');
+            }
+            return editors;
         }).catch(error => {
             console.error('❌ Failed to initialize edit post rich text editor:', error);
             fallbackToTextarea('editPostText');
@@ -111,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const editorKey = editorId === 'addPostText' ? 'add' : 'edit';
         const editor = richTextEditors[editorKey];
 
-        if (editor) {
+        if (editor && editor.getContent) {
             const content = editor.getContent();
             console.log(`📖 Got rich text content from ${editorId}:`, content.substring(0, 100) + '...');
             return content;
@@ -129,10 +156,20 @@ document.addEventListener('DOMContentLoaded', function () {
         const editorKey = editorId === 'addPostText' ? 'add' : 'edit';
         const editor = richTextEditors[editorKey];
 
-        if (editor) {
-            editor.setContent(content || '');
-            console.log(`✅ Rich text content set for ${editorId}`);
+        if (editor && editor.setContent) {
+            try {
+                editor.setContent(content || '');
+                console.log(`✅ Rich text content set for ${editorId}`);
+            } catch (error) {
+                console.error(`❌ Error setting rich text content for ${editorId}:`, error);
+                // Fallback to textarea
+                const textarea = document.getElementById(editorId);
+                if (textarea) {
+                    textarea.value = content || '';
+                }
+            }
         } else {
+            console.warn(`⚠️ Rich text editor not available for ${editorId}, using textarea fallback`);
             const textarea = document.getElementById(editorId);
             if (textarea) {
                 textarea.value = content || '';
@@ -170,28 +207,16 @@ document.addEventListener('DOMContentLoaded', function () {
         // Show loading state
         showLoadingState();
 
-        // Initialize edit rich text editor if not already done
-        initializeEditRichTextEditor().then(() => {
-            // Load post data with enhanced functionality
+        // Small delay to ensure rich text editor is ready
+        setTimeout(() => {
             loadPostDataEnhanced(postId);
-        });
+        }, 100);
     }
 
     function handleEditModalHide() {
         console.log('🚪 Closing edit modal');
         clearAllForms();
         hideLoadingState();
-
-        // Clean up edit rich text editor to prevent memory leaks
-        if (richTextEditors.edit) {
-            try {
-                tinymce.get('editPostText')?.remove();
-                richTextEditors.edit = null;
-                console.log('🧹 Edit rich text editor cleaned up');
-            } catch (error) {
-                console.warn('⚠️ Error cleaning up edit rich text editor:', error);
-            }
-        }
     }
 
     function handleDeletePost() {
@@ -246,6 +271,13 @@ document.addEventListener('DOMContentLoaded', function () {
             if (window.UIUtils) {
                 window.UIUtils.showWarning('API not configured. Only table data available.', 'Warning');
             }
+        }
+    }
+
+    function refreshPostContent(postId) {
+        console.log('🔄 Refreshing post content for ID:', postId);
+        if (window.appUrls?.getPostData) {
+            callGetPostDataAPIEnhanced(postId);
         }
     }
 
@@ -364,7 +396,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Rich text content - handle HTML content properly
             const content = data.postText || data.content || data.caption || '';
-            setRichTextContent('editPostText', content);
+            console.log('📝 Setting rich text content from table data:', content.substring(0, 100) + '...');
+
+            // Wait a bit for editor to be ready, then set content
+            setTimeout(() => {
+                setRichTextContent('editPostText', content);
+            }, 200);
 
             // Image handling with multiple sources
             const imageUrl = data.imageUrl || data.thumbnailUrl;
@@ -402,7 +439,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Rich text content - handle HTML content properly
             const content = postData.content || postData.Content || postData.postText || postData.PostText || '';
-            setRichTextContent('editPostText', content);
+            console.log('📝 Setting rich text content from API data:', content.substring(0, 100) + '...');
+
+            // Ensure editor is ready before setting content
+            if (richTextEditors.edit && richTextEditors.edit.initialized) {
+                setRichTextContent('editPostText', content);
+            } else {
+                // Retry after a short delay
+                setTimeout(() => {
+                    setRichTextContent('editPostText', content);
+                }, 300);
+            }
 
             // Image handling with multiple sources
             const imageUrl = postData.imageURL || postData.ImageURL || postData.imageUrl || postData.thumbnailURL || postData.thumbnailUrl;
@@ -913,84 +960,9 @@ document.addEventListener('DOMContentLoaded', function () {
         extractEnhancedTableData,
         getRichTextContent,
         setRichTextContent,
-        richTextEditors
+        richTextEditors,
+        refreshPostContent
     };
 
     console.log('🐛 Debug functions available: window.postDebug');
-}); ',
-'insertdatetime', 'media', 'table', 'help', 'wordcount', 'emoticons'
-            ],
-toolbar: 'undo redo | blocks | bold italic forecolor backcolor | ' +
-    'alignleft aligncenter alignright alignjustify | ' +
-    'bullist numlist outdent indent | removeformat | help | ' +
-    'link image media | code preview fullscreen',
-    content_style: `
-                body { 
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-                    font-size: 14px; 
-                    line-height: 1.6;
-                    margin: 1rem;
-                }
-                h1, h2, h3, h4, h5, h6 { margin-top: 1rem; margin-bottom: 0.5rem; }
-                p { margin-bottom: 0.75rem; }
-                ul, ol { margin-bottom: 0.75rem; }
-            `,
-        placeholder: 'Start writing your content here...',
-            skin: 'oxide',
-                content_css: 'default',
-                    branding: false,
-                        promotion: false,
-                            resize: 'vertical',
-                                browser_spellcheck: true,
-                                    contextmenu: 'link image table',
-                                        images_upload_handler: function (blobInfo, success, failure) {
-                                            console.log('📷 Image upload requested:', blobInfo.filename());
-                                            const reader = new FileReader();
-                                            reader.onload = function (e) {
-                                                success(e.target.result);
-                                            };
-                                            reader.readAsDataURL(blobInfo.blob());
-                                        },
-paste_data_images: true,
-    paste_as_text: false,
-        link_assume_external_targets: true,
-            target_list: [
-                { title: 'New window', value: '_blank' },
-                { title: 'Same window', value: '_self' }
-            ]
-        };
-
-// Initialize Add Post Editor
-tinymce.init({
-    ...commonConfig,
-    selector: '#addPostText',
-    setup: function (editor) {
-        editor.on('init', function () {
-            console.log('✅ Add post rich text editor initialized');
-            richTextEditors.add = editor;
-        });
-
-        editor.on('change', function () {
-            validateForm('addPostForm');
-        });
-    }
-}).catch(error => {
-    console.error('❌ Failed to initialize add post rich text editor:', error);
-    fallbackToTextarea('addPostText');
 });
-    }
-
-function initializeEditRichTextEditor() {
-    console.log('📝 Initializing edit post rich text editor...');
-
-    if (richTextEditors.edit) {
-        console.log('✅ Edit rich text editor already initialized');
-        return Promise.resolve(richTextEditors.edit);
-    }
-
-    const commonConfig = {
-        height: 300,
-        menubar: false,
-        plugins: [
-            'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-            'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen
