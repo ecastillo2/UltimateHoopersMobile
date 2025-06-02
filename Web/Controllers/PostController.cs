@@ -79,6 +79,10 @@ namespace Website.Controllers
                     return Json(new { success = false, message = "Post not found" });
                 }
 
+                // Determine media type from file URL
+                var mediaType = DetermineMediaType(post.PostFileURL);
+                var hasMedia = !string.IsNullOrEmpty(post.PostFileURL);
+
                 // Format the response with comprehensive post data
                 var postData = new
                 {
@@ -94,10 +98,21 @@ namespace Website.Controllers
                         postType = post.PostType,
                         type = post.Type, // Include both for compatibility
                         status = post.Status,
+
+                        // Enhanced media information
                         imageURL = post.PostFileURL,
                         imageUrl = post.PostFileURL, // Include both cases
+                        postFileURL = post.PostFileURL,
+                        PostFileURL = post.PostFileURL,
                         thumbnailURL = post.ThumbnailUrl,
                         thumbnailUrl = post.ThumbnailUrl, // Include both cases
+
+                        // Media metadata
+                        mediaType = mediaType,
+                        hasMedia = hasMedia,
+                        isVideo = mediaType == "video",
+                        isImage = mediaType == "image",
+
                         postedDate = post.PostedDate?.ToString("yyyy-MM-ddTHH:mm:ss") ?? "",
                         profileId = post.ProfileId,
                         author = post.ProfileId ?? "System",
@@ -107,6 +122,7 @@ namespace Website.Controllers
                         likes = GetRandomLikes(),
                         comments = GetRandomComments(),
                         shares = GetRandomShares(),
+
                         // Additional content info for rich text
                         contentType = "html",
                         hasRichContent = HasRichTextContent(post.PostText),
@@ -119,7 +135,10 @@ namespace Website.Controllers
                         hasContent = !string.IsNullOrEmpty(post.PostText),
                         hasDescription = !string.IsNullOrEmpty(post.Caption),
                         contentLength = post.PostText?.Length ?? 0,
-                        plainTextLength = GetPlainTextFromHtml(post.PostText ?? "").Length
+                        plainTextLength = GetPlainTextFromHtml(post.PostText ?? "").Length,
+                        mediaType = mediaType,
+                        mediaUrl = post.PostFileURL,
+                        thumbnailUrl = post.ThumbnailUrl
                     }
                 };
 
@@ -543,6 +562,30 @@ namespace Website.Controllers
 
             return richTextIndicators.Any(indicator =>
                 content.Contains(indicator, StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>
+        /// Determine media type from file URL
+        /// </summary>
+        /// <param name="fileUrl">File URL to analyze</param>
+        /// <returns>Media type (image, video, or unknown)</returns>
+        private string DetermineMediaType(string fileUrl)
+        {
+            if (string.IsNullOrEmpty(fileUrl))
+                return "unknown";
+
+            var extension = Path.GetExtension(fileUrl).ToLowerInvariant();
+
+            var imageExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".svg" };
+            var videoExtensions = new[] { ".mp4", ".webm", ".ogg", ".avi", ".mov", ".wmv", ".flv", ".mkv" };
+
+            if (imageExtensions.Contains(extension))
+                return "image";
+
+            if (videoExtensions.Contains(extension))
+                return "video";
+
+            return "unknown";
         }
 
         #endregion
