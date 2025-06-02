@@ -1,5 +1,5 @@
 /**
- * Post Management JavaScript - Complete without Unicode
+ * Post Management JavaScript - Complete with Enhanced Post Info Tab Population
  */
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -19,7 +19,8 @@ document.addEventListener('DOMContentLoaded', function () {
         populateFromTableData,
         populateFromAPIData,
         checkAPIConfiguration,
-        testTableDataExtraction
+        testTableDataExtraction,
+        updatePostInfoDisplay
     };
 
     // Verify API configuration
@@ -69,6 +70,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const tableData = extractTableData(row);
             console.log('Extracted table data:', tableData);
             populateFromTableData(tableData);
+
+            // ENHANCED: Also update Post Info display with table data immediately
+            updatePostInfoDisplayFromTableData(tableData);
             console.log('Table data populated successfully');
         } else {
             console.warn('No table row found for post ID:', postId);
@@ -135,7 +139,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const dataFromAttributes = {
             postId: row.getAttribute('data-post-id'),
             title: row.getAttribute('data-title'),
-            description: row.getAttribute('data-description'),
+            description: row.getAttribute('data-description') || row.getAttribute('data-caption'),
             content: row.getAttribute('data-content'),
             imageUrl: row.getAttribute('data-image-url'),
             status: row.getAttribute('data-status'),
@@ -169,9 +173,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const statusCell = cells[3];
             const statusElement = statusCell.querySelector('.badge, .post-status');
 
-            // Extract from author column
-            const authorCell = cells[4];
-            const authorText = authorCell.textContent.trim();
+            // Extract author from data attribute or assume System
+            const authorText = row.getAttribute('data-author') || 'System';
 
             const dataFromCells = {
                 title: titleElement?.textContent?.trim() || dataFromAttributes.title,
@@ -211,8 +214,8 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             // Date fields
-            if (data.startDate) {
-                safeSetValue('editStartDate', formatDateForInput(data.startDate));
+            if (data.startDate || data.date) {
+                safeSetValue('editStartDate', formatDateForInput(data.startDate || data.date));
             }
             if (data.endDate) {
                 safeSetValue('editEndDate', formatDateForInput(data.endDate));
@@ -225,6 +228,42 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('Table data populated successfully');
         } catch (error) {
             console.error('Error populating from table data:', error);
+        }
+    }
+
+    // ENHANCED: New function to update Post Info display from table data
+    function updatePostInfoDisplayFromTableData(data) {
+        console.log('Updating post info display from table data:', data);
+
+        try {
+            // Avatar and basic info
+            const initials = getPostInitials(data.title);
+            safeUpdateElement('postInfoInitials', initials);
+            safeUpdateElement('postInfoTitle', data.title || 'Post');
+            safeUpdateElement('postInfoType', data.type || 'General');
+
+            // Badges
+            safeUpdateElement('postInfoStatus', data.status || 'Active');
+            safeUpdateElement('postInfoPostType', data.type || 'General');
+
+            // Detailed information
+            safeUpdateElement('postInfoTitleDetail', data.title || '--');
+            safeUpdateElement('postInfoAuthor', data.author || 'System');
+
+            // Format date for display
+            const dateToShow = data.startDate || data.date;
+            safeUpdateElement('postInfoCreated', formatDateForDisplay(dateToShow));
+            safeUpdateElement('postInfoStartDate', formatDateForDisplay(data.startDate || data.date));
+            safeUpdateElement('postInfoEndDate', formatDateForDisplay(data.endDate));
+
+            // Mock statistics (since we don't have real data from table)
+            safeUpdateElement('postInfoViews', Math.floor(Math.random() * 1000));
+            safeUpdateElement('postInfoLikes', Math.floor(Math.random() * 100));
+            safeUpdateElement('postInfoComments', Math.floor(Math.random() * 50));
+
+            console.log('Post info display updated from table data');
+        } catch (error) {
+            console.error('Error updating post info display from table data:', error);
         }
     }
 
@@ -265,7 +304,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             console.log('API data populated successfully');
 
-            // Update Post Info tab
+            // ENHANCED: Update Post Info tab with API data
             updatePostInfoDisplay(postData);
         } catch (error) {
             console.error('Error populating from API data:', error);
@@ -287,6 +326,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     console.log('Found row via button search');
                     const tableData = extractTableData(row);
                     populateFromTableData(tableData);
+                    updatePostInfoDisplayFromTableData(tableData);
                     return;
                 }
             }
@@ -304,6 +344,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     console.log('Found row via DataTable search');
                     const tableData = extractTableData(row);
                     populateFromTableData(tableData);
+                    updatePostInfoDisplayFromTableData(tableData);
                     return;
                 }
             }
@@ -469,21 +510,81 @@ document.addEventListener('DOMContentLoaded', function () {
         hideLoadingState();
     }
 
+    // ENHANCED: Improved tab switching with proper data loading
     function handleTabSwitch(event) {
         const targetTab = event.target.getAttribute('data-bs-target');
         const postId = document.getElementById('editPostId')?.value;
 
         console.log('Switching to tab:', targetTab, 'for post:', postId);
 
-        if (!postId) return;
+        if (!postId) {
+            console.warn('No post ID available for tab switch');
+            return;
+        }
 
         switch (targetTab) {
             case '#post-info-tab-pane':
-                loadPostInfo(postId);
+                loadPostInfoTab(postId);
                 break;
             case '#analytics-tab-pane':
                 loadAnalyticsData(postId);
                 break;
+            case '#post-details-tab-pane':
+                // Details tab should already be populated, but refresh if needed
+                console.log('Switched to post details tab');
+                break;
+        }
+    }
+
+    // ENHANCED: Improved Post Info tab loading
+    function loadPostInfoTab(postId) {
+        console.log('Loading post info tab for:', postId);
+
+        // Check if already loaded and has meaningful data
+        const currentTitle = document.getElementById('postInfoTitle')?.textContent;
+        if (currentTitle && currentTitle !== '--' && currentTitle !== 'Post' && currentTitle.trim()) {
+            console.log('Post info already loaded with data:', currentTitle);
+            return;
+        }
+
+        // First try to get data from the form fields that should already be populated
+        const titleFromForm = document.getElementById('editTitle')?.value;
+        const descFromForm = document.getElementById('editDescription')?.value;
+        const statusFromForm = document.getElementById('editStatus')?.value;
+        const typeFromForm = document.getElementById('editPostType')?.value;
+        const startDateFromForm = document.getElementById('editStartDate')?.value;
+        const endDateFromForm = document.getElementById('editEndDate')?.value;
+
+        if (titleFromForm) {
+            console.log('Using form data to populate post info');
+            const formData = {
+                title: titleFromForm,
+                description: descFromForm,
+                status: statusFromForm,
+                type: typeFromForm,
+                startDate: startDateFromForm,
+                endDate: endDateFromForm,
+                author: 'System' // Default fallback
+            };
+            updatePostInfoDisplay(formData);
+            return;
+        }
+
+        // If form is empty, try to get data from table
+        const row = findPostRowById(postId);
+        if (row) {
+            console.log('Using table data to populate post info');
+            const tableData = extractTableData(row);
+            updatePostInfoDisplayFromTableData(tableData);
+            return;
+        }
+
+        // Last resort: call API if available
+        if (window.appUrls?.getPostData) {
+            console.log('Calling API to get post info data');
+            callGetPostDataAPIEnhanced(postId);
+        } else {
+            console.warn('No data source available for post info');
         }
     }
 
@@ -505,22 +606,6 @@ document.addEventListener('DOMContentLoaded', function () {
         clearAnalyticsForm();
     }
 
-    function loadPostInfo(postId) {
-        console.log('Loading post info for:', postId);
-
-        // Check if already loaded
-        const currentTitle = document.getElementById('postInfoTitle')?.textContent;
-        if (currentTitle && currentTitle !== '--' && currentTitle !== 'Post') {
-            console.log('Post info already loaded');
-            return;
-        }
-
-        // Call API if available
-        if (window.appUrls?.getPostData) {
-            callGetPostDataAPIEnhanced(postId);
-        }
-    }
-
     function loadAnalyticsData(postId) {
         console.log('Loading analytics data for:', postId);
 
@@ -531,32 +616,50 @@ document.addEventListener('DOMContentLoaded', function () {
         safeSetValue('totalShares', Math.floor(Math.random() * 25));
     }
 
+    // ENHANCED: Improved post info display function
     function updatePostInfoDisplay(data) {
-        console.log('Updating post info display');
+        console.log('Updating post info display with data:', data);
 
-        // Avatar and basic info
-        const initials = getPostInitials(data.Title || data.title);
-        safeUpdateElement('postInfoInitials', initials);
-        safeUpdateElement('postInfoTitle', data.Title || data.title || 'Post');
-        safeUpdateElement('postInfoType', data.PostType || data.postType || 'General');
+        try {
+            // Handle different data structures
+            const title = data.Title || data.title || 'Post';
+            const type = data.PostType || data.postType || data.type || 'General';
+            const status = data.Status || data.status || 'Active';
+            const author = data.Author || data.author || data.ProfileId || data.profileId || 'System';
+            const createdDate = data.CreatedDate || data.createdDate || data.PostedDate || data.postedDate;
+            const startDate = data.StartDate || data.startDate;
+            const endDate = data.EndDate || data.endDate;
 
-        // Badges
-        safeUpdateElement('postInfoStatus', data.Status || data.status || 'Active');
-        safeUpdateElement('postInfoPostType', data.PostType || data.postType || 'General');
+            // Avatar and basic info
+            const initials = getPostInitials(title);
+            safeUpdateElement('postInfoInitials', initials);
+            safeUpdateElement('postInfoTitle', title);
+            safeUpdateElement('postInfoType', type);
 
-        // Detailed information
-        safeUpdateElement('postInfoTitleDetail', data.Title || data.title || '--');
-        safeUpdateElement('postInfoAuthor', data.Author || data.author || 'System');
-        safeUpdateElement('postInfoCreated', formatDate(data.CreatedDate || data.createdDate));
-        safeUpdateElement('postInfoStartDate', formatDate(data.StartDate || data.startDate));
-        safeUpdateElement('postInfoEndDate', formatDate(data.EndDate || data.endDate));
+            // Badges
+            safeUpdateElement('postInfoStatus', status);
+            safeUpdateElement('postInfoPostType', type);
 
-        // Mock statistics
-        safeUpdateElement('postInfoViews', Math.floor(Math.random() * 1000));
-        safeUpdateElement('postInfoLikes', Math.floor(Math.random() * 100));
-        safeUpdateElement('postInfoComments', Math.floor(Math.random() * 50));
+            // Detailed information
+            safeUpdateElement('postInfoTitleDetail', title);
+            safeUpdateElement('postInfoAuthor', author);
+            safeUpdateElement('postInfoCreated', formatDateForDisplay(createdDate));
+            safeUpdateElement('postInfoStartDate', formatDateForDisplay(startDate));
+            safeUpdateElement('postInfoEndDate', formatDateForDisplay(endDate));
 
-        console.log('Post info display updated');
+            // Statistics - use real data if available, otherwise mock data
+            const views = data.Views || data.views || Math.floor(Math.random() * 1000);
+            const likes = data.Likes || data.likes || Math.floor(Math.random() * 100);
+            const comments = data.Comments || data.comments || Math.floor(Math.random() * 50);
+
+            safeUpdateElement('postInfoViews', views);
+            safeUpdateElement('postInfoLikes', likes);
+            safeUpdateElement('postInfoComments', comments);
+
+            console.log('Post info display updated successfully');
+        } catch (error) {
+            console.error('Error updating post info display:', error);
+        }
     }
 
     function showLoadingState() {
@@ -624,7 +727,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const elements = [
             'postInfoInitials', 'postInfoTitle', 'postInfoType',
             'postInfoStatus', 'postInfoPostType', 'postInfoTitleDetail',
-            'postInfoAuthor', 'postInfoCreated', 'postInfoStartDate', 'postInfoEndDate'
+            'postInfoAuthor', 'postInfoCreated', 'postInfoStartDate', 'postInfoEndDate',
+            'postInfoViews', 'postInfoLikes', 'postInfoComments'
         ];
 
         for (let i = 0; i < elements.length; i++) {
@@ -724,12 +828,23 @@ document.addEventListener('DOMContentLoaded', function () {
         return title[0].toUpperCase();
     }
 
-    function formatDate(dateString) {
+    // ENHANCED: Better date formatting functions
+    function formatDateForDisplay(dateString) {
         if (!dateString) return '--';
         try {
             const date = new Date(dateString);
-            return date.toLocaleDateString();
+            if (isNaN(date.getTime())) return '--';
+
+            // Format as readable date
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
         } catch (e) {
+            console.warn('Error formatting date for display:', dateString, e);
             return '--';
         }
     }
@@ -738,6 +853,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!dateString) return '';
         try {
             const date = new Date(dateString);
+            if (isNaN(date.getTime())) return '';
+
             // Format as yyyy-MM-ddTHH:mm for datetime-local input
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -746,6 +863,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const minutes = String(date.getMinutes()).padStart(2, '0');
             return year + '-' + month + '-' + day + 'T' + hours + ':' + minutes;
         } catch (e) {
+            console.warn('Error formatting date for input:', dateString, e);
             return '';
         }
     }
@@ -794,3 +912,16 @@ document.addEventListener('DOMContentLoaded', function () {
             toastElement.addEventListener('hidden.bs.toast', function () {
                 toastElement.remove();
             });
+        }
+    }
+
+    // Expose functions for global access
+    window.loadPostData = loadPostDataEnhanced;
+    window.populateFromTableData = populateFromTableData;
+    window.populateFromAPIData = populateFromAPIDataEnhanced;
+    window.findPostRowById = findPostRowById;
+    window.testGetPostData = testGetPostData;
+    window.updatePostInfoDisplay = updatePostInfoDisplay;
+
+    console.log('Enhanced Post Management JavaScript fully loaded');
+});
