@@ -193,8 +193,13 @@ namespace Web.Controllers
                 // Create new Product
                 var createdProduct = await _productApi.CreateProductAsync(product, accessToken, cancellationToken);
 
+                if (createdProduct != null)
+                {
+                    await _storageApi.UpdateProductImageFileAsync(product.ProductId, ImageFile);
+                }
+
                 TempData["Success"] = "Product created successfully.";
-                return RedirectToAction("Details", new { id = createdProduct.ProductId });
+                return RedirectToAction("Details");
             }
             catch (Exception ex)
             {

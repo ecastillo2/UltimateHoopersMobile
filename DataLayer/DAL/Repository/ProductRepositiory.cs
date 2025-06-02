@@ -54,10 +54,7 @@ namespace DataLayer.DAL.Repository
         /// <param name="pageSize"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<(List<Product> Products, int TotalCount, int TotalPages)> GetProductsPaginatedAsync(
-            int page = 1,
-            int pageSize = 20,
-            CancellationToken cancellationToken = default)
+        public async Task<(List<Product> Products, int TotalCount, int TotalPages)> GetProductsPaginatedAsync(int page = 1,int pageSize = 20,CancellationToken cancellationToken = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
@@ -92,12 +89,7 @@ namespace DataLayer.DAL.Repository
         /// <param name="sortBy"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<(List<Product> Products, string NextCursor)> GetProductsWithCursorAsync(
-             string cursor = null,
-             int limit = 20,
-             string direction = "next",
-             string sortBy = "Points",
-             CancellationToken cancellationToken = default)
+        public async Task<(List<Product> Products, string NextCursor)> GetProductsWithCursorAsync(string cursor = null,int limit = 20,string direction = "next",string sortBy = "Points",CancellationToken cancellationToken = default)
         {
             try
             {
@@ -162,16 +154,13 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-
         /// <summary>
         /// Get Product By Id Async
         /// </summary>
         /// <param name="runId"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<Product> GetProductByIdAsync(
-            string productId,
-            CancellationToken cancellationToken = default)
+        public async Task<Product> GetProductByIdAsync(string productId,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -188,17 +177,17 @@ namespace DataLayer.DAL.Repository
         }
 
         /// <summary>
-        /// AddProfileToJoinedRunAsync
+        /// Insert Product
         /// </summary>
-        /// <param name="profileId"></param>
-        /// <param name="runId"></param>
+        /// <param name="model"></param>
+        /// <param name="cancellationToken"></param>
         /// <returns></returns>
         public async Task InsertProduct(Product model, CancellationToken cancellationToken = default)
         {
             try
             {
 
-                model.ImageURL = $"{_blobBaseUrl}{model.ProductId}";
+                model.ImageURL = $"{_blobBaseUrl}{model.ProductId}.webp";
 
 
                 // Add to context and save
@@ -219,9 +208,7 @@ namespace DataLayer.DAL.Repository
         /// <param name="privateRun"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<bool> UpdateProductAsync(
-    Product product,
-    CancellationToken cancellationToken = default)
+        public async Task<bool> UpdateProductAsync(Product product,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -256,7 +243,6 @@ namespace DataLayer.DAL.Repository
                 throw;
             }
         }
-
 
         /// <summary>
         /// Save Changes Async

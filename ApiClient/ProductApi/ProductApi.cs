@@ -1,4 +1,5 @@
-﻿using Domain;
+﻿using Azure;
+using Domain;
 using Domain.DtoModel;
 using Microsoft.Extensions.Configuration;
 using System.Net.Http.Headers;
@@ -69,7 +70,7 @@ namespace WebAPI.ApiClients
         /// <summary>
         /// Create a new Product
         /// </summary>
-        public async Task<Product> CreateProductAsync(Product model, string accessToken, CancellationToken cancellationToken = default)
+        public async Task<Response> CreateProductAsync(Product model, string accessToken, CancellationToken cancellationToken = default)
         {
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
@@ -82,7 +83,9 @@ namespace WebAPI.ApiClients
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
-            return JsonSerializer.Deserialize<Product>(content, _jsonOptions);
+            var result = JsonSerializer.Deserialize<Response>(content, _jsonOptions);
+
+            return result;
         }
 
         /// <summary>

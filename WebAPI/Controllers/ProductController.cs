@@ -103,9 +103,9 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="post">Post to create</param>
         /// <returns>Created post</returns>
-        [HttpPost]
+        [HttpPost("CreateProduct")]
         //[Authorize]
-        public async Task<ActionResult<Post>> Product([FromBody] Product product)
+        public async Task<ActionResult<Post>> CreateProduct([FromBody] Product product)
         {
             try
             {

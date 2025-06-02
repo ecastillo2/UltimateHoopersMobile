@@ -1,4 +1,5 @@
-﻿using Domain;
+﻿using Azure;
+using Domain;
 using Domain.DtoModel;
 using System;
 using System.Collections.Generic;
@@ -56,7 +57,7 @@ namespace WebAPI.ApiClients
         /// <param name="accessToken"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<Product> CreateProductAsync(Product product, string accessToken, CancellationToken cancellationToken = default);
+        Task<Response> CreateProductAsync(Product product, string accessToken, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Update Client Async
