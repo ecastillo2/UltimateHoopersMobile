@@ -11,6 +11,9 @@
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.bootstrap5.min.css">
     <link rel="stylesheet" type="text/css" href="~/css/management.css">
 
+    <!-- TinyMCE CDN -->
+    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+
     <!-- 4. Enhanced CSS for Rich Text Editor -->
 
     <style>
@@ -37,15 +40,15 @@
             border-radius: 0.375rem;
         }
 
-        .rich-text-loading::before {
-            content: "Loading rich text editor...";
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #6c757d;
-            font-size: 0.875rem;
-        }
+            .rich-text-loading::before {
+                content: "Loading rich text editor...";
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                color: #6c757d;
+                font-size: 0.875rem;
+            }
 
         /* Content preview styling */
         .post-content-preview {
@@ -58,25 +61,25 @@
             font-size: 0.875rem;
         }
 
-        .post-content-preview h1,
-        .post-content-preview h2,
-        .post-content-preview h3,
-        .post-content-preview h4,
-        .post-content-preview h5,
-        .post-content-preview h6 {
-            margin-top: 0.5rem;
-            margin-bottom: 0.5rem;
-        }
+            .post-content-preview h1,
+            .post-content-preview h2,
+            .post-content-preview h3,
+            .post-content-preview h4,
+            .post-content-preview h5,
+            .post-content-preview h6 {
+                margin-top: 0.5rem;
+                margin-bottom: 0.5rem;
+            }
 
-        .post-content-preview p {
-            margin-bottom: 0.5rem;
-        }
+            .post-content-preview p {
+                margin-bottom: 0.5rem;
+            }
 
-        .post-content-preview ul,
-        .post-content-preview ol {
-            margin-bottom: 0.5rem;
-            padding-left: 1.5rem;
-        }
+            .post-content-preview ul,
+            .post-content-preview ol {
+                margin-bottom: 0.5rem;
+                padding-left: 1.5rem;
+            }
 
         /* Modal adjustments for rich text editor */
         .modal-xl .rich-text-editor {
@@ -85,9 +88,12 @@
 
         /* Responsive adjustments */
         @@media (max-width: 768px) {
-            .tox-tinymce {
-                min-height: 250px !important;
-            }
+            .tox-tinymce
+
+        {
+            min-height: 250px !important;
+        }
+
         }
     </style>
     
