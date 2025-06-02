@@ -164,7 +164,7 @@
                         <tr>
                            
                             <th>Post</th>
-                            <th>Type</th>
+                            
                             <th>Date</th>
                             <th>Status</th>
                            @*  <th>Author</th> *@
@@ -176,20 +176,24 @@
                         {
                             <tr data-status="@(post.Status?.ToLower() ?? "active")"
                                 data-type="@(post.PostType?.ToLower() ?? "general")"
-                                data-date="@(post.PostedDate )
+                                data-date="@(post.PostedDate?.ToString("yyyy-MM-dd") ?? "")"
                                 data-author="@(post.ProfileId ?? "")"
                                 data-post-id="@post.PostId"
                                 data-title="@post.Title"
                                 data-caption="@post.Caption"
+                               
+                                
                                 data-image-url="@post.PostFileURL"
-                                data-start-date="@post.PostedDate"
-                               ">
+                                data-thumbnail-url="@post.ThumbnailUrl"
+                             
+                              
+                                data-posted-date="@(post.PostedDate?.ToString("yyyy-MM-ddTHH:mm") ?? "")">
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <div class="post-image-cell me-3">
                                             @if (!string.IsNullOrEmpty(post.PostFileURL))
                                             {
-                                                <img src="@post.ThumbnailUrl)" alt="@post.Title" class="post-image"
+                                                <img src="@(post.ThumbnailUrl ?? post.PostFileURL)" alt="@post.Title" class="post-image"
                                                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
                                                      loading="lazy">
                                                 <div class="post-initials" style="display: none;">
@@ -209,10 +213,8 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td>
-                                    <span class="badge post-type-badge bg-info">@(post.PostType ?? "General")</span>
-                                </td>
-                                <td class="post-date">@(post.PostedDate)</td>
+                            
+                                <td class="post-date">@(post.PostedDate?.ToString("MM/dd/yyyy") ?? "N/A")</td>
                                 <td>
                                     <span class="badge bg-success badge-pill post-status">@(post.Status ?? "Active")</span>
                                 </td>
@@ -287,30 +289,22 @@
                             <select class="form-select" id="addPostType" name="PostType" required>
                                 <option value="">Select Type</option>
                                 <option value="News">News</option>
-                                <option value="Announcement">Announcement</option>
+                                <option value="User">User</option>
                                 <option value="Event">Event</option>
-                                <option value="General">General</option>
+                               
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label for="addStatus" class="form-label">Status</label>
                             <select class="form-select" id="addStatus" name="Status">
-                                <option value="Active" selected>Active</option>
+                                <option value="Active">Active</option>
+                                <option value="InActive">InActive</option>
                                 <option value="Draft">Draft</option>
                                 <option value="Archived">Archived</option>
                             </select>
                         </div>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="addStartDate" class="form-label">Start Date</label>
-                            <input type="datetime-local" class="form-control" id="addStartDate" name="StartDate">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="addEndDate" class="form-label">End Date</label>
-                            <input type="datetime-local" class="form-control" id="addEndDate" name="EndDate">
-                        </div>
-                    </div>
+             
                     <div class="row mb-3">
                         <div class="col-md-12">
                             <label for="addImageFile" class="form-label">Upload Image</label>
@@ -414,41 +408,25 @@
                                 <div class="col-md-4">
                                     <label for="editPostType" class="form-label">Post Type <span class="text-danger">*</span></label>
                                     <select class="form-select" id="editPostType" name="PostType" required>
-                                        <option value="">Select Type</option>
-                                        <option value="News">News</option>
-                                        <option value="Announcement">Announcement</option>
-                                        <option value="Event">Event</option>
-                                        <option value="General">General</option>
+                                      <option value="">Select Type</option>
+                                <option value="News">News</option>
+                                <option value="User">User</option>
+                                <option value="Event">Event</option>
                                     </select>
                                 </div>
                                 <div class="col-md-4">
                                     <label for="editStatus" class="form-label">Status</label>
                                     <select class="form-select" id="editStatus" name="Status">
                                         <option value="Active">Active</option>
+                                        <option value="InActive">InActive</option>
                                         <option value="Draft">Draft</option>
                                         <option value="Archived">Archived</option>
                                     </select>
                                 </div>
-                                <div class="col-md-4">
-                                    <label for="editPriority" class="form-label">Priority</label>
-                                    <select class="form-select" id="editPriority" name="Priority">
-                                        <option value="Normal">Normal</option>
-                                        <option value="High">High</option>
-                                        <option value="Low">Low</option>
-                                    </select>
-                                </div>
+                                
                             </div>
 
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="editStartDate" class="form-label">Start Date</label>
-                                    <input type="datetime-local" class="form-control" id="editStartDate" name="StartDate">
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="editEndDate" class="form-label">End Date</label>
-                                    <input type="datetime-local" class="form-control" id="editEndDate" name="EndDate">
-                                </div>
-                            </div>
+                           
 
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -493,14 +471,7 @@
                                                     <span class="text-muted">Created:</span>
                                                     <span id="postInfoCreated">--</span>
                                                 </li>
-                                                <li class="list-group-item d-flex justify-content-between px-0">
-                                                    <span class="text-muted">Start Date:</span>
-                                                    <span id="postInfoStartDate">--</span>
-                                                </li>
-                                                <li class="list-group-item d-flex justify-content-between px-0">
-                                                    <span class="text-muted">End Date:</span>
-                                                    <span id="postInfoEndDate">--</span>
-                                                </li>
+                                               
                                             </ul>
                                         </div>
                                     </div>

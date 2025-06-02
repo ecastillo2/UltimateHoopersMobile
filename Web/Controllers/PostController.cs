@@ -11,14 +11,14 @@ namespace Website.Controllers
         private readonly IPostApi _postApi;
         private readonly ILogger<PostController> _logger;
 
-        public PostController(IPostApi postApi,ILogger<PostController> logger)
+        public PostController(IPostApi postApi, ILogger<PostController> logger)
         {
             _postApi = postApi ?? throw new ArgumentNullException(nameof(postApi));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         [HttpGet]
-        public async Task<IActionResult> Post(string postType, string cursor = null,int limit = 10,string direction = "next",string sortBy = "StartDate",CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Post(string postType, string cursor = null, int limit = 10, string direction = "next", string sortBy = "StartDate", CancellationToken cancellationToken = default)
         {
             try
             {
@@ -35,13 +35,12 @@ namespace Website.Controllers
                 var profileId = HttpContext.Session.GetString("ProfileId");
 
                 // Get runs with cursor pagination
-                var result = await _postApi.GetPostsAsync( postType, accessToken,cancellationToken = default);
+                var result = await _postApi.GetPostsAsync(postType, accessToken, cancellationToken = default);
 
                 // Create view model
                 var viewModel = new PostsViewModel
                 {
                     PostList = result,
-                 
                 };
 
                 return View(viewModel);
@@ -51,6 +50,71 @@ namespace Website.Controllers
                 _logger.LogError(ex, "Error retrieving runs");
                 TempData["Error"] = "An error occurred while retrieving runs. Please try again later.";
                 return RedirectToAction("Dashboard", "Dashboard");
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetPostData(string id, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                // Get the access token from session
+                var accessToken = HttpContext.Session.GetString("UserToken");
+                if (string.IsNullOrEmpty(accessToken))
+                {
+                    return Json(new { success = false, message = "Authentication required" });
+                }
+
+                // Get post details
+                var post = await _postApi.GetPostByIdAsync(id, accessToken, cancellationToken);
+                if (post == null)
+                {
+                    return Json(new { success = false, message = "Post not found" });
+                }
+
+                // Format the response with comprehensive post data
+                var postData = new
+                {
+                    success = true,
+                    post = new
+                    {
+                        postId = post.PostId,
+                        title = post.Title,
+                        caption = post.Caption,
+                        content = "",
+                        description = "",
+                        postType = post.PostType,
+                        status = post.Status,            
+                        imageURL = post.PostFileURL,
+                        thumbnailURL = post.ThumbnailUrl,
+                        postedDate = post.PostedDate?.ToString("yyyy-MM-ddTHH:mm") ?? "",
+                        startDate =  "",
+                        endDate =  "",
+                        profileId = post.ProfileId,
+                        author = post.ProfileId ?? "System",
+                        isActive = post.Status?.ToLower() == "active",
+                        createdDate = post.PostedDate?.ToString("yyyy-MM-ddTHH:mm") ?? "",
+                        views = GetRandomViews(),
+                        likes = GetRandomLikes(),
+                        comments = GetRandomComments(),
+                        shares = GetRandomShares()
+                    },
+                    // Additional metadata
+                    metadata = new
+                    {
+                        hasImage = !string.IsNullOrEmpty(post.PostFileURL),
+                        hasContent = !string.IsNullOrEmpty("post.Content"),
+                        hasDescription = !string.IsNullOrEmpty("post.Description"),
+                       
+                    }
+                };
+
+                return Json(postData);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving post data for ID: {PostId}", id);
+                return Json(new { success = false, message = "Error retrieving post data", error = ex.Message });
             }
         }
 
@@ -172,7 +236,7 @@ namespace Website.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Post run, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Edit(Post post, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -180,30 +244,42 @@ namespace Website.Controllers
                 var accessToken = HttpContext.Session.GetString("UserToken");
                 if (string.IsNullOrEmpty(accessToken))
                 {
-                    TempData["Error"] = "You must be logged in to edit a run.";
-                    return RedirectToAction("Index", "Home", new { scrollTo = "login" });
+                    return Json(new { success = false, message = "Authentication required" });
                 }
 
-                // Verify user is creator or admin
+                // Get user info for permission checking
                 var profileId = HttpContext.Session.GetString("ProfileId");
                 var userRole = HttpContext.Session.GetString("UserRole");
-                if (run.ProfileId != profileId && userRole != "Admin")
+
+                // Get the existing post to check permissions
+                var existingPost = await _postApi.GetPostByIdAsync(post.PostId, accessToken, cancellationToken);
+                if (existingPost == null)
                 {
-                    TempData["Error"] = "You do not have permission to edit this run.";
-                    return RedirectToAction("Details", new { id = run.PostId });
+                    return Json(new { success = false, message = "Post not found" });
                 }
 
-                // Update run
-                await _postApi.UpdatePostAsync(run, accessToken, cancellationToken);
+                // Verify user has permission to edit this post
+                if (existingPost.ProfileId != profileId && userRole != "Admin")
+                {
+                    return Json(new { success = false, message = "You do not have permission to edit this post" });
+                }
 
-                TempData["Success"] = "Run updated successfully.";
-                return RedirectToAction("Details", new { id = run.PostId });
+                // Update post via API
+                await _postApi.UpdatePostAsync(post, accessToken, cancellationToken);
+
+                _logger.LogInformation("Post updated successfully by user {ProfileId}: {PostId}", profileId, post.PostId);
+
+                return Json(new
+                {
+                    success = true,
+                    message = "Post updated successfully!",
+                    postId = post.PostId
+                });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating run: {RunId}", run.PostId);
-                TempData["Error"] = "An error occurred while updating the run. Please try again later.";
-                return View(run);
+                _logger.LogError(ex, "Error updating post: {PostId}", post?.PostId);
+                return Json(new { success = false, message = "An unexpected error occurred while updating the post" });
             }
         }
 
@@ -252,6 +328,10 @@ namespace Website.Controllers
             }
         }
 
-        
+        // Helper methods for mock data (replace with real data when available)
+        private int GetRandomViews() => new Random().Next(50, 1000);
+        private int GetRandomLikes() => new Random().Next(5, 100);
+        private int GetRandomComments() => new Random().Next(0, 50);
+        private int GetRandomShares() => new Random().Next(0, 25);
     }
 }
