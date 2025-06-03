@@ -226,6 +226,97 @@ namespace WebAPI.ApiClients
             }
         }
 
+        /// <summary>
+        /// Upload product image file to blob storage
+        /// </summary>
+        /// <param name="productId">Product identifier</param>
+        /// <param name="type">File type (image, video, etc.)</param>
+        /// <param name="formFile">Uploaded file</param>
+        /// <param name="timeStamp">Optional timestamp</param>
+        /// <returns>Success status</returns>
+        public async Task<bool> UpdateVideoFileAsync(string videoId, IFormFile formFile, TimeSpan? timeStamp = null)
+        {
+            try
+            {
+                // Validate inputs
+                if (string.IsNullOrEmpty(videoId))
+                {
+                    _logger?.LogError("videoId is null or empty");
+                    return false;
+                }
+
+                if (formFile == null || formFile.Length == 0)
+                {
+                    _logger?.LogError("FormFile is null or empty");
+                    return false;
+                }
+
+                // Validate file type
+                var allowedTypes = new[] { "video/mp4" };
+                if (!allowedTypes.Contains(formFile.ContentType.ToLower()))
+                {
+                    _logger?.LogError($"Unsupported file type: {formFile.ContentType}");
+                    return false;
+                }
+
+                // Validate file size (e.g., max 10MB)
+                if (formFile.Length > 10 * 1024 * 1024)
+                {
+                    _logger?.LogError($"File size too large: {formFile.Length} bytes");
+                    return false;
+                }
+
+                var containerClient = _blobServiceClient.GetBlobContainerClient(_productImageContainerName);
+                await containerClient.CreateIfNotExistsAsync(PublicAccessType.Blob);
+
+                var fileName = $"{videoId}.mp4";
+                var blobClient = containerClient.GetBlobClient(fileName);
+
+                // Process image and upload
+                using var processedImageStream = await ProcessImageForWebP(formFile);
+
+                if (processedImageStream == null || processedImageStream.Length == 0)
+                {
+                    _logger?.LogError("Processed image stream is null or empty");
+                    return false;
+                }
+
+                // Reset stream position to beginning
+                processedImageStream.Position = 0;
+
+                var uploadOptions = new BlobUploadOptions
+                {
+                    HttpHeaders = new BlobHttpHeaders
+                    {
+                        ContentType = "image/webp",
+                        CacheControl = "public, max-age=31536000" // 1 year cache
+                    },
+                    Conditions = null, // Allow overwrite
+                    ProgressHandler = null
+                };
+
+                await blobClient.UploadAsync(processedImageStream, uploadOptions);
+
+                _logger?.LogInformation($"Successfully uploaded image for product {videoId}");
+                return true;
+            }
+            catch (ArgumentException ex)
+            {
+                _logger?.LogError(ex, $"Invalid parameter while processing image for product {videoId}: {ex.Message}");
+                return false;
+            }
+            catch (NotSupportedException ex)
+            {
+                _logger?.LogError(ex, $"Image format not supported for product {videoId}: {ex.Message}");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, $"Error uploading image for product {videoId}: {ex.Message}");
+                return false;
+            }
+        }
+
         private async Task<MemoryStream> ProcessImageForWebP(IFormFile formFile)
         {
             try

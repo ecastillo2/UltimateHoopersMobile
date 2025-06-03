@@ -11,7 +11,10 @@ namespace Domain
         public string? VideoURL { get; set; }
         public string? VideoName { get; set; }
         public string? Status { get; set; }
+        public string? VideoNumber { get; set; }
+        public string? Title { get; set; }
         public DateTime? VideoDate { get; set; }
+        public DateTime? CreatedDate { get; set; }
 
     }
 }

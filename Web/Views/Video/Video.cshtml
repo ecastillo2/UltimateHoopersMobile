@@ -1,0 +1,751 @@
+﻿@model Website.ViewModels.ProductsViewModel
+
+@{
+    ViewData["Title"] = "Products";
+    var userType = ViewData["UserType"]?.ToString() ?? "Admin";
+}
+
+@section Styles {
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.bootstrap5.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.bootstrap5.min.css">
+    <link rel="stylesheet" type="text/css" href="~/css/management.css">
+    <style>
+        .modal-loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1060;
+        }
+
+        .product-image {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+        }
+
+        .product-initials {
+            width: 40px;
+            height: 40px;
+            background-color: var(--secondary-color);
+            color: white;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .image-preview-container {
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+            .image-preview-container.has-image {
+                border: 2px solid var(--primary-color, #007bff) !important;
+                box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+                background: linear-gradient(135deg, rgba(0, 123, 255, 0.05) 0%, rgba(0, 123, 255, 0.1) 100%);
+            }
+
+        #currentImage, #newImage, #addPreviewImage {
+            max-width: 100%;
+            max-height: 180px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+            #currentImage:hover, #newImage:hover, #addPreviewImage:hover {
+                transform: scale(1.02);
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            }
+
+        #addImagePlaceholder {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+            #addImagePlaceholder:hover {
+                background-color: rgba(0, 123, 255, 0.05);
+            }
+
+        #addImageFile, #addImageURL {
+            transition: all 0.3s ease;
+            border-radius: 8px;
+        }
+
+            #addImageFile:focus, #addImageURL:focus {
+                border-color: var(--primary-color, #007bff);
+                box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+                outline: none;
+            }
+
+        .drag-over {
+            border-color: var(--primary-color, #007bff) !important;
+            background-color: rgba(0, 123, 255, 0.05) !important;
+            transform: scale(1.02);
+        }
+
+        .btn-orange {
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(255, 107, 53, 0.3);
+        }
+
+            .btn-orange:hover {
+                background: linear-gradient(135deg, #e55a2b 0%, #e8851a 100%);
+                color: white;
+                transform: translateY(-1px);
+                box-shadow: 0 4px 8px rgba(255, 107, 53, 0.4);
+            }
+
+            .btn-orange:active {
+                transform: translateY(0);
+                box-shadow: 0 2px 4px rgba(255, 107, 53, 0.3);
+            }
+
+        #clearAddImage {
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+            #clearAddImage:hover {
+                background-color: #6c757d;
+                border-color: #6c757d;
+                color: white;
+                transform: translateY(-1px);
+            }
+
+        .is-invalid {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        .is-valid {
+            border-color: #28a745 !important;
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25) !important;
+        }
+
+        @@keyframes shake {
+            0%, 100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-5px);
+            }
+
+            75% {
+                transform: translateX(5px);
+            }
+        }
+    </style>
+}
+
+<div class="dashboard-header">
+    <div class="container">
+        <h1>Products</h1>
+        <p class="lead">Manage products, upload images to cloud storage, and track inventory</p>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Back button to dashboard -->
+    <div class="back-button">
+        <a href="@Url.Action("Dashboard", "Dashboard")" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Product Filters -->
+    <div class="mb-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Filter Products</h5>
+                    <button class="btn btn-sm btn-outline-secondary" id="resetFilters">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i>
+                        Reset Filters
+                    </button>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label for="statusFilter" class="form-label">Status</label>
+                        <select class="form-select" id="statusFilter">
+                            <option value="all" selected>All Statuses</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="discontinued">Discontinued</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="categoryFilter" class="form-label">Category</label>
+                        <select class="form-select" id="categoryFilter">
+                            <option value="all" selected>All Categories</option>
+                            <option value="clothing">Clothing</option>
+                            <option value="equipment">Equipment</option>
+                            <option value="accessories">Accessories</option>
+                            <option value="footwear">Footwear</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="typeFilter" class="form-label">Type</label>
+                        <select class="form-select" id="typeFilter">
+                            <option value="all" selected>All Types</option>
+                            <option value="clothing">Clothing</option>
+                            <option value="equipment">Equipment</option>
+                            <option value="accessories">Accessories</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="priceRangeFilter" class="form-label">Price Range</label>
+                        <select class="form-select" id="priceRangeFilter">
+                            <option value="all" selected>All Prices</option>
+                            <option value="0-25">$0 - $25</option>
+                            <option value="25-50">$25 - $50</option>
+                            <option value="50-100">$50 - $100</option>
+                            <option value="100+">$100+</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mt-3" id="activeFilters">
+                    <span class="badge bg-secondary me-2">Active Filters:</span>
+                    <span class="text-muted filter-none">None</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12 text-end">
+            <button type="button" class="btn btn-orange" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                <i class="bi bi-plus-circle me-2"></i>Add Product
+            </button>
+        </div>
+    </div>
+
+    <!-- DataTable -->
+    @if (Model?.ProductList != null && Model.ProductList.Any())
+    {
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <table id="productsTable" class="table table-striped table-hover w-100">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Price</th>
+                            <th>Points</th>
+                            <th>Status</th>
+                            <th>Category</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var product in Model.ProductList)
+                        {
+                            <tr data-status="@(product.Product.Status?.ToLower() ?? "active")"
+                                data-category="@(product.Product.Category?.ToLower() ?? "")"
+                                data-type="@(product.Product.Type?.ToLower() ?? "")"
+                                data-price="@(product.Product.Price ?? 0)"
+                                data-points="@(product.Product.Points ?? 0)"
+                                data-image-url="@product.Product.ImageURL"
+                                data-product-id="@product.Product.ProductId"
+                                data-product-title="@product.Product.Title"
+                                data-product-number="@product.Product.ProductNumber"
+                                data-description="@product.Product.Description"
+                                data-tag="@product.Product.Tag">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="product-image-cell me-3">
+                                            @if (!string.IsNullOrEmpty(product.Product.ImageURL))
+                                            {
+                                                <img src="@product.Product.ImageURL" alt="@product.Product.Title" class="product-image"
+                                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                                                     loading="lazy">
+                                                <div class="product-initials" style="display: none;">
+                                                    <span>@(product.Product.Title?.Substring(0, 1).ToUpper() ?? "P")</span>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="product-initials">
+                                                    <span>@(product.Product.Title?.Substring(0, 1).ToUpper() ?? "P")</span>
+                                                </div>
+                                            }
+                                        </div>
+                                        <div>
+                                            <div class="fw-semibold product-title">@product.Product.Title</div>
+                                            <div class="text-muted small product-number">#@(product.Product.ProductNumber)</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="product-price">$@(product.Product.Price?.ToString("F2") ?? "0.00")</td>
+                                <td class="product-points">@(product.Product.Points ?? 0)</td>
+                                <td>
+                                    <span class="badge bg-success badge-pill product-status">@(product.Product.Status ?? "Active")</span>
+                                </td>
+                                <td class="product-category">@(product.Product.Category ?? "N/A")</td>
+                                <td>
+                                    <div class="table-actions">
+                                        <button type="button" class="btn btn-sm btn-outline-primary action-icon"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#editProductModal"
+                                                data-product-id="@product.Product.ProductId"
+                                                title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <a href="@Url.Action("Details", "Product", new { id = product.Product.ProductId })"
+                                           class="btn btn-sm btn-primary action-icon" title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="no-products-message">
+            <i class="bi bi-box" style="font-size: 3rem; color: var(--secondary-color);"></i>
+            <h3 class="mt-3">No Products Found</h3>
+            <p class="text-muted">There are no products available at the moment. Add a new product to get started!</p>
+            <button type="button" class="btn btn-orange mt-3" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                <i class="bi bi-plus-circle me-2"></i>Add Product
+            </button>
+        </div>
+    }
+</div>
+
+<!-- Add Product Modal -->
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addProductModalLabel">Add New Product</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="addProductForm" method="post" action="@Url.Action("Create", "Product")" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+
+                    <!-- Image Upload Section -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Product Image</label>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="image-preview-container mb-3">
+                                        <div id="addImagePreview" class="current-image-preview border rounded p-3 text-center" style="min-height: 200px; background-color: #f8f9fa;">
+                                            <img id="addPreviewImage" src="" alt="Product Image Preview" class="img-fluid rounded" style="max-height: 180px; display: none;">
+                                            <div id="addImagePlaceholder" class="d-flex flex-column align-items-center justify-content-center h-100">
+                                                <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
+                                                <p class="text-muted mt-2 mb-0">Image Preview</p>
+                                                <small class="text-muted">No image selected</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="mb-3">
+                                        <label for="addImageFile" class="form-label">Upload Image</label>
+                                        <input type="file" class="form-control" id="addImageFile" name="ImageFile" accept="image/*">
+                                        <div class="form-text">Supported: JPG, PNG, GIF, BMP, WEBP. Max size: 5MB</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="addImageURL" class="form-label">Or Image URL</label>
+                                        <input type="url" class="form-control" id="addImageURL" name="ImageURL" placeholder="https://example.com/image.jpg">
+                                        <div class="form-text">Provide a direct link to the product image</div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" id="clearAddImage">
+                                            <i class="bi bi-x-circle me-1"></i>Clear Image
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Basic Product Information -->
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="addTitle" class="form-label">Product Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="addTitle" name="Title" required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="addDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="addDescription" name="Description" rows="3" placeholder="Enter product description..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="addPrice" class="form-label">Price <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" step="0.01" min="0" class="form-control" id="addPrice" name="Price" placeholder="0.00" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="addPoints" class="form-label">Points</label>
+                            <input type="number" min="0" class="form-control" id="addPoints" name="Points" placeholder="0">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="addTag" class="form-label">Tag</label>
+                            <input type="text" class="form-control" id="addTag" name="Tag" placeholder="e.g., bestseller, new">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="addType" class="form-label">Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="addType" name="Type" required>
+                                <option value="">Select Type</option>
+                                <option value="Clothing">Clothing</option>
+                                <option value="Equipment">Equipment</option>
+                                <option value="Accessories">Accessories</option>
+                                <option value="Footwear">Footwear</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="addCategory" class="form-label">Category <span class="text-danger">*</span></label>
+                            <select class="form-select" id="addCategory" name="Category" required>
+                                <option value="">Select Category</option>
+                                <option value="Clothing">Clothing</option>
+                                <option value="Equipment">Equipment</option>
+                                <option value="Accessories">Accessories</option>
+                                <option value="Footwear">Footwear</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-orange">
+                        <i class="bi bi-plus-circle me-2"></i>Add Product
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Product Modal -->
+<div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editProductModalLabel">Edit Product</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="nav nav-tabs" id="editProductTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="product-details-tab" data-bs-toggle="tab" data-bs-target="#product-details-tab-pane" type="button" role="tab">Product Details</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="product-info-tab" data-bs-toggle="tab" data-bs-target="#product-info-tab-pane" type="button" role="tab">Product Info</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="inventory-tab" data-bs-toggle="tab" data-bs-target="#inventory-tab-pane" type="button" role="tab">Inventory</button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="editProductTabContent">
+                    <!-- Product Details Tab -->
+                    <div class="tab-pane fade show active" id="product-details-tab-pane" role="tabpanel">
+                        <form id="editProductForm" method="post" action="@Url.Action("Edit", "Product")" enctype="multipart/form-data" class="mt-4">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" id="editProductId" name="ProductId" value="" />
+
+                            <!-- Image Section -->
+                            <div class="row mb-4">
+                                <div class="col-md-12">
+                                    <label class="form-label fw-bold">Product Image</label>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="image-preview-container mb-3">
+                                                <div id="currentImagePreview" class="current-image-preview border rounded p-3 text-center" style="min-height: 200px; background-color: #f8f9fa;">
+                                                    <img id="currentImage" src="" alt="Current Product Image" class="img-fluid rounded" style="max-height: 180px; display: none;">
+                                                    <div id="currentImagePlaceholder" class="d-flex flex-column align-items-center justify-content-center h-100">
+                                                        <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
+                                                        <p class="text-muted mt-2 mb-0">Current Image</p>
+                                                        <small class="text-muted">No image uploaded</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <div class="mb-3">
+                                                <label for="editImageFile" class="form-label">Upload New Image</label>
+                                                <input type="file" class="form-control" id="editImageFile" name="ImageFile" accept="image/*">
+                                                <div class="form-text">Supported: JPG, PNG, GIF, BMP, WEBP. Max size: 5MB</div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="editImageURL" class="form-label">Or Image URL</label>
+                                                <input type="url" class="form-control" id="editImageURL" name="ImageURL" placeholder="https://example.com/image.jpg">
+                                                <div class="form-text">Provide a direct link to the product image</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Basic Product Information -->
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    <label for="editTitle" class="form-label">Product Title <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="editTitle" name="Title" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="editProductNumber" class="form-label">Product Number</label>
+                                    <input type="text" class="form-control bg-light text-muted" id="editProductNumber" name="ProductNumber" readonly tabindex="-1" onfocus="this.blur()">
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label for="editDescription" class="form-label">Description</label>
+                                    <textarea class="form-control" id="editDescription" name="Description" rows="3"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label for="editPrice" class="form-label">Price <span class="text-danger">*</span></label>
+                                    <input type="number" step="0.01" min="0" class="form-control" id="editPrice" name="Price" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="editPoints" class="form-label">Points</label>
+                                    <input type="number" min="0" class="form-control" id="editPoints" name="Points">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="editTag" class="form-label">Tag</label>
+                                    <input type="text" class="form-control" id="editTag" name="Tag">
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label for="editType" class="form-label">Type <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="editType" name="Type" required>
+                                        <option value="">Select Type</option>
+                                        <option value="Clothing">Clothing</option>
+                                        <option value="Equipment">Equipment</option>
+                                        <option value="Accessories">Accessories</option>
+                                        <option value="Footwear">Footwear</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="editCategory" class="form-label">Category <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="editCategory" name="Category" required>
+                                        <option value="">Select Category</option>
+                                        <option value="Clothing">Clothing</option>
+                                        <option value="Equipment">Equipment</option>
+                                        <option value="Accessories">Accessories</option>
+                                        <option value="Footwear">Footwear</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="editStatus" class="form-label">Status</label>
+                                    <select class="form-select" id="editStatus" name="Status">
+                                        <option value="Active">Active</option>
+                                        <option value="Inactive">Inactive</option>
+                                        <option value="Discontinued">Discontinued</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-danger me-auto" id="deleteProductBtn">Delete Product</button>
+                                <button type="submit" class="btn btn-orange">Save Changes</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Product Info Tab -->
+                    <div class="tab-pane fade" id="product-info-tab-pane" role="tabpanel">
+                        <div class="mt-4">
+                            <div class="text-center mb-4">
+                                <div class="rounded-circle bg-navy text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 100px; height: 100px; font-size: 2.5rem;" id="productInfoAvatar">
+                                    <span id="productInfoInitials">--</span>
+                                </div>
+                                <h4 class="mb-1" id="productInfoTitle">--</h4>
+                                <p class="text-muted" id="productInfoNumber">--</p>
+                                <div class="d-flex justify-content-center gap-2 mb-2">
+                                    <span class="badge bg-primary" id="productInfoStatus">--</span>
+                                    <span class="badge bg-secondary" id="productInfoCategory">--</span>
+                                </div>
+                            </div>
+
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-header bg-white">
+                                            <h5 class="card-title mb-0">Product Information</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <ul class="list-group list-group-flush">
+                                                <li class="list-group-item d-flex justify-content-between px-0">
+                                                    <span class="text-muted">Title:</span>
+                                                    <span id="productInfoTitleDetail">--</span>
+                                                </li>
+                                                <li class="list-group-item d-flex justify-content-between px-0">
+                                                    <span class="text-muted">Price:</span>
+                                                    <span id="productInfoPrice">--</span>
+                                                </li>
+                                                <li class="list-group-item d-flex justify-content-between px-0">
+                                                    <span class="text-muted">Points:</span>
+                                                    <span id="productInfoPoints">--</span>
+                                                </li>
+                                                <li class="list-group-item d-flex justify-content-between px-0">
+                                                    <span class="text-muted">Type:</span>
+                                                    <span id="productInfoType">--</span>
+                                                </li>
+                                                <li class="list-group-item d-flex justify-content-between px-0">
+                                                    <span class="text-muted">Tag:</span>
+                                                    <span id="productInfoTag">--</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-header bg-white">
+                                            <h5 class="card-title mb-0">Product Statistics</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row text-center g-3 mt-4">
+                                                <div class="col-4">
+                                                    <div class="border rounded p-3">
+                                                        <h3 class="mb-1 fs-5" id="productInfoSales">0</h3>
+                                                        <p class="mb-0 small text-muted">Sales</p>
+                                                    </div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <div class="border rounded p-3">
+                                                        <h3 class="mb-1 fs-5" id="productInfoViews">0</h3>
+                                                        <p class="mb-0 small text-muted">Views</p>
+                                                    </div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <div class="border rounded p-3">
+                                                        <h3 class="mb-1 fs-5" id="productInfoRating">0</h3>
+                                                        <p class="mb-0 small text-muted">Rating</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Inventory Tab -->
+                    <div class="tab-pane fade" id="inventory-tab-pane" role="tabpanel">
+                        <div class="mt-4">
+                            <h6 class="mb-3">Inventory Management</h6>
+                            <div class="row mb-4">
+                                <div class="col-md-4 mb-3">
+                                    <label for="stockQuantity" class="form-label">Stock Quantity</label>
+                                    <input type="number" min="0" class="form-control" id="stockQuantity" name="StockQuantity" placeholder="0">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="lowStockThreshold" class="form-label">Low Stock Threshold</label>
+                                    <input type="number" min="0" class="form-control" id="lowStockThreshold" name="LowStockThreshold" placeholder="5">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="reorderLevel" class="form-label">Reorder Level</label>
+                                    <input type="number" min="0" class="form-control" id="reorderLevel" name="ReorderLevel" placeholder="10">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Product Confirmation Modal -->
+<div class="modal fade" id="deleteProductModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Deletion</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this product? This action cannot be undone.</p>
+                <p class="text-danger"><strong>Note:</strong> The product image will also be removed from cloud storage.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteProductForm" method="post" action="@Url.Action("Delete", "Product")">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="deleteProductId" name="id" value="" />
+                    <button type="submit" class="btn btn-danger">Delete Product</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- DataTables Scripts -->
+    <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.9/js/responsive.bootstrap5.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.bootstrap5.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
+
+    <!-- API URL Configuration -->
+    <script>
+        window.appUrls = {
+            getProductData: '@Url.Action("GetProductData", "Product")',
+            updateInventory: '@Url.Action("UpdateInventory", "Product")',
+            uploadImage: '@Url.Action("UploadImage", "Product")',
+            deleteImage: '@Url.Action("DeleteImage", "Product")',
+            validateImageUrl: '@Url.Action("ValidateImageUrl", "Product")'
+        };
+        console.log('Product API URLs configured:', window.appUrls);
+    </script>
+
+    <!-- Product Management Script -->
+    <script type="text/javascript" src="~/js/utilities.js"></script>
+    <script type="text/javascript" src="~/js/productManagement.js"></script>
+}
