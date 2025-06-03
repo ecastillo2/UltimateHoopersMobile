@@ -5,8 +5,8 @@
 @section Styles {
     <style>
         :root {
-            --primary-color: #FF6B00;
-            --secondary-color: #1C2C5B;
+            --primary-color: #ff6238;
+            --secondary-color: #342580;
             --accent-color: #3BACB6;
             --light-color: #F8F9FA;
             --dark-color: #212529;
@@ -18,7 +18,7 @@
         }
 
         .hero-section {
-            background: linear-gradient(135deg, var(--secondary-color) 0%, #0b1733 100%);
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #251b5c 100%);
             color: white;
             padding: 6rem 0;
             position: relative;
@@ -60,8 +60,20 @@
         }
 
             .btn-orange:hover {
-                background-color: #e25c00;
-                border-color: #e25c00;
+                background-color: #e55530;
+                border-color: #e55530;
+                color: white;
+            }
+
+        .btn-outline-orange {
+            background-color: transparent;
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+            .btn-outline-orange:hover {
+                background-color: var(--primary-color);
+                border-color: var(--primary-color);
                 color: white;
             }
 
@@ -72,8 +84,20 @@
         }
 
             .btn-navy:hover {
-                background-color: #151f3e;
-                border-color: #151f3e;
+                background-color: #2a1e65;
+                border-color: #2a1e65;
+                color: white;
+            }
+
+        .btn-outline-navy {
+            background-color: transparent;
+            border-color: var(--secondary-color);
+            color: var(--secondary-color);
+        }
+
+            .btn-outline-navy:hover {
+                background-color: var(--secondary-color);
+                border-color: var(--secondary-color);
                 color: white;
             }
 
@@ -97,7 +121,7 @@
             justify-content: center;
             border-radius: 20px;
             margin-bottom: 1.5rem;
-            background-color: rgba(255, 107, 0, 0.1);
+            background-color: rgba(255, 98, 56, 0.1);
             color: var(--primary-color);
             font-size: 2rem;
         }
@@ -184,7 +208,7 @@
         .circle-decoration {
             position: absolute;
             border-radius: 50%;
-            background: rgba(255, 107, 0, 0.1);
+            background: rgba(255, 98, 56, 0.1);
             z-index: 0;
         }
 
@@ -252,6 +276,18 @@
                         height: 3px;
                         background-color: var(--primary-color);
                     }
+
+        .hover-shadow-lg {
+            transition: box-shadow 0.3s ease;
+        }
+
+            .hover-shadow-lg:hover {
+                box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175) !important;
+            }
+
+        .transition-all {
+            transition: all 0.3s ease;
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 }
@@ -281,7 +317,7 @@
                 </div>
                 <div class="col-lg-6 mt-5 mt-lg-0 text-center">
                     <div class="position-relative">
-                        <img src="https://placehold.co/600x400/FF6B00/FFFFFF?text=Ultimate+Hoopers+App" alt="Ultimate Hoopers App" class="img-fluid rounded-4 shadow-lg hero-image">
+                        <img src="~/image/mobileapp.png" class="img-fluid rounded-4 shadow-lg hero-image">
                         <div class="position-absolute top-0 start-0 translate-middle bg-orange rounded-circle p-4 shadow-lg">
                             <i class="ti ti-device-mobile text-white fs-1"></i>
                         </div>
@@ -384,16 +420,16 @@
             </div>
             <div class="row g-4">
                 <div class="col-md-3">
-                    <img src="https://placehold.co/300x600/1C2C5B/FFFFFF?text=Dashboard" alt="App Screenshot" class="img-fluid rounded-4 shadow-sm">
+                    <img src="https://placehold.co/300x600/342580/FFFFFF?text=Dashboard" alt="App Screenshot" class="img-fluid rounded-4 shadow-sm">
                 </div>
                 <div class="col-md-3">
-                    <img src="https://placehold.co/300x600/FF6B00/FFFFFF?text=Training" alt="App Screenshot" class="img-fluid rounded-4 shadow-sm">
+                    <img src="https://placehold.co/300x600/ff6238/FFFFFF?text=Training" alt="App Screenshot" class="img-fluid rounded-4 shadow-sm">
                 </div>
                 <div class="col-md-3">
-                    <img src="https://placehold.co/300x600/1C2C5B/FFFFFF?text=Stats" alt="App Screenshot" class="img-fluid rounded-4 shadow-sm">
+                    <img src="https://placehold.co/300x600/342580/FFFFFF?text=Stats" alt="App Screenshot" class="img-fluid rounded-4 shadow-sm">
                 </div>
-                <div class="col-md-3">
-                    <img src="https://placehold.co/300x600/FF6B00/FFFFFF?text=Profile" alt="App Screenshot" class="img-fluid rounded-4 shadow-sm">
+                <div class="col-md-4">
+                    <img src="https://placehold.co/300x600/ff6238/FFFFFF?text=Profile" alt="App Screenshot" class="img-fluid rounded-4 shadow-sm">
                 </div>
             </div>
         </div>
@@ -409,7 +445,7 @@
             <div class="row g-4">
                 <div class="col-lg-3 col-md-6">
                     <div class="card coach-card shadow-sm">
-                        <img src="https://placehold.co/400x400/1C2C5B/FFFFFF?text=Coach+Mike" class="coach-img" alt="Coach">
+                        <img src="https://placehold.co/400x400/342580/FFFFFF?text=Coach+Mike" class="coach-img" alt="Coach">
                         <div class="card-body text-center p-4">
                             <h4 class="mb-1">Mike Johnson</h4>
                             <p class="text-orange mb-3">Former NBA Player</p>
@@ -424,7 +460,7 @@
                 </div>
                 <div class="col-lg-3 col-md-6">
                     <div class="card coach-card shadow-sm">
-                        <img src="https://placehold.co/400x400/FF6B00/FFFFFF?text=Coach+Sarah" class="coach-img" alt="Coach">
+                        <img src="https://placehold.co/400x400/ff6238/FFFFFF?text=Coach+Sarah" class="coach-img" alt="Coach">
                         <div class="card-body text-center p-4">
                             <h4 class="mb-1">Sarah Williams</h4>
                             <p class="text-orange mb-3">WNBA Champion</p>
@@ -439,7 +475,7 @@
                 </div>
                 <div class="col-lg-3 col-md-6">
                     <div class="card coach-card shadow-sm">
-                        <img src="https://placehold.co/400x400/1C2C5B/FFFFFF?text=Coach+David" class="coach-img" alt="Coach">
+                        <img src="https://placehold.co/400x400/342580/FFFFFF?text=Coach+David" class="coach-img" alt="Coach">
                         <div class="card-body text-center p-4">
                             <h4 class="mb-1">David Chen</h4>
                             <p class="text-orange mb-3">College Coach</p>
@@ -454,7 +490,7 @@
                 </div>
                 <div class="col-lg-3 col-md-6">
                     <div class="card coach-card shadow-sm">
-                        <img src="https://placehold.co/400x400/FF6B00/FFFFFF?text=Coach+Lisa" class="coach-img" alt="Coach">
+                        <img src="https://placehold.co/400x400/ff6238/FFFFFF?text=Coach+Lisa" class="coach-img" alt="Coach">
                         <div class="card-body text-center p-4">
                             <h4 class="mb-1">Lisa Rodriguez</h4>
                             <p class="text-orange mb-3">Youth Development</p>
@@ -586,7 +622,7 @@
                     </div>
                 </div>
                 <div class="col-lg-6 mt-5 mt-lg-0 d-flex justify-content-center">
-                    <img src="https://placehold.co/400x600/FFFFFF/FF6B00?text=Ultimate+Hoopers" alt="App Screenshots" class="img-fluid hero-image" style="max-height: 500px;">
+                    <img src="~/image/mobileappsingle.png" alt="App Screenshots" class="img-fluid hero-image" style="max-height: 500px;">
                 </div>
             </div>
         </div>
@@ -602,7 +638,7 @@
         <div class="container">
             <div class="text-center mb-7">
                 <h2 class="fs-9 fw-bold mb-3 text-navy">Simple Pricing</h2>
-                <p class="fs-4 text-muted mx-auto" style="max-width: 700px;">Choose the plan that fits your needs</p>
+                <p class="fs-4 text-muted mx-auto" style="max-width: 700px;">Whether you're a player looking to improve or a host organizing games, we have the perfect plan for you</p>
             </div>
             <div class="row g-4 justify-content-center">
                 <div class="col-lg-4 col-md-6">
@@ -612,36 +648,29 @@
                                 <div class="d-inline-flex align-items-center justify-content-center bg-light rounded-circle mb-3" style="width: 80px; height: 80px;">
                                     <i class="ti ti-player-play fs-1 text-orange"></i>
                                 </div>
-                                <h3 class="fs-4 fw-bold">Starter</h3>
+                                <h3 class="fs-4 fw-bold">Player</h3>
                                 <div class="d-flex align-items-center justify-content-center gap-2 my-3">
-                                    <span class="fs-1 fw-bold">$9.99</span>
-                                    <span class="text-muted">/month</span>
+                                    <span class="fs-1 fw-bold text-success">FREE</span>
                                 </div>
-                                <p class="text-muted">Perfect for beginners who want to improve their skills</p>
+                                <p class="text-muted">Perfect for players who want to find games and track their progress</p>
                             </div>
                             <ul class="list-unstyled mb-4">
                                 <li class="d-flex align-items-center mb-3">
                                     <i class="ti ti-check text-success me-2"></i>
-                                    <span>Basic skill tracking</span>
+                                    <span>Find pickup games</span>
                                 </li>
                                 <li class="d-flex align-items-center mb-3">
                                     <i class="ti ti-check text-success me-2"></i>
-                                    <span>50+ training videos</span>
+                                    <span>Track personal stats</span>
                                 </li>
                                 <li class="d-flex align-items-center mb-3">
                                     <i class="ti ti-check text-success me-2"></i>
-                                    <span>Workout scheduler</span>
+                                    <span>Access to open runs</span>
                                 </li>
-                                <li class="d-flex align-items-center mb-3">
-                                    <i class="ti ti-x text-danger me-2"></i>
-                                    <span class="text-muted">Coach feedback</span>
-                                </li>
-                                <li class="d-flex align-items-center mb-3">
-                                    <i class="ti ti-x text-danger me-2"></i>
-                                    <span class="text-muted">Advanced analytics</span>
-                                </li>
+                                
+                            
                             </ul>
-                            <a href="#" class="btn btn-outline-orange w-100 py-2">Start Free Trial</a>
+                            <a href="#" class="btn btn-outline-orange w-100 py-2">Download</a>
                         </div>
                     </div>
                 </div>
@@ -655,36 +684,48 @@
                                 <div class="d-inline-flex align-items-center justify-content-center bg-light rounded-circle mb-3" style="width: 80px; height: 80px;">
                                     <i class="ti ti-trophy fs-1 text-orange"></i>
                                 </div>
-                                <h3 class="fs-4 fw-bold">Pro</h3>
+                                <h3 class="fs-4 fw-bold">Player Advanced</h3>
                                 <div class="d-flex align-items-center justify-content-center gap-2 my-3">
-                                    <span class="fs-1 fw-bold">$19.99</span>
+                                    <span class="fs-1 fw-bold">$5</span>
                                     <span class="text-muted">/month</span>
                                 </div>
-                                <p class="text-muted">For serious players looking to take their game to the next level</p>
+                                <p class="text-muted">For serious players who want exclusive access to premium games</p>
                             </div>
                             <ul class="list-unstyled mb-4">
                                 <li class="d-flex align-items-center mb-3">
                                     <i class="ti ti-check text-success me-2"></i>
-                                    <span>Advanced skill tracking</span>
+                                    <span>All free features</span>
                                 </li>
                                 <li class="d-flex align-items-center mb-3">
                                     <i class="ti ti-check text-success me-2"></i>
-                                    <span>200+ training videos</span>
+                                    <span>Find pickup games</span>
                                 </li>
                                 <li class="d-flex align-items-center mb-3">
                                     <i class="ti ti-check text-success me-2"></i>
-                                    <span>Workout scheduler</span>
+                                    <span>Track personal stats</span>
                                 </li>
                                 <li class="d-flex align-items-center mb-3">
                                     <i class="ti ti-check text-success me-2"></i>
-                                    <span>Monthly coach feedback</span>
+                                    <span>Access to open runs</span>
                                 </li>
                                 <li class="d-flex align-items-center mb-3">
                                     <i class="ti ti-check text-success me-2"></i>
-                                    <span>Basic analytics</span>
+                                    <span>Gain performance points</span>
+                                </li>
+                                <li class="d-flex align-items-center mb-3">
+                                    <i class="ti ti-check text-success me-2"></i>
+                                    <span>Invited to private runs</span>
+                                </li>
+                                <li class="d-flex align-items-center mb-3">
+                                    <i class="ti ti-check text-success me-2"></i>
+                                    <span>Invited to Participate in events</span>
+                                </li>
+                                <li class="d-flex align-items-center mb-3">
+                                    <i class="ti ti-check text-success me-2"></i>
+                                    <span>Scouting Report</span>
                                 </li>
                             </ul>
-                            <a href="#" class="btn btn-orange w-100 py-2">Start Free Trial</a>
+                            <a href="#" class="btn btn-outline-orange w-100 py-2">Download</a>
                         </div>
                     </div>
                 </div>
@@ -695,36 +736,36 @@
                                 <div class="d-inline-flex align-items-center justify-content-center bg-light rounded-circle mb-3" style="width: 80px; height: 80px;">
                                     <i class="ti ti-crown fs-1 text-navy"></i>
                                 </div>
-                                <h3 class="fs-4 fw-bold">Elite</h3>
+                                <h3 class="fs-4 fw-bold">Client Host</h3>
                                 <div class="d-flex align-items-center justify-content-center gap-2 my-3">
-                                    <span class="fs-1 fw-bold">$39.99</span>
+                                    <span class="fs-1 fw-bold">$200</span>
                                     <span class="text-muted">/month</span>
                                 </div>
-                                <p class="text-muted">The ultimate package for players aiming for excellence</p>
+                                <p class="text-muted">For organizations and coaches who host basketball events</p>
                             </div>
                             <ul class="list-unstyled mb-4">
                                 <li class="d-flex align-items-center mb-3">
                                     <i class="ti ti-check text-success me-2"></i>
-                                    <span>Comprehensive skill tracking</span>
+                                    <span>Host basketball games</span>
                                 </li>
                                 <li class="d-flex align-items-center mb-3">
                                     <i class="ti ti-check text-success me-2"></i>
-                                    <span>Unlimited training videos</span>
+                                    <span>Hudl Focus camera ($2,000 value)</span>
                                 </li>
                                 <li class="d-flex align-items-center mb-3">
                                     <i class="ti ti-check text-success me-2"></i>
-                                    <span>Advanced workout scheduler</span>
+                                    <span>Marketing & promotion tools</span>
                                 </li>
                                 <li class="d-flex align-items-center mb-3">
                                     <i class="ti ti-check text-success me-2"></i>
-                                    <span>Weekly coach feedback</span>
+                                    <span>Event management dashboard</span>
                                 </li>
                                 <li class="d-flex align-items-center mb-3">
                                     <i class="ti ti-check text-success me-2"></i>
-                                    <span>Advanced analytics & reports</span>
+                                    <span>Player recruitment tools</span>
                                 </li>
                             </ul>
-                            <a href="#" class="btn btn-outline-navy w-100 py-2">Start Free Trial</a>
+                            <a href="#" class="btn btn-outline-navy w-100 py-2">Start Hosting</a>
                         </div>
                     </div>
                 </div>
@@ -806,7 +847,6 @@
     </footer>
 </div>
 
-<!-- Login Modal (Optional) -->
 <!-- Login Modal -->
 <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -830,7 +870,7 @@
                             <div class="mb-3">
                                 <label for="clientEmail" class="form-label">Email Address</label>
                                 <input type="email" class="form-control" id="clientEmail" name="email" required>
-                                <div class="form-text">Demo: any @@@("client.com") email, password: client123</div>
+                                <div class="form-text">Demo: any @@client.com email, password: client123</div>
                             </div>
                             <div class="mb-3">
                                 <label for="clientPassword" class="form-label">Password</label>
@@ -853,7 +893,7 @@
                             <div class="mb-3">
                                 <label for="adminEmail" class="form-label">Email Address</label>
                                 <input type="email" class="form-control" id="adminEmail" name="email" required>
-                                <div class="form-text">Demo: any @@@("company.com") email, password: admin123</div>
+                                <div class="form-text">Demo: any @@company.com email, password: admin123</div>
                             </div>
                             <div class="mb-3">
                                 <label for="adminPassword" class="form-label">Password</label>

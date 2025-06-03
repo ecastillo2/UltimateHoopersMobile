@@ -9,24 +9,17 @@ using Microsoft.Extensions.Logging;
 namespace DataLayer.DAL.Repository
 {
     /// <summary>
-    /// Product Repository
+    /// Implementation of the PrivateRun repository with optimized query methods
     /// </summary>
-    public class ProductRepository : IProductRepository
+    public class VideoRepository : IVideoRepository
     {
         private readonly ApplicationContext _context;
-        private readonly ILogger<ProductRepository> _logger;
+        private readonly ILogger<VideoRepository> _logger;
         private readonly IConfiguration _configuration;
         private bool _disposed = false;
         private readonly string _blobBaseUrl;
 
-        /// <summary>
-        /// Product Repository
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="configuration"></param>
-        /// <param name="logger"></param>
-        /// <exception cref="ArgumentNullException"></exception>
-        public ProductRepository(ApplicationContext context, IConfiguration configuration, ILogger<ProductRepository> logger = null)
+        public VideoRepository(ApplicationContext context, IConfiguration configuration, ILogger<VideoRepository> logger = null)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
@@ -35,15 +28,15 @@ namespace DataLayer.DAL.Repository
         }
 
         /// <summary>
-        /// Get Products Async
+        /// Get Video Async
         /// </summary>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<List<Product>> GetCProductsAsync(CancellationToken cancellationToken = default)
+        public async Task<List<Video>> GetVideosAsync(CancellationToken cancellationToken = default)
         {
             try
             {
-                return await _context.Product
+                return await _context.Video
                     .AsNoTracking()
                     .ToListAsync(cancellationToken);
             }
@@ -61,17 +54,17 @@ namespace DataLayer.DAL.Repository
         /// <param name="pageSize"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<(List<Product> Products, int TotalCount, int TotalPages)> GetProductsPaginatedAsync(int page = 1,int pageSize = 20,CancellationToken cancellationToken = default)
+        public async Task<(List<Video> Videos, int TotalCount, int TotalPages)> GetVideosPaginatedAsync(int page = 1,int pageSize = 20,CancellationToken cancellationToken = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
 
             try
             {
-                var totalCount = await _context.Product.CountAsync(cancellationToken);
+                var totalCount = await _context.Video.CountAsync(cancellationToken);
                 var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
-                var products = await _context.Product
+                var products = await _context.Video
                     .AsNoTracking()
 
                     .Skip((page - 1) * pageSize)
@@ -96,12 +89,12 @@ namespace DataLayer.DAL.Repository
         /// <param name="sortBy"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<(List<Product> Products, string NextCursor)> GetProductsWithCursorAsync(string cursor = null,int limit = 20,string direction = "next",string sortBy = "Points",CancellationToken cancellationToken = default)
+        public async Task<(List<Video> Videos, string NextCursor)> GetVideosWithCursorAsync(string cursor = null,int limit = 20,string direction = "next",string sortBy = "Points",CancellationToken cancellationToken = default)
         {
             try
             {
                 // Default query starting point
-                IQueryable<Product> query = _context.Product.AsNoTracking();
+                IQueryable<Video> query = _context.Video.AsNoTracking();
 
                 // Parse the cursor if provided
                 CursorData cursorData = null;
@@ -135,9 +128,9 @@ namespace DataLayer.DAL.Repository
                     privateRuns.RemoveAt(limit);
 
                     // Create cursor for next page based on last item properties
-                    var newCursorData = new ProductCursorData
+                    var newCursorData = new VideoCursorData
                     {
-                        Id = lastItem.ProductId,
+                        Id = lastItem.VideoId,
 
 
                     };
@@ -167,21 +160,23 @@ namespace DataLayer.DAL.Repository
         /// <param name="runId"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<Product> GetProductByIdAsync(string productId,CancellationToken cancellationToken = default)
+        public async Task<Video> GetVideoByIdAsync(string videoId, CancellationToken cancellationToken = default)
         {
             try
             {
-                return await _context.Product
+                return await _context.Video
                     .AsNoTracking()
 
-                    .FirstOrDefaultAsync(p => p.ProductId == productId, cancellationToken);
+                    .FirstOrDefaultAsync(p => p.VideoId == videoId, cancellationToken);
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Error getting Product {ProductId}", productId);
+                _logger?.LogError(ex, "Error getting Video {VideoId}", videoId);
                 throw;
             }
         }
+
+
 
         /// <summary>
         /// Get Product By Id Async
@@ -189,25 +184,25 @@ namespace DataLayer.DAL.Repository
         /// <param name="runId"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<bool> DeleteProductAsync(string productId, CancellationToken cancellationToken = default)
+        public async Task<bool> DeleteVideoAsync(string videoId, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(productId))
+            if (string.IsNullOrWhiteSpace(videoId))
             {
-                _logger?.LogWarning("DeleteProductAsync called with null or empty productId");
+                _logger?.LogWarning("DeleteVideoAsync called with null or empty VideoId");
                 return false;
             }
 
             try
             {
                 // Find the product with related entities
-                var product = await _context.Product
+                var video = await _context.Video
                     //.Include(p => p.Reviews) // Include related entities if any
                     //.Include(p => p.Categories)
-                    .FirstOrDefaultAsync(p => p.ProductId == productId, cancellationToken);
+                    .FirstOrDefaultAsync(p => p.VideoId == videoId, cancellationToken);
 
-                if (product == null)
+                if (video == null)
                 {
-                    _logger?.LogWarning("Product with ID {ProductId} not found for deletion", productId);
+                    _logger?.LogWarning("Product with ID {ProductId} not found for deletion", videoId);
                     return false;
                 }
 
@@ -218,28 +213,29 @@ namespace DataLayer.DAL.Repository
                 //}
 
                 // Remove the product
-                _context.Product.Remove(product);
+                _context.Video.Remove(video);
 
                 // Save all changes - EF Core automatically wraps this in a transaction
                 var rowsAffected = await _context.SaveChangesAsync(cancellationToken);
 
                 if (rowsAffected > 0)
                 {
-                    _logger?.LogInformation("Successfully deleted product {ProductId}", productId);
+                    _logger?.LogInformation("Successfully deleted Video {VideoId}", videoId);
                     return true;
                 }
                 else
                 {
-                    _logger?.LogWarning("No rows affected when deleting product {ProductId}", productId);
+                    _logger?.LogWarning("No rows affected when deleting Video {VideoId}", videoId);
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Error deleting product {ProductId}", productId);
+                _logger?.LogError(ex, "Error deleting product {ProductId}", videoId);
                 throw;
             }
         }
+
 
         /// <summary>
         /// Insert Product
@@ -247,19 +243,19 @@ namespace DataLayer.DAL.Repository
         /// <param name="model"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task InsertProduct(Product model, CancellationToken cancellationToken = default)
+        public async Task InsertVideo(Video model, CancellationToken cancellationToken = default)
         {
             try
             {
 
-                model.ImageURL = $"{_blobBaseUrl}{model.ProductId}.webp";
+                model.VideoURL = $"{_blobBaseUrl}{model.VideoId}.webp";
 
 
                 // Add to context and save
-                await _context.Product.AddAsync(model);
+                await _context.Video.AddAsync(model);
                 await SaveChangesAsync();
 
-                _logger?.LogInformation("Successfully inserted Product with ID: {JoinedRunId}", model.ProductId);
+                _logger?.LogInformation("Successfully inserted Product with ID: {JoinedRunId}", model.VideoId);
             }
             catch (Exception ex)
             {
@@ -273,38 +269,31 @@ namespace DataLayer.DAL.Repository
         /// <param name="privateRun"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<bool> UpdateProductAsync(Product product,CancellationToken cancellationToken = default)
+        public async Task<bool> UpdateVideoAsync(Video video, CancellationToken cancellationToken = default)
         {
             try
             {
                 // Retrieve the existing product from database
-                var existingProduct = await _context.Product
-                    .FirstOrDefaultAsync(p => p.ProductId == product.ProductId, cancellationToken);
+                var existingVideo = await _context.Video
+                    .FirstOrDefaultAsync(p => p.VideoId == video.VideoId, cancellationToken);
 
-                if (existingProduct == null)
+                if (existingVideo == null)
                 {
                     return false;
                 }
 
                 // Update only the fields you want to allow updates for
-                existingProduct.Title = product.Title;
-                existingProduct.Description = product.Description;
-                existingProduct.Price = product.Price;
-                existingProduct.Points = product.Points;
-                existingProduct.Type = product.Type;
-                existingProduct.Category = product.Category;
-                existingProduct.Status = product.Status;
-                existingProduct.ProductNumber = product.ProductNumber;
-                existingProduct.Tag = product.Tag;
+                existingVideo.Status = video.Status;
+               
 
                 // Don't update sensitive fields like CreatedDate, CreatedBy, etc.
-                // existingProduct.CreatedDate = product.CreatedDate; // DON'T update
+                // existingProduct.CreatedDate = Video.CreatedDate; // DON'T update
 
                 return await SaveChangesAsync(cancellationToken) > 0;
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Error updating Product {ProductId}", product.ProductId);
+                _logger?.LogError(ex, "Error updating Video {VideoId}", video.VideoId);
                 throw;
             }
         }
@@ -329,10 +318,6 @@ namespace DataLayer.DAL.Repository
 
         #region IDisposable and IAsyncDisposable Implementation
 
-        /// <summary>
-        /// Dispose
-        /// </summary>
-        /// <param name="disposing"></param>
         protected virtual void Dispose(bool disposing)
         {
             if (!_disposed)
@@ -346,19 +331,12 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        /// <summary>
-        /// Dispose
-        /// </summary>
         public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
         }
 
-        /// <summary>
-        /// DisposeAsync
-        /// </summary>
-        /// <returns></returns>
         public async ValueTask DisposeAsync()
         {
             if (!_disposed)
@@ -370,36 +348,13 @@ namespace DataLayer.DAL.Repository
             GC.SuppressFinalize(this);
         }
 
-        /// <summary>
-        /// BatchUpdateProductsAsync
-        /// </summary>
-        /// <param name="products"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
-        public Task<int> BatchUpdateProductsAsync(IEnumerable<Product> products, CancellationToken cancellationToken = default)
+        public Task<int> BatchUpdateVideosAsync(IEnumerable<Video> videos, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
 
-        /// <summary>
-        /// GetProductsAsync
-        /// </summary>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
-        public Task<List<Product>> GetProductsAsync(CancellationToken cancellationToken = default)
-        {
-            throw new NotImplementedException();
-        }
 
-        /// <summary>
-        /// Stream All Products Async
-        /// </summary>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
-        public IAsyncEnumerable<Product> StreamAllProductsAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
+        public IAsyncEnumerable<Video> StreamAllVideosAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
@@ -411,7 +366,7 @@ namespace DataLayer.DAL.Repository
     /// <summary>
     /// Helper class for cursor-based pagination
     /// </summary>
-    internal class ProductCursorData
+    internal class VideoCursorData
     {
         public string Id { get; set; }
         public string Category { get; set; }

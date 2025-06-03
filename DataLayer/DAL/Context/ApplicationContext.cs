@@ -48,6 +48,7 @@ namespace DataLayer.Context
         public virtual DbSet<Order> Order { get; set; }
         public virtual DbSet<Activity> Activity { get; set; }
         public virtual DbSet<ScoutingReport> ScoutingReport { get; set; }
+        public virtual DbSet<Video> Video { get; set; }
         public virtual DbSet<Squad> Squad { get; set; }
         public virtual DbSet<SquadTeam> SquadTeam { get; set; }
         public virtual DbSet<SquadRequest> SquadRequest { get; set; }
