@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Models;
+using SixLabors.ImageSharp.Processing;
 using SkiaSharp;
 using System;
 using System.Drawing;
@@ -143,48 +144,219 @@ namespace WebAPI.ApiClients
         /// <returns>Success status</returns>
         public async Task<bool> UpdateProductImageFileAsync(string productId, IFormFile formFile, TimeSpan? timeStamp = null)
         {
-            if (string.IsNullOrWhiteSpace(productId))
-            {
-                throw new ArgumentException("Product ID cannot be null or empty", nameof(productId));
-            }
-
-            if (formFile == null || formFile.Length == 0)
-            {
-                throw new ArgumentException("No file was provided", nameof(formFile));
-            }
-
             try
             {
+                // Validate inputs
+                if (string.IsNullOrEmpty(productId))
+                {
+                    //_logger?.LogError("ProductId is null or empty");
+                    return false;
+                }
+
+                if (formFile == null || formFile.Length == 0)
+                {
+                    //_logger?.LogError("FormFile is null or empty");
+                    return false;
+                }
+
+                // Validate file type
+                var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp", "image/bmp" };
+                if (!allowedTypes.Contains(formFile.ContentType.ToLower()))
+                {
+                    //_logger?.LogError($"Unsupported file type: {formFile.ContentType}");
+                    return false;
+                }
+
+                // Validate file size (e.g., max 10MB)
+                if (formFile.Length > 10 * 1024 * 1024)
+                {
+                    //_logger?.LogError($"File size too large: {formFile.Length} bytes");
+                    return false;
+                }
+
                 var containerClient = _blobServiceClient.GetBlobContainerClient(_productImageContainerName);
                 await containerClient.CreateIfNotExistsAsync(PublicAccessType.Blob);
 
                 var fileName = $"{productId}.webp";
                 var blobClient = containerClient.GetBlobClient(fileName);
 
-                
-                    using var processedImageStream = await ProcessImageForWebP(formFile);
+                // Process image and upload
+                using var processedImageStream = await ProcessImageForWebP(formFile);
 
-                    var uploadOptions = new BlobUploadOptions
+                if (processedImageStream == null || processedImageStream.Length == 0)
+                {
+                    //_logger?.LogError("Processed image stream is null or empty");
+                    return false;
+                }
+
+                // Reset stream position to beginning
+                processedImageStream.Position = 0;
+
+                var uploadOptions = new BlobUploadOptions
+                {
+                    HttpHeaders = new BlobHttpHeaders
                     {
-                        HttpHeaders = new BlobHttpHeaders
-                        {
-                            ContentType = "image/webp",
-                            CacheControl = "public, max-age=31536000" // 1 year cache
-                        }
-                    };
+                        ContentType = "image/webp",
+                        CacheControl = "public, max-age=31536000" // 1 year cache
+                    },
+                    Conditions = null, // Allow overwrite
+                    ProgressHandler = null
+                };
 
-                    await blobClient.UploadAsync(processedImageStream, overwrite: true);
+                await blobClient.UploadAsync(processedImageStream, uploadOptions);
 
-                    
-                    return true;
-                
-
-              
+                //_logger?.LogInformation($"Successfully uploaded image for product {productId}");
+                return true;
+            }
+            catch (ArgumentException ex)
+            {
+               // _logger?.LogError(ex, $"Invalid parameter while processing image for product {productId}: {ex.Message}");
+                return false;
+            }
+            catch (NotSupportedException ex)
+            {
+                //_logger?.LogError(ex, $"Image format not supported for product {productId}: {ex.Message}");
+                return false;
             }
             catch (Exception ex)
             {
-                
+                //_logger?.LogError(ex, $"Error uploading image for product {productId}: {ex.Message}");
                 return false;
+            }
+        }
+
+        private async Task<MemoryStream> ProcessImageForWebP(IFormFile formFile)
+        {
+            try
+            {
+                using var inputStream = formFile.OpenReadStream();
+
+                // Read the image data into a byte array first
+                using var memoryStream = new MemoryStream();
+                await inputStream.CopyToAsync(memoryStream);
+                var imageBytes = memoryStream.ToArray();
+
+                // Validate that we can read the image
+                if (imageBytes.Length == 0)
+                {
+                    throw new ArgumentException("Image file is empty");
+                }
+
+                // Process with ImageSharp (recommended) or System.Drawing
+                return await ProcessImageWithImageSharp(imageBytes);
+            }
+            catch (Exception ex)
+            {
+                //_logger?.LogError(ex, $"Error processing image: {ex.Message}");
+                throw new ArgumentException($"Failed to process image: {ex.Message}", ex);
+            }
+        }
+
+        // Option 1: Using ImageSharp (Recommended - more reliable)
+        private async Task<MemoryStream> ProcessImageWithImageSharp(byte[] imageBytes)
+        {
+            try
+            {
+                using var image = SixLabors.ImageSharp.Image.Load(imageBytes);
+
+                // Resize if needed (optional)
+                var maxWidth = 1200;
+                var maxHeight = 1200;
+
+                if (image.Width > maxWidth || image.Height > maxHeight)
+                {
+                    var ratioX = (double)maxWidth / image.Width;
+                    var ratioY = (double)maxHeight / image.Height;
+                    var ratio = Math.Min(ratioX, ratioY);
+
+                    var newWidth = (int)(image.Width * ratio);
+                    var newHeight = (int)(image.Height * ratio);
+
+                    image.Mutate(x => x.Resize(newWidth, newHeight));
+                }
+
+                var outputStream = new MemoryStream();
+
+                // Save as WebP with quality settings
+                var encoder = new SixLabors.ImageSharp.Formats.Webp.WebpEncoder()
+                {
+                    Quality = 85, // Adjust quality as needed (0-100)
+                    Method = SixLabors.ImageSharp.Formats.Webp.WebpEncodingMethod.Default
+                };
+
+                await image.SaveAsync(outputStream, encoder);
+
+                outputStream.Position = 0;
+                return outputStream;
+            }
+            catch (Exception ex)
+            {
+                throw new ArgumentException($"ImageSharp processing failed: {ex.Message}", ex);
+            }
+        }
+
+        // Option 2: Using System.Drawing (Fallback - less reliable but widely available)
+        private async Task<MemoryStream> ProcessImageWithSystemDrawing(byte[] imageBytes)
+        {
+            try
+            {
+                using var inputStream = new MemoryStream(imageBytes);
+                using var originalImage = System.Drawing.Image.FromStream(inputStream);
+
+                // Resize if needed
+                var maxWidth = 1200;
+                var maxHeight = 1200;
+
+                var newWidth = originalImage.Width;
+                var newHeight = originalImage.Height;
+
+                if (originalImage.Width > maxWidth || originalImage.Height > maxHeight)
+                {
+                    var ratioX = (double)maxWidth / originalImage.Width;
+                    var ratioY = (double)maxHeight / originalImage.Height;
+                    var ratio = Math.Min(ratioX, ratioY);
+
+                    newWidth = (int)(originalImage.Width * ratio);
+                    newHeight = (int)(originalImage.Height * ratio);
+                }
+
+                using var resizedImage = new System.Drawing.Bitmap(newWidth, newHeight);
+                using var graphics = System.Drawing.Graphics.FromImage(resizedImage);
+
+                graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+                graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+
+                graphics.DrawImage(originalImage, 0, 0, newWidth, newHeight);
+
+                var outputStream = new MemoryStream();
+
+                // Save as PNG first (System.Drawing doesn't support WebP directly)
+                resizedImage.Save(outputStream, System.Drawing.Imaging.ImageFormat.Png);
+
+                outputStream.Position = 0;
+                return outputStream;
+            }
+            catch (Exception ex)
+            {
+                throw new ArgumentException($"System.Drawing processing failed: {ex.Message}", ex);
+            }
+        }
+
+        // Alternative: Simple pass-through if WebP conversion is causing issues
+        private async Task<MemoryStream> ProcessImageSimple(IFormFile formFile)
+        {
+            try
+            {
+                var outputStream = new MemoryStream();
+                using var inputStream = formFile.OpenReadStream();
+                await inputStream.CopyToAsync(outputStream);
+                outputStream.Position = 0;
+                return outputStream;
+            }
+            catch (Exception ex)
+            {
+                throw new ArgumentException($"Simple image processing failed: {ex.Message}", ex);
             }
         }
 
@@ -366,31 +538,7 @@ namespace WebAPI.ApiClients
 
         #region Private Helper Methods
 
-        /// <summary>
-        /// Process image and convert to WebP format
-        /// </summary>
-        /// <param name="formFile">Input image file</param>
-        /// <returns>WebP image stream</returns>
-        private async Task<MemoryStream> ProcessImageForWebP(IFormFile formFile)
-        {
-            using var inputStream = formFile.OpenReadStream();
-            using var cleanStream = await RemoveExifDataAsync(inputStream);
-            using var image = Image.FromStream(cleanStream);
-
-            // Correct orientation
-            CorrectImageOrientation(image);
-
-            // Convert to SKBitmap for WebP processing
-            using var skBitmap = ConvertToSkiaBitmap(image);
-            using var resizedBitmap = skBitmap.Resize(new SKImageInfo(PRODUCT_IMAGE_WIDTH, PRODUCT_IMAGE_HEIGHT), SKFilterQuality.High);
-            using var skImage = SKImage.FromBitmap(resizedBitmap);
-            using var encoded = skImage.Encode(SKEncodedImageFormat.Webp, WEBP_QUALITY);
-
-            var outputStream = new MemoryStream();
-            encoded.SaveTo(outputStream);
-            outputStream.Position = 0;
-            return outputStream;
-        }
+       
 
         /// <summary>
         /// Validate if the uploaded file is a valid image

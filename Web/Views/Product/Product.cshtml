@@ -72,7 +72,6 @@
                 box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
             }
 
-        /* Enhanced styling for Add Product Modal */
         #addImagePlaceholder {
             transition: all 0.3s ease;
             cursor: pointer;
@@ -146,20 +145,17 @@
         }
 
         @@keyframes shake {
-            0%, 100%
+            0%, 100% {
+                transform: translateX(0);
+            }
 
-        {
-            transform: translateX(0);
-        }
+            25% {
+                transform: translateX(-5px);
+            }
 
-        25% {
-            transform: translateX(-5px);
-        }
-
-        75% {
-            transform: translateX(5px);
-        }
-
+            75% {
+                transform: translateX(5px);
+            }
         }
     </style>
 }
@@ -344,7 +340,7 @@
     }
 </div>
 
-<!-- Enhanced Add Product Modal with File Upload -->
+<!-- Add Product Modal -->
 <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
@@ -728,7 +724,16 @@
 </div>
 
 @section Scripts {
-    <!-- CRITICAL: URL configuration must come first -->
+    <!-- DataTables Scripts -->
+    <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.9/js/responsive.bootstrap5.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.bootstrap5.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
+
+    <!-- API URL Configuration -->
     <script>
         window.appUrls = {
             getProductData: '@Url.Action("GetProductData", "Product")',
@@ -740,409 +745,7 @@
         console.log('Product API URLs configured:', window.appUrls);
     </script>
 
-    <!-- DataTables Scripts -->
-    <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.9/js/responsive.bootstrap5.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.bootstrap5.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
-
     <!-- Product Management Script -->
+    <script type="text/javascript" src="~/js/utilities.js"></script>
     <script type="text/javascript" src="~/js/productManagement.js"></script>
-
-    <!-- Enhanced Add Product Modal JavaScript -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🎯 Initializing Add Product Modal with File Upload');
-
-            // Initialize add product modal functionality
-            initializeAddProductModal();
-
-            function initializeAddProductModal() {
-                // Get modal and form elements
-                const addModal = document.getElementById('addProductModal');
-                const addForm = document.getElementById('addProductForm');
-                const fileInput = document.getElementById('addImageFile');
-                const urlInput = document.getElementById('addImageURL');
-                const previewImg = document.getElementById('addPreviewImage');
-                const placeholder = document.getElementById('addImagePlaceholder');
-                const clearBtn = document.getElementById('clearAddImage');
-
-                if (!addModal || !addForm) {
-                    console.warn('⚠️ Add product modal elements not found');
-                    return;
-                }
-
-                // File input change handler
-                if (fileInput) {
-                    fileInput.addEventListener('change', function(e) {
-                        const file = e.target.files[0];
-                        if (file) {
-                            handleFileSelection(file);
-                            // Clear URL input when file is selected
-                            if (urlInput) urlInput.value = '';
-                        }
-                    });
-                }
-
-                // URL input change handler
-                if (urlInput) {
-                    urlInput.addEventListener('blur', function() {
-                        const url = this.value.trim();
-                        if (url) {
-                            handleUrlInput(url);
-                            // Clear file input when URL is provided
-                            if (fileInput) fileInput.value = '';
-                        }
-                    });
-
-                    // Real-time URL validation
-                    urlInput.addEventListener('input', function() {
-                        const url = this.value.trim();
-                        if (url && !isValidImageUrl(url)) {
-                            this.classList.add('is-invalid');
-                        } else {
-                            this.classList.remove('is-invalid');
-                        }
-                    });
-                }
-
-                // Clear image button
-                if (clearBtn) {
-                    clearBtn.addEventListener('click', function() {
-                        clearImagePreview();
-                    });
-                }
-
-                // Drag and drop functionality for file input
-                const fileInputArea = fileInput?.parentElement;
-                if (fileInputArea) {
-                    fileInputArea.addEventListener('dragover', function(e) {
-                        e.preventDefault();
-                        this.classList.add('drag-over');
-                    });
-
-                    fileInputArea.addEventListener('dragleave', function(e) {
-                        e.preventDefault();
-                        this.classList.remove('drag-over');
-                    });
-
-                    fileInputArea.addEventListener('drop', function(e) {
-                        e.preventDefault();
-                        this.classList.remove('drag-over');
-
-                        const files = e.dataTransfer.files;
-                        if (files.length > 0) {
-                            const file = files[0];
-                            if (file.type.startsWith('image/')) {
-                                fileInput.files = files;
-                                handleFileSelection(file);
-                                if (urlInput) urlInput.value = '';
-                            } else {
-                                showToast('Please drop an image file', 'error');
-                            }
-                        }
-                    });
-                }
-
-                // Modal show/hide handlers
-                addModal.addEventListener('show.bs.modal', function() {
-                    console.log('📝 Opening add product modal');
-                    clearForm();
-                });
-
-                addModal.addEventListener('hidden.bs.modal', function() {
-                    console.log('🚪 Closing add product modal');
-                    clearForm();
-                });
-
-                // Form submission handler with enhanced validation
-                addForm.addEventListener('submit', function(e) {
-                    if (!validateAddProductForm()) {
-                        e.preventDefault();
-                        return false;
-                    }
-
-                    console.log('📤 Submitting add product form');
-                    const submitBtn = this.querySelector('button[type="submit"]');
-                    if (submitBtn) {
-                        setButtonLoading(submitBtn, true, 'Adding Product...');
-                    }
-
-                    // Show success message (form will submit normally)
-                    showToast('Creating product...', 'info');
-                });
-
-                console.log('✅ Add product modal initialized');
-            }
-
-            function handleFileSelection(file) {
-                console.log('📁 File selected:', file.name, 'Size:', formatFileSize(file.size));
-
-                // Validate file
-                if (!validateImageFile(file)) {
-                    return;
-                }
-
-                // Create preview
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    updateImagePreview(e.target.result);
-                    showToast(`Image "${file.name}" loaded successfully`, 'success');
-                };
-                reader.onerror = function() {
-                    showToast('Error reading file. Please try again.', 'error');
-                };
-                reader.readAsDataURL(file);
-            }
-
-            function handleUrlInput(url) {
-                console.log('🔗 URL entered:', url);
-
-                // Basic URL validation
-                if (!isValidImageUrl(url)) {
-                    showToast('Please enter a valid image URL', 'warning');
-                    return;
-                }
-
-                // Show loading state
-                const placeholder = document.getElementById('addImagePlaceholder');
-                if (placeholder) {
-                    placeholder.innerHTML = `
-                        <i class="bi bi-hourglass-split text-muted" style="font-size: 3rem;"></i>
-                        <p class="text-muted mt-2 mb-0">Loading Image...</p>
-                        <small class="text-muted">Please wait</small>
-                    `;
-                }
-
-                // Test if the image loads
-                const testImg = new Image();
-                testImg.onload = function() {
-                    updateImagePreview(url);
-                    showToast('Image loaded from URL successfully', 'success');
-                };
-                testImg.onerror = function() {
-                    resetPlaceholder();
-                    showToast('Failed to load image from URL. Please check the URL and try again.', 'error');
-                };
-                testImg.src = url;
-            }
-
-            function updateImagePreview(src) {
-                const previewImg = document.getElementById('addPreviewImage');
-                const placeholder = document.getElementById('addImagePlaceholder');
-
-                if (previewImg && placeholder) {
-                    previewImg.src = src;
-                    previewImg.style.display = 'block';
-                    placeholder.style.display = 'none';
-
-                    // Add image preview container styling
-                    const container = document.getElementById('addImagePreview');
-                    if (container) {
-                        container.classList.add('has-image');
-                    }
-
-                    // Add image load animation
-                    previewImg.style.opacity = '0';
-                    previewImg.style.transform = 'scale(0.8)';
-
-                    setTimeout(() => {
-                        previewImg.style.transition = 'all 0.3s ease';
-                        previewImg.style.opacity = '1';
-                        previewImg.style.transform = 'scale(1)';
-                    }, 50);
-                }
-            }
-
-            function clearImagePreview() {
-                console.log('🧹 Clearing image preview');
-
-                const fileInput = document.getElementById('addImageFile');
-                const urlInput = document.getElementById('addImageURL');
-
-                // Clear inputs
-                if (fileInput) fileInput.value = '';
-                if (urlInput) {
-                    urlInput.value = '';
-                    urlInput.classList.remove('is-invalid');
-                }
-
-                resetPlaceholder();
-                showToast('Image cleared', 'info');
-            }
-
-            function resetPlaceholder() {
-                const previewImg = document.getElementById('addPreviewImage');
-                const placeholder = document.getElementById('addImagePlaceholder');
-
-                // Reset preview
-                if (previewImg && placeholder) {
-                    previewImg.src = '';
-                    previewImg.style.display = 'none';
-                    placeholder.style.display = 'flex';
-
-                    // Reset placeholder content
-                    placeholder.innerHTML = `
-                        <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
-                        <p class="text-muted mt-2 mb-0">Image Preview</p>
-                        <small class="text-muted">No image selected</small>
-                    `;
-                }
-
-                // Remove container styling
-                const container = document.getElementById('addImagePreview');
-                if (container) {
-                    container.classList.remove('has-image');
-                }
-            }
-
-            function clearForm() {
-                console.log('🧹 Clearing add product form');
-
-                const form = document.getElementById('addProductForm');
-                if (form) {
-                    form.reset();
-
-                    // Clear any validation classes
-                    const inputs = form.querySelectorAll('.is-invalid');
-                    inputs.forEach(input => input.classList.remove('is-invalid'));
-
-                    clearImagePreview();
-                }
-            }
-
-            function validateImageFile(file) {
-                const maxSize = 5 * 1024 * 1024; // 5MB
-                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
-
-                if (file.size > maxSize) {
-                    showToast(`File size (${formatFileSize(file.size)}) must be less than 5MB`, 'error');
-                    return false;
-                }
-
-                if (!allowedTypes.includes(file.type.toLowerCase())) {
-                    showToast('File type not supported. Please use JPG, PNG, GIF, WebP, or BMP.', 'error');
-                    return false;
-                }
-
-                return true;
-            }
-
-            function isValidImageUrl(url) {
-                try {
-                    new URL(url);
-                    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
-                    const urlLower = url.toLowerCase();
-                    return imageExtensions.some(ext => urlLower.includes(ext)) ||
-                           url.includes('image') ||
-                           url.includes('img') ||
-                           /\/(photo|picture|pic)\//i.test(url);
-                } catch {
-                    return false;
-                }
-            }
-
-            function validateAddProductForm() {
-                const title = document.getElementById('addTitle')?.value?.trim();
-                const price = document.getElementById('addPrice')?.value;
-                const type = document.getElementById('addType')?.value;
-                const category = document.getElementById('addCategory')?.value;
-
-                const errors = [];
-
-                if (!title) {
-                    errors.push('Product title is required');
-                    markFieldInvalid('addTitle');
-                } else {
-                    markFieldValid('addTitle');
-                }
-
-                if (!price || isNaN(parseFloat(price)) || parseFloat(price) < 0) {
-                    errors.push('Valid price is required');
-                    markFieldInvalid('addPrice');
-                } else {
-                    markFieldValid('addPrice');
-                }
-
-                if (!type) {
-                    errors.push('Product type is required');
-                    markFieldInvalid('addType');
-                } else {
-                    markFieldValid('addType');
-                }
-
-                if (!category) {
-                    errors.push('Product category is required');
-                    markFieldInvalid('addCategory');
-                } else {
-                    markFieldValid('addCategory');
-                }
-
-                if (errors.length > 0) {
-                    showToast('Please fix the following errors:\n• ' + errors.join('\n• '), 'error');
-                    return false;
-                }
-
-                return true;
-            }
-
-            function markFieldInvalid(fieldId) {
-                const field = document.getElementById(fieldId);
-                if (field) {
-                    field.classList.add('is-invalid');
-                    field.classList.remove('is-valid');
-                }
-            }
-
-            function markFieldValid(fieldId) {
-                const field = document.getElementById(fieldId);
-                if (field) {
-                    field.classList.remove('is-invalid');
-                    field.classList.add('is-valid');
-                }
-            }
-
-            function setButtonLoading(button, loading, text = 'Loading...') {
-                if (!button) return;
-
-                if (loading) {
-                    button.dataset.originalText = button.innerHTML;
-                    button.disabled = true;
-                    button.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>${text}`;
-                } else {
-                    button.disabled = false;
-                    button.innerHTML = button.dataset.originalText || button.innerHTML;
-                }
-            }
-
-            function formatFileSize(bytes) {
-                if (bytes === 0) return '0 Bytes';
-                const k = 1024;
-                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-                const i = Math.floor(Math.log(bytes) / Math.log(k));
-                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-            }
-
-            function showToast(message, type = 'success') {
-                console.log(`${type}: ${message}`);
-
-                // Use UIUtils if available, otherwise fallback to console/alert
-                if (window.UIUtils) {
-                    window.UIUtils.showToast(message, type);
-                } else {
-                    // Fallback: simple alert for critical errors
-                    if (type === 'error') {
-                        alert('Error: ' + message);
-                    } else {
-                        console.log(`${type}: ${message}`);
-                    }
-                }
-            }
-
-            console.log('🎯 Add Product Modal with File Upload loaded successfully');
-        });
-    </script>
 }
