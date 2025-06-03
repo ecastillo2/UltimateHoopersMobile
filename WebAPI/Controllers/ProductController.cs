@@ -99,10 +99,10 @@ namespace WebAPI.Controllers
 
 
         /// <summary>
-        /// Create a new post
+        /// Create Product
         /// </summary>
-        /// <param name="post">Post to create</param>
-        /// <returns>Created post</returns>
+        /// <param name="product"></param>
+        /// <returns></returns>
         [HttpPost("CreateProduct")]
         //[Authorize]
         public async Task<IActionResult> CreateProduct([FromBody] Product product)
