@@ -438,12 +438,13 @@ namespace Web.Controllers
 
                 if (result.Success)
                 {
-                    TempData["Error"] = "Product not found.";
-                    return RedirectToAction("Product");
+                    var uploadResult = await _storageApi.RemoveProductImageFileAsync($"{product.ProductId}.webp");
+                    
                 }
                 else
                 {
-                    var uploadResult = await _storageApi.RemoveProductImageFileAsync($"{product.ProductId}.webp");
+                    TempData["Error"] = "Product not found.";
+                    return RedirectToAction("Product");
                 }
 
 
