@@ -436,14 +436,14 @@ namespace Web.Controllers
                     // Delete product
                     var result = await _productApi.DeleteProductAsync(id, accessToken, cancellationToken);
 
-                if (result == null)
+                if (result.IsSuccessStatusCode)
                 {
                     TempData["Error"] = "Product not found.";
                     return RedirectToAction("Product");
                 }
                 else
                 {
-                    var uploadResult = await _storageApi.RemoveProductImageFileAsync(product.ProductId);
+                    var uploadResult = await _storageApi.RemoveProductImageFileAsync($"{product.ProductId}.webp");
                 }
 
 
