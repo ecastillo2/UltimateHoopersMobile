@@ -2,6 +2,8 @@
 using Domain;
 using Domain.DtoModel;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -13,6 +15,7 @@ namespace WebAPI.ApiClients
     /// </summary>
     public class ProductApi : IProductApi
     {
+        private readonly ILogger<ProductApi> _logger;
         private readonly HttpClient _httpClient;
         private readonly string _baseUrl;
         private readonly JsonSerializerOptions _jsonOptions;
@@ -24,11 +27,11 @@ namespace WebAPI.ApiClients
         /// <param name="httpClient"></param>
         /// <param name="configuration"></param>
         /// <exception cref="ArgumentNullException"></exception>
-        public ProductApi(HttpClient httpClient, IConfiguration configuration)
+        public ProductApi(HttpClient httpClient, IConfiguration configuration, ILogger<ProductApi> logger)
         {
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             _baseUrl = configuration["ApiSettings:BaseUrl"] ?? "https://ultimatehoopersapi.azurewebsites.net";
-
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _jsonOptions = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true,
@@ -107,12 +110,50 @@ namespace WebAPI.ApiClients
         /// <summary>
         /// Delete a Run
         /// </summary>
-        public async Task<HttpResponseMessage> DeleteProductAsync(string productId, string accessToken, CancellationToken cancellationToken = default)
+        public async Task<(bool Success, string ErrorMessage)> DeleteProductAsync(string productId, string accessToken, CancellationToken cancellationToken = default)
         {
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            try
+            {
+                if (string.IsNullOrWhiteSpace(productId))
+                    return (false, "Product ID cannot be null or empty");
 
-            var response = await _httpClient.DeleteAsync($"{_baseUrl}/api/Product/DeleteProductAsync?id={productId}", cancellationToken);
-            return response;
+                if (string.IsNullOrWhiteSpace(accessToken))
+                    return (false, "Access token cannot be null or empty");
+
+                using var request = new HttpRequestMessage(HttpMethod.Delete, $"{_baseUrl}/api/Product/{productId}/DeleteProductAsync");
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+                var response = await _httpClient.SendAsync(request, cancellationToken);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return (true, string.Empty);
+                }
+
+                var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                return response.StatusCode switch
+                {
+                    HttpStatusCode.NotFound => (false, $"Product {productId} not found"),
+                    HttpStatusCode.Unauthorized => (false, "Unauthorized - invalid access token"),
+                    HttpStatusCode.Forbidden => (false, "Forbidden - insufficient permissions"),
+                    _ => (false, $"Failed to delete product. Status: {response.StatusCode}, Error: {errorContent}")
+                };
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP error occurred while deleting product {ProductId}", productId);
+                return (false, $"Network error: {ex.Message}");
+            }
+            catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+            {
+                _logger.LogError(ex, "Timeout occurred while deleting product {ProductId}", productId);
+                return (false, "Request timed out");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error while deleting product {ProductId}", productId);
+                return (false, $"Unexpected error: {ex.Message}");
+            }
         }
 
 

@@ -436,7 +436,7 @@ namespace Web.Controllers
                     // Delete product
                     var result = await _productApi.DeleteProductAsync(id, accessToken, cancellationToken);
 
-                if (result.IsSuccessStatusCode)
+                if (result.Success)
                 {
                     TempData["Error"] = "Product not found.";
                     return RedirectToAction("Product");

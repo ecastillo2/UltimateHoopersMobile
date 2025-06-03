@@ -198,20 +198,35 @@ namespace WebAPI.Controllers
         /// <param name="id"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        [HttpDelete("DeleteProductAsync/{id}")]
+        [HttpDelete("{id}/DeleteProductAsync")]
         
         public async Task<IActionResult> DeleteProductAsync(string id, CancellationToken cancellationToken)
         {
             try
             {
+                // Validate input
+                if (string.IsNullOrWhiteSpace(id))
+                {
+                    return BadRequest("Product ID cannot be null or empty");
+                }
+
                 var result = await _repository.DeleteProductAsync(id, cancellationToken);
 
-                return Ok();
+                if (!result)
+                {
+                    return NotFound($"Product with ID {id} not found");
+                }
+
+                return NoContent(); // 204 No Content is more appropriate for successful deletion
+            }
+            catch (OperationCanceledException)
+            {
+                return StatusCode(499, "Request was cancelled");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving Product {ProductId}", id);
-                return StatusCode(500, "An error occurred while retrieving the Product");
+                _logger.LogError(ex, "Error deleting Product {ProductId}", id);
+                return StatusCode(500, "An error occurred while deleting the product");
             }
         }
     }

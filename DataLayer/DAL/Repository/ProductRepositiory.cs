@@ -188,24 +188,21 @@ namespace DataLayer.DAL.Repository
         {
             if (string.IsNullOrWhiteSpace(productId))
             {
-                _logger?.LogWarning("DeleteProductWithRelatedEntitiesAsync called with null or empty productId");
+                _logger?.LogWarning("DeleteProductAsync called with null or empty productId");
                 return false;
             }
-
-            using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
 
             try
             {
                 // Find the product with related entities
                 var product = await _context.Product
                     //.Include(p => p.Reviews) // Include related entities if any
-                   // .Include(p => p.Categories)
+                    //.Include(p => p.Categories)
                     .FirstOrDefaultAsync(p => p.ProductId == productId, cancellationToken);
 
                 if (product == null)
                 {
                     _logger?.LogWarning("Product with ID {ProductId} not found for deletion", productId);
-                    await transaction.RollbackAsync(cancellationToken);
                     return false;
                 }
 
@@ -218,26 +215,23 @@ namespace DataLayer.DAL.Repository
                 // Remove the product
                 _context.Product.Remove(product);
 
-                // Save all changes
+                // Save all changes - EF Core automatically wraps this in a transaction
                 var rowsAffected = await _context.SaveChangesAsync(cancellationToken);
 
                 if (rowsAffected > 0)
                 {
-                    await transaction.CommitAsync(cancellationToken);
-                    _logger?.LogInformation("Successfully deleted product {ProductId} with related entities", productId);
+                    _logger?.LogInformation("Successfully deleted product {ProductId}", productId);
                     return true;
                 }
                 else
                 {
-                    await transaction.RollbackAsync(cancellationToken);
                     _logger?.LogWarning("No rows affected when deleting product {ProductId}", productId);
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync(cancellationToken);
-                _logger?.LogError(ex, "Error deleting product {ProductId} with related entities", productId);
+                _logger?.LogError(ex, "Error deleting product {ProductId}", productId);
                 throw;
             }
         }
