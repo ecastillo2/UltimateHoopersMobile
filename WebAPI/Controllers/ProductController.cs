@@ -191,6 +191,29 @@ namespace WebAPI.Controllers
             }
         }
 
+
+        /// <summary>
+        /// Get products By Id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        [HttpDelete("DeleteProductAsync/{id}")]
+        
+        public async Task<IActionResult> DeleteProductAsync(string id, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var result = await _repository.DeleteProductAsync(id, cancellationToken);
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving Product {ProductId}", id);
+                return StatusCode(500, "An error occurred while retrieving the Product");
+            }
+        }
     }
 }
 

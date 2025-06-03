@@ -14,13 +14,13 @@ using System.Threading.Tasks;
 
 namespace WebAPI.ApiClients
 {
-    public  class StorageApi : IStorageApi
+    public class StorageApi : IStorageApi
     {
+        private readonly ILogger<StorageApi> _logger;
         private readonly string _connectionString;
         private readonly string _productImageContainerName;
         private readonly BlobServiceClient _blobServiceClient;
         private readonly HttpClient _httpClient;
-        // Image processing constants
         private const int MAX_IMAGE_WIDTH = 1200;
         private const int MAX_IMAGE_HEIGHT = 1200;
         private const int PRODUCT_IMAGE_WIDTH = 800;
@@ -31,11 +31,12 @@ namespace WebAPI.ApiClients
         /// <summary>
         /// Storage API Constructor
         /// </summary>
+        /// <param name="httpClient">HTTP client instance</param>
         /// <param name="configuration">Application configuration</param>
         /// <param name="logger">Logger instance</param>
-        public StorageApi(HttpClient httpClient, IConfiguration configuration)
+        public StorageApi(HttpClient httpClient, IConfiguration configuration, ILogger<StorageApi> logger)
         {
-            // _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             _connectionString = configuration["BlobStorage:ConnectionString"] ?? ""
                 ?? throw new InvalidOperationException("Blob storage connection string is not configured");
@@ -77,7 +78,7 @@ namespace WebAPI.ApiClients
             }
             catch (Exception ex)
             {
-                //_logger.LogError(ex, "Error removing Exif data from image");
+                _logger.LogError(ex, "Error removing Exif data from image");
 
                 // Fallback: return original stream
                 imageStream.Position = 0;
@@ -129,7 +130,7 @@ namespace WebAPI.ApiClients
             }
             catch (Exception ex)
             {
-                //_logger.LogError(ex, "Error processing image for upload");
+                _logger.LogError(ex, "Error processing image for upload");
                 throw;
             }
         }
@@ -149,13 +150,13 @@ namespace WebAPI.ApiClients
                 // Validate inputs
                 if (string.IsNullOrEmpty(productId))
                 {
-                    //_logger?.LogError("ProductId is null or empty");
+                    _logger?.LogError("ProductId is null or empty");
                     return false;
                 }
 
                 if (formFile == null || formFile.Length == 0)
                 {
-                    //_logger?.LogError("FormFile is null or empty");
+                    _logger?.LogError("FormFile is null or empty");
                     return false;
                 }
 
@@ -163,14 +164,14 @@ namespace WebAPI.ApiClients
                 var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp", "image/bmp" };
                 if (!allowedTypes.Contains(formFile.ContentType.ToLower()))
                 {
-                    //_logger?.LogError($"Unsupported file type: {formFile.ContentType}");
+                    _logger?.LogError($"Unsupported file type: {formFile.ContentType}");
                     return false;
                 }
 
                 // Validate file size (e.g., max 10MB)
                 if (formFile.Length > 10 * 1024 * 1024)
                 {
-                    //_logger?.LogError($"File size too large: {formFile.Length} bytes");
+                    _logger?.LogError($"File size too large: {formFile.Length} bytes");
                     return false;
                 }
 
@@ -185,7 +186,7 @@ namespace WebAPI.ApiClients
 
                 if (processedImageStream == null || processedImageStream.Length == 0)
                 {
-                    //_logger?.LogError("Processed image stream is null or empty");
+                    _logger?.LogError("Processed image stream is null or empty");
                     return false;
                 }
 
@@ -205,22 +206,22 @@ namespace WebAPI.ApiClients
 
                 await blobClient.UploadAsync(processedImageStream, uploadOptions);
 
-                //_logger?.LogInformation($"Successfully uploaded image for product {productId}");
+                _logger?.LogInformation($"Successfully uploaded image for product {productId}");
                 return true;
             }
             catch (ArgumentException ex)
             {
-               // _logger?.LogError(ex, $"Invalid parameter while processing image for product {productId}: {ex.Message}");
+                _logger?.LogError(ex, $"Invalid parameter while processing image for product {productId}: {ex.Message}");
                 return false;
             }
             catch (NotSupportedException ex)
             {
-                //_logger?.LogError(ex, $"Image format not supported for product {productId}: {ex.Message}");
+                _logger?.LogError(ex, $"Image format not supported for product {productId}: {ex.Message}");
                 return false;
             }
             catch (Exception ex)
             {
-                //_logger?.LogError(ex, $"Error uploading image for product {productId}: {ex.Message}");
+                _logger?.LogError(ex, $"Error uploading image for product {productId}: {ex.Message}");
                 return false;
             }
         }
@@ -247,12 +248,11 @@ namespace WebAPI.ApiClients
             }
             catch (Exception ex)
             {
-                //_logger?.LogError(ex, $"Error processing image: {ex.Message}");
+                _logger?.LogError(ex, $"Error processing image: {ex.Message}");
                 throw new ArgumentException($"Failed to process image: {ex.Message}", ex);
             }
         }
 
-        // Option 1: Using ImageSharp (Recommended - more reliable)
         private async Task<MemoryStream> ProcessImageWithImageSharp(byte[] imageBytes)
         {
             try
@@ -295,78 +295,13 @@ namespace WebAPI.ApiClients
             }
         }
 
-        // Option 2: Using System.Drawing (Fallback - less reliable but widely available)
-        private async Task<MemoryStream> ProcessImageWithSystemDrawing(byte[] imageBytes)
-        {
-            try
-            {
-                using var inputStream = new MemoryStream(imageBytes);
-                using var originalImage = System.Drawing.Image.FromStream(inputStream);
-
-                // Resize if needed
-                var maxWidth = 1200;
-                var maxHeight = 1200;
-
-                var newWidth = originalImage.Width;
-                var newHeight = originalImage.Height;
-
-                if (originalImage.Width > maxWidth || originalImage.Height > maxHeight)
-                {
-                    var ratioX = (double)maxWidth / originalImage.Width;
-                    var ratioY = (double)maxHeight / originalImage.Height;
-                    var ratio = Math.Min(ratioX, ratioY);
-
-                    newWidth = (int)(originalImage.Width * ratio);
-                    newHeight = (int)(originalImage.Height * ratio);
-                }
-
-                using var resizedImage = new System.Drawing.Bitmap(newWidth, newHeight);
-                using var graphics = System.Drawing.Graphics.FromImage(resizedImage);
-
-                graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
-                graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
-
-                graphics.DrawImage(originalImage, 0, 0, newWidth, newHeight);
-
-                var outputStream = new MemoryStream();
-
-                // Save as PNG first (System.Drawing doesn't support WebP directly)
-                resizedImage.Save(outputStream, System.Drawing.Imaging.ImageFormat.Png);
-
-                outputStream.Position = 0;
-                return outputStream;
-            }
-            catch (Exception ex)
-            {
-                throw new ArgumentException($"System.Drawing processing failed: {ex.Message}", ex);
-            }
-        }
-
-        // Alternative: Simple pass-through if WebP conversion is causing issues
-        private async Task<MemoryStream> ProcessImageSimple(IFormFile formFile)
-        {
-            try
-            {
-                var outputStream = new MemoryStream();
-                using var inputStream = formFile.OpenReadStream();
-                await inputStream.CopyToAsync(outputStream);
-                outputStream.Position = 0;
-                return outputStream;
-            }
-            catch (Exception ex)
-            {
-                throw new ArgumentException($"Simple image processing failed: {ex.Message}", ex);
-            }
-        }
-
         /// <summary>
         /// Delete a file from blob storage
         /// </summary>
         /// <param name="fileName">Name of the file to delete</param>
         /// <param name="containerName">Container name (optional, uses default if not specified)</param>
         /// <returns>Success status</returns>
-        public async Task<bool> DeleteFileAsync(string fileName, string containerName = null)
+        public async Task<bool> RemoveProductImageFileAsync(string fileName, string containerName = null)
         {
             if (string.IsNullOrWhiteSpace(fileName))
             {
@@ -375,17 +310,17 @@ namespace WebAPI.ApiClients
 
             try
             {
-                var containerClient = _blobServiceClient.GetBlobContainerClient(containerName ?? "");
+                var containerClient = _blobServiceClient.GetBlobContainerClient(_productImageContainerName);
                 var blobClient = containerClient.GetBlobClient(fileName);
 
                 var response = await blobClient.DeleteIfExistsAsync();
 
-               // _logger.LogInformation("File {FileName} deleted: {Success}", fileName, response.Value);
+                _logger.LogInformation("File {FileName} deleted: {Success}", fileName, response.Value);
                 return response.Value;
             }
             catch (Exception ex)
             {
-               // _logger.LogError(ex, "Error deleting file {FileName}", fileName);
+                _logger.LogError(ex, "Error deleting file {FileName}", fileName);
                 return false;
             }
         }
@@ -418,7 +353,7 @@ namespace WebAPI.ApiClients
             }
             catch (Exception ex)
             {
-                //_logger.LogError(ex, "Error getting URL for file {FileName}", fileName);
+                _logger.LogError(ex, "Error getting URL for file {FileName}", fileName);
                 return null;
             }
         }
@@ -446,7 +381,7 @@ namespace WebAPI.ApiClients
             }
             catch (Exception ex)
             {
-               // _logger.LogError(ex, "Error checking if file {FileName} exists", fileName);
+                _logger.LogError(ex, "Error checking if file {FileName} exists", fileName);
                 return false;
             }
         }
@@ -483,12 +418,12 @@ namespace WebAPI.ApiClients
                     ContentType = file.ContentType ?? "application/octet-stream"
                 });
 
-                //_logger.LogInformation("Successfully uploaded file {FileName}", blobName);
+                _logger.LogInformation("Successfully uploaded file {FileName}", blobName);
                 return blobClient.Uri.ToString();
             }
             catch (Exception ex)
             {
-               // _logger.LogError(ex, "Error uploading file {FileName}", fileName ?? file.FileName);
+                _logger.LogError(ex, "Error uploading file {FileName}", fileName ?? file.FileName);
                 throw;
             }
         }
@@ -531,14 +466,12 @@ namespace WebAPI.ApiClients
             }
             catch (Exception ex)
             {
-                //_logger.LogError(ex, "Error getting metadata for file {FileName}", fileName);
+                _logger.LogError(ex, "Error getting metadata for file {FileName}", fileName);
                 return null;
             }
         }
 
         #region Private Helper Methods
-
-       
 
         /// <summary>
         /// Validate if the uploaded file is a valid image
@@ -643,19 +576,6 @@ namespace WebAPI.ApiClients
                 image.RotateFlip(rotateFlipType);
                 image.RemovePropertyItem(orientationPropertyId);
             }
-        }
-
-        /// <summary>
-        /// Convert System.Drawing.Image to SkiaSharp bitmap
-        /// </summary>
-        /// <param name="image">Source image</param>
-        /// <returns>SKBitmap</returns>
-        private static SKBitmap ConvertToSkiaBitmap(Image image)
-        {
-            using var ms = new MemoryStream();
-            image.Save(ms, ImageFormat.Png);
-            ms.Position = 0;
-            return SKBitmap.Decode(ms);
         }
 
         #endregion

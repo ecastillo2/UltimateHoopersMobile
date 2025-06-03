@@ -431,20 +431,21 @@ namespace Web.Controllers
 
                 // Get product details first to clean up image
                 var product = await _productApi.GetProductByIdAsync(id, accessToken, cancellationToken);
-                if (product == null)
+                
+
+                    // Delete product
+                    var result = await _productApi.DeleteProductAsync(id, accessToken, cancellationToken);
+
+                if (result == null)
                 {
                     TempData["Error"] = "Product not found.";
                     return RedirectToAction("Product");
                 }
+                else
+                {
+                    var uploadResult = await _storageApi.RemoveProductImageFileAsync(product.ProductId);
+                }
 
-                // Delete product
-                await _productApi.DeleteProductAsync(id, accessToken, cancellationToken);
-
-                // Note: You might want to also clean up the image from storage here
-                // if (!string.IsNullOrEmpty(product.ImageURL))
-                // {
-                //     await _storageApi.DeleteProductImageAsync(product.ProductId);
-                // }
 
                 TempData["Success"] = "Product deleted successfully.";
                 return RedirectToAction("Product");

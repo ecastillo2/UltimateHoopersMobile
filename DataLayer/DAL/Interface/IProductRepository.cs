@@ -63,7 +63,10 @@ namespace DataLayer.DAL.Interface
         /// <returns></returns>
         Task InsertProduct(Product product,CancellationToken cancellationToken = default);
 
-
+        /// <summary>
+        /// Get Product by ID
+        /// </summary>
+        Task<bool> DeleteProductAsync(string productId,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Update Product Async

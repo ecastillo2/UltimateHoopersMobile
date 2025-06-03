@@ -107,12 +107,12 @@ namespace WebAPI.ApiClients
         /// <summary>
         /// Delete a Run
         /// </summary>
-        public async Task<bool> DeleteProductAsync(string productId, string accessToken, CancellationToken cancellationToken = default)
+        public async Task<HttpResponseMessage> DeleteProductAsync(string productId, string accessToken, CancellationToken cancellationToken = default)
         {
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            var response = await _httpClient.DeleteAsync($"{_baseUrl}/api/Product/DeleteProduct?productId={productId}", cancellationToken);
-            return response.IsSuccessStatusCode;
+            var response = await _httpClient.DeleteAsync($"{_baseUrl}/api/Product/DeleteProductAsync?id={productId}", cancellationToken);
+            return response;
         }
 
 

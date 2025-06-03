@@ -44,7 +44,7 @@ namespace WebAPI.ApiClients
         /// <param name="fileName">Name of the file to delete</param>
         /// <param name="containerName">Container name (optional, uses default if not specified)</param>
         /// <returns>Success status</returns>
-        Task<bool> DeleteFileAsync(string fileName, string containerName = null);
+        Task<bool> RemoveProductImageFileAsync(string fileName, string containerName = null);
 
         /// <summary>
         /// Get a file URL from blob storage

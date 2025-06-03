@@ -75,7 +75,7 @@ namespace WebAPI.ApiClients
         /// <param name="accessToken"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<bool> DeleteProductAsync(string productId, string accessToken, CancellationToken cancellationToken = default);
+        Task<HttpResponseMessage> DeleteProductAsync(string productId, string accessToken, CancellationToken cancellationToken = default);
 
         
     }
