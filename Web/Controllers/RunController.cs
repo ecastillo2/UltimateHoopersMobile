@@ -18,7 +18,7 @@ namespace Web.Controllers
         private readonly IJoinedRunApi _joinedRunApi;
         private readonly ILogger<RunController> _logger;
 
-        public RunController(IRunApi runApi,IClientApi clientApi,IJoinedRunApi joinedRunApi,ILogger<RunController> logger)
+        public RunController(IRunApi runApi, IClientApi clientApi, IJoinedRunApi joinedRunApi, ILogger<RunController> logger)
         {
             _clientApi = clientApi ?? throw new ArgumentNullException(nameof(clientApi));
             _joinedRunApi = joinedRunApi ?? throw new ArgumentNullException(nameof(joinedRunApi));
@@ -27,7 +27,7 @@ namespace Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Run(string cursor = null,int limit = 10,string direction = "next",string sortBy = "StartDate",CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Run(string cursor = null, int limit = 10, string direction = "next", string sortBy = "StartDate", CancellationToken cancellationToken = default)
         {
             try
             {
@@ -44,7 +44,7 @@ namespace Web.Controllers
                 var profileId = HttpContext.Session.GetString("ProfileId");
 
                 // Get runs with cursor pagination
-                var result = await _runApi.GetRunsWithCursorAsync(cursor: cursor,limit: limit,direction: direction,sortBy: sortBy,accessToken: accessToken,cancellationToken: cancellationToken);
+                var result = await _runApi.GetRunsWithCursorAsync(cursor: cursor, limit: limit, direction: direction, sortBy: sortBy, accessToken: accessToken, cancellationToken: cancellationToken);
 
                 // Create view model
                 var viewModel = new RunsViewModel
@@ -64,9 +64,9 @@ namespace Web.Controllers
             }
         }
 
-        // NEW: Get runs for calendar view
+        // ENHANCED: Get runs for calendar view with better error handling
         [HttpGet]
-        public async Task<IActionResult> GetRunsForCalendar(DateTime? startDate = null,DateTime? endDate = null,CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetRunsForCalendar(DateTime? startDate = null, DateTime? endDate = null, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -76,7 +76,7 @@ namespace Web.Controllers
                     return Json(new { success = false, message = "Unauthorized" });
                 }
 
-                // FIXED: Set default date range if not provided (current month +/- 2 months)
+                // Set default date range if not provided (current month +/- 2 months)
                 var now = DateTime.Now;
                 startDate ??= new DateTime(now.Year, now.Month, 1).AddMonths(-2);
                 endDate ??= new DateTime(now.Year, now.Month, 1).AddMonths(3).AddDays(-1);
@@ -86,27 +86,26 @@ namespace Web.Controllers
                 // Get runs within the date range
                 var runs = await GetRunsForDateRange(startDate.Value, endDate.Value, accessToken, cancellationToken);
 
-                // FIXED: Transform runs for calendar display with proper data mapping
+                // Transform runs for calendar display with proper data mapping
                 var calendarRuns = runs.Select(run => new
                 {
                     runId = run.RunId ?? "",
-                    name = run.Name ?? "Basketball Run",
+                    name = run.Client?.Name ?? run.Name ?? "Basketball Run", // ENHANCED: Use Client.Name as primary
                     type = run.Type?.ToLower() ?? "pickup",
                     runDate = run.RunDate?.ToString("yyyy-MM-dd"),
                     startTime = DateTimeUtilities.FormatTimeSpanTo12Hour(run.StartTime ?? TimeSpan.Zero),
                     endTime = DateTimeUtilities.FormatTimeSpanTo12Hour(run.EndTime ?? TimeSpan.Zero),
-                    location = BuildLocationStringFixed(run), // FIXED: Use corrected method
+                    location = BuildLocationStringFixed(run),
                     skillLevel = run.SkillLevel ?? "All Levels",
                     playerCount = run.PlayerCount ?? 0,
                     playerLimit = run.PlayerLimit ?? 10,
                     description = run.Description ?? "",
                     status = run.Status ?? "Active",
                     isPublic = run.IsPublic ?? true,
-                    // FIXED: Use actual address data instead of empty strings
-                    address =  run.Client.Address,
-                    city = run.Client.City,
-                    state = run.Client.State,
-                    profileId =  "Profile"
+                    address = run.Client?.Address ?? "",
+                    city = run.Client?.City ?? "",
+                    state = run.Client?.State ?? "",
+                    profileId = run.ProfileId ?? ""
                 }).ToList();
 
                 _logger.LogInformation("Retrieved {Count} runs for calendar", calendarRuns.Count);
@@ -139,28 +138,23 @@ namespace Web.Controllers
         {
             var locationParts = new List<string>();
 
-            // FIXED: Use actual run properties instead of hardcoded "test" values
-            if (!string.IsNullOrEmpty(run.Client.Address))
+            if (!string.IsNullOrEmpty(run.Client?.Address))
                 locationParts.Add(run.Client.Address);
-            if (!string.IsNullOrEmpty(run.Client.State))
+            if (!string.IsNullOrEmpty(run.Client?.State))
                 locationParts.Add(run.Client.State);
-            if (!string.IsNullOrEmpty(run.Client.City) && locationParts.Any())
+            if (!string.IsNullOrEmpty(run.Client?.City) && locationParts.Any())
                 locationParts.Add(run.Client.City);
 
             return locationParts.Any() ? string.Join(", ", locationParts) : "Location TBD";
         }
 
         // Helper method to get runs for a date range
-        private async Task<List<Run>> GetRunsForDateRange(
-            DateTime startDate,
-            DateTime endDate,
-            string accessToken,
-            CancellationToken cancellationToken)
+        private async Task<List<Run>> GetRunsForDateRange(DateTime startDate, DateTime endDate, string accessToken, CancellationToken cancellationToken)
         {
             var allRuns = new List<Run>();
             string cursor = null;
             const int batchSize = 50;
-            const int maxRuns = 500; // Prevent runaway queries
+            const int maxRuns = 500;
 
             try
             {
@@ -176,7 +170,6 @@ namespace Web.Controllers
 
                     if (result.Items?.Any() == true)
                     {
-                        // Filter runs within the date range
                         var filteredRuns = result.Items.Where(run =>
                             run.RunDate.HasValue &&
                             run.RunDate.Value.Date >= startDate.Date &&
@@ -184,7 +177,6 @@ namespace Web.Controllers
 
                         allRuns.AddRange((IEnumerable<Run>)filteredRuns);
 
-                        // If we've found runs past our end date, we can stop
                         if (result.Items.Any(run => run.RunDate.HasValue && run.RunDate.Value.Date > endDate.Date))
                         {
                             break;
@@ -193,7 +185,6 @@ namespace Web.Controllers
 
                     cursor = result.NextCursor;
 
-                    // Safety check to prevent infinite loops
                     if (allRuns.Count >= maxRuns)
                     {
                         _logger.LogWarning("Calendar query hit maximum run limit of {MaxRuns}", maxRuns);
@@ -211,23 +202,7 @@ namespace Web.Controllers
             return allRuns.OrderBy(r => r.RunDate).ThenBy(r => r.StartTime).ToList();
         }
 
-        // Helper method to build location string
-        private string BuildLocationString(Run run)
-        {
-            var locationParts = new List<string>();
-
-            if (!string.IsNullOrEmpty("test"))
-                locationParts.Add("test");
-            if (!string.IsNullOrEmpty("test"))
-                locationParts.Add("test");
-            if (!string.IsNullOrEmpty("test") && locationParts.Any())
-                locationParts.Add("test");
-
-            return locationParts.Any() ? string.Join(", ", locationParts) : "Location TBD";
-        }
-
-        // Fixed GetRunData method in RunController.cs
-        // Replace the existing GetRunData method in Web/Controllers/RunController.cs with this implementation
+        // ENHANCED: GetRunData method with better client information
         [HttpGet]
         public async Task<IActionResult> GetRunData(string id, CancellationToken cancellationToken = default)
         {
@@ -247,7 +222,7 @@ namespace Web.Controllers
 
                 var clientCourtList = new List<Court>();
 
-                // Enhanced court data retrieval with better error handling
+                // Enhanced court data retrieval
                 try
                 {
                     if (!string.IsNullOrEmpty(run.ClientId))
@@ -265,10 +240,9 @@ namespace Web.Controllers
                 catch (Exception courtEx)
                 {
                     _logger.LogError(courtEx, "Error retrieving courts for client: {ClientId}", run.ClientId);
-                    // Continue with empty courts list
                 }
 
-                // Enhanced court list handling with better structure
+                // Enhanced court list handling
                 var courtListData = new List<object>();
                 if (clientCourtList != null && clientCourtList.Any())
                 {
@@ -276,7 +250,6 @@ namespace Web.Controllers
                     {
                         courtId = c.CourtId ?? "",
                         name = c.Name + " - " + c.CourtType ?? "Unnamed Court",
-                        // Add additional court properties if needed
                         address = c.Address ?? "",
                         isIndoor = true,
                         isActive = true
@@ -289,25 +262,34 @@ namespace Web.Controllers
                     _logger.LogWarning("No courts available for client {ClientId}", run.ClientId);
                 }
 
-                // Enhanced run data response with comprehensive court information
+                // ENHANCED: Run data response with client information and auto-population data
                 var runData = new
                 {
                     runId = run.RunId ?? "",
                     clientId = run.ClientId ?? "",
                     name = run.Name ?? "",
 
+                    // ENHANCED: Client information for auto-population
+                    clientName = run.Client?.Name ?? "",
+                    clientAddress = run.Client?.Address ?? "",
+                    clientCity = run.Client?.City ?? "",
+                    clientState = run.Client?.State ?? "",
+                    clientZip = run.Client?.Zip ?? "",
+
                     // Safe date formatting
                     runDate = run.RunDate?.ToString("yyyy-MM-dd") ?? "",
 
-                    // Safe TimeSpan formatting
-                    startTime = DateTimeUtilities.FormatTimeSpanTo12Hour(run.StartTime ?? TimeSpan.Zero),
-                    endTime = DateTimeUtilities.FormatTimeSpanTo12Hour(run.EndTime ?? TimeSpan.Zero),
+                    // ENHANCED: Time formatting for form inputs
+                    startTime = run.StartTime.HasValue ?
+                        TimeSpan.FromTicks(run.StartTime.Value.Ticks).ToString(@"hh\:mm") : "",
+                    endTime = run.EndTime.HasValue ?
+                        TimeSpan.FromTicks(run.EndTime.Value.Ticks).ToString(@"hh\:mm") : "",
 
-                    // Address fields with defaults
-                    address = "",
-                    city = "",
-                    state ="",
-                    zip =  "",
+                    // Address fields - now support both run and client addresses
+                    address = run.Client.Address ?? run.Client?.Address ?? "",
+                    city = run.Client.City ?? run.Client?.City ?? "",
+                    state = run.Client.State ?? run.Client?.State ?? "",
+                    zip = run.Client.Zip ?? run.Client?.Zip ?? "",
 
                     // Safe numeric conversions
                     playerLimit = run.PlayerLimit ?? 0,
@@ -322,23 +304,27 @@ namespace Web.Controllers
 
                     // Safe boolean conversion
                     isPublic = run.IsPublic ?? true,
-                    isOutdoor =  false,
+                    isOutdoor = false,
 
                     // Enhanced court selection
                     courtId = GetCourtIdFromRun(run),
 
-                    // Enhanced court list with comprehensive data
+                    // Enhanced court list
                     courtList = courtListData,
 
                     success = true,
 
-                    // Additional debugging information (remove in production)
+                    // ENHANCED: Default time suggestions based on run type
+                    defaultTimes = GetDefaultTimesForRunType(run.Type),
+
+                    // Additional debugging information
                     debug = new
                     {
                         hasClientId = !string.IsNullOrEmpty(run.ClientId),
                         clientId = run.ClientId,
                         courtCount = courtListData.Count,
-                        runCourtId = GetCourtIdFromRun(run)
+                        runCourtId = GetCourtIdFromRun(run),
+                        hasClientInfo = run.Client != null
                     }
                 };
 
@@ -354,11 +340,85 @@ namespace Web.Controllers
                 {
                     success = false,
                     message = $"Error loading run data: {ex.Message}",
-                    error = ex.GetType().Name // Additional debugging info
+                    error = ex.GetType().Name
                 });
             }
         }
 
+        // ENHANCED: Get default times based on run type
+        private object GetDefaultTimesForRunType(string runType)
+        {
+            return runType?.ToLower() switch
+            {
+                "pickup" => new { startTime = "18:00", endTime = "20:00" }, // 6 PM - 8 PM
+                "training" => new { startTime = "17:00", endTime = "19:00" }, // 5 PM - 7 PM  
+                "tournament" => new { startTime = "09:00", endTime = "17:00" }, // 9 AM - 5 PM
+                "youth" => new { startTime = "16:00", endTime = "17:30" }, // 4 PM - 5:30 PM
+                "women" => new { startTime = "19:00", endTime = "21:00" }, // 7 PM - 9 PM
+                _ => new { startTime = "18:00", endTime = "20:00" } // Default
+            };
+        }
+
+        // ENHANCED: Get client data for auto-population
+        [HttpGet]
+        public async Task<IActionResult> GetClientData(string clientId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var accessToken = HttpContext.Session.GetString("UserToken");
+                if (string.IsNullOrEmpty(accessToken))
+                {
+                    return Json(new { success = false, message = "Unauthorized" });
+                }
+
+                if (string.IsNullOrEmpty(clientId))
+                {
+                    return Json(new { success = false, message = "Client ID is required" });
+                }
+
+                // Get client data from API
+                var client = await _clientApi.GetClientByIdAsync(clientId, accessToken, cancellationToken);
+
+                if (client == null)
+                {
+                    return Json(new { success = false, message = "Client not found" });
+                }
+
+                // Get courts for the client
+                var courts = await _clientApi.GetClientCourtsAsync(clientId, accessToken, cancellationToken);
+
+                var clientData = new
+                {
+                    success = true,
+                    client = new
+                    {
+                        clientId = client.ClientId,
+                        name = client.Name ?? "",
+                        address = client.Address ?? "",
+                        city = client.City ?? "",
+                        state = client.State ?? "",
+                        zip = client.Zip ?? "",
+                        phoneNumber = client.PhoneNumber ?? ""
+                    },
+                    courts = courts?.Select(c => new
+                    {
+                        courtId = c.CourtId ?? "",
+                        name = c.Name ?? "Unnamed Court",
+                    }) ?? Enumerable.Empty<object>()
+            };
+
+                return Json(clientData);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving client data for ID: {ClientId}", clientId);
+                return Json(new
+                {
+                    success = false,
+                    message = $"Error loading client data: {ex.Message}"
+                });
+            }
+        }
 
         // New method to get courts for a specific client
         [HttpGet]
@@ -379,7 +439,6 @@ namespace Web.Controllers
 
                 _logger.LogInformation("Fetching courts for client: {ClientId}", clientId);
 
-                // Get courts for the client
                 var courts = await _clientApi.GetClientCourtsAsync(clientId, accessToken, cancellationToken);
 
                 if (courts == null)
@@ -388,7 +447,6 @@ namespace Web.Controllers
                     courts = new List<Court>();
                 }
 
-                // Transform courts data with comprehensive information
                 var courtData = courts.Select(c => new
                 {
                     courtId = c.CourtId ?? "",
@@ -421,32 +479,26 @@ namespace Web.Controllers
             }
         }
 
-
-
         // Helper method to safely get court ID from run data
         private string GetCourtIdFromRun(dynamic run)
         {
             try
             {
-                // Try different possible property names for court ID
                 if (run.CourtId != null)
                 {
                     var courtId = run.CourtId.ToString();
-                    // _logger.LogDebug("Found CourtId: {CourtId}", courtId);
                     return courtId;
                 }
 
                 if (run.Court?.CourtId != null)
                 {
                     var courtId = run.Court.CourtId.ToString();
-                    //  _logger.LogWarning("Found Court.CourtId: {CourtId}", courtId);
                     return courtId;
                 }
 
                 if (run.VenueId != null)
                 {
                     var venueId = run.VenueId.ToString();
-                    // _logger.LogDebug("Found VenueId (using as CourtId): {VenueId}", venueId);
                     return venueId;
                 }
 
@@ -471,10 +523,8 @@ namespace Web.Controllers
                     return Json(new { success = false, message = "Unauthorized" });
                 }
 
-                // Get participants for the run
                 var participants = await _joinedRunApi.GetJoinedRunProfilesByRunIdAsync(runId, accessToken, cancellationToken);
 
-                // Transform to expected format
                 var participantData = participants.Select(p => new
                 {
                     profileId = p.ProfileId,
@@ -504,7 +554,6 @@ namespace Web.Controllers
                     return Json(new { success = false, message = "Unauthorized" });
                 }
 
-                // Verify user has permission (is run creator or admin)
                 var profileId = HttpContext.Session.GetString("ProfileId");
                 var userRole = HttpContext.Session.GetString("UserRole");
 
@@ -542,7 +591,6 @@ namespace Web.Controllers
                     return Json(new { success = false, message = "Unauthorized" });
                 }
 
-                // Verify user has permission (is run creator or admin)
                 var currentProfileId = HttpContext.Session.GetString("ProfileId");
                 var userRole = HttpContext.Session.GetString("UserRole");
 
@@ -557,7 +605,6 @@ namespace Web.Controllers
                     return Json(new { success = false, message = "You do not have permission to add participants to this run" });
                 }
 
-                // Check if run is at capacity
                 if (run.PlayerCount >= run.PlayerLimit)
                 {
                     return Json(new { success = false, message = "This run is already at maximum capacity" });
@@ -579,7 +626,6 @@ namespace Web.Controllers
         {
             try
             {
-                // Get the access token from session
                 var accessToken = HttpContext.Session.GetString("UserToken");
                 if (string.IsNullOrEmpty(accessToken))
                 {
@@ -587,7 +633,6 @@ namespace Web.Controllers
                     return RedirectToAction("Index", "Home", new { scrollTo = "login" });
                 }
 
-                // Get run details
                 var run = await _runApi.GetRunByIdAsync(id, accessToken, cancellationToken);
                 if (run == null)
                 {
@@ -595,7 +640,6 @@ namespace Web.Controllers
                     return RedirectToAction("Run");
                 }
 
-                // Create view model or return view with run data
                 return View(run);
             }
             catch (Exception ex)
@@ -609,7 +653,6 @@ namespace Web.Controllers
         [HttpGet]
         public IActionResult Create()
         {
-            // Get the access token from session
             var accessToken = HttpContext.Session.GetString("UserToken");
             if (string.IsNullOrEmpty(accessToken))
             {
@@ -626,7 +669,6 @@ namespace Web.Controllers
         {
             try
             {
-                // Get the access token from session
                 var accessToken = HttpContext.Session.GetString("UserToken");
                 if (string.IsNullOrEmpty(accessToken))
                 {
@@ -634,10 +676,8 @@ namespace Web.Controllers
                     return RedirectToAction("Index", "Home", new { scrollTo = "login" });
                 }
 
-                // Set creator profile ID
                 run.ProfileId = HttpContext.Session.GetString("ProfileId");
 
-                // Set default values if not provided
                 if (run.PlayerLimit == null || run.PlayerLimit <= 0)
                 {
                     run.PlayerLimit = 10;
@@ -663,7 +703,6 @@ namespace Web.Controllers
                     run.IsPublic = true;
                 }
 
-                // Create new run
                 var createdRun = await _runApi.CreateRunAsync(run, accessToken, cancellationToken);
 
                 TempData["Success"] = "Run created successfully.";
@@ -682,7 +721,6 @@ namespace Web.Controllers
         {
             try
             {
-                // Get the access token from session
                 var accessToken = HttpContext.Session.GetString("UserToken");
                 if (string.IsNullOrEmpty(accessToken))
                 {
@@ -690,7 +728,6 @@ namespace Web.Controllers
                     return RedirectToAction("Index", "Home", new { scrollTo = "login" });
                 }
 
-                // Get run details
                 var run = await _runApi.GetRunByIdAsync(id, accessToken, cancellationToken);
                 if (run == null)
                 {
@@ -698,7 +735,6 @@ namespace Web.Controllers
                     return RedirectToAction("Run");
                 }
 
-                // Verify user is creator or admin
                 var profileId = HttpContext.Session.GetString("ProfileId");
                 var userRole = HttpContext.Session.GetString("UserRole");
                 if (run.ProfileId != profileId && userRole != "Admin")
@@ -717,14 +753,12 @@ namespace Web.Controllers
             }
         }
 
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit([FromBody] Run run, CancellationToken cancellationToken = default)
         {
             try
             {
-                // Get the access token from session
                 var accessToken = HttpContext.Session.GetString("UserToken");
                 if (string.IsNullOrEmpty(accessToken))
                 {
@@ -736,11 +770,9 @@ namespace Web.Controllers
                     });
                 }
 
-                // Get user info for permission checking
                 var profileId = HttpContext.Session.GetString("ProfileId");
                 var userRole = HttpContext.Session.GetString("UserRole");
 
-                // Validate the run data
                 var validationResult = ValidateRunData(run);
                 if (!validationResult.IsValid)
                 {
@@ -752,7 +784,6 @@ namespace Web.Controllers
                     });
                 }
 
-                // Get the existing run to check permissions
                 var existingRun = await _runApi.GetRunByIdAsync(run.RunId, accessToken, cancellationToken);
                 if (existingRun == null)
                 {
@@ -763,7 +794,6 @@ namespace Web.Controllers
                     });
                 }
 
-                // Verify user has permission to edit this run
                 if (existingRun.ProfileId != profileId && userRole != "Admin")
                 {
                     return Json(new
@@ -773,7 +803,6 @@ namespace Web.Controllers
                     });
                 }
 
-                // Check if player limit is being reduced below current participant count
                 if (run.PlayerLimit.HasValue && existingRun.PlayerCount.HasValue &&
                     run.PlayerLimit < existingRun.PlayerCount)
                 {
@@ -784,19 +813,15 @@ namespace Web.Controllers
                     });
                 }
 
-                // Set default values if not provided
                 SetDefaultRunValues(run, existingRun);
 
-                // Preserve the original ProfileId and other system fields
                 run.ProfileId = existingRun.ProfileId;
 
-                // Preserve player count if not provided
                 if (!run.PlayerCount.HasValue)
                 {
                     run.PlayerCount = existingRun.PlayerCount;
                 }
 
-                // Update run via API
                 var updateResult = await _runApi.UpdateRunAsync(run, accessToken, cancellationToken);
 
                 if (!updateResult)
@@ -811,7 +836,6 @@ namespace Web.Controllers
 
                 _logger.LogInformation("Run updated successfully by user {ProfileId}: {RunId}", profileId, run.RunId);
 
-                // Fetch the updated run data to return current state
                 var refreshedRun = await _runApi.GetRunByIdAsync(run.RunId, accessToken, cancellationToken);
 
                 return Json(new
@@ -832,10 +856,10 @@ namespace Web.Controllers
                         skillLevel = refreshedRun.SkillLevel,
                         type = refreshedRun.Type,
                         isPublic = refreshedRun.IsPublic,
-                        address = "",
-                        city = "",
-                        state = "",
-                        zip = ""
+                        address = refreshedRun.Client.Address ?? "",
+                        city = refreshedRun.Client.City ?? "",
+                        state = refreshedRun.Client.State ?? "",
+                        zip = refreshedRun.Client.Zip ?? ""
                     } : new
                     {
                         runId = run.RunId,
@@ -849,10 +873,10 @@ namespace Web.Controllers
                         skillLevel = run.SkillLevel,
                         type = run.Type,
                         isPublic = run.IsPublic,
-                        address = "",
-                        city = "",
-                        state = "",
-                        zip = ""
+                        address = run.Client.Address ?? "",
+                        city = run.Client.City ?? "",
+                        state = run.Client.State ?? "",
+                        zip = run.Client.Zip ?? ""
                     }
                 });
             }
@@ -905,11 +929,10 @@ namespace Web.Controllers
                 {
                     success = false,
                     message = "An unexpected error occurred while updating the run. Please try again later.",
-                    error = ex.GetType().Name // Only include in development
+                    error = ex.GetType().Name
                 });
             }
         }
-
 
         private ValidationResult ValidateRunData(Run run)
         {
@@ -998,13 +1021,7 @@ namespace Web.Controllers
                 run.IsPublic = existingRun.IsPublic ?? true;
             }
 
-            // Preserve creation metadata
             run.CreatedDate = existingRun.CreatedDate;
-            // run.CreatedBy = existingRun.CreatedBy;
-
-            // Set update metadata
-            // run.UpdatedDate = DateTime.UtcNow;
-            //run.UpdatedBy = HttpContext.Session.GetString("ProfileId");
         }
 
         private class ValidationResult
@@ -1020,7 +1037,6 @@ namespace Web.Controllers
         {
             try
             {
-                // Get the access token from session
                 var accessToken = HttpContext.Session.GetString("UserToken");
                 if (string.IsNullOrEmpty(accessToken))
                 {
@@ -1028,7 +1044,6 @@ namespace Web.Controllers
                     return RedirectToAction("Index", "Home", new { scrollTo = "login" });
                 }
 
-                // Get run details first to check permissions
                 var run = await _runApi.GetRunByIdAsync(id, accessToken, cancellationToken);
                 if (run == null)
                 {
@@ -1036,7 +1051,6 @@ namespace Web.Controllers
                     return RedirectToAction("Run");
                 }
 
-                // Verify user is creator or admin
                 var profileId = HttpContext.Session.GetString("ProfileId");
                 var userRole = HttpContext.Session.GetString("UserRole");
                 if (run.ProfileId != profileId && userRole != "Admin")
@@ -1045,7 +1059,6 @@ namespace Web.Controllers
                     return RedirectToAction("Details", new { id = id });
                 }
 
-                // Delete run
                 await _runApi.DeleteRunAsync(id, accessToken, cancellationToken);
 
                 TempData["Success"] = "Run deleted successfully.";
@@ -1065,7 +1078,6 @@ namespace Web.Controllers
         {
             try
             {
-                // Get the access token from session
                 var accessToken = HttpContext.Session.GetString("UserToken");
                 if (string.IsNullOrEmpty(accessToken))
                 {
@@ -1073,7 +1085,6 @@ namespace Web.Controllers
                     return RedirectToAction("Index", "Home", new { scrollTo = "login" });
                 }
 
-                // Get profile ID
                 var profileId = HttpContext.Session.GetString("ProfileId");
                 if (string.IsNullOrEmpty(profileId))
                 {
@@ -1081,14 +1092,12 @@ namespace Web.Controllers
                     return RedirectToAction("Details", new { id = runId });
                 }
 
-                // Create joined run request
                 var joinedRun = new CreateJoinedRunDto
                 {
                     RunId = runId,
                     ProfileId = profileId
                 };
 
-                // Join run
                 await _runApi.UserJoinRunAsync(joinedRun, accessToken, cancellationToken);
 
                 TempData["Success"] = "You have successfully joined the run.";
@@ -1102,8 +1111,6 @@ namespace Web.Controllers
             }
         }
     }
-
-
 
     // Request models for API calls
     public class RemoveParticipantRequest
