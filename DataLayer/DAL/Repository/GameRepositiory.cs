@@ -96,6 +96,174 @@ namespace DataLayer.DAL.Repository
         }
 
         /// <summary>
+        /// Get all games by Client ID with winners, losers, and run information
+        /// </summary>
+        /// <param name="clientId">The Client ID to filter games by</param>
+        /// <returns>List of games with the specified Client ID, including complete profile and run data</returns>
+        public async Task<List<Game>> GetGameByClientId(string clientId)
+        {
+            try
+            {
+                // Fetch all games with the specified ClientId
+                var games = await _context.Game
+                    .Where(model => model.ClientId == clientId)
+                    .ToListAsync();
+
+                if (!games.Any())
+                    return new List<Game>();
+
+                return await PopulateGameDetails(games);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching games by client ID '{clientId}': {ex.Message}");
+                return new List<Game>();
+            }
+        }
+
+        /// <summary>
+        /// Helper method to populate game details (winners, losers, runs) for multiple games efficiently
+        /// </summary>
+        /// <param name="games">List of games to populate</param>
+        /// <returns>Games with populated details</returns>
+        /// <summary>
+/// Helper method to populate game details (winners, losers, runs) for multiple games efficiently
+/// </summary>
+/// <param name="games">List of games to populate</param>
+/// <returns>Games with populated details</returns>
+private async Task<List<Game>> PopulateGameDetails(List<Game> games)
+{
+    try
+    {
+        var gameIds = games.Select(g => g.GameId).ToList();
+        
+        // Get all winning players for these games in one query
+        var allWinningPlayers = await _context.GameWinningPlayer
+            .Where(wp => gameIds.Contains(wp.GameId))
+            .ToListAsync();
+            
+        // Get all losing players for these games in one query
+        var allLosingPlayers = await _context.GameLosingPlayer
+            .Where(lp => gameIds.Contains(lp.GameId))
+            .ToListAsync();
+            
+        // Get all unique profile IDs
+        var allProfileIds = allWinningPlayers.Select(wp => wp.ProfileId)
+            .Concat(allLosingPlayers.Select(lp => lp.ProfileId))
+            .Distinct()
+            .ToList();
+            
+        // Fetch all profiles at once
+        var allProfiles = await _context.Profile
+            .Where(p => allProfileIds.Contains(p.ProfileId))
+            .ToListAsync();
+            
+        // Get all run IDs and fetch runs
+        var runIds = games.Where(g => !string.IsNullOrEmpty(g.RunId))
+            .Select(g => g.RunId)
+            .Distinct()
+            .ToList();
+            
+        var allRuns = await _context.Run
+            .Where(r => runIds.Contains(r.RunId))
+            .ToListAsync();
+            
+        // Process each game
+        foreach (var game in games)
+        {
+            // Initialize ProfileList
+            game.ProfileList = new List<Profile>();
+            
+            // Get winning player IDs for this game
+            var winningPlayerIds = allWinningPlayers
+                .Where(wp => wp.GameId == game.GameId)
+                .Select(wp => wp.ProfileId)
+                .ToList();
+                
+            // Get losing player IDs for this game
+            var losingPlayerIds = allLosingPlayers
+                .Where(lp => lp.GameId == game.GameId)
+                .Select(lp => lp.ProfileId)
+                .ToList();
+                
+            // Get winner profiles and mark them (preserving all properties)
+            var winnerProfiles = allProfiles
+                .Where(profile => winningPlayerIds.Contains(profile.ProfileId))
+                .Select(profile => {
+                    var winnerProfile = new Profile
+                    {
+                        ProfileId = profile.ProfileId,
+                        UserName = profile.UserName,
+                        ImageURL = profile.ImageURL,
+                        // Add any other Profile properties here
+                        WinOrLose = "W"
+                    };
+                    return winnerProfile;
+                })
+                .ToList();
+                
+            // Get loser profiles and mark them (preserving all properties)
+            var loserProfiles = allProfiles
+                .Where(profile => losingPlayerIds.Contains(profile.ProfileId))
+                .Select(profile => {
+                    var loserProfile = new Profile
+                    {
+                        ProfileId = profile.ProfileId,
+                        UserName = profile.UserName,
+                        ImageURL = profile.ImageURL,
+                       
+                        // Add any other Profile properties here
+                        WinOrLose = "L"
+                    };
+                    return loserProfile;
+                })
+                .ToList();
+                
+            // Populate the main ProfileList with both winners and losers
+            game.ProfileList = winnerProfiles.Concat(loserProfiles).ToList();
+            
+            // Attach the associated Run
+            if (!string.IsNullOrEmpty(game.RunId))
+            {
+                game.Run = allRuns.FirstOrDefault(run => run.RunId == game.RunId);
+            }
+        }
+        
+        return games;
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error populating game details: {ex.Message}");
+        return games; // Return games without details rather than empty list
+    }
+}
+
+        /// <summary>
+        /// Alternative version using Entity Framework Include for eager loading (if relationships are configured)
+        /// </summary>
+        /// <param name="clientId">The Client ID to filter games by</param>
+        /// <returns>List of games with the specified Client ID</returns>
+        public async Task<List<Game>> GetGamesByClientIdWithIncludes(string clientId)
+        {
+            try
+            {
+                var games = await _context.Game
+                    .Include(g => g.Run)
+                    .Include(g => g.ProfileList)
+                    // Add other includes as needed based on your entity relationships
+                    .Where(model => model.ClientId == clientId)
+                    .ToListAsync();
+
+                return games ?? new List<Game>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching games by client ID '{clientId}': {ex.Message}");
+                return new List<Game>();
+            }
+        }
+
+        /// <summary>
         /// Get Game History
         /// </summary>
         /// <returns>List of games with player information</returns>
@@ -454,5 +622,7 @@ namespace DataLayer.DAL.Repository
         {
             return await _context.SaveChangesAsync();
         }
+
+     
     }
 }

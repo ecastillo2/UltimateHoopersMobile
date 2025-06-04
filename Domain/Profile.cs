@@ -42,6 +42,7 @@ namespace Domain
         public string? SubId { get; set; }
         [NotMapped]
         public string? SegId { get; set; }
+        
         [NotMapped]
         public string? FirstName { get; set; }
 

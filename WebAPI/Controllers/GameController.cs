@@ -1,7 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using DataLayer.DAL.Interface;
 using Domain;
+using Domain.DtoModel;
 using Microsoft.AspNetCore.Authorization;
-using DataLayer.DAL.Interface;
+using Microsoft.AspNetCore.Mvc;
 
 namespace WebAPI.Controllers
 {
@@ -25,6 +26,8 @@ namespace WebAPI.Controllers
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
+
+      
 
         /// <summary>
         /// Get all games
@@ -67,6 +70,37 @@ namespace WebAPI.Controllers
             try
             {
                 var game = await _repository.GetGameById(gameId);
+
+                if (game == null)
+                    return NotFound(new { message = $"Game with ID {gameId} not found" });
+
+                return Ok(game);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving game {GameId}", gameId);
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new { message = "An error occurred while retrieving the game" });
+            }
+        }
+
+        /// <summary>
+        /// Get a game by Client ID
+        /// </summary>
+        /// <param name="gameId">The ID of the game to retrieve</param>
+        /// <returns>The game with the specified ID</returns>
+        /// <response code="200">Returns the game</response>
+        /// <response code="404">If the game was not found</response>
+        /// <response code="500">If an error occurred while retrieving the game</response>
+        [HttpGet("GetGameByClientId")]
+        [ProducesResponseType(typeof(Game), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetGameByClientId(string gameId)
+        {
+            try
+            {
+                var game = await _repository.GetGameByClientId(gameId);
 
                 if (game == null)
                     return NotFound(new { message = $"Game with ID {gameId} not found" });

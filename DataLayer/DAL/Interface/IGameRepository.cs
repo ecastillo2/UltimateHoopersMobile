@@ -7,6 +7,8 @@ namespace DataLayer.DAL.Interface
     {
         Task<List<Game>> GetGames();
         Task<Game> GetGameById(string GameId);
+
+        Task<List<Game>> GetGameByClientId(string Clientd);
         Task InsertGame(Game model);
         Task UpdateGame(Game model);
         Task DeleteGame(string GameId);
