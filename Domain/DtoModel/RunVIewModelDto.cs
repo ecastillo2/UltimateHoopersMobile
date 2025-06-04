@@ -65,6 +65,7 @@ namespace Domain.DtoModel
         public string? TeamType { get; set; }
         public int? PlayerLimit { get; set; }
         public Court Court { get; set; }
+        public Client Client { get; set; }
         public IList<JoinedRun> JoinedRunList { get; set; }
         [NotMapped]
         public string? ImageUrl { get; }

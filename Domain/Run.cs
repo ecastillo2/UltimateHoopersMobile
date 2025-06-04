@@ -35,6 +35,9 @@ namespace Domain
         public Court? Court { get; set; }
 
         [NotMapped]
+        public Client? Client { get; set; }
+
+        [NotMapped]
         public string? ImageUrl { get; set; }
 
         [NotMapped]

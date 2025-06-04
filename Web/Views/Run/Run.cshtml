@@ -435,9 +435,9 @@
 
         // Build location string for filtering
         var locationParts = new List<string>();
-        if (!string.IsNullOrEmpty(run.Address)) locationParts.Add(run.Address);
-        if (!string.IsNullOrEmpty(run.City)) locationParts.Add(run.City);
-        if (!string.IsNullOrEmpty(run.State)) locationParts.Add(run.State);
+        if (!string.IsNullOrEmpty(run.Client.Address)) locationParts.Add(run.Address);
+        if (!string.IsNullOrEmpty(run.Client.City)) locationParts.Add(run.City);
+        if (!string.IsNullOrEmpty(run.Client.State)) locationParts.Add(run.State);
         var fullLocation = string.Join(", ", locationParts);
 
         <tr data-run-type="@(run.Type?.ToLower() ?? "pickup")"
@@ -451,7 +451,7 @@
             <td>
                 <div class="d-flex align-items-center">
                     <div class="me-3">
-                        <div class="fw-semibold">@run.Name</div>
+                        <div class="fw-semibold">@run.Client.Name</div>
                         <div class="text-muted small">@(run.Type ?? "Pickup") • @(run.SkillLevel ?? "All Levels")</div>
                     </div>
                 </div>
@@ -473,10 +473,10 @@
             </td>
             <td>
                 <div>
-                    <div class="fw-semibold">@(run.Address ?? "Location TBD")</div>
-                    @if (!string.IsNullOrEmpty(run.City) || !string.IsNullOrEmpty(run.State))
+                    <div class="fw-semibold">@(run.Client.Address ?? "Location TBD")</div>
+                    @if (!string.IsNullOrEmpty(run.Client.City) || !string.IsNullOrEmpty(run.Client.State))
                     {
-                        <div class="text-muted small">@run.City@(!string.IsNullOrEmpty(run.City) && !string.IsNullOrEmpty(run.State) ? ", " : "")@run.State</div>
+                        <div class="text-muted small">@run.Client.City@(!string.IsNullOrEmpty(run.Client.City) && !string.IsNullOrEmpty(run.Client.State) ? ", " : "")@run.Client.State</div>
                     }
                 </div>
             </td>

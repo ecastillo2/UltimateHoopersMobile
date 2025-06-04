@@ -18,11 +18,7 @@ namespace Web.Controllers
         private readonly IJoinedRunApi _joinedRunApi;
         private readonly ILogger<RunController> _logger;
 
-        public RunController(
-         IRunApi runApi,
-         IClientApi clientApi,
-         IJoinedRunApi joinedRunApi,
-         ILogger<RunController> logger)
+        public RunController(IRunApi runApi,IClientApi clientApi,IJoinedRunApi joinedRunApi,ILogger<RunController> logger)
         {
             _clientApi = clientApi ?? throw new ArgumentNullException(nameof(clientApi));
             _joinedRunApi = joinedRunApi ?? throw new ArgumentNullException(nameof(joinedRunApi));
@@ -31,12 +27,7 @@ namespace Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Run(
-             string cursor = null,
-             int limit = 10,
-             string direction = "next",
-             string sortBy = "StartDate",
-             CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Run(string cursor = null,int limit = 10,string direction = "next",string sortBy = "StartDate",CancellationToken cancellationToken = default)
         {
             try
             {
@@ -53,13 +44,7 @@ namespace Web.Controllers
                 var profileId = HttpContext.Session.GetString("ProfileId");
 
                 // Get runs with cursor pagination
-                var result = await _runApi.GetRunsWithCursorAsync(
-                    cursor: cursor,
-                    limit: limit,
-                    direction: direction,
-                    sortBy: sortBy,
-                    accessToken: accessToken,
-                    cancellationToken: cancellationToken);
+                var result = await _runApi.GetRunsWithCursorAsync(cursor: cursor,limit: limit,direction: direction,sortBy: sortBy,accessToken: accessToken,cancellationToken: cancellationToken);
 
                 // Create view model
                 var viewModel = new RunsViewModel
@@ -81,10 +66,7 @@ namespace Web.Controllers
 
         // NEW: Get runs for calendar view
         [HttpGet]
-        public async Task<IActionResult> GetRunsForCalendar(
-    DateTime? startDate = null,
-    DateTime? endDate = null,
-    CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetRunsForCalendar(DateTime? startDate = null,DateTime? endDate = null,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -121,9 +103,9 @@ namespace Web.Controllers
                     status = run.Status ?? "Active",
                     isPublic = run.IsPublic ?? true,
                     // FIXED: Use actual address data instead of empty strings
-                    address =  "address",
-                    city =  "cit",
-                    state =  "state",
+                    address =  run.Client.Address,
+                    city = run.Client.City,
+                    state = run.Client.State,
                     profileId =  "Profile"
                 }).ToList();
 
@@ -158,12 +140,12 @@ namespace Web.Controllers
             var locationParts = new List<string>();
 
             // FIXED: Use actual run properties instead of hardcoded "test" values
-            if (!string.IsNullOrEmpty("run.Address"))
-                locationParts.Add("run.Address");
-            if (!string.IsNullOrEmpty("run.Address"))
-                locationParts.Add("run.Address");
-            if (!string.IsNullOrEmpty("run.Address") && locationParts.Any())
-                locationParts.Add("run.Address");
+            if (!string.IsNullOrEmpty(run.Client.Address))
+                locationParts.Add(run.Client.Address);
+            if (!string.IsNullOrEmpty(run.Client.State))
+                locationParts.Add(run.Client.State);
+            if (!string.IsNullOrEmpty(run.Client.City) && locationParts.Any())
+                locationParts.Add(run.Client.City);
 
             return locationParts.Any() ? string.Join(", ", locationParts) : "Location TBD";
         }

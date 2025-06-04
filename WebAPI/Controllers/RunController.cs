@@ -94,8 +94,7 @@ namespace WebAPI.Controllers
         {
             try
             {
-                var (privateRuns, nextCursor) = await _runRepository
-                    .GetRunsWithCursorAsync(cursor, limit, direction, sortBy, cancellationToken);
+                var (privateRuns, nextCursor) = await _runRepository.GetRunsWithCursorAsync(cursor, limit, direction, sortBy, cancellationToken);
 
                 // Create a list to hold our detailed profile view models
                 var detailedViewModels = new List<RunDetailViewModelDto>();

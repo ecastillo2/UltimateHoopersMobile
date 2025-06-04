@@ -94,15 +94,15 @@ namespace DataLayer.DAL.Repository
 
 
                 // Execute query with limit
-                var privateRuns = await query.Take(limit + 1).ToListAsync(cancellationToken);
+                var runs = await query.Take(limit + 1).ToListAsync(cancellationToken);
 
                 // Check if we have a next page by fetching limit+1 items
                 string nextCursor = null;
-                if (privateRuns.Count > limit)
+                if (runs.Count > limit)
                 {
                     // Remove the extra item we retrieved to check for "has next page"
-                    var lastItem = privateRuns[limit];
-                    privateRuns.RemoveAt(limit);
+                    var lastItem = runs[limit];
+                    runs.RemoveAt(limit);
 
                     // Create cursor for next page based on last item properties
                     var newCursorData = new RunCursorData
@@ -117,12 +117,12 @@ namespace DataLayer.DAL.Repository
                 }
 
                 // If we requested previous direction and got results, we need to reverse the order
-                if (direction.ToLowerInvariant() == "previous" && privateRuns.Any())
+                if (direction.ToLowerInvariant() == "previous" && runs.Any())
                 {
-                    privateRuns.Reverse();
+                    runs.Reverse();
                 }
 
-                return (privateRuns, nextCursor);
+                return (runs, nextCursor);
             }
             catch (Exception ex)
             {
