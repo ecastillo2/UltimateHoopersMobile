@@ -11,6 +11,7 @@ namespace Domain.DtoModel
 
         public Run Run { get; set; }
         public Court Court { get; set; }
+        public Client Client { get; set; }
         public IList<Profile> JoinedRunProfileList { get; set; }
 
         public int? PlayerCount { get; set; }

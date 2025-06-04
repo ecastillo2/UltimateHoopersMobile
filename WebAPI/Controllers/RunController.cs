@@ -10,11 +10,13 @@ namespace WebAPI.Controllers
     public class RunController : ControllerBase
     {
         private readonly IRunRepository _runRepository;
+        private readonly IClientRepository _clientRepository;
         private readonly ILogger<RunController> _logger;
 
-        public RunController(IRunRepository privateRunRepository, ILogger<RunController> logger)
+        public RunController(IRunRepository privateRunRepository, IClientRepository clientRepository, ILogger<RunController> logger)
         {
             _runRepository = privateRunRepository ?? throw new ArgumentNullException(nameof(privateRunRepository));
+            _clientRepository = clientRepository ?? throw new ArgumentNullException(nameof(clientRepository));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -105,6 +107,7 @@ namespace WebAPI.Controllers
                     // Get additional profile data using the profile's ID
                     var privateRun = item;
                     var court = await _runRepository.GetCourtAsync(item.CourtId, cancellationToken);
+                    var client = await _clientRepository.GetClientByIdAsync(item.ClientId, cancellationToken);
                     var JoinRunProfileList = await _runRepository.GetJoinedRunAsync(item.RunId, cancellationToken);
                     
 
@@ -113,6 +116,7 @@ namespace WebAPI.Controllers
                     {
                         Run = item,
                         Court = court != null ? new Court(court) : null,
+                        Client = client != null ? new Client(client) : null,
                         JoinedRunProfileList = JoinRunProfileList,
                         
                     };
