@@ -911,7 +911,7 @@ namespace BasketballGameAnalyzer
                             Points = points,
                             GameTime = gameTime,
                             Basket = recentCandidates.First().Basket,
-                            Confidence = recentCandidates.Average(c => c.Confidence)
+                            //Confidence = recentCandidates.Average(c => c.Confidence)
                         };
                     }
                 }
