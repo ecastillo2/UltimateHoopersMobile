@@ -86,13 +86,13 @@ namespace Web.Controllers
                 // Get runs within the date range
                 var runs = await GetRunsForDateRange(startDate.Value, endDate.Value, accessToken, cancellationToken);
 
-                // Transform runs for calendar display with proper data mapping
+                // Transform runs for calendar display with proper data mapping and null safety
                 var calendarRuns = runs.Select(run => new
                 {
                     runId = run.RunId ?? "",
                     name = run.Client?.Name ?? run.Name ?? "Basketball Run", // ENHANCED: Use Client.Name as primary
                     type = run.Type?.ToLower() ?? "pickup",
-                    runDate = run.RunDate?.ToString("yyyy-MM-dd"),
+                    runDate = run.RunDate?.ToString("yyyy-MM-dd") ?? "",
                     startTime = DateTimeUtilities.FormatTimeSpanTo12Hour(run.StartTime ?? TimeSpan.Zero),
                     endTime = DateTimeUtilities.FormatTimeSpanTo12Hour(run.EndTime ?? TimeSpan.Zero),
                     location = BuildLocationStringFixed(run),
@@ -202,7 +202,7 @@ namespace Web.Controllers
             return allRuns.OrderBy(r => r.RunDate).ThenBy(r => r.StartTime).ToList();
         }
 
-        // ENHANCED: GetRunData method with better client information
+        // FIXED: GetRunData method with comprehensive null safety
         [HttpGet]
         public async Task<IActionResult> GetRunData(string id, CancellationToken cancellationToken = default)
         {
@@ -214,6 +214,11 @@ namespace Web.Controllers
                     return Json(new { success = false, message = "Unauthorized" });
                 }
 
+                if (string.IsNullOrEmpty(id))
+                {
+                    return Json(new { success = false, message = "Run ID is required" });
+                }
+
                 var run = await _runApi.GetRunByIdAsync(id, accessToken, cancellationToken);
                 if (run == null)
                 {
@@ -222,15 +227,16 @@ namespace Web.Controllers
 
                 var clientCourtList = new List<Court>();
 
-                // Enhanced court data retrieval
+                // Enhanced court data retrieval with comprehensive error handling
                 try
                 {
                     if (!string.IsNullOrEmpty(run.ClientId))
                     {
                         _logger.LogInformation("Fetching courts for client: {ClientId}", run.ClientId);
-                        clientCourtList = await _clientApi.GetClientCourtsAsync(run.ClientId, accessToken, cancellationToken);
+                        var courts = await _clientApi.GetClientCourtsAsync(run.ClientId, accessToken, cancellationToken);
+                        clientCourtList = courts ?? new List<Court>();
                         _logger.LogInformation("Retrieved {CourtCount} courts for client {ClientId}",
-                            clientCourtList?.Count ?? 0, run.ClientId);
+                            clientCourtList.Count, run.ClientId);
                     }
                     else
                     {
@@ -240,17 +246,19 @@ namespace Web.Controllers
                 catch (Exception courtEx)
                 {
                     _logger.LogError(courtEx, "Error retrieving courts for client: {ClientId}", run.ClientId);
+                    // Continue execution even if court loading fails
+                    clientCourtList = new List<Court>();
                 }
 
-                // Enhanced court list handling
+                // Enhanced court list handling with comprehensive null safety
                 var courtListData = new List<object>();
                 if (clientCourtList != null && clientCourtList.Any())
                 {
                     courtListData = clientCourtList.Select(c => new
                     {
-                        courtId = c.CourtId ?? "",
-                        name = c.Name + " - " + c.CourtType ?? "Unnamed Court",
-                        address = c.Address ?? "",
+                        courtId = c?.CourtId ?? "",
+                        name = (c?.Name ?? "Unnamed Court") + " - " + (c?.CourtType ?? "Standard"),
+                        address = c?.Address ?? "",
                         isIndoor = true,
                         isActive = true
                     }).Cast<object>().ToList();
@@ -262,14 +270,29 @@ namespace Web.Controllers
                     _logger.LogWarning("No courts available for client {ClientId}", run.ClientId);
                 }
 
-                // ENHANCED: Run data response with client information and auto-population data
+                // FIXED: Safe time formatting with comprehensive null checks
+                string FormatTimeSafe(TimeSpan? timeSpan)
+                {
+                    if (!timeSpan.HasValue) return "";
+                    try
+                    {
+                        return TimeSpan.FromTicks(timeSpan.Value.Ticks).ToString(@"hh\:mm");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Error formatting time span: {TimeSpan}", timeSpan);
+                        return "";
+                    }
+                }
+
+                // ENHANCED: Run data response with comprehensive null safety and error handling
                 var runData = new
                 {
                     runId = run.RunId ?? "",
                     clientId = run.ClientId ?? "",
                     name = run.Name ?? "",
 
-                    // ENHANCED: Client information for auto-population
+                    // FIXED: Client information with proper null checking
                     clientName = run.Client?.Name ?? "",
                     clientAddress = run.Client?.Address ?? "",
                     clientCity = run.Client?.City ?? "",
@@ -279,19 +302,17 @@ namespace Web.Controllers
                     // Safe date formatting
                     runDate = run.RunDate?.ToString("yyyy-MM-dd") ?? "",
 
-                    // ENHANCED: Time formatting for form inputs
-                    startTime = run.StartTime.HasValue ?
-                        TimeSpan.FromTicks(run.StartTime.Value.Ticks).ToString(@"hh\:mm") : "",
-                    endTime = run.EndTime.HasValue ?
-                        TimeSpan.FromTicks(run.EndTime.Value.Ticks).ToString(@"hh\:mm") : "",
+                    // FIXED: Time formatting with comprehensive null safety
+                    startTime = FormatTimeSafe(run.StartTime),
+                    endTime = FormatTimeSafe(run.EndTime),
 
-                    // Address fields - now support both run and client addresses
-                    address = run.Client.Address ?? run.Client?.Address ?? "",
-                    city = run.Client.City ?? run.Client?.City ?? "",
-                    state = run.Client.State ?? run.Client?.State ?? "",
-                    zip = run.Client.Zip ?? run.Client?.Zip ?? "",
+                    // FIXED: Address fields with proper null safety - avoiding duplicate access
+                    address = run.Client?.Address ?? "",
+                    city = run.Client?.City ?? "",
+                    state = run.Client?.State ?? "",
+                    zip = run.Client?.Zip ?? "",
 
-                    // Safe numeric conversions
+                    // Safe numeric conversions with null coalescing
                     playerLimit = run.PlayerLimit ?? 0,
                     playerCount = run.PlayerCount ?? 0,
 
@@ -306,8 +327,8 @@ namespace Web.Controllers
                     isPublic = run.IsPublic ?? true,
                     isOutdoor = false,
 
-                    // Enhanced court selection
-                    courtId = GetCourtIdFromRun(run),
+                    // Enhanced court selection with null safety
+                    courtId = GetCourtIdFromRunSafe(run),
 
                     // Enhanced court list
                     courtList = courtListData,
@@ -321,10 +342,11 @@ namespace Web.Controllers
                     debug = new
                     {
                         hasClientId = !string.IsNullOrEmpty(run.ClientId),
-                        clientId = run.ClientId,
+                        clientId = run.ClientId ?? "",
                         courtCount = courtListData.Count,
-                        runCourtId = GetCourtIdFromRun(run),
-                        hasClientInfo = run.Client != null
+                        runCourtId = GetCourtIdFromRunSafe(run),
+                        hasClientInfo = run.Client != null,
+                        clientName = run.Client?.Name ?? "No client data"
                     }
                 };
 
@@ -340,7 +362,8 @@ namespace Web.Controllers
                 {
                     success = false,
                     message = $"Error loading run data: {ex.Message}",
-                    error = ex.GetType().Name
+                    error = ex.GetType().Name,
+                    runId = id ?? ""
                 });
             }
         }
@@ -359,7 +382,7 @@ namespace Web.Controllers
             };
         }
 
-        // ENHANCED: Get client data for auto-population
+        // FIXED: Enhanced GetClientData method with comprehensive null safety
         [HttpGet]
         public async Task<IActionResult> GetClientData(string clientId, CancellationToken cancellationToken = default)
         {
@@ -376,7 +399,7 @@ namespace Web.Controllers
                     return Json(new { success = false, message = "Client ID is required" });
                 }
 
-                // Get client data from API
+                // Get client data from API with comprehensive error handling
                 var client = await _clientApi.GetClientByIdAsync(clientId, accessToken, cancellationToken);
 
                 if (client == null)
@@ -384,15 +407,25 @@ namespace Web.Controllers
                     return Json(new { success = false, message = "Client not found" });
                 }
 
-                // Get courts for the client
-                var courts = await _clientApi.GetClientCourtsAsync(clientId, accessToken, cancellationToken);
+                // Get courts for the client with comprehensive error handling
+                List<Court> courts = new List<Court>();
+                try
+                {
+                    var courtResult = await _clientApi.GetClientCourtsAsync(clientId, accessToken, cancellationToken);
+                    courts = courtResult ?? new List<Court>(); // Ensure not null
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to load courts for client {ClientId}", clientId);
+                    // Continue without courts rather than failing entirely
+                }
 
                 var clientData = new
                 {
                     success = true,
                     client = new
                     {
-                        clientId = client.ClientId,
+                        clientId = client.ClientId ?? "",
                         name = client.Name ?? "",
                         address = client.Address ?? "",
                         city = client.City ?? "",
@@ -400,12 +433,12 @@ namespace Web.Controllers
                         zip = client.Zip ?? "",
                         phoneNumber = client.PhoneNumber ?? ""
                     },
-                    courts = courts?.Select(c => new
+                    courts = courts.Select(c => new
                     {
-                        courtId = c.CourtId ?? "",
-                        name = c.Name ?? "Unnamed Court",
+                        courtId = c?.CourtId ?? "",
+                        name = c?.Name ?? "Unnamed Court",
                     }) ?? Enumerable.Empty<object>()
-            };
+                };
 
                 return Json(clientData);
             }
@@ -415,12 +448,13 @@ namespace Web.Controllers
                 return Json(new
                 {
                     success = false,
-                    message = $"Error loading client data: {ex.Message}"
+                    message = $"Error loading client data: {ex.Message}",
+                    error = ex.GetType().Name
                 });
             }
         }
 
-        // New method to get courts for a specific client
+        // FIXED: New method to get courts for a specific client with enhanced error handling
         [HttpGet]
         public async Task<IActionResult> GetRunCourts(string clientId, CancellationToken cancellationToken = default)
         {
@@ -439,19 +473,23 @@ namespace Web.Controllers
 
                 _logger.LogInformation("Fetching courts for client: {ClientId}", clientId);
 
-                var courts = await _clientApi.GetClientCourtsAsync(clientId, accessToken, cancellationToken);
-
-                if (courts == null)
+                List<Court> courts = new List<Court>();
+                try
                 {
-                    _logger.LogWarning("GetClientCourtsAsync returned null for client: {ClientId}", clientId);
-                    courts = new List<Court>();
+                    var courtResult = await _clientApi.GetClientCourtsAsync(clientId, accessToken, cancellationToken);
+                    courts = courtResult ?? new List<Court>();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "GetClientCourtsAsync returned error for client: {ClientId}", clientId);
+                    // Continue with empty courts list
                 }
 
                 var courtData = courts.Select(c => new
                 {
-                    courtId = c.CourtId ?? "",
-                    name = c.Name ?? "Unnamed Court",
-                    address = c.Address ?? "",
+                    courtId = c?.CourtId ?? "",
+                    name = c?.Name ?? "Unnamed Court",
+                    address = c?.Address ?? "",
                     isIndoor = true,
                     isActive = true
                 }).ToList();
@@ -479,27 +517,25 @@ namespace Web.Controllers
             }
         }
 
-        // Helper method to safely get court ID from run data
-        private string GetCourtIdFromRun(dynamic run)
+        // FIXED: Helper method to safely get court ID from run data
+        private string GetCourtIdFromRunSafe(dynamic run)
         {
             try
             {
-                if (run.CourtId != null)
+                // Try multiple properties safely
+                if (run?.CourtId != null)
                 {
-                    var courtId = run.CourtId.ToString();
-                    return courtId;
+                    return run.CourtId.ToString();
                 }
 
-                if (run.Court?.CourtId != null)
+                if (run?.Court?.CourtId != null)
                 {
-                    var courtId = run.Court.CourtId.ToString();
-                    return courtId;
+                    return run.Court.CourtId.ToString();
                 }
 
-                if (run.VenueId != null)
+                if (run?.VenueId != null)
                 {
-                    var venueId = run.VenueId.ToString();
-                    return venueId;
+                    return run.VenueId.ToString();
                 }
 
                 _logger.LogDebug("No court ID found in run data");
@@ -523,14 +559,19 @@ namespace Web.Controllers
                     return Json(new { success = false, message = "Unauthorized" });
                 }
 
+                if (string.IsNullOrEmpty(runId))
+                {
+                    return Json(new { success = false, message = "Run ID is required" });
+                }
+
                 var participants = await _joinedRunApi.GetJoinedRunProfilesByRunIdAsync(runId, accessToken, cancellationToken);
 
-                var participantData = participants.Select(p => new
+                var participantData = (participants ?? new List<Profile>()).Select(p => new
                 {
-                    profileId = p.ProfileId,
-                    userName = p.UserName ?? "Unknown Player",
-                    imageUrl = p.ImageURL,
-                    status = p.Status ?? "Active"
+                    profileId = p?.ProfileId ?? "",
+                    userName = p?.UserName ?? "Unknown Player",
+                    imageUrl = p?.ImageURL ?? "",
+                    status = p?.Status ?? "Active"
                 }).ToList();
 
                 return Json(participantData);
@@ -548,6 +589,11 @@ namespace Web.Controllers
         {
             try
             {
+                if (request == null || string.IsNullOrEmpty(request.RunId) || string.IsNullOrEmpty(request.ProfileId))
+                {
+                    return Json(new { success = false, message = "Invalid request data" });
+                }
+
                 var accessToken = HttpContext.Session.GetString("UserToken");
                 if (string.IsNullOrEmpty(accessToken))
                 {
@@ -585,6 +631,11 @@ namespace Web.Controllers
         {
             try
             {
+                if (request == null || string.IsNullOrEmpty(request.RunId) || string.IsNullOrEmpty(request.ProfileId))
+                {
+                    return Json(new { success = false, message = "Invalid request data" });
+                }
+
                 var accessToken = HttpContext.Session.GetString("UserToken");
                 if (string.IsNullOrEmpty(accessToken))
                 {
@@ -605,7 +656,7 @@ namespace Web.Controllers
                     return Json(new { success = false, message = "You do not have permission to add participants to this run" });
                 }
 
-                if (run.PlayerCount >= run.PlayerLimit)
+                if ((run.PlayerCount ?? 0) >= (run.PlayerLimit ?? 0))
                 {
                     return Json(new { success = false, message = "This run is already at maximum capacity" });
                 }
@@ -631,6 +682,12 @@ namespace Web.Controllers
                 {
                     TempData["Error"] = "You must be logged in to view run details.";
                     return RedirectToAction("Index", "Home", new { scrollTo = "login" });
+                }
+
+                if (string.IsNullOrEmpty(id))
+                {
+                    TempData["Error"] = "Run ID is required.";
+                    return RedirectToAction("Run");
                 }
 
                 var run = await _runApi.GetRunByIdAsync(id, accessToken, cancellationToken);
@@ -676,6 +733,12 @@ namespace Web.Controllers
                     return RedirectToAction("Index", "Home", new { scrollTo = "login" });
                 }
 
+                if (run == null)
+                {
+                    TempData["Error"] = "Invalid run data provided.";
+                    return View(new Run());
+                }
+
                 run.ProfileId = HttpContext.Session.GetString("ProfileId");
 
                 if (run.PlayerLimit == null || run.PlayerLimit <= 0)
@@ -706,7 +769,7 @@ namespace Web.Controllers
                 var createdRun = await _runApi.CreateRunAsync(run, accessToken, cancellationToken);
 
                 TempData["Success"] = "Run created successfully.";
-                return RedirectToAction("Details", new { id = createdRun.RunId });
+                return RedirectToAction("Details", new { id = createdRun?.RunId });
             }
             catch (Exception ex)
             {
@@ -726,6 +789,12 @@ namespace Web.Controllers
                 {
                     TempData["Error"] = "You must be logged in to edit a run.";
                     return RedirectToAction("Index", "Home", new { scrollTo = "login" });
+                }
+
+                if (string.IsNullOrEmpty(id))
+                {
+                    TempData["Error"] = "Run ID is required.";
+                    return RedirectToAction("Run");
                 }
 
                 var run = await _runApi.GetRunByIdAsync(id, accessToken, cancellationToken);
@@ -767,6 +836,15 @@ namespace Web.Controllers
                         success = false,
                         message = "You must be logged in to edit a run.",
                         requiresLogin = true
+                    });
+                }
+
+                if (run == null)
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = "Invalid run data provided."
                     });
                 }
 
@@ -856,10 +934,10 @@ namespace Web.Controllers
                         skillLevel = refreshedRun.SkillLevel,
                         type = refreshedRun.Type,
                         isPublic = refreshedRun.IsPublic,
-                        address = refreshedRun.Client.Address ?? "",
-                        city = refreshedRun.Client.City ?? "",
-                        state = refreshedRun.Client.State ?? "",
-                        zip = refreshedRun.Client.Zip ?? ""
+                        address = refreshedRun.Client?.Address ?? "",
+                        city = refreshedRun.Client?.City ?? "",
+                        state = refreshedRun.Client?.State ?? "",
+                        zip = refreshedRun.Client?.Zip ?? ""
                     } : new
                     {
                         runId = run.RunId,
@@ -873,10 +951,10 @@ namespace Web.Controllers
                         skillLevel = run.SkillLevel,
                         type = run.Type,
                         isPublic = run.IsPublic,
-                        address = run.Client.Address ?? "",
-                        city = run.Client.City ?? "",
-                        state = run.Client.State ?? "",
-                        zip = run.Client.Zip ?? ""
+                        address = run.Client?.Address ?? "",
+                        city = run.Client?.City ?? "",
+                        state = run.Client?.State ?? "",
+                        zip = run.Client?.Zip ?? ""
                     }
                 });
             }
@@ -936,6 +1014,11 @@ namespace Web.Controllers
 
         private ValidationResult ValidateRunData(Run run)
         {
+            if (run == null)
+            {
+                return new ValidationResult { IsValid = false, ErrorMessage = "Run data is required.", Field = "run" };
+            }
+
             if (string.IsNullOrEmpty(run.RunId))
             {
                 return new ValidationResult { IsValid = false, ErrorMessage = "Run ID is required.", Field = "runId" };
@@ -996,6 +1079,8 @@ namespace Web.Controllers
 
         private void SetDefaultRunValues(Run run, Run existingRun)
         {
+            if (run == null || existingRun == null) return;
+
             if (string.IsNullOrEmpty(run.Status))
             {
                 run.Status = existingRun.Status ?? "Active";
@@ -1044,6 +1129,12 @@ namespace Web.Controllers
                     return RedirectToAction("Index", "Home", new { scrollTo = "login" });
                 }
 
+                if (string.IsNullOrEmpty(id))
+                {
+                    TempData["Error"] = "Run ID is required.";
+                    return RedirectToAction("Run");
+                }
+
                 var run = await _runApi.GetRunByIdAsync(id, accessToken, cancellationToken);
                 if (run == null)
                 {
@@ -1083,6 +1174,12 @@ namespace Web.Controllers
                 {
                     TempData["Error"] = "You must be logged in to join a run.";
                     return RedirectToAction("Index", "Home", new { scrollTo = "login" });
+                }
+
+                if (string.IsNullOrEmpty(runId))
+                {
+                    TempData["Error"] = "Run ID is required.";
+                    return RedirectToAction("Run");
                 }
 
                 var profileId = HttpContext.Session.GetString("ProfileId");
