@@ -1,10 +1,10 @@
 ﻿/**
- * Enhanced Product Management with Comprehensive Debugging
- * This version includes extensive logging and error handling to identify the issue
+ * Complete Fixed Product Management JavaScript
+ * Addresses the "Product ID is required" error and all related issues
  */
 
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('🚀 Initializing Enhanced Product Management with Debug');
+    console.log('🚀 Initializing Complete Fixed Product Management');
 
     // Global storage for current product data
     window.currentProductData = null;
@@ -14,8 +14,53 @@ document.addEventListener('DOMContentLoaded', function () {
     initializeModals();
     initializeForms();
     initializeImageHandlers();
+    fixEditButtons();
 
-    console.log('✅ Complete Product Management loaded successfully');
+    console.log('✅ Complete Fixed Product Management loaded successfully');
+
+    // ========== FIX EDIT BUTTONS ==========
+    function fixEditButtons() {
+        console.log('🔧 Fixing edit buttons...');
+
+        const editButtons = document.querySelectorAll('[data-bs-target="#editProductModal"]');
+        console.log(`Found ${editButtons.length} edit buttons`);
+
+        editButtons.forEach((button, index) => {
+            let productId = button.getAttribute('data-product-id');
+
+            if (!productId) {
+                // Try to get from parent row
+                const row = button.closest('tr');
+                if (row) {
+                    productId = row.getAttribute('data-product-id') ||
+                        row.getAttribute('data-productid') ||
+                        row.dataset.productId;
+
+                    if (productId) {
+                        button.setAttribute('data-product-id', productId);
+                        console.log(`✅ Fixed button ${index + 1}: added data-product-id="${productId}"`);
+                    } else {
+                        console.warn(`❌ Button ${index + 1}: No product ID found anywhere`);
+
+                        // Try to extract from href of nearby view button
+                        const viewButton = row.querySelector('a[href*="/Product/Details"]');
+                        if (viewButton) {
+                            const match = viewButton.href.match(/id=([^&]+)/);
+                            if (match) {
+                                productId = match[1];
+                                button.setAttribute('data-product-id', productId);
+                                console.log(`✅ Extracted from view button: ${productId}`);
+                            }
+                        }
+                    }
+                } else {
+                    console.error(`❌ Button ${index + 1}: No parent row found`);
+                }
+            } else {
+                console.log(`✅ Button ${index + 1}: Already has data-product-id="${productId}"`);
+            }
+        });
+    }
 
     // ========== DATATABLE INITIALIZATION ==========
     function initializeDataTable() {
@@ -39,20 +84,19 @@ document.addEventListener('DOMContentLoaded', function () {
                     { orderable: false, targets: [5] }
                 ],
                 order: [[0, 'asc']],
-                // Add callback to initialize filters after table is ready
                 initComplete: function () {
                     console.log('📊 DataTable initialization complete, setting up filters...');
-                    // Small delay to ensure DOM is ready
                     setTimeout(function () {
                         initializeFilters();
+                        fixEditButtons(); // Fix buttons after DataTable renders
                     }, 100);
                 }
             });
             console.log('📊 DataTable initialized successfully');
         } else {
-            // If no data, still try to initialize filters after a delay
             setTimeout(function () {
                 initializeFilters();
+                fixEditButtons();
             }, 500);
         }
     }
@@ -68,8 +112,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         const table = productsTable.DataTable();
-
-        // Get filter elements
         const statusFilter = $('#statusFilter');
         const categoryFilter = $('#categoryFilter');
         const typeFilter = $('#typeFilter');
@@ -82,31 +124,20 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // Apply filter function
         function applyFilters() {
-            console.log('🔍 Applying filters...', {
-                status: statusFilter.val(),
-                category: categoryFilter.val(),
-                type: typeFilter.val(),
-                priceRange: priceRangeFilter.val()
-            });
+            console.log('🔍 Applying filters...');
 
-            // Remove any existing custom filter to prevent stacking
             if ($.fn.dataTable.ext.search.length > 0) {
-                // Remove only our custom filters, keep others
                 $.fn.dataTable.ext.search = $.fn.dataTable.ext.search.filter(fn =>
                     !fn.name || fn.name !== 'productTableFilter'
                 );
             }
 
-            // Create a new custom filter function
             const customFilter = function (settings, data, dataIndex) {
-                // Only apply this filter to our productsTable
                 if (settings.nTable.id !== 'productsTable') return true;
 
                 const row = $(table.row(dataIndex).node());
 
-                // Skip filtering if all filters are set to 'all'
                 if (statusFilter.val() === 'all' &&
                     categoryFilter.val() === 'all' &&
                     typeFilter.val() === 'all' &&
@@ -118,67 +149,49 @@ document.addEventListener('DOMContentLoaded', function () {
                     // Status filtering
                     if (statusFilter.val() !== 'all') {
                         const statusValue = statusFilter.val().toLowerCase();
-
-                        // Get status from data attributes or cell content
                         const rowStatus = (row.attr('data-status') || '').toLowerCase();
-                        const statusCell = row.find('td:nth-child(4)'); // Status column
+                        const statusCell = row.find('td:nth-child(4)');
                         const statusText = statusCell.find('.badge').text().toLowerCase() ||
                             statusCell.text().toLowerCase();
 
                         const matchesStatus = rowStatus === statusValue || statusText.includes(statusValue);
-
-                        if (!matchesStatus) {
-                            return false;
-                        }
+                        if (!matchesStatus) return false;
                     }
 
                     // Category filtering
                     if (categoryFilter.val() !== 'all') {
                         const categoryValue = categoryFilter.val().toLowerCase();
-
-                        // Get category from data attributes or cell content
                         const rowCategory = (row.attr('data-category') || '').toLowerCase();
-                        const categoryCell = row.find('td:nth-child(5)'); // Category column
+                        const categoryCell = row.find('td:nth-child(5)');
                         const categoryText = categoryCell.text().toLowerCase();
 
                         const matchesCategory = rowCategory === categoryValue || categoryText === categoryValue;
-
-                        if (!matchesCategory) {
-                            return false;
-                        }
+                        if (!matchesCategory) return false;
                     }
 
                     // Type filtering
                     if (typeFilter.val() !== 'all') {
                         const typeValue = typeFilter.val().toLowerCase();
-
-                        // Get type from data attributes or product info
                         const rowType = (row.attr('data-type') || '').toLowerCase();
                         const productCell = row.find('td:first-child');
                         const productText = productCell.text().toLowerCase();
 
                         const matchesType = rowType === typeValue || productText.includes(typeValue);
-
-                        if (!matchesType) {
-                            return false;
-                        }
+                        if (!matchesType) return false;
                     }
 
                     // Price range filtering
                     if (priceRangeFilter.val() !== 'all') {
                         const priceRangeValue = priceRangeFilter.val();
-
-                        // Get price from data attributes or cell content
                         let price = parseFloat(row.attr('data-price')) || 0;
 
                         if (price === 0) {
-                            const priceCell = row.find('td:nth-child(2)'); // Price column
+                            const priceCell = row.find('td:nth-child(2)');
                             const priceText = priceCell.text().replace(/[$,]/g, '');
                             price = parseFloat(priceText) || 0;
                         }
 
                         let matchesPrice = false;
-
                         switch (priceRangeValue) {
                             case '0-25':
                                 matchesPrice = price >= 0 && price <= 25;
@@ -196,48 +209,33 @@ document.addEventListener('DOMContentLoaded', function () {
                                 matchesPrice = true;
                         }
 
-                        if (!matchesPrice) {
-                            return false;
-                        }
+                        if (!matchesPrice) return false;
                     }
 
-                    // If we got here, the row passes all filters
                     return true;
-
                 } catch (error) {
                     console.error('❌ Error in filter function:', error);
-                    return true; // Show row if there's an error
+                    return true;
                 }
             };
 
-            // Mark the filter function for identification
             customFilter.name = 'productTableFilter';
-
-            // Add the custom filter
             $.fn.dataTable.ext.search.push(customFilter);
-
-            // Redraw the table to apply filters
             table.draw();
-
-            // Update the active filters display
             updateActiveFilters();
         }
 
-        // Update the active filters display
         function updateActiveFilters() {
             if (!activeFiltersContainer.length) return;
 
-            // Clear the current active filters display (except the label)
             activeFiltersContainer.find('.filter-badge, .filter-none').remove();
 
-            // Check if any filters are active
             const hasActiveFilters =
                 statusFilter.val() !== 'all' ||
                 categoryFilter.val() !== 'all' ||
                 typeFilter.val() !== 'all' ||
                 priceRangeFilter.val() !== 'all';
 
-            // If no filters are active, show "None"
             if (!hasActiveFilters) {
                 activeFiltersContainer.append(
                     $('<span>').addClass('text-muted filter-none').text('None')
@@ -245,39 +243,36 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            // Add badges for active filters
             if (statusFilter.val() !== 'all') {
-                addFilterBadge('Status', formatFilterValue(statusFilter.val()), function () {
+                addFilterBadge('Status', formatFilterValue(statusFilter.val()), () => {
                     statusFilter.val('all');
                     applyFilters();
                 });
             }
 
             if (categoryFilter.val() !== 'all') {
-                addFilterBadge('Category', formatFilterValue(categoryFilter.val()), function () {
+                addFilterBadge('Category', formatFilterValue(categoryFilter.val()), () => {
                     categoryFilter.val('all');
                     applyFilters();
                 });
             }
 
             if (typeFilter.val() !== 'all') {
-                addFilterBadge('Type', formatFilterValue(typeFilter.val()), function () {
+                addFilterBadge('Type', formatFilterValue(typeFilter.val()), () => {
                     typeFilter.val('all');
                     applyFilters();
                 });
             }
 
             if (priceRangeFilter.val() !== 'all') {
-                addFilterBadge('Price', formatFilterValue(priceRangeFilter.val()), function () {
+                addFilterBadge('Price', formatFilterValue(priceRangeFilter.val()), () => {
                     priceRangeFilter.val('all');
                     applyFilters();
                 });
             }
         }
 
-        // Helper function to format filter values for display
         function formatFilterValue(value) {
-            // Handle special cases
             if (value === '100+') return '$100+';
             if (value.includes('-')) {
                 const parts = value.split('-');
@@ -285,14 +280,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     return `$${parts[0]} - $${parts[1]}`;
                 }
             }
-
-            return value
-                .split('-')
-                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(' ');
+            return value.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
         }
 
-        // Add a filter badge to the display
         function addFilterBadge(label, value, removeCallback) {
             const badge = $('<span>')
                 .addClass('badge bg-primary me-2 filter-badge')
@@ -311,28 +301,12 @@ document.addEventListener('DOMContentLoaded', function () {
             activeFiltersContainer.append(badge);
         }
 
-        // Add event listeners to filters
-        statusFilter.on('change', function () {
-            console.log('Status filter changed to:', this.value);
-            applyFilters();
-        });
+        // Event listeners
+        statusFilter.on('change', applyFilters);
+        categoryFilter.on('change', applyFilters);
+        typeFilter.on('change', applyFilters);
+        priceRangeFilter.on('change', applyFilters);
 
-        categoryFilter.on('change', function () {
-            console.log('Category filter changed to:', this.value);
-            applyFilters();
-        });
-
-        typeFilter.on('change', function () {
-            console.log('Type filter changed to:', this.value);
-            applyFilters();
-        });
-
-        priceRangeFilter.on('change', function () {
-            console.log('Price range filter changed to:', this.value);
-            applyFilters();
-        });
-
-        // Reset filters button
         if (resetFiltersBtn.length) {
             resetFiltersBtn.on('click', function () {
                 console.log('🔄 Resetting all filters');
@@ -344,9 +318,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
-        // Initialize with current filter values
         applyFilters();
-
         console.log('✅ Product table filters initialized successfully');
     }
 
@@ -357,7 +329,6 @@ document.addEventListener('DOMContentLoaded', function () {
             editProductModal.addEventListener('show.bs.modal', handleEditModalShow);
             editProductModal.addEventListener('hidden.bs.modal', handleEditModalHide);
 
-            // Tab switching handlers
             const tabButtons = editProductModal.querySelectorAll('button[data-bs-toggle="tab"]');
             tabButtons.forEach(button => {
                 button.addEventListener('shown.bs.tab', handleTabSwitch);
@@ -366,7 +337,6 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('📝 Modal event handlers initialized');
         }
 
-        // Delete button handler
         const deleteProductBtn = document.getElementById('deleteProductBtn');
         if (deleteProductBtn) {
             deleteProductBtn.addEventListener('click', handleDeleteProduct);
@@ -377,23 +347,72 @@ document.addEventListener('DOMContentLoaded', function () {
         const button = event.relatedTarget;
         const productId = button.getAttribute('data-product-id');
 
-        console.log('📂 Opening edit modal for product ID:', productId);
+        console.log('📂 ENHANCED MODAL OPENING - Product ID Debug:');
+        console.log('  Button element:', button);
+        console.log('  data-product-id:', productId);
+        console.log('  Button HTML:', button.outerHTML);
 
         if (!productId) {
-            console.error('🚨 No product ID found on button');
-            showToast('Product ID is missing', 'error');
-            return;
+            console.error('❌ No product ID found on button!');
+
+            // Try to recover from various sources
+            let recoveredId = null;
+
+            // Try parent row
+            const row = button.closest('tr');
+            if (row) {
+                recoveredId = row.getAttribute('data-product-id') ||
+                    row.getAttribute('data-productid') ||
+                    row.dataset.productId;
+                console.log('  Trying row data:', recoveredId);
+            }
+
+            // Try sibling view button
+            if (!recoveredId && row) {
+                const viewButton = row.querySelector('a[href*="/Product/Details"]');
+                if (viewButton) {
+                    const match = viewButton.href.match(/id=([^&]+)/);
+                    if (match) {
+                        recoveredId = match[1];
+                        console.log('  Extracted from view button:', recoveredId);
+                    }
+                }
+            }
+
+            if (recoveredId) {
+                // Fix the button for future use
+                button.setAttribute('data-product-id', recoveredId);
+                console.log('✅ Recovered and set ProductId:', recoveredId);
+            } else {
+                console.error('❌ Could not recover ProductId from any source');
+                showToast('Product ID is missing. Please refresh the page.', 'error');
+                event.preventDefault();
+                return;
+            }
         }
 
-        // Set product IDs in forms
-        safeSetValue('editProductId', productId);
-        safeSetValue('deleteProductId', productId);
+        const finalProductId = productId || button.getAttribute('data-product-id');
+        console.log('✅ Final ProductId:', finalProductId);
 
-        // Clear previous data
+        // Set product IDs in forms with verification
+        const productIdField = document.getElementById('editProductId');
+        const deleteIdField = document.getElementById('deleteProductId');
+
+        if (productIdField) {
+            productIdField.value = finalProductId;
+            console.log('✅ Set editProductId field to:', productIdField.value);
+        } else {
+            console.error('❌ editProductId field not found!');
+        }
+
+        if (deleteIdField) {
+            deleteIdField.value = finalProductId;
+            console.log('✅ Set deleteProductId field to:', deleteIdField.value);
+        }
+
+        // Clear previous data and load new data
         clearAllForms();
-
-        // Load product data
-        loadProductDataEnhanced(productId);
+        loadProductDataEnhanced(finalProductId);
     }
 
     function handleEditModalHide() {
@@ -412,7 +431,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         switch (targetTab) {
             case '#product-details-tab-pane':
-                // Already handled in main load function
                 break;
             case '#product-info-tab-pane':
                 console.log('📊 Loading product info tab');
@@ -441,9 +459,408 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // ========== DATA LOADING FUNCTIONS ==========
+    // ========== FORM HANDLERS ==========
+    function initializeForms() {
+        // Add Product Form
+        const addProductForm = document.getElementById('addProductForm');
+        if (addProductForm) {
+            addProductForm.addEventListener('submit', handleAddFormSubmit);
+            console.log('✅ Add form handler attached');
+        }
+
+        // Edit Product Form - FIXED VERSION
+        const editProductForm = document.getElementById('editProductForm');
+        if (editProductForm) {
+            editProductForm.addEventListener('submit', handleEditFormSubmitFixed);
+            console.log('✅ FIXED edit form handler attached');
+        }
+    }
+
+    function handleAddFormSubmit(e) {
+        e.preventDefault();
+        console.log('📤 Add product form submitted');
+
+        const formData = new FormData(e.target);
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+
+        if (submitBtn && window.UIUtils) {
+            window.UIUtils.setButtonLoading(submitBtn, true, 'Adding Product...');
+        }
+
+        const xhr = new XMLHttpRequest();
+
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (submitBtn && window.UIUtils) {
+                    window.UIUtils.setButtonLoading(submitBtn, false);
+                }
+
+                if (xhr.status === 200) {
+                    try {
+                        const result = JSON.parse(xhr.responseText);
+                        if (result.success) {
+                            showToast('Product created successfully!', 'success');
+                            const modal = bootstrap.Modal.getInstance(document.getElementById('addProductModal'));
+                            if (modal) modal.hide();
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            showToast(`Error creating product: ${result.message || 'Unknown error'}`, 'error');
+                        }
+                    } catch (e) {
+                        showToast('Error parsing server response', 'error');
+                    }
+                } else {
+                    showToast(`Server error: ${xhr.status}`, 'error');
+                }
+            }
+        };
+
+        xhr.open('POST', '/Product/Create');
+        xhr.send(formData);
+    }
+
+    function handleEditFormSubmitFixed(e) {
+        e.preventDefault();
+        console.log('📤 FIXED Edit product form submitted (Content-Type fix)');
+
+        const form = e.target;
+        const submitBtn = form.querySelector('button[type="submit"]');
+
+        // CRITICAL: Pre-submission validation
+        const productIdField = form.querySelector('#editProductId');
+        const productIdValue = productIdField?.value;
+
+        console.log('🔍 PRE-SUBMISSION VALIDATION:');
+        console.log('  ProductId value:', `"${productIdValue}"`);
+
+        if (!productIdValue || productIdValue.trim() === '') {
+            console.error('❌ CRITICAL: ProductId is empty at submission!');
+
+            // Try to recover
+            const recoveredId = tryRecoverProductId();
+            if (recoveredId) {
+                console.log('🔧 RECOVERED ProductId:', recoveredId);
+                productIdField.value = recoveredId;
+            } else {
+                showToast('Product ID is missing. Please close and reopen the edit dialog.', 'error');
+                return;
+            }
+        }
+
+        // Validate other required fields
+        const titleField = form.querySelector('#editTitle');
+        const typeField = form.querySelector('#editType');
+        const categoryField = form.querySelector('#editCategory');
+
+        const validationErrors = [];
+
+        if (!titleField?.value?.trim()) {
+            validationErrors.push('Title');
+            titleField?.classList.add('is-invalid');
+        }
+        if (!typeField?.value) {
+            validationErrors.push('Type');
+            typeField?.classList.add('is-invalid');
+        }
+        if (!categoryField?.value) {
+            validationErrors.push('Category');
+            categoryField?.classList.add('is-invalid');
+        }
+
+        if (validationErrors.length > 0) {
+            showToast(`Please fill in: ${validationErrors.join(', ')}`, 'error');
+            return;
+        }
+
+        console.log('✅ Pre-submission validation passed');
+
+        // Show loading state
+        if (submitBtn && window.UIUtils) {
+            window.UIUtils.setButtonLoading(submitBtn, true, 'Saving...');
+        }
+
+        const formData = new FormData(form);
+
+        // Debug: Log form data
+        console.log('📦 FormData contents:');
+        for (let [key, value] of formData.entries()) {
+            if (value instanceof File) {
+                console.log(`  ${key}: File(${value.name}, ${value.size} bytes)`);
+            } else {
+                console.log(`  ${key}: "${value}"`);
+            }
+        }
+
+        // METHOD 1: Use fetch with proper FormData handling
+        submitWithFetch(form, formData, submitBtn);
+    }
+
+    // METHOD 1: Fetch approach (recommended)
+    function submitWithFetch(form, formData, submitBtn) {
+        console.log('🚀 Using fetch method...');
+
+        fetch(form.action, {
+            method: 'POST',
+            // DO NOT set Content-Type header - let browser handle it automatically
+            // DO NOT set any headers that might interfere
+            body: formData
+        })
+            .then(response => {
+                console.log('📡 Response received:', response.status, response.statusText);
+                console.log('📡 Response Content-Type:', response.headers.get('content-type'));
+
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        console.error('❌ Server error response:', text);
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    });
+                }
+                return response.text();
+            })
+            .then(responseText => {
+                console.log('📦 Raw response:', responseText.substring(0, 500));
+
+                if (submitBtn && window.UIUtils) {
+                    window.UIUtils.setButtonLoading(submitBtn, false);
+                }
+
+                try {
+                    const result = JSON.parse(responseText);
+                    console.log('📦 Parsed result:', result);
+
+                    if (result.success) {
+                        showToast('Product updated successfully!', 'success');
+
+                        window.currentProductData = { ...window.currentProductData, ...result.product };
+
+                        setTimeout(() => {
+                            const modal = bootstrap.Modal.getInstance(document.getElementById('editProductModal'));
+                            if (modal) modal.hide();
+                            location.reload();
+                        }, 1000);
+                    } else {
+                        console.error('❌ Server error:', result.message);
+                        showToast(`Error: ${result.message}`, 'error');
+
+                        if (result.field) {
+                            const errorField = form.querySelector(`#edit${result.field}`);
+                            if (errorField) {
+                                errorField.classList.add('is-invalid');
+                                errorField.focus();
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error('❌ JSON parse error:', e);
+                    console.log('Full response text:', responseText);
+
+                    // Check if it's an HTML error page
+                    if (responseText.includes('<html') || responseText.includes('<!DOCTYPE')) {
+                        showToast('Server returned an error page. Check browser console for details.', 'error');
+                    } else {
+                        showToast('Error parsing server response', 'error');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('❌ Fetch error:', error);
+                if (submitBtn && window.UIUtils) {
+                    window.UIUtils.setButtonLoading(submitBtn, false);
+                }
+                showToast(`Network error: ${error.message}`, 'error');
+            });
+    }
+
+    // METHOD 2: XMLHttpRequest approach (alternative)
+    function submitWithXHR(form, formData, submitBtn) {
+        console.log('🚀 Using XMLHttpRequest method...');
+
+        const xhr = new XMLHttpRequest();
+
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                console.log('📡 XHR Response received');
+                console.log('  Status:', xhr.status);
+                console.log('  Response headers:', xhr.getAllResponseHeaders());
+                console.log('  Response text (first 500 chars):', xhr.responseText.substring(0, 500));
+
+                if (submitBtn && window.UIUtils) {
+                    window.UIUtils.setButtonLoading(submitBtn, false);
+                }
+
+                if (xhr.status === 200) {
+                    try {
+                        const result = JSON.parse(xhr.responseText);
+                        console.log('📦 XHR Parsed result:', result);
+
+                        if (result.success) {
+                            showToast('Product updated successfully!', 'success');
+                            setTimeout(() => {
+                                const modal = bootstrap.Modal.getInstance(document.getElementById('editProductModal'));
+                                if (modal) modal.hide();
+                                location.reload();
+                            }, 1000);
+                        } else {
+                            showToast(`Error: ${result.message}`, 'error');
+                        }
+                    } catch (e) {
+                        console.error('❌ XHR JSON parse error:', e);
+                        showToast('Error parsing server response', 'error');
+                    }
+                } else {
+                    console.error('❌ XHR HTTP error:', xhr.status, xhr.statusText);
+                    showToast(`Server error: ${xhr.status}`, 'error');
+                }
+            }
+        };
+
+        // CRITICAL: Do NOT set Content-Type header manually!
+        // The browser will automatically set: Content-Type: multipart/form-data; boundary=...
+
+        console.log('🚀 Sending XHR request to:', form.action);
+        xhr.open('POST', form.action);
+
+        // Do NOT call xhr.setRequestHeader('Content-Type', anything);
+        // Let the browser handle Content-Type automatically
+
+        xhr.send(formData);
+    }
+
+    // METHOD 3: Let the browser handle form submission naturally
+    function submitNaturally(form, submitBtn) {
+        console.log('🚀 Using natural form submission...');
+
+        // Show loading state
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+
+            // Re-enable button after timeout in case something goes wrong
+            setTimeout(() => {
+                if (submitBtn.disabled) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Save Changes';
+                }
+            }, 30000); // 30 seconds timeout
+        }
+
+        // Let the form submit naturally
+        form.submit();
+    }
+
+    // METHOD 4: Manual form data construction (last resort)
+    function submitManualFormData(form, submitBtn) {
+        console.log('🚀 Using manual form data construction...');
+
+        if (submitBtn && window.UIUtils) {
+            window.UIUtils.setButtonLoading(submitBtn, true, 'Saving...');
+        }
+
+        // Manually create form data with explicit field mapping
+        const formData = new FormData();
+
+        // Add all fields manually to ensure they're included
+        const fieldMappings = [
+            { id: 'editProductId', name: 'ProductId' },
+            { id: 'editTitle', name: 'Title' },
+            { id: 'editDescription', name: 'Description' },
+            { id: 'editPrice', name: 'Price' },
+            { id: 'editPoints', name: 'Points' },
+            { id: 'editTag', name: 'Tag' },
+            { id: 'editProductNumber', name: 'ProductNumber' },
+            { id: 'editType', name: 'Type' },
+            { id: 'editCategory', name: 'Category' },
+            { id: 'editStatus', name: 'Status' },
+            { id: 'editImageURL', name: 'ImageURL' }
+        ];
+
+        fieldMappings.forEach(field => {
+            const element = document.getElementById(field.id);
+            if (element && element.value !== null && element.value !== undefined) {
+                formData.append(field.name, element.value);
+                console.log(`✅ Added ${field.name}: "${element.value}"`);
+            }
+        });
+
+        // Add image file if present
+        const imageFileInput = document.getElementById('editImageFile');
+        if (imageFileInput && imageFileInput.files.length > 0) {
+            formData.append('ImageFile', imageFileInput.files[0]);
+            console.log('✅ Added ImageFile:', imageFileInput.files[0].name);
+        }
+
+        // Add anti-forgery token
+        const tokenInput = form.querySelector('input[name="__RequestVerificationToken"]');
+        if (tokenInput && tokenInput.value) {
+            formData.append('__RequestVerificationToken', tokenInput.value);
+            console.log('✅ Added anti-forgery token');
+        }
+
+        // Add RemoveImage flag
+        formData.append('RemoveImage', 'false');
+
+        // Use fetch to submit
+        fetch(form.action, {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => {
+                if (submitBtn && window.UIUtils) {
+                    window.UIUtils.setButtonLoading(submitBtn, false);
+                }
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(result => {
+                if (result.success) {
+                    showToast('Product updated successfully!', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast(`Error: ${result.message}`, 'error');
+                }
+            })
+            .catch(error => {
+                if (submitBtn && window.UIUtils) {
+                    window.UIUtils.setButtonLoading(submitBtn, false);
+                }
+                showToast(`Error: ${error.message}`, 'error');
+            });
+    }
+
+    // Helper function to try different submission methods
+    function submitFormWithFallback(form, submitBtn) {
+        const formData = new FormData(form);
+
+        console.log('📤 Attempting form submission with fallback methods...');
+
+        // Try Method 1: Fetch (most reliable)
+        submitWithFetch(form, formData, submitBtn);
+
+        // If you still get Content-Type errors, uncomment one of these alternatives:
+         submitWithXHR(form, formData, submitBtn);
+        // submitNaturally(form, submitBtn);
+        // submitManualFormData(form, submitBtn);
+    }
+
+    // Export the functions for use in your main file
+    window.ProductFormSubmission = {
+        handleEditFormSubmitFixed,
+        submitWithFetch,
+        submitWithXHR,
+        submitNaturally,
+        submitManualFormData,
+        submitFormWithFallback
+    };
+
+    console.log('✅ Fixed form submission handlers loaded');
+    console.log('💡 Available methods: fetch, XHR, natural, manual, fallback');
+
+    // ========== DATA LOADING ==========
     function loadProductDataEnhanced(productId) {
-        console.log('📥 Loading enhanced product data for ID:', productId);
+        console.log('📥 Loading product data for ID:', productId);
 
         if (!productId) {
             console.error('🚨 No product ID provided');
@@ -452,7 +869,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         showLoadingState();
 
-        // Try to populate from table data first
         const row = findProductRowById(productId);
         if (row) {
             console.log('📋 Found table row, extracting data...');
@@ -460,7 +876,6 @@ document.addEventListener('DOMContentLoaded', function () {
             populateFromTableData(tableData);
         }
 
-        // Always call API for complete data
         if (!window.appUrls?.getProductData) {
             console.error('🚨 GetProductData API URL not configured');
             hideLoadingState();
@@ -476,14 +891,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 return response.json();
             })
             .then(data => {
-                console.log('📦 Received enhanced product data:', data);
+                console.log('📦 Received product data:', data);
                 hideLoadingState();
 
                 if (data.success !== false) {
                     populateFromAPIDataEnhanced(data);
                     showToast('Product data loaded successfully', 'success');
                 } else {
-                    showToast(`Failed to load complete product data: ${data.message || 'Unknown error'}`, 'warning');
+                    showToast(`Failed to load product data: ${data.message || 'Unknown error'}`, 'warning');
                 }
             })
             .catch(error => {
@@ -498,7 +913,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         console.log('📋 Extracting data from table row');
 
-        // Get data attributes
         const dataFromAttributes = {
             productId: row.getAttribute('data-product-id'),
             title: row.getAttribute('data-product-title'),
@@ -513,10 +927,8 @@ document.addEventListener('DOMContentLoaded', function () {
             tag: row.getAttribute('data-tag')
         };
 
-        // Extract from cell content as fallback
         const cells = row.querySelectorAll('td');
         if (cells.length >= 4) {
-            // Product info from first column
             const productCell = cells[0];
             const titleEl = productCell.querySelector('.product-title, .fw-semibold');
             const numberEl = productCell.querySelector('.product-number, .text-muted.small');
@@ -528,18 +940,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 dataFromAttributes.productNumber = numberEl.textContent.trim();
             }
 
-            // Price from second column
             if (cells[1] && !dataFromAttributes.price) {
                 const priceText = cells[1].textContent.trim();
                 dataFromAttributes.price = priceText.replace('$', '');
             }
 
-            // Points from third column
             if (cells[2] && !dataFromAttributes.points) {
                 dataFromAttributes.points = cells[2].textContent.trim();
             }
 
-            // Status from fourth column
             if (cells[3] && !dataFromAttributes.status) {
                 const statusEl = cells[3].querySelector('.badge, .product-status');
                 if (statusEl) {
@@ -547,7 +956,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
 
-            // Category from fifth column
             if (cells[4] && !dataFromAttributes.category) {
                 dataFromAttributes.category = cells[4].textContent.trim();
             }
@@ -560,10 +968,8 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('📝 Populating form from table data:', data);
 
         try {
-            // Store data globally
             window.currentProductData = data;
 
-            // Populate form fields
             safeSetValue('editTitle', data.title);
             safeSetValue('editDescription', data.description);
             safeSetValue('editPrice', data.price);
@@ -571,13 +977,11 @@ document.addEventListener('DOMContentLoaded', function () {
             safeSetValue('editTag', data.tag);
             safeSetValue('editProductNumber', data.productNumber);
 
-            // Handle image URL
             if (data.imageUrl) {
                 safeSetValue('editImageURL', data.imageUrl);
                 updateImagePreview(data.imageUrl);
             }
 
-            // Select fields
             safeSetSelect('editType', data.type);
             safeSetSelect('editCategory', data.category);
             safeSetSelect('editStatus', data.status || 'Active');
@@ -589,16 +993,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function populateFromAPIDataEnhanced(data) {
-        console.log('🌐 Populating form from enhanced API data:', data);
+        console.log('🌐 Populating form from API data:', data);
 
         try {
-            // Handle different possible data structures
             const productData = data.product || data;
-
-            // Store data globally for product info tab access
             window.currentProductData = productData;
 
-            // Basic information
             safeSetValue('editTitle', productData.title || productData.Title);
             safeSetValue('editDescription', productData.description || productData.Description);
             safeSetValue('editPrice', productData.price || productData.Price);
@@ -606,21 +1006,18 @@ document.addEventListener('DOMContentLoaded', function () {
             safeSetValue('editTag', productData.tag || productData.Tag);
             safeSetValue('editProductNumber', productData.productNumber || productData.ProductNumber);
 
-            // Image handling
             const imageUrl = productData.imageURL || productData.ImageURL || productData.imageUrl;
             if (imageUrl) {
                 safeSetValue('editImageURL', imageUrl);
                 updateImagePreview(imageUrl);
             }
 
-            // Select fields
             safeSetSelect('editType', productData.type || productData.Type);
             safeSetSelect('editCategory', productData.category || productData.Category);
             safeSetSelect('editStatus', productData.status || productData.Status || 'Active');
 
-            console.log('✅ Enhanced API data populated successfully');
+            console.log('✅ API data populated successfully');
 
-            // Update Product Info tab immediately if it's active
             const activeTab = document.querySelector('#editProductTabs .nav-link.active');
             if (activeTab && activeTab.getAttribute('data-bs-target') === '#product-info-tab-pane') {
                 updateProductInfoDisplayFromCurrentData();
@@ -630,13 +1027,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // ========== PRODUCT INFO TAB FUNCTIONALITY ==========
+    // ========== PRODUCT INFO TAB ==========
     function updateProductInfoDisplayFromCurrentData() {
         console.log('📊 Updating product info display from current data');
 
         let productData = window.currentProductData;
 
-        // Fallback to form data if no stored data
         if (!productData) {
             productData = {
                 title: safeGetValue('editTitle'),
@@ -672,7 +1068,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const points = productData.points || productData.Points || '0';
         const tag = productData.tag || productData.Tag || '--';
 
-        // Update avatar and basic info
         const initials = getProductInitials(title);
         safeUpdateElement('productInfoInitials', initials);
         safeUpdateElement('productInfoTitle', title);
@@ -680,20 +1075,17 @@ document.addEventListener('DOMContentLoaded', function () {
         safeUpdateElement('productInfoStatus', status);
         safeUpdateElement('productInfoCategory', category);
 
-        // Update product information section
         safeUpdateElement('productInfoTitleDetail', title);
         safeUpdateElement('productInfoPrice', `$${parseFloat(price || 0).toFixed(2)}`);
         safeUpdateElement('productInfoPoints', points);
         safeUpdateElement('productInfoType', type);
         safeUpdateElement('productInfoTag', tag);
 
-        // Update status badge color
         const statusBadge = document.getElementById('productInfoStatus');
         if (statusBadge) {
             statusBadge.className = 'badge ' + getStatusBadgeClass(status);
         }
 
-        // Update statistics (mock data for now)
         safeUpdateElement('productInfoSales', Math.floor(Math.random() * 100));
         safeUpdateElement('productInfoViews', Math.floor(Math.random() * 1000));
         safeUpdateElement('productInfoRating', (Math.random() * 2 + 3).toFixed(1));
@@ -704,7 +1096,6 @@ document.addEventListener('DOMContentLoaded', function () {
     function loadInventoryData(productId) {
         console.log('📦 Loading inventory data for product:', productId);
 
-        // Mock inventory data for now
         const inventoryData = {
             stockQuantity: Math.floor(Math.random() * 100),
             lowStockThreshold: 10,
@@ -716,296 +1107,8 @@ document.addEventListener('DOMContentLoaded', function () {
         safeSetValue('reorderLevel', inventoryData.reorderLevel);
     }
 
-    // ========== FORM HANDLERS ==========
-    function initializeForms() {
-        // Add Product Form
-        const addProductForm = document.getElementById('addProductForm');
-        if (addProductForm) {
-            addProductForm.addEventListener('submit', handleAddFormSubmit);
-            console.log('✅ Add form handler attached');
-        }
-
-        // Edit Product Form  
-        const editProductForm = document.getElementById('editProductForm');
-        if (editProductForm) {
-            editProductForm.addEventListener('submit', handleEditFormSubmit);
-            console.log('✅ Edit form handler attached');
-        }
-    }
-
-    function handleAddFormSubmit(e) {
-        e.preventDefault();
-        console.log('📤 Add product form submitted');
-
-        const formData = new FormData(e.target);
-        const submitBtn = e.target.querySelector('button[type="submit"]');
-
-        if (submitBtn && window.UIUtils) {
-            window.UIUtils.setButtonLoading(submitBtn, true, 'Adding Product...');
-        }
-
-        const token = getAntiForgeryToken();
-
-        fetch('/Product/Create', {
-            method: 'POST',
-            headers: {
-                'RequestVerificationToken': token
-            },
-            body: formData
-        })
-            .then(response => response.json())
-            .then(result => {
-                if (submitBtn && window.UIUtils) {
-                    window.UIUtils.setButtonLoading(submitBtn, false);
-                }
-
-                if (result.success) {
-                    showToast('Product created successfully!', 'success');
-
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('addProductModal'));
-                    if (modal) modal.hide();
-
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    showToast(`Error creating product: ${result.message || 'Unknown error'}`, 'error');
-                }
-            })
-            .catch(error => {
-                if (submitBtn && window.UIUtils) {
-                    window.UIUtils.setButtonLoading(submitBtn, false);
-                }
-                console.error('Error creating product:', error);
-                showToast(`Error creating product: ${error.message}`, 'error');
-            });
-    }
-
-    // ========== COMPLETELY REWRITTEN FORM HANDLER ==========
-    function handleEditFormSubmit(e) {
-        e.preventDefault();
-        console.log('📤 Edit product form submitted - DEBUG VERSION');
-
-        const form = e.target;
-        const submitBtn = form.querySelector('button[type="submit"]');
-
-        // Show loading state
-        if (submitBtn && window.UIUtils) {
-            window.UIUtils.setButtonLoading(submitBtn, true, 'Saving...');
-        }
-
-        // DEBUG: Log all form elements
-        console.log('🔍 DEBUGGING FORM SUBMISSION:');
-        console.log('Form element:', form);
-        console.log('Form action:', form.action);
-        console.log('Form method:', form.method);
-        console.log('Form enctype:', form.enctype);
-
-        // Get all form inputs and log them
-        const formElements = form.querySelectorAll('input, select, textarea');
-        console.log('📋 All form elements:');
-        formElements.forEach(element => {
-            console.log(`  ${element.name || element.id}: "${element.value}" (type: ${element.type})`);
-        });
-
-        // Create FormData and log contents
-        const formData = new FormData(form);
-        console.log('📦 FormData contents:');
-        for (let [key, value] of formData.entries()) {
-            if (value instanceof File) {
-                console.log(`  ${key}: File - ${value.name} (${value.size} bytes)`);
-            } else {
-                console.log(`  ${key}: "${value}"`);
-            }
-        }
-
-        // Check if required fields are present
-        const requiredFields = ['ProductId', 'Title', 'Type', 'Category'];
-        const missingFields = [];
-
-        requiredFields.forEach(field => {
-            const value = formData.get(field);
-            if (!value || value.trim() === '') {
-                missingFields.push(field);
-            }
-        });
-
-        if (missingFields.length > 0) {
-            console.error('❌ Missing required fields:', missingFields);
-            if (submitBtn && window.UIUtils) {
-                window.UIUtils.setButtonLoading(submitBtn, false);
-            }
-            showToast(`Missing required fields: ${missingFields.join(', ')}`, 'error');
-            return;
-        }
-
-        // Get anti-forgery token
-        const tokenInput = form.querySelector('input[name="__RequestVerificationToken"]');
-        console.log('🔒 Anti-forgery token element:', tokenInput);
-        console.log('🔒 Token value:', tokenInput?.value);
-
-        if (!tokenInput || !tokenInput.value) {
-            console.error('❌ Anti-forgery token missing');
-            if (submitBtn && window.UIUtils) {
-                window.UIUtils.setButtonLoading(submitBtn, false);
-            }
-            showToast('Security token missing. Please refresh the page.', 'error');
-            return;
-        }
-
-        // Add token to headers
-        const headers = {
-            'RequestVerificationToken': tokenInput.value
-        };
-
-        console.log('📡 Request headers:', headers);
-        console.log('🚀 Submitting to: /Product/Edit');
-
-        // Submit using fetch with FormData
-        fetch('/Product/Edit', {
-            method: 'POST',
-            headers: headers,
-            body: formData
-        })
-            .then(response => {
-                console.log('📡 Response status:', response.status);
-                console.log('📡 Response headers:', response.headers);
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                return response.text(); // Get as text first to see raw response
-            })
-            .then(responseText => {
-                console.log('📦 Raw response:', responseText);
-
-                // Try to parse as JSON
-                let result;
-                try {
-                    result = JSON.parse(responseText);
-                    console.log('📦 Parsed response:', result);
-                } catch (e) {
-                    console.error('❌ Failed to parse JSON response:', e);
-                    throw new Error('Invalid JSON response from server');
-                }
-
-                if (submitBtn && window.UIUtils) {
-                    window.UIUtils.setButtonLoading(submitBtn, false);
-                }
-
-                if (result.success) {
-                    showToast('Product updated successfully!', 'success');
-                    setTimeout(() => {
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('editProductModal'));
-                        if (modal) modal.hide();
-                        location.reload();
-                    }, 1000);
-                } else {
-                    console.error('❌ Server returned error:', result);
-                    showToast(`Error updating product: ${result.message || 'Unknown error'}`, 'error');
-                }
-            })
-            .catch(error => {
-                console.error('❌ Fetch error:', error);
-                if (submitBtn && window.UIUtils) {
-                    window.UIUtils.setButtonLoading(submitBtn, false);
-                }
-                showToast(`Error updating product: ${error.message}`, 'error');
-            });
-    }
-
-    // ========== ALTERNATIVE: LET THE BROWSER HANDLE IT ==========
-    function handleEditFormSubmitNative(e) {
-        // Don't prevent default - let the browser submit normally
-        console.log('📤 Letting browser handle form submission');
-
-        const form = e.target;
-        const submitBtn = form.querySelector('button[type="submit"]');
-
-        // Just show loading state and let the form submit
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
-        }
-
-        // The form will submit normally to the controller
-    }
-
-    // ========== MANUAL FORM DATA CONSTRUCTION ==========
-    function handleEditFormSubmitManual(e) {
-        e.preventDefault();
-        console.log('📤 Manual form data construction');
-
-        const submitBtn = e.target.querySelector('button[type="submit"]');
-        if (submitBtn && window.UIUtils) {
-            window.UIUtils.setButtonLoading(submitBtn, true, 'Saving...');
-        }
-
-        // Manually construct form data
-        const formData = new FormData();
-
-        // Add all the product fields manually
-        const fields = [
-            'ProductId', 'Title', 'Description', 'Price', 'Points',
-            'Tag', 'Type', 'Category', 'Status', 'ProductNumber', 'ImageURL'
-        ];
-
-        fields.forEach(field => {
-            const element = document.getElementById(`edit${field}`);
-            if (element) {
-                const value = element.value || '';
-                formData.append(field, value);
-                console.log(`✅ Added ${field}: "${value}"`);
-            } else {
-                console.warn(`⚠️ Element edit${field} not found`);
-            }
-        });
-
-        // Add image file if present
-        const imageFile = document.getElementById('editImageFile');
-        if (imageFile && imageFile.files.length > 0) {
-            formData.append('ImageFile', imageFile.files[0]);
-            console.log('✅ Added ImageFile:', imageFile.files[0].name);
-        }
-
-        // Add anti-forgery token
-        const token = getAntiForgeryToken();
-        if (token) {
-            formData.append('__RequestVerificationToken', token);
-            console.log('✅ Added anti-forgery token');
-        }
-
-        // Submit
-        fetch('/Product/Edit', {
-            method: 'POST',
-            body: formData
-        })
-            .then(response => response.json())
-            .then(result => {
-                if (submitBtn && window.UIUtils) {
-                    window.UIUtils.setButtonLoading(submitBtn, false);
-                }
-
-                if (result.success) {
-                    showToast('Product updated successfully!', 'success');
-                    setTimeout(() => {
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('editProductModal'));
-                        if (modal) modal.hide();
-                        location.reload();
-                    }, 1000);
-                } else {
-                    showToast(`Error: ${result.message}`, 'error');
-                }
-            })
-            .catch(error => {
-                if (submitBtn && window.UIUtils) {
-                    window.UIUtils.setButtonLoading(submitBtn, false);
-                }
-                showToast(`Error: ${error.message}`, 'error');
-            });
-    }
-
     // ========== IMAGE HANDLERS ==========
     function initializeImageHandlers() {
-        // Image file input handlers
         const imageFileInputs = document.querySelectorAll('input[type="file"][accept*="image"]');
         imageFileInputs.forEach(input => {
             input.addEventListener('change', function (e) {
@@ -1016,7 +1119,6 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
 
-        // Image URL input handlers
         const imageUrlInputs = document.querySelectorAll('input[name="ImageURL"]');
         imageUrlInputs.forEach(input => {
             input.addEventListener('blur', function () {
@@ -1036,6 +1138,27 @@ document.addEventListener('DOMContentLoaded', function () {
         reader.readAsDataURL(file);
     }
 
+    function updateImagePreview(imageUrl) {
+        const currentImage = document.getElementById('currentImage');
+        const placeholder = document.getElementById('currentImagePlaceholder');
+
+        if (!currentImage || !placeholder) {
+            console.warn('⚠️ Image preview elements not found');
+            return;
+        }
+
+        if (imageUrl && imageUrl.trim()) {
+            currentImage.src = imageUrl;
+            currentImage.style.display = 'block';
+            placeholder.style.display = 'none';
+            console.log('🖼️ Image preview updated');
+        } else {
+            currentImage.style.display = 'none';
+            placeholder.style.display = 'flex';
+            console.log('🖼️ Image preview cleared');
+        }
+    }
+
     // ========== UI STATE MANAGEMENT ==========
     function clearAllForms() {
         clearProductDetailsForm();
@@ -1051,7 +1174,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         fields.forEach(field => safeSetValue(field, ''));
 
-        // Reset select fields
         const selects = ['editType', 'editCategory', 'editStatus'];
         selects.forEach(select => {
             const element = document.getElementById(select);
@@ -1150,7 +1272,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         console.log('🔍 Looking for row with product ID:', productId);
 
-        // Try different strategies to find the row
         let row = document.querySelector(`tr[data-product-id="${productId}"]`);
         if (row) return row;
 
@@ -1160,7 +1281,6 @@ document.addEventListener('DOMContentLoaded', function () {
             if (row) return row;
         }
 
-        // Search within table body
         const tableBody = document.querySelector('#productsTable tbody');
         if (tableBody) {
             const allRows = tableBody.querySelectorAll('tr');
@@ -1174,25 +1294,34 @@ document.addEventListener('DOMContentLoaded', function () {
         return null;
     }
 
-    function updateImagePreview(imageUrl) {
-        const currentImage = document.getElementById('currentImage');
-        const placeholder = document.getElementById('currentImagePlaceholder');
+    function tryRecoverProductId() {
+        console.log('🔧 Attempting to recover ProductId...');
 
-        if (!currentImage || !placeholder) {
-            console.warn('⚠️ Image preview elements not found');
-            return;
+        if (window.currentProductData?.productId) {
+            console.log('  Found in currentProductData:', window.currentProductData.productId);
+            return window.currentProductData.productId;
         }
 
-        if (imageUrl && imageUrl.trim()) {
-            currentImage.src = imageUrl;
-            currentImage.style.display = 'block';
-            placeholder.style.display = 'none';
-            console.log('🖼️ Image preview updated');
-        } else {
-            currentImage.style.display = 'none';
-            placeholder.style.display = 'flex';
-            console.log('🖼️ Image preview cleared');
+        const deleteIdField = document.getElementById('deleteProductId');
+        if (deleteIdField?.value) {
+            console.log('  Found in deleteProductId field:', deleteIdField.value);
+            return deleteIdField.value;
         }
+
+        const modal = document.getElementById('editProductModal');
+        if (modal && modal.classList.contains('show')) {
+            const activeButton = document.querySelector('[data-bs-target="#editProductModal"][aria-expanded="true"]');
+            if (activeButton) {
+                const productId = activeButton.getAttribute('data-product-id');
+                if (productId) {
+                    console.log('  Found from active button:', productId);
+                    return productId;
+                }
+            }
+        }
+
+        console.log('  Could not recover ProductId from any source');
+        return null;
     }
 
     function getProductInitials(title) {
@@ -1212,21 +1341,61 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    function getAntiForgeryToken() {
-        const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
-        return tokenInput ? tokenInput.value : '';
-    }
-
     function showToast(message, type = 'success') {
         if (window.UIUtils) {
             window.UIUtils.showToast(message, type);
         } else {
             console.log(`${type}: ${message}`);
+            alert(`${type}: ${message}`);
         }
     }
 
+    // ========== DEBUG FUNCTIONS ==========
+    function debugFormState() {
+        console.log('🔍 CURRENT FORM STATE:');
+
+        const form = document.getElementById('editProductForm');
+        if (!form) {
+            console.log('  Form not found!');
+            return;
+        }
+
+        const formData = new FormData(form);
+        console.log('  Form element:', form);
+        console.log('  Form action:', form.action);
+        console.log('  Form method:', form.method);
+
+        console.log('  Form data:');
+        for (let [key, value] of formData.entries()) {
+            console.log(`    ${key}: "${value}"`);
+        }
+
+        const productIdField = document.getElementById('editProductId');
+        console.log('  ProductId field:', productIdField);
+        console.log('  ProductId value:', `"${productIdField?.value}"`);
+
+        const titleField = document.getElementById('editTitle');
+        console.log('  Title field:', titleField);
+        console.log('  Title value:', `"${titleField?.value}"`);
+    }
+
+    function debugEditButtons() {
+        console.log('🔍 DEBUGGING EDIT BUTTONS:');
+        const editButtons = document.querySelectorAll('[data-bs-target="#editProductModal"]');
+        console.log(`Found ${editButtons.length} edit buttons`);
+
+        editButtons.forEach((button, index) => {
+            const productId = button.getAttribute('data-product-id');
+            console.log(`Button ${index + 1}:`, {
+                hasProductId: !!productId,
+                productId: productId,
+                element: button,
+                html: button.outerHTML
+            });
+        });
+    }
+
     // ========== GLOBAL API ==========
-    // Expose functions for debugging and external access
     window.productDebug = {
         loadProductDataEnhanced,
         findProductRowById,
@@ -1238,12 +1407,14 @@ document.addEventListener('DOMContentLoaded', function () {
         clearAllForms,
         currentProductData: () => window.currentProductData,
         initializeFilters,
-        applyFilters: () => {
-            const table = $('#productsTable').DataTable();
-            if (table) table.draw();
-        }
+        debugFormState,
+        debugEditButtons,
+        tryRecoverProductId,
+        fixEditButtons
     };
 
-    console.log('✅ Complete Product Management loaded successfully');
+    console.log('✅ Complete Fixed Product Management loaded successfully');
     console.log('🐛 Debug functions available: window.productDebug');
+    console.log('💡 Use window.productDebug.debugFormState() to check form state');
+    console.log('💡 Use window.productDebug.debugEditButtons() to check buttons');
 });

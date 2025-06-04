@@ -311,14 +311,75 @@ namespace Web.Controllers
         {
             try
             {
+                // DEBUG: Log the received data
+                _logger.LogInformation("=== EDIT PRODUCT DEBUG ===");
+                _logger.LogInformation("Product object is null: {IsNull}", product == null);
+
+                if (product != null)
+                {
+                    _logger.LogInformation("Product data received:");
+                    _logger.LogInformation("  ProductId: {ProductId}", product.ProductId);
+                    _logger.LogInformation("  Title: {Title}", product.Title);
+                    _logger.LogInformation("  Type: {Type}", product.Type);
+                    _logger.LogInformation("  Category: {Category}", product.Category);
+                    _logger.LogInformation("  Price: {Price}", product.Price);
+                    _logger.LogInformation("  Status: {Status}", product.Status);
+                }
+
+                // DEBUG: Log form data
+                _logger.LogInformation("Form data received:");
+                foreach (var key in Request.Form.Keys)
+                {
+                    _logger.LogInformation("  {Key}: {Value}", key, Request.Form[key]);
+                }
+
+                // DEBUG: Log files
+                _logger.LogInformation("Files received: {FileCount}", Request.Form.Files.Count);
+                foreach (var file in Request.Form.Files)
+                {
+                    _logger.LogInformation("  File: {FileName}, Size: {Size}", file.FileName, file.Length);
+                }
+
+                _logger.LogInformation("ImageFile parameter: {IsNull}", ImageFile == null ? "null" : $"{ImageFile.FileName} ({ImageFile.Length} bytes)");
+                _logger.LogInformation("RemoveImage parameter: {RemoveImage}", RemoveImage);
+                _logger.LogInformation("========================");
+
                 var accessToken = HttpContext.Session.GetString("UserToken");
                 if (string.IsNullOrEmpty(accessToken))
                 {
                     return Json(new { success = false, message = "Authentication required", requiresLogin = true });
                 }
 
-                if (string.IsNullOrEmpty(product.ProductId))
+                // If product is null, try to manually extract from form data
+                if (product == null)
                 {
+                    _logger.LogWarning("Product is null, attempting manual extraction from form data");
+
+                    product = new Product
+                    {
+                        ProductId = Request.Form["ProductId"].FirstOrDefault(),
+                        Title = Request.Form["Title"].FirstOrDefault(),
+                        Description = Request.Form["Description"].FirstOrDefault(),
+                        Price = decimal.TryParse(Request.Form["Price"].FirstOrDefault(), out var price) ? price : null,
+                        Points = int.TryParse(Request.Form["Points"].FirstOrDefault(), out var points) ? points : null,
+                        Type = Request.Form["Type"].FirstOrDefault(),
+                        Category = Request.Form["Category"].FirstOrDefault(),
+                        Status = Request.Form["Status"].FirstOrDefault(),
+                        Tag = Request.Form["Tag"].FirstOrDefault(),
+                        ImageURL = Request.Form["ImageURL"].FirstOrDefault(),
+                        ProductNumber = Request.Form["ProductNumber"].FirstOrDefault()
+                    };
+
+                    _logger.LogInformation("Manually created product:");
+                    _logger.LogInformation("  ProductId: {ProductId}", product.ProductId);
+                    _logger.LogInformation("  Title: {Title}", product.Title);
+                    _logger.LogInformation("  Type: {Type}", product.Type);
+                    _logger.LogInformation("  Category: {Category}", product.Category);
+                }
+
+                if (string.IsNullOrEmpty(product?.ProductId))
+                {
+                    _logger.LogError("Product ID is missing or empty");
                     return Json(new { success = false, message = "Product ID is required" });
                 }
 
@@ -326,6 +387,7 @@ namespace Web.Controllers
                 var validationResult = ValidateProduct(product);
                 if (!validationResult.IsValid)
                 {
+                    _logger.LogWarning("Product validation failed: {Error}", validationResult.ErrorMessage);
                     return Json(new { success = false, message = validationResult.ErrorMessage, field = validationResult.Field });
                 }
 
@@ -333,6 +395,7 @@ namespace Web.Controllers
                 var existingProduct = await _productApi.GetProductByIdAsync(product.ProductId, accessToken, cancellationToken);
                 if (existingProduct == null)
                 {
+                    _logger.LogError("Existing product not found for ID: {ProductId}", product.ProductId);
                     return Json(new { success = false, message = "Product not found" });
                 }
 
@@ -341,16 +404,19 @@ namespace Web.Controllers
 
                 if (RemoveImage)
                 {
-                    // Remove image
+                    _logger.LogInformation("Removing image for product: {ProductId}", product.ProductId);
                     imageUrl = null;
                     product.ImageURL = null;
                 }
                 else if (ImageFile != null && ImageFile.Length > 0)
                 {
+                    _logger.LogInformation("Processing new image upload for product: {ProductId}", product.ProductId);
+
                     // Validate and upload new image
                     var fileValidation = ValidateImageFile(ImageFile);
                     if (!fileValidation.IsValid)
                     {
+                        _logger.LogWarning("Image file validation failed: {Error}", fileValidation.ErrorMessage);
                         return Json(new { success = false, message = fileValidation.ErrorMessage });
                     }
 
@@ -361,9 +427,11 @@ namespace Web.Controllers
                         {
                             imageUrl = $"/api/storage/product/{product.ProductId}{Path.GetExtension(ImageFile.FileName).ToLower()}";
                             product.ImageURL = imageUrl;
+                            _logger.LogInformation("Image uploaded successfully: {ImageUrl}", imageUrl);
                         }
                         else
                         {
+                            _logger.LogError("Failed to upload image for product: {ProductId}", product.ProductId);
                             return Json(new { success = false, message = "Failed to upload image. Please try again." });
                         }
                     }
@@ -375,10 +443,13 @@ namespace Web.Controllers
                 }
                 else if (!string.IsNullOrEmpty(product.ImageURL) && product.ImageURL != existingProduct.ImageURL)
                 {
+                    _logger.LogInformation("Validating new image URL for product: {ProductId}", product.ProductId);
+
                     // Validate new image URL
                     var urlValidation = await ValidateImageUrl(product.ImageURL);
                     if (!urlValidation.IsValid)
                     {
+                        _logger.LogWarning("Image URL validation failed: {Error}", urlValidation.ErrorMessage);
                         return Json(new { success = false, message = urlValidation.ErrorMessage });
                     }
                     imageUrl = product.ImageURL;
@@ -393,6 +464,11 @@ namespace Web.Controllers
                 product.Status = product.Status ?? "Active";
                 product.Points = product.Points ?? 0;
                 product.ProductNumber = existingProduct.ProductNumber; // Preserve original product number
+
+                _logger.LogInformation("Updating product with final data:");
+                _logger.LogInformation("  ProductId: {ProductId}", product.ProductId);
+                _logger.LogInformation("  Title: {Title}", product.Title);
+                _logger.LogInformation("  ImageURL: {ImageURL}", product.ImageURL);
 
                 // Update product
                 await _productApi.UpdateProductAsync(product, accessToken, cancellationToken);
