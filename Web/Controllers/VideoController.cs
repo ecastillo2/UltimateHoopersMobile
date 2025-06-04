@@ -25,14 +25,14 @@ namespace Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Video(string cursor = null, int limit = 10, string direction = "next", string sortBy = "Title", CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Video(string cursor = null, int limit = 10, string direction = "next", string sortBy = "VideoDate", CancellationToken cancellationToken = default)
         {
             try
             {
                 var accessToken = HttpContext.Session.GetString("UserToken");
                 if (string.IsNullOrEmpty(accessToken))
                 {
-                    TempData["Error"] = "You must be logged in to view Videos.";
+                    TempData["Error"] = "You must be logged in to view videos.";
                     return RedirectToAction("Index", "Home", new { scrollTo = "login" });
                 }
 
@@ -58,8 +58,8 @@ namespace Web.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving Videos");
-                TempData["Error"] = "An error occurred while retrieving Videos. Please try again later.";
+                _logger.LogError(ex, "Error retrieving videos");
+                TempData["Error"] = "An error occurred while retrieving videos. Please try again later.";
                 return RedirectToAction("Dashboard", "Dashboard");
             }
         }
@@ -93,8 +93,14 @@ namespace Web.Controllers
                     {
                         videoId = video.VideoId,
                         title = video.Title,
-                    
-                       
+                        videoName = video.VideoName,
+                        videoURL = video.VideoURL,
+                        videoThumbnail = video.VideoThumbnail,
+                        status = video.Status,
+                        videoDate = video.VideoDate?.ToString("yyyy-MM-ddTHH:mm:ss"),
+                        createdDate = video.CreatedDate?.ToString("yyyy-MM-ddTHH:mm:ss"),
+                        clientId = video.ClientId,
+                        videoNumber = video.VideoNumber
                     }
                 };
 
@@ -102,8 +108,8 @@ namespace Web.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving Video data for ID: {videoId}", id);
-                return Json(new { success = false, message = "Error loading Video data: " + ex.Message });
+                _logger.LogError(ex, "Error retrieving video data for ID: {videoId}", id);
+                return Json(new { success = false, message = "Error loading video data: " + ex.Message });
             }
         }
 
@@ -115,7 +121,7 @@ namespace Web.Controllers
                 var accessToken = HttpContext.Session.GetString("UserToken");
                 if (string.IsNullOrEmpty(accessToken))
                 {
-                    TempData["Error"] = "You must be logged in to view Video details.";
+                    TempData["Error"] = "You must be logged in to view video details.";
                     return RedirectToAction("Index", "Home", new { scrollTo = "login" });
                 }
 
@@ -130,8 +136,8 @@ namespace Web.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving Video details for ID: {VideoId}", id);
-                TempData["Error"] = "An error occurred while retrieving Video details. Please try again later.";
+                _logger.LogError(ex, "Error retrieving video details for ID: {VideoId}", id);
+                TempData["Error"] = "An error occurred while retrieving video details. Please try again later.";
                 return RedirectToAction("Video");
             }
         }
@@ -142,16 +148,16 @@ namespace Web.Controllers
             var accessToken = HttpContext.Session.GetString("UserToken");
             if (string.IsNullOrEmpty(accessToken))
             {
-                TempData["Error"] = "You must be logged in to create a Product.";
+                TempData["Error"] = "You must be logged in to create a video.";
                 return RedirectToAction("Index", "Home", new { scrollTo = "login" });
             }
 
-            return View(new Product());
+            return View(new Video());
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Video video, IFormFile ImageFile, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Create([FromForm] Video video, IFormFile VideoFile, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -161,6 +167,44 @@ namespace Web.Controllers
                     return Json(new { success = false, message = "Authentication required", requiresLogin = true });
                 }
 
+                // Debug logging to see what's being received
+                _logger.LogInformation("Create Video - Received video object: {@Video}", video);
+                _logger.LogInformation("Create Video - VideoFile: {FileName}, Size: {Size}",
+                    VideoFile?.FileName, VideoFile?.Length);
+
+                // If video is null, try to create from form data manually
+                if (video == null)
+                {
+                    video = new Video();
+
+                    // Try to get values from form collection
+                    var form = Request.Form;
+                    video.Title = form["Title"].FirstOrDefault() ?? form["VideoName"].FirstOrDefault();
+                    video.VideoName = form["VideoName"].FirstOrDefault() ?? form["Title"].FirstOrDefault();
+                    video.Status = form["Status"].FirstOrDefault() ?? "Active";
+                    video.ClientId = form["ClientId"].FirstOrDefault();
+
+                    // Try to parse VideoDate if provided
+                    if (DateTime.TryParse(form["VideoDate"].FirstOrDefault(), out DateTime videoDate))
+                    {
+                        video.VideoDate = videoDate;
+                    }
+
+                    _logger.LogInformation("Create Video - Manually created video from form: {@Video}", video);
+                }
+
+                // Ensure we have required fields
+                if (string.IsNullOrWhiteSpace(video.Title) && string.IsNullOrWhiteSpace(video.VideoName))
+                {
+                    return Json(new { success = false, message = "Video title or name is required", field = "Title" });
+                }
+
+                // Use VideoName as Title if Title is empty, or vice versa
+                if (string.IsNullOrWhiteSpace(video.Title))
+                    video.Title = video.VideoName;
+                if (string.IsNullOrWhiteSpace(video.VideoName))
+                    video.VideoName = video.Title;
+
                 // Enhanced validation
                 var validationResult = ValidateVideo(video);
                 if (!validationResult.IsValid)
@@ -168,10 +212,10 @@ namespace Web.Controllers
                     return Json(new { success = false, message = validationResult.ErrorMessage, field = validationResult.Field });
                 }
 
-                // Validate image file if provided
-                if (ImageFile != null)
+                // Validate video file if provided
+                if (VideoFile != null)
                 {
-                    var fileValidation = ValidateImageFile(ImageFile);
+                    var fileValidation = ValidateVideoFile(VideoFile);
                     if (!fileValidation.IsValid)
                     {
                         return Json(new { success = false, message = fileValidation.ErrorMessage });
@@ -182,37 +226,37 @@ namespace Web.Controllers
                 video.VideoId = Guid.NewGuid().ToString();
                 video.VideoNumber = UniqueIdNumber.GenerateSixDigit();
                 video.Status = video.Status ?? "Active";
-               
+                video.CreatedDate = DateTime.UtcNow;
+                video.VideoDate = video.VideoDate ?? DateTime.UtcNow;
 
-                // Handle image file upload
-                string imageUrl = null;
-                if (ImageFile != null && ImageFile.Length > 0)
+                // Handle video file upload
+                string videoUrl = null;
+                if (VideoFile != null && VideoFile.Length > 0)
                 {
                     try
                     {
-                        video.VideoURL = video.VideoId + Path.GetExtension(ImageFile.FileName).ToLower();
-                        var uploadResult = await _storageApi.UpdateVideoFileAsync(video.VideoId, ImageFile);
+                        var fileName = video.VideoId + Path.GetExtension(VideoFile.FileName).ToLower();
+                        var uploadResult = await _storageApi.UpdateVideoFileAsync(video.VideoId, VideoFile);
 
                         if (uploadResult)
                         {
-                            // Set the image URL - you may need to construct this based on your storage configuration
-                            imageUrl = $"/api/storage/video/{video.VideoURL}"; // Adjust based on your storage setup
-                            video.VideoURL = imageUrl;
+                            videoUrl = $"/api/storage/video/{fileName}";
+                            video.VideoURL = videoUrl;
                         }
                         else
                         {
-                            return Json(new { success = false, message = "Failed to upload image. Please try again." });
+                            return Json(new { success = false, message = "Failed to upload video. Please try again." });
                         }
                     }
                     catch (Exception uploadEx)
                     {
-                        _logger.LogError(uploadEx, "Error uploading image for Video: {VideoId}", video.VideoId);
-                        return Json(new { success = false, message = "Error uploading image: " + uploadEx.Message });
+                        _logger.LogError(uploadEx, "Error uploading video for Video: {VideoId}", video.VideoId);
+                        return Json(new { success = false, message = "Error uploading video: " + uploadEx.Message });
                     }
                 }
                 else if (!string.IsNullOrEmpty(video.VideoURL))
                 {
-                    // Validate image URL if provided
+                    // Validate video URL if provided
                     var urlValidation = await ValidateVideoUrl(video.VideoURL);
                     if (!urlValidation.IsValid)
                     {
@@ -236,23 +280,23 @@ namespace Web.Controllers
                             videoId = video.VideoId,
                             title = video.Title,
                             videoNumber = video.VideoNumber,
-                            ClientId = video.ClientId,
-                            VideoName = video.VideoName,
-                            VideoURL = video.VideoURL,
-                            VideoDate = video.VideoDate,
-                            Status = video.Status,
+                            clientId = video.ClientId,
+                            videoName = video.VideoName,
+                            videoURL = video.VideoURL,
+                            videoDate = video.VideoDate,
+                            status = video.Status,
                         }
                     });
                 }
                 else
                 {
-                    return Json(new { success = false, message = "Failed to create Video. Please try again." });
+                    return Json(new { success = false, message = "Failed to create video. Please try again." });
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating Video");
-                return Json(new { success = false, message = "An error occurred while creating the Video: " + ex.Message });
+                _logger.LogError(ex, "Error creating video");
+                return Json(new { success = false, message = "An error occurred while creating the video: " + ex.Message });
             }
         }
 
@@ -264,7 +308,7 @@ namespace Web.Controllers
                 var accessToken = HttpContext.Session.GetString("UserToken");
                 if (string.IsNullOrEmpty(accessToken))
                 {
-                    TempData["Error"] = "You must be logged in to edit a Video.";
+                    TempData["Error"] = "You must be logged in to edit a video.";
                     return RedirectToAction("Index", "Home", new { scrollTo = "login" });
                 }
 
@@ -279,15 +323,15 @@ namespace Web.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving Video for edit, ID: {VideoId}", id);
-                TempData["Error"] = "An error occurred while retrieving the Video. Please try again later.";
+                _logger.LogError(ex, "Error retrieving video for edit, ID: {VideoId}", id);
+                TempData["Error"] = "An error occurred while retrieving the video. Please try again later.";
                 return RedirectToAction("Video");
             }
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Video video, IFormFile VideoFile, bool RemoveImage = false, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Edit(Video video, IFormFile VideoFile, bool RemoveVideo = false, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -309,26 +353,26 @@ namespace Web.Controllers
                     return Json(new { success = false, message = validationResult.ErrorMessage, field = validationResult.Field });
                 }
 
-                // Get existing Video
+                // Get existing video
                 var existingVideo = await _videoApi.GetVideoByIdAsync(video.VideoId, accessToken, cancellationToken);
                 if (existingVideo == null)
                 {
                     return Json(new { success = false, message = "Video not found" });
                 }
 
-                // Handle image operations
+                // Handle video operations
                 string videoUrl = existingVideo.VideoURL;
 
-                if (RemoveImage)
+                if (RemoveVideo)
                 {
-                    // Remove image
+                    // Remove video
                     videoUrl = null;
                     video.VideoURL = null;
                 }
                 else if (VideoFile != null && VideoFile.Length > 0)
                 {
-                    // Validate and upload new image
-                    var fileValidation = ValidateImageFile(VideoFile);
+                    // Validate and upload new video
+                    var fileValidation = ValidateVideoFile(VideoFile);
                     if (!fileValidation.IsValid)
                     {
                         return Json(new { success = false, message = fileValidation.ErrorMessage });
@@ -339,23 +383,23 @@ namespace Web.Controllers
                         var uploadResult = await _storageApi.UpdateVideoFileAsync(video.VideoId, VideoFile);
                         if (uploadResult)
                         {
-                            videoUrl = $"/api/storage/Video/{video.VideoId}{Path.GetExtension(VideoFile.FileName).ToLower()}";
+                            videoUrl = $"/api/storage/video/{video.VideoId}{Path.GetExtension(VideoFile.FileName).ToLower()}";
                             video.VideoURL = videoUrl;
                         }
                         else
                         {
-                            return Json(new { success = false, message = "Failed to upload image. Please try again." });
+                            return Json(new { success = false, message = "Failed to upload video. Please try again." });
                         }
                     }
                     catch (Exception uploadEx)
                     {
-                        _logger.LogError(uploadEx, "Error uploading image for video: {VideoId}", video.VideoId);
-                        return Json(new { success = false, message = "Error uploading image: " + uploadEx.Message });
+                        _logger.LogError(uploadEx, "Error uploading video for Video: {VideoId}", video.VideoId);
+                        return Json(new { success = false, message = "Error uploading video: " + uploadEx.Message });
                     }
                 }
                 else if (!string.IsNullOrEmpty(video.VideoURL) && video.VideoURL != existingVideo.VideoURL)
                 {
-                    // Validate new image URL
+                    // Validate new video URL
                     var urlValidation = await ValidateVideoUrl(video.VideoURL);
                     if (!urlValidation.IsValid)
                     {
@@ -365,13 +409,13 @@ namespace Web.Controllers
                 }
                 else
                 {
-                    // Keep existing image
+                    // Keep existing video
                     video.VideoURL = existingVideo.VideoURL;
                 }
 
                 // Set default values
                 video.Status = video.Status ?? "Active";
-                video.VideoNumber = existingVideo.VideoNumber; // Preserve original Video number
+                video.VideoNumber = existingVideo.VideoNumber; // Preserve original video number
 
                 // Update Video
                 await _videoApi.UpdateVideoFileAsync(video, accessToken, cancellationToken);
@@ -387,15 +431,15 @@ namespace Web.Controllers
                         videoId = video.VideoId,
                         title = video.Title,
                         videoNumber = video.VideoNumber,
-                       
-                        
+                        videoName = video.VideoName,
+                        status = video.Status
                     }
                 });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating Video: {VideoId}", video?.VideoId);
-                return Json(new { success = false, message = "An error occurred while updating the Video: " + ex.Message });
+                _logger.LogError(ex, "Error updating video: {VideoId}", video?.VideoId);
+                return Json(new { success = false, message = "An error occurred while updating the video: " + ex.Message });
             }
         }
 
@@ -408,43 +452,52 @@ namespace Web.Controllers
                 var accessToken = HttpContext.Session.GetString("UserToken");
                 if (string.IsNullOrEmpty(accessToken))
                 {
-                    TempData["Error"] = "You must be logged in to delete a product.";
+                    TempData["Error"] = "You must be logged in to delete a video.";
                     return RedirectToAction("Index", "Home", new { scrollTo = "login" });
                 }
 
-                // Get Video details first to clean up image
-                var product = await _videoApi.GetVideoByIdAsync(id, accessToken, cancellationToken);
-                
+                // Get video details first to clean up files
+                var video = await _videoApi.GetVideoByIdAsync(id, accessToken, cancellationToken);
 
-                    // Delete product
+                if (video != null)
+                {
+                    // Delete video
                     var result = await _videoApi.DeleteVideoFileAsync(id, accessToken, cancellationToken);
 
-                if (result.Success)
-                {
-                    var uploadResult = await _storageApi.RemoveVideoFileAsync($"{product.VideoId}.webp");
-                    
+                    if (result.Success)
+                    {
+                        // Remove video file from storage
+                        var uploadResult = await _storageApi.RemoveVideoFileAsync($"{video.VideoId}.mp4");
+                        // Also try to remove other common video formats
+                        await _storageApi.RemoveVideoFileAsync($"{video.VideoId}.webm");
+                        await _storageApi.RemoveVideoFileAsync($"{video.VideoId}.ogg");
+                    }
+                    else
+                    {
+                        TempData["Error"] = result.ErrorMessage ?? "Failed to delete video.";
+                        return RedirectToAction("Video");
+                    }
                 }
                 else
                 {
-                    TempData["Error"] = "Product not found.";
-                    return RedirectToAction("Product");
+                    TempData["Error"] = "Video not found.";
+                    return RedirectToAction("Video");
                 }
 
-
-                TempData["Success"] = "Product deleted successfully.";
-                return RedirectToAction("Product");
+                TempData["Success"] = "Video deleted successfully.";
+                return RedirectToAction("Video");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting Product: {ProductId}", id);
-                TempData["Error"] = "An error occurred while deleting the Product. Please try again later.";
-                return RedirectToAction("Product");
+                _logger.LogError(ex, "Error deleting video: {VideoId}", id);
+                TempData["Error"] = "An error occurred while deleting the video. Please try again later.";
+                return RedirectToAction("Video");
             }
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ValidateImageUrl([FromBody] ValidateVideoUrlRequest request, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> ValidateVideoUrl([FromBody] ValidateVideoUrlRequest request, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -460,8 +513,8 @@ namespace Web.Controllers
                     return Json(new
                     {
                         success = true,
-                        message = "Valid image URL",
-                        VideoUrl = request.VideoUrl
+                        message = "Valid video URL",
+                        videoUrl = request.VideoUrl
                     });
                 }
                 else
@@ -471,72 +524,8 @@ namespace Web.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error validating image URL: {VideoUrl}", request?.VideoUrl);
-                return Json(new { success = false, message = "Error validating image URL" });
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UploadImage(IFormFile imageFile, string productId, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var accessToken = HttpContext.Session.GetString("UserToken");
-                if (string.IsNullOrEmpty(accessToken))
-                {
-                    return Json(new { success = false, message = "Authentication required" });
-                }
-
-                if (imageFile == null || imageFile.Length == 0)
-                {
-                    return Json(new { success = false, message = "No image file provided" });
-                }
-
-                var validationResult = ValidateImageFile(imageFile);
-                if (!validationResult.IsValid)
-                {
-                    return Json(new { success = false, message = validationResult.ErrorMessage });
-                }
-
-                var uploadResult = await _storageApi.UpdateProductImageFileAsync(productId, imageFile);
-                if (!uploadResult)
-                {
-                    return Json(new { success = false, message = "Failed to upload image" });
-                }
-
-                var imageUrl = $"/api/storage/product/{productId}{Path.GetExtension(imageFile.FileName).ToLower()}";
-
-                // Update product with new image URL if productId is provided
-                if (!string.IsNullOrEmpty(productId))
-                {
-                    try
-                    {
-                        var product = await _videoApi.GetVideoByIdAsync(productId, accessToken, cancellationToken);
-                        if (product != null)
-                        {
-                            product.VideoURL = imageUrl;
-                            await _videoApi.UpdateVideoFileAsync(product, accessToken, cancellationToken);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Error updating Video image URL for product: {VideoId}", productId);
-                        // Continue anyway - the file was uploaded successfully
-                    }
-                }
-
-                return Json(new
-                {
-                    success = true,
-                    message = "Image uploaded successfully",
-                    imageUrl = imageUrl
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error uploading Video video");
-                return Json(new { success = false, message = "Failed to upload image. Please try again." });
+                _logger.LogError(ex, "Error validating video URL: {VideoUrl}", request?.VideoUrl);
+                return Json(new { success = false, message = "Error validating video URL" });
             }
         }
 
@@ -544,32 +533,40 @@ namespace Web.Controllers
 
         private ValidationResult ValidateVideo(Video video)
         {
-            if (string.IsNullOrWhiteSpace(video.Title))
+            // Check if we have either Title or VideoName
+            var hasTitle = !string.IsNullOrWhiteSpace(video.Title);
+            var hasVideoName = !string.IsNullOrWhiteSpace(video.VideoName);
+
+            if (!hasTitle && !hasVideoName)
             {
-                return new ValidationResult { IsValid = false, ErrorMessage = "Product title is required", Field = "Title" };
+                return new ValidationResult { IsValid = false, ErrorMessage = "Video title or name is required", Field = "Title" };
             }
 
-            if (video.Title.Length > 100)
+            var titleToCheck = hasTitle ? video.Title : video.VideoName;
+
+            if (titleToCheck.Length > 100)
             {
-                return new ValidationResult { IsValid = false, ErrorMessage = "Product title cannot exceed 100 characters", Field = "Title" };
+                return new ValidationResult { IsValid = false, ErrorMessage = "Video title cannot exceed 100 characters", Field = "Title" };
             }
 
-          
             return new ValidationResult { IsValid = true };
         }
 
-        private ValidationResult ValidateImageFile(IFormFile file)
+        private ValidationResult ValidateVideoFile(IFormFile file)
         {
-            const int maxFileSize = 5 * 1024 * 1024; // 5MB
-            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp" };
-            var allowedContentTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp", "image/bmp" };
+            const int maxFileSize = 100 * 1024 * 1024; // 100MB for videos
+            var allowedExtensions = new[] { ".mp4", ".webm", ".ogg", ".avi", ".mov", ".wmv", ".flv", ".mkv" };
+            var allowedContentTypes = new[] {
+                "video/mp4", "video/webm", "video/ogg", "video/avi",
+                "video/quicktime", "video/x-msvideo", "video/x-flv", "video/x-matroska"
+            };
 
             if (file.Length > maxFileSize)
             {
                 return new ValidationResult
                 {
                     IsValid = false,
-                    ErrorMessage = $"File size ({FormatFileSize(file.Length)}) exceeds maximum allowed size (5MB)"
+                    ErrorMessage = $"File size ({FormatFileSize(file.Length)}) exceeds maximum allowed size (100MB)"
                 };
             }
 
@@ -579,7 +576,7 @@ namespace Web.Controllers
                 return new ValidationResult
                 {
                     IsValid = false,
-                    ErrorMessage = "Invalid file type. Allowed types: JPG, PNG, GIF, WebP, BMP"
+                    ErrorMessage = "Invalid file type. Allowed types: MP4, WebM, OGG, AVI, MOV, WMV, FLV, MKV"
                 };
             }
 
@@ -588,7 +585,7 @@ namespace Web.Controllers
                 return new ValidationResult
                 {
                     IsValid = false,
-                    ErrorMessage = "Invalid file content type. Please upload a valid image file."
+                    ErrorMessage = "Invalid file content type. Please upload a valid video file."
                 };
             }
 
@@ -599,7 +596,7 @@ namespace Web.Controllers
         {
             if (string.IsNullOrWhiteSpace(videoUrl))
             {
-                return new ValidationResult { IsValid = false, ErrorMessage = "Image URL is required" };
+                return new ValidationResult { IsValid = false, ErrorMessage = "Video URL is required" };
             }
 
             if (!Uri.TryCreate(videoUrl, UriKind.Absolute, out Uri uri))
@@ -607,13 +604,13 @@ namespace Web.Controllers
                 return new ValidationResult { IsValid = false, ErrorMessage = "Invalid URL format" };
             }
 
-            // Check if URL points to an image based on extension
+            // Check if URL points to a video based on extension
             var path = uri.AbsolutePath.ToLowerInvariant();
-            var imageExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp" };
+            var videoExtensions = new[] { ".mp4", ".webm", ".ogg", ".avi", ".mov", ".wmv", ".flv", ".mkv" };
 
-            if (!imageExtensions.Any(ext => path.EndsWith(ext)))
+            if (!videoExtensions.Any(ext => path.EndsWith(ext)))
             {
-                return new ValidationResult { IsValid = false, ErrorMessage = "URL does not appear to point to a valid image file" };
+                return new ValidationResult { IsValid = false, ErrorMessage = "URL does not appear to point to a valid video file" };
             }
 
             try
@@ -625,21 +622,21 @@ namespace Web.Controllers
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    return new ValidationResult { IsValid = false, ErrorMessage = "Image URL is not accessible" };
+                    return new ValidationResult { IsValid = false, ErrorMessage = "Video URL is not accessible" };
                 }
 
                 var contentType = response.Content.Headers.ContentType?.MediaType?.ToLowerInvariant();
-                if (!string.IsNullOrEmpty(contentType) && !contentType.StartsWith("image/"))
+                if (!string.IsNullOrEmpty(contentType) && !contentType.StartsWith("video/"))
                 {
-                    return new ValidationResult { IsValid = false, ErrorMessage = "URL does not point to an image" };
+                    return new ValidationResult { IsValid = false, ErrorMessage = "URL does not point to a video" };
                 }
 
                 return new ValidationResult { IsValid = true };
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Error validating image URL: {ImageUrl}", videoUrl);
-                return new ValidationResult { IsValid = false, ErrorMessage = "Could not validate image URL. Please check the URL and try again." };
+                _logger.LogWarning(ex, "Error validating video URL: {VideoUrl}", videoUrl);
+                return new ValidationResult { IsValid = false, ErrorMessage = "Could not validate video URL. Please check the URL and try again." };
             }
         }
 

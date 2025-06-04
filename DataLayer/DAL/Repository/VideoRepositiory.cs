@@ -23,7 +23,7 @@ namespace DataLayer.DAL.Repository
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            _blobBaseUrl = configuration["BlobStorage:ImageBaseUrl"] ?? "https://ultimatehoopersapi.azurewebsites.net";
+            _blobBaseUrl = configuration["BlobStorage:VideoBaseUrl"] ?? "https://ultimatehoopersapi.azurewebsites.net";
             _logger = logger;
         }
 
@@ -248,8 +248,8 @@ namespace DataLayer.DAL.Repository
             try
             {
 
-                model.VideoURL = $"{_blobBaseUrl}{model.VideoId}.webp";
-
+                model.VideoURL = $"{_blobBaseUrl}{model.VideoId}.mp4";
+                model.CreatedDate = DateTime.UtcNow;
 
                 // Add to context and save
                 await _context.Video.AddAsync(model);

@@ -9,7 +9,7 @@ namespace Common
         /// </summary>
         /// <param name="ratingList"></param>
         /// <returns></returns>
-        public static async Task<string> GetStarRating(IList<Rating> ratingList)
+        public static async Task<string> GetStarRating(IList<RatePlayer> ratingList)
         {
 
             //var postCommentList = await RatingApi.GetPostCommentByPostId(PostId, null);

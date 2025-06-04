@@ -619,7 +619,7 @@ namespace DataLayer.DAL.Repository
         {
             try
             {
-                var ratings = await _context.Rating
+                var ratings = await _context.RatePlayer
                     .AsNoTracking()
                     .Where(r => r.ProfileId == profileId)
                     .Select(r => r.StarRating)

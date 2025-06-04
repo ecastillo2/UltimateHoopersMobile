@@ -67,6 +67,10 @@ builder.Services.AddHttpClient<IPostApi, PostApi>(client =>
 {
 
 });
+builder.Services.AddHttpClient<IVideoApi, VideoApi>(client =>
+{
+
+});
 
 
 //builder.Services.AddHttpClient<IUserApi, UserApi>(user =>
