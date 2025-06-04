@@ -172,14 +172,15 @@ namespace DataLayer.DAL.Repository
         {
             try
             {
-                return await _context.Run
-                    .AsNoTracking()
-
-                    .FirstOrDefaultAsync(p => p.RunId == runId, cancellationToken);
+                return await (from run in _context.Run.AsNoTracking()
+                              join client in _context.Client on run.ClientId equals client.ClientId
+                              where run.RunId == runId
+                              select run) // Only select the run, not the client
+                             .FirstOrDefaultAsync(cancellationToken);
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Error getting PrivateRun {PrivateRunId}", runId);
+                _logger?.LogError(ex, "Error getting Run {RunId} with Client", runId);
                 throw;
             }
         }
