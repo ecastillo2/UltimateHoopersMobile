@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Domain;
-using DataLayer.DAL.Context;
 using DataLayer.DAL.Interface;
 using DataLayer.Context;
 
@@ -44,8 +43,6 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-
-      
         /// <summary>
         /// Update Post
         /// </summary>

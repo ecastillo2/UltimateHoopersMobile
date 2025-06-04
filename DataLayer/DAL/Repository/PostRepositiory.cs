@@ -1,16 +1,10 @@
 ﻿using Common;
 using DataLayer.Context;
-using DataLayer.DAL.Context;
 using DataLayer.DAL.Interface;
 using Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace DataLayer.DAL.Repository
 {
@@ -524,6 +518,12 @@ namespace DataLayer.DAL.Repository
             }
         }
 
+        /// <summary>
+        /// Add To Cache
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
         private void AddToCache<T>(string key, T value)
         {
             lock (_cacheLock)
@@ -755,8 +755,7 @@ namespace DataLayer.DAL.Repository
         {
             return await GetPostById(postId);
         }
-
-      
+   
         /// <summary>
         /// Get public posts with optimized entity queries
         /// </summary>

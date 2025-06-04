@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Runtime.CompilerServices;
 using DataLayer.Context;
-using DataLayer.DAL.Context;
 using DataLayer.DAL.Interface;
 using Domain;
 using Microsoft.EntityFrameworkCore;
@@ -46,10 +40,7 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<(List<Run> Runs, int TotalCount, int TotalPages)> GetRunsPaginatedAsync(
-            int page = 1,
-            int pageSize = 20,
-            CancellationToken cancellationToken = default)
+        public async Task<(List<Run> Runs, int TotalCount, int TotalPages)> GetRunsPaginatedAsync(int page = 1,int pageSize = 20,CancellationToken cancellationToken = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
@@ -75,12 +66,7 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<(List<Run> Runs, string NextCursor)> GetRunsWithCursorAsync(
-            string cursor = null,
-            int limit = 20,
-            string direction = "next",
-            string sortBy = "Points",
-            CancellationToken cancellationToken = default)
+        public async Task<(List<Run> Runs, string NextCursor)> GetRunsWithCursorAsync(string cursor = null,int limit = 20,string direction = "next",string sortBy = "Points",CancellationToken cancellationToken = default)
         {
             try
             {
@@ -145,8 +131,7 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async IAsyncEnumerable<Run> StreamAllRunsAsync(
-    [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        public async IAsyncEnumerable<Run> StreamAllRunsAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             var batchSize = 100;
             var lastId = string.Empty;
@@ -183,10 +168,7 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-
-        public async Task<Run> GetRunByIdAsync(
-            string runId,
-            CancellationToken cancellationToken = default)
+        public async Task<Run> GetRunByIdAsync(string runId,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -202,10 +184,7 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-
-        public async Task<Court> GetCourtAsync(
-            string courtId,
-            CancellationToken cancellationToken = default)
+        public async Task<Court> GetCourtAsync(string courtId,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -221,9 +200,7 @@ namespace DataLayer.DAL.Repository
         }
 
 
-        public async Task<List<Profile>> GetJoinedRunAsync(
-      string privateRunId,
-      CancellationToken cancellationToken = default)
+        public async Task<List<Profile>> GetJoinedRunAsync(string privateRunId,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -243,9 +220,7 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<bool> UpdateRunAsync(
-            Run model,
-            CancellationToken cancellationToken = default)
+        public async Task<bool> UpdateRunAsync(Run model,CancellationToken cancellationToken = default)
         {
 
             using (var context = _context)
@@ -281,8 +256,6 @@ namespace DataLayer.DAL.Repository
             }
 
         }
-
-
 
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {

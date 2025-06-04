@@ -1,8 +1,6 @@
 ﻿using DataLayer.Context;
 using DataLayer.DAL.Interface;
 using Domain;
-using Domain.DtoModel;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -66,7 +64,7 @@ namespace DataLayer.DAL.Repository
         }
 
         /// <summary>
-        /// GetJoinedRunsByProfileId
+        /// Get JoinedRuns By ProfileId
         /// </summary>
         /// <param name="profileId"></param>
         /// <returns></returns>
@@ -108,7 +106,7 @@ namespace DataLayer.DAL.Repository
         }
 
         /// <summary>
-        /// GetJoinedRunProfilesByRunIdAsync
+        /// Get Joined Run Profiles By Run Id Async
         /// </summary>
         /// <param name="runId"></param>
         /// <returns></returns>
@@ -234,7 +232,7 @@ namespace DataLayer.DAL.Repository
         }
 
         /// <summary>
-        /// AddProfileToJoinedRunAsync
+        /// Add Profile To Joined Run Async
         /// </summary>
         /// <param name="profileId"></param>
         /// <param name="runId"></param>

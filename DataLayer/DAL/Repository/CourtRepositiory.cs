@@ -31,6 +31,11 @@ namespace DataLayer.DAL.Repository
             _logger = logger;
         }
 
+        /// <summary>
+        /// Get Courts Async
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task<List<Court>> GetCourtsAsync(CancellationToken cancellationToken = default)
         {
             try
@@ -46,10 +51,14 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<(List<Court> Courts, int TotalCount, int TotalPages)> GetCourtsPaginatedAsync(
-            int page = 1,
-            int pageSize = 20,
-            CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Get Courts Paginated Async
+        /// </summary>
+        /// <param name="page"></param>
+        /// <param name="pageSize"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<(List<Court> Courts, int TotalCount, int TotalPages)> GetCourtsPaginatedAsync(int page = 1,int pageSize = 20,CancellationToken cancellationToken = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
@@ -75,12 +84,16 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<(List<Court> Courts, string NextCursor)> GetCourtsWithCursorAsync(
-            string cursor = null,
-            int limit = 20,
-            string direction = "next",
-            string sortBy = "Points",
-            CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Get Courts With Cursor Async
+        /// </summary>
+        /// <param name="cursor"></param>
+        /// <param name="limit"></param>
+        /// <param name="direction"></param>
+        /// <param name="sortBy"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<(List<Court> Courts, string NextCursor)> GetCourtsWithCursorAsync(string cursor = null,int limit = 20,string direction = "next",string sortBy = "Points",CancellationToken cancellationToken = default)
         {
             try
             {
@@ -145,8 +158,12 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async IAsyncEnumerable<Court> StreamAllCourtsAsync(
-    [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Stream All Courts Async
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async IAsyncEnumerable<Court> StreamAllCourtsAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             var batchSize = 100;
             var lastId = string.Empty;
@@ -183,10 +200,13 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-       
-        public async Task<Court> GetCourtByIdAsync(
-            string courtId,
-            CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Get Court By Id Async
+        /// </summary>
+        /// <param name="courtId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<Court> GetCourtByIdAsync(string courtId,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -202,12 +222,13 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-
-
-
-        public async Task<bool> UpdateCourtAsync(
-            Court court,
-            CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Update Court Async
+        /// </summary>
+        /// <param name="court"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<bool> UpdateCourtAsync(Court court,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -221,8 +242,11 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-      
-
+        /// <summary>
+        /// Save Changes Async
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             try

@@ -176,8 +176,6 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-
-
         /// <summary>
         /// Get Product By Id Async
         /// </summary>
@@ -235,7 +233,6 @@ namespace DataLayer.DAL.Repository
                 throw;
             }
         }
-
 
         /// <summary>
         /// Insert Product

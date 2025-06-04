@@ -4,7 +4,6 @@ using Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using SkiaSharp;
 using System.Runtime.CompilerServices;
 
 namespace DataLayer.DAL.Repository
@@ -41,14 +40,7 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-       
-
-        public async Task<(List<User> Users, string NextCursor)> GetUsersWithCursorAsync(
-            string cursor = null,
-            int limit = 20,
-            string direction = "next",
-            string sortBy = "Points",
-            CancellationToken cancellationToken = default)
+        public async Task<(List<User> Users, string NextCursor)> GetUsersWithCursorAsync(string cursor = null,int limit = 20,string direction = "next",string sortBy = "Points",CancellationToken cancellationToken = default)
         {
             try
             {
@@ -113,8 +105,7 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async IAsyncEnumerable<User> StreamAllUsersAsync(
-    [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        public async IAsyncEnumerable<User> StreamAllUsersAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             var batchSize = 100;
             var lastId = string.Empty;
@@ -151,10 +142,7 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-
-        public async Task<User> GetUserByIdAsync(
-            string runId,
-            CancellationToken cancellationToken = default)
+        public async Task<User> GetUserByIdAsync(string runId,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -170,9 +158,7 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<ScoutingReport?> GetProfileScoutingReportByUserId(
-     string userId,
-     CancellationToken cancellationToken = default)
+        public async Task<ScoutingReport?> GetProfileScoutingReportByUserId(string userId,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -203,10 +189,7 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-
-        public async Task<Profile> GetProfileByUserId(
-    string runId,
-    CancellationToken cancellationToken = default)
+        public async Task<Profile> GetProfileByUserId(string runId,CancellationToken cancellationToken = default)
         {
             try
             {

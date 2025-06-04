@@ -33,6 +33,11 @@ namespace DataLayer.DAL.Repository
             _logger = logger;
         }
 
+        /// <summary>
+        /// Get Profiles Async
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task<List<Profile>> GetProfilesAsync(CancellationToken cancellationToken = default)
         {
             try
@@ -48,10 +53,14 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<(List<Profile> Profiles, int TotalCount, int TotalPages)> GetProfilesPaginatedAsync(
-            int page = 1,
-            int pageSize = 20,
-            CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Get Profiles Paginated Async
+        /// </summary>
+        /// <param name="page"></param>
+        /// <param name="pageSize"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<(List<Profile> Profiles, int TotalCount, int TotalPages)> GetProfilesPaginatedAsync(int page = 1,int pageSize = 20,CancellationToken cancellationToken = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
@@ -77,12 +86,16 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<(List<Profile> Profiles, string NextCursor)> GetProfilesWithCursorAsync(
-            string cursor = null,
-            int limit = 20,
-            string direction = "next",
-            string sortBy = "Points",
-            CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Get Profiles With Cursor Async
+        /// </summary>
+        /// <param name="cursor"></param>
+        /// <param name="limit"></param>
+        /// <param name="direction"></param>
+        /// <param name="sortBy"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<(List<Profile> Profiles, string NextCursor)> GetProfilesWithCursorAsync(string cursor = null,int limit = 20,string direction = "next",string sortBy = "Points",CancellationToken cancellationToken = default)
         {
             try
             {
@@ -253,8 +266,12 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async IAsyncEnumerable<Profile> StreamAllProfilesAsync(
-    [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Stream All Profiles Async
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async IAsyncEnumerable<Profile> StreamAllProfilesAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             var batchSize = 100;
             var lastId = string.Empty;
@@ -291,9 +308,13 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<List<Profile>> GetFollowingProfilesAsync(
-            string profileId,
-            CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Get Following Profiles Async
+        /// </summary>
+        /// <param name="profileId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<List<Profile>> GetFollowingProfilesAsync(string profileId,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -318,9 +339,13 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<List<Profile>> GetFollowerProfilesAsync(
-            string profileId,
-            CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Get Follower Profiles Async
+        /// </summary>
+        /// <param name="profileId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<List<Profile>> GetFollowerProfilesAsync(string profileId,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -345,9 +370,13 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<Profile> GetProfileByIdAsync(
-            string profileId,
-            CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Get Profile By Id Async
+        /// </summary>
+        /// <param name="profileId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<Profile> GetProfileByIdAsync(string profileId,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -414,9 +443,13 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<Client> GetClientByUserIdAsync(
-        string userId,
-        CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Get Client By User Id Async
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<Client> GetClientByUserIdAsync(string userId,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -439,10 +472,13 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-
-        public async Task<List<Court>> GetCourtsByClientIdAsync(
-    string clientId,
-    CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Get Courts By ClientId Async
+        /// </summary>
+        /// <param name="clientId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<List<Court>> GetCourtsByClientIdAsync(string clientId,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -466,10 +502,13 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-
-        public async Task<List<User>> GetUsersByClientIdAsync(
-  string clientId,
-  CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Get Users By ClientId Async
+        /// </summary>
+        /// <param name="clientId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<List<User>> GetUsersByClientIdAsync(string clientId,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -493,9 +532,13 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<Profile> GetProfileByUserIdAsync(
-            string userId,
-            CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Get Profile By UserId Async
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<Profile> GetProfileByUserIdAsync(string userId,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -511,9 +554,13 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<Profile> GetProfileByUsernameAsync(
-            string username,
-            CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Get Profile By Username Async
+        /// </summary>
+        /// <param name="username"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<Profile> GetProfileByUsernameAsync(string username,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -529,10 +576,15 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<Profile> GetProfileWithTimeoutAsync(
-            string profileId,
-            TimeSpan timeout,
-            CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Get Profile With TimeouAsync
+        /// </summary>
+        /// <param name="profileId"></param>
+        /// <param name="timeout"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        /// <exception cref="TimeoutException"></exception>
+        public async Task<Profile> GetProfileWithTimeoutAsync(string profileId,TimeSpan timeout,CancellationToken cancellationToken = default)
         {
             using var timeoutCts = new CancellationTokenSource(timeout);
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
@@ -557,9 +609,13 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<List<Game>> GetProfileGameHistoryAsync(
-     string profileId,
-     CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Get Profile Game History Async
+        /// </summary>
+        /// <param name="profileId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<List<Game>> GetProfileGameHistoryAsync(string profileId,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -626,9 +682,13 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<GameStatistics> GetProfileGameStatisticsAsync(
-            string profileId,
-            CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Get Profile Game Statistics Async
+        /// </summary>
+        /// <param name="profileId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<GameStatistics> GetProfileGameStatisticsAsync(string profileId,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -660,9 +720,14 @@ namespace DataLayer.DAL.Repository
                 throw;
             }
         }
-        public async Task<ScoutingReport> GetScoutingReportAsync(
-            string profileId,
-            CancellationToken cancellationToken = default)
+
+        /// <summary>
+        /// Get ScoutingReport Async
+        /// </summary>
+        /// <param name="profileId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<ScoutingReport> GetScoutingReportAsync(string profileId,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -677,9 +742,13 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<ScoutingReport> GetScoutingReportByIdAsync(
-            string scoutingReportId,
-            CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Get Scouting Report By Id Async
+        /// </summary>
+        /// <param name="scoutingReportId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<ScoutingReport> GetScoutingReportByIdAsync(string scoutingReportId,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -700,9 +769,7 @@ namespace DataLayer.DAL.Repository
         /// <param name="privateRun"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<bool> UpdateScoutingReportAsync(
-    ScoutingReport model,
-    CancellationToken cancellationToken = default)
+        public async Task<bool> UpdateScoutingReportAsync(ScoutingReport model,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -742,9 +809,7 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<Squad> GetProfileSquadAsync(
-            string profileId,
-            CancellationToken cancellationToken = default)
+        public async Task<Squad> GetProfileSquadAsync(string profileId,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -775,9 +840,7 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<Setting> GetProfileSettingsAsync(
-            string profileId,
-            CancellationToken cancellationToken = default)
+        public async Task<Setting> GetProfileSettingsAsync(string profileId,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -792,9 +855,7 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<bool> UpdateProfileAsync(
-            Profile profile,
-            CancellationToken cancellationToken = default)
+        public async Task<bool> UpdateProfileAsync(Profile profile,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -808,9 +869,7 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<int> BatchUpdateProfilesAsync(
-            IEnumerable<Profile> profiles,
-            CancellationToken cancellationToken = default)
+        public async Task<int> BatchUpdateProfilesAsync(IEnumerable<Profile> profiles,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -828,10 +887,7 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<bool> UpdateProfilePointsAsync(
-            string profileId,
-            int points,
-            CancellationToken cancellationToken = default)
+        public async Task<bool> UpdateProfilePointsAsync(string profileId,int points,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -852,10 +908,7 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<bool> SetTopRecordStatusAsync(
-            string profileId,
-            bool hasTopRecord,
-            CancellationToken cancellationToken = default)
+        public async Task<bool> SetTopRecordStatusAsync(string profileId,bool hasTopRecord,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -876,10 +929,7 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<bool> UpdateLastRunDateAsync(
-            string profileId,
-            DateTime lastRunDate,
-            CancellationToken cancellationToken = default)
+        public async Task<bool> UpdateLastRunDateAsync(string profileId,DateTime lastRunDate,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -900,10 +950,7 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<bool> UpdateProfileUserNameAsync(
-            string profileId,
-            string newUserName,
-            CancellationToken cancellationToken = default)
+        public async Task<bool> UpdateProfileUserNameAsync(string profileId,string newUserName,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -929,9 +976,7 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<bool> UpdateSettingAsync(
-            Setting setting,
-            CancellationToken cancellationToken = default)
+        public async Task<bool> UpdateSettingAsync(Setting setting,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -946,9 +991,7 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<bool> UpsertScoutingReportAsync(
-            ScoutingReport scoutingReport,
-            CancellationToken cancellationToken = default)
+        public async Task<bool> UpsertScoutingReportAsync(ScoutingReport scoutingReport,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -989,9 +1032,7 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<bool> IsUserNameAvailableAsync(
-            string userName,
-            CancellationToken cancellationToken = default)
+        public async Task<bool> IsUserNameAvailableAsync(string userName,CancellationToken cancellationToken = default)
         {
             try
             {

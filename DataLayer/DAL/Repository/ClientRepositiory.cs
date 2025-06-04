@@ -52,10 +52,7 @@ namespace DataLayer.DAL.Repository
         /// <param name="pageSize"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<(List<Client> Clients, int TotalCount, int TotalPages)> GetClientsPaginatedAsync(
-            int page = 1,
-            int pageSize = 20,
-            CancellationToken cancellationToken = default)
+        public async Task<(List<Client> Clients, int TotalCount, int TotalPages)> GetClientsPaginatedAsync(int page = 1,int pageSize = 20,CancellationToken cancellationToken = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
@@ -90,12 +87,7 @@ namespace DataLayer.DAL.Repository
         /// <param name="sortBy"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<(List<Client> Clients, string NextCursor)> GetClientsWithCursorAsync(
-            string cursor = null,
-            int limit = 20,
-            string direction = "next",
-            string sortBy = "Points",
-            CancellationToken cancellationToken = default)
+        public async Task<(List<Client> Clients, string NextCursor)> GetClientsWithCursorAsync(string cursor = null,int limit = 20,string direction = "next",string sortBy = "Points",CancellationToken cancellationToken = default)
         {
             try
             {
@@ -165,8 +157,7 @@ namespace DataLayer.DAL.Repository
         /// </summary>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async IAsyncEnumerable<Client> StreamAllClientsAsync(
-    [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        public async IAsyncEnumerable<Client> StreamAllClientsAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             var batchSize = 100;
             var lastId = string.Empty;
@@ -209,24 +200,21 @@ namespace DataLayer.DAL.Repository
         /// <param name="runId"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<Client> GetClientByIdAsync(
-            string runId,
-            CancellationToken cancellationToken = default)
+        public async Task<Client> GetClientByIdAsync(string clientId,CancellationToken cancellationToken = default)
         {
             try
             {
                 return await _context.Client
                     .AsNoTracking()
 
-                    .FirstOrDefaultAsync(p => p.ClientId == runId, cancellationToken);
+                    .FirstOrDefaultAsync(p => p.ClientId == clientId, cancellationToken);
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, "Error getting PrivateRun {PrivateRunId}", runId);
+                _logger?.LogError(ex, "Error getting PrivateRun {clientId}", clientId);
                 throw;
             }
         }
-
 
         /// <summary>
         /// Get Court By Client Id Async
@@ -234,9 +222,7 @@ namespace DataLayer.DAL.Repository
         /// <param name="clientId"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<List<Court>> GetCourtByClientIdAsync(
-     string clientId,
-     CancellationToken cancellationToken = default)
+        public async Task<List<Court>> GetCourtByClientIdAsync(string clientId,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -252,9 +238,13 @@ namespace DataLayer.DAL.Repository
             }
         }
 
-        public async Task<List<Court>> GetClientCourtsAsync(
-    string clientId,
-    CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Get Client Courts Async
+        /// </summary>
+        /// <param name="clientId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<List<Court>> GetClientCourtsAsync(string clientId,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -269,8 +259,6 @@ namespace DataLayer.DAL.Repository
                 throw;
             }
         }
-
-
 
         /// <summary>
         /// Update Client Async
@@ -278,9 +266,7 @@ namespace DataLayer.DAL.Repository
         /// <param name="privateRun"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<bool> UpdateClientAsync(
-            Client model,
-            CancellationToken cancellationToken = default)
+        public async Task<bool> UpdateClientAsync(Client model,CancellationToken cancellationToken = default)
         {
             try
             {

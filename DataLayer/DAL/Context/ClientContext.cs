@@ -9,7 +9,6 @@ namespace DataLayer.DAL.Context
 		{
 
 		}
-
         public DbSet<Client> Client { get; set; }
     }
 }
