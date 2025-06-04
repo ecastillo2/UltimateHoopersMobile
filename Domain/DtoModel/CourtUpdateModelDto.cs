@@ -25,6 +25,7 @@ namespace Domain.DtoModel
         public string? Url { get; set; }
         public string? CourtSize { get; set; }
         public string? CourtNumber { get; set; }
+        public string? CourtType { get; set; }
 
         public void UpdateCourt(Court court)
         {
@@ -37,6 +38,7 @@ namespace Domain.DtoModel
             court.RentalCostPerHour = RentalCostPerHour;
             court.Url = Url;
             court.CourtSize = CourtSize;
+            court.CourtType = CourtType;
         }
     }
 }

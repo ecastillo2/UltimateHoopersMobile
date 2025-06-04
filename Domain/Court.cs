@@ -29,6 +29,7 @@ namespace Domain
             RentalCostPerHour = court.RentalCostPerHour;
             CourtSize = court.CourtSize;
             CourtNumber = court.CourtNumber;
+            CourtType = court.CourtType;
         }
 
 
@@ -50,5 +51,6 @@ namespace Domain
         public string? Url { get; set; }
         public string? CourtSize { get; set; }
         public string? CourtNumber { get; set; }
+        public string? CourtType { get; set; }
     }
 }

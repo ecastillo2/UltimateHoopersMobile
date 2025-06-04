@@ -33,7 +33,8 @@ namespace Domain.DtoModel
             Url = court.Url;
             CourtSize = court.CourtSize;
             CourtNumber = court.CourtNumber;
-            
+            CourtType = court.CourtType;
+
         }
 
         public string? CourtId { get; set; }
@@ -51,5 +52,6 @@ namespace Domain.DtoModel
         public string? Url { get; set; }
         public string? CourtSize { get; set; }
         public string? CourtNumber { get; set; }
+        public string? CourtType { get; set; }
     }
 }

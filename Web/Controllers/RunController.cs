@@ -127,7 +127,7 @@ namespace Web.Controllers
                     courtListData = clientCourtList.Select(c => new
                     {
                         courtId = c.CourtId ?? "",
-                        name = c.Name ?? "Unnamed Court",
+                        name = c.Name + " - "+ c.CourtType ?? "Unnamed Court",
                         // Add additional court properties if needed
                         address = c.Address ?? "",
                         isIndoor =  true,
