@@ -1,323 +1,280 @@
-/**
- * UI Utilities - Spinner and Toast Management
- * Common utility functions for loading spinners and toast notifications
+﻿/**
+ * Basic Utility Functions for Run Management
+ * Provides common functionality used across the application
  */
 
-window.UIUtils = (function () {
-    'use strict';
+window.UIUtils = {
+    // Toast notification system
+    showToast: function (message, type = 'info', duration = 5000) {
+        console.log(`${type.toUpperCase()}: ${message}`);
 
-    // Toast configuration
-    const TOAST_CONFIG = {
-        autohide: {
-            success: true,
-            info: true,
-            warning: true,
-            error: false // Error toasts stay visible until manually dismissed
-        },
-        delay: 5000,
-        icons: {
-            success: 'bi-check-circle',
-            error: 'bi-exclamation-triangle',
-            warning: 'bi-exclamation-triangle',
-            info: 'bi-info-circle'
-        },
-        bgClasses: {
-            success: 'bg-success',
-            error: 'bg-danger',
-            warning: 'bg-warning',
-            info: 'bg-info'
-        }
-    };
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${this.getBootstrapAlertClass(type)} alert-dismissible fade show position-fixed`;
+        toast.style.cssText = `
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            max-width: 500px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        `;
 
-    /**
-     * Show loading spinner
-     * @param {string} selector - Optional selector for specific spinner element
-     */
-    function showLoading(selector = '.loading-spinner') {
-        const spinner = document.querySelector(selector);
-        if (spinner) {
-            spinner.classList.add('active');
-        }
-    }
-
-    /**
-     * Hide loading spinner
-     * @param {string} selector - Optional selector for specific spinner element
-     */
-    function hideLoading(selector = '.loading-spinner') {
-        const spinner = document.querySelector(selector);
-        if (spinner) {
-            spinner.classList.remove('active');
-        }
-    }
-
-    /**
-     * Show toast notification
-     * @param {string} message - The message to display
-     * @param {string} type - Type of toast (success, error, warning, info)
-     * @param {string} title - Optional title for the toast
-     * @param {Object} options - Additional options
-     */
-    function showToast(message, type = 'success', title = null, options = {}) {
-        console.log(`${type}: ${message}`);
-
-        // Merge with default options
-        const config = {
-            autohide: TOAST_CONFIG.autohide[type] !== false,
-            delay: options.delay || TOAST_CONFIG.delay,
-            position: options.position || 'bottom-end'
-        };
-
-        // Create toast container if it doesn't exist
-        let container = getOrCreateToastContainer(config.position);
-
-        // Create toast
-        const toastId = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        const iconClass = TOAST_CONFIG.icons[type] || 'bi-info-circle';
-        const bgClass = TOAST_CONFIG.bgClasses[type] || 'bg-info';
-
-        // Build toast HTML
-        let toastContent = `<i class="bi ${iconClass} me-2"></i>`;
-        if (title) {
-            toastContent += `<strong>${title}</strong>: `;
-        }
-        toastContent += message;
-
-        const toastHtml = `
-            <div id="${toastId}" class="toast align-items-center text-white ${bgClass} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="d-flex">
-                    <div class="toast-body">
-                        ${toastContent}
-                    </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
+        toast.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="bi bi-${this.getToastIcon(type)} me-2"></i>
+                <div class="flex-grow-1">${message}</div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         `;
 
-        container.insertAdjacentHTML('beforeend', toastHtml);
+        document.body.appendChild(toast);
 
-        // Initialize and show toast
-        const toastElement = document.getElementById(toastId);
-        if (toastElement && typeof bootstrap !== 'undefined' && bootstrap.Toast) {
-            const toast = new bootstrap.Toast(toastElement, {
-                autohide: config.autohide,
-                delay: config.delay
-            });
-
-            toast.show();
-
-            // Remove toast element after it's hidden
-            toastElement.addEventListener('hidden.bs.toast', () => {
-                toastElement.remove();
-            });
-
-            // Return toast instance for manual control if needed
-            return toast;
-        }
-
-        return null;
-    }
-
-    /**
-     * Get or create toast container
-     * @param {string} position - Position for the container
-     * @returns {HTMLElement} The toast container element
-     */
-    function getOrCreateToastContainer(position = 'bottom-end') {
-        const containerClass = `toast-container-${position}`;
-        let container = document.querySelector(`.${containerClass}`);
-
-        if (!container) {
-            container = document.createElement('div');
-            container.className = `toast-container ${containerClass} position-fixed p-3`;
-            container.style.zIndex = '9999';
-
-            // Set position based on parameter
-            switch (position) {
-                case 'top-start':
-                    container.classList.add('top-0', 'start-0');
-                    break;
-                case 'top-center':
-                    container.classList.add('top-0', 'start-50', 'translate-middle-x');
-                    break;
-                case 'top-end':
-                    container.classList.add('top-0', 'end-0');
-                    break;
-                case 'bottom-start':
-                    container.classList.add('bottom-0', 'start-0');
-                    break;
-                case 'bottom-center':
-                    container.classList.add('bottom-0', 'start-50', 'translate-middle-x');
-                    break;
-                case 'bottom-end':
-                default:
-                    container.classList.add('bottom-0', 'end-0');
-                    break;
+        // Auto remove after duration
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.remove();
             }
+        }, duration);
 
-            document.body.appendChild(container);
+        return toast;
+    },
+
+    getBootstrapAlertClass: function (type) {
+        const classMap = {
+            'success': 'success',
+            'error': 'danger',
+            'warning': 'warning',
+            'info': 'info'
+        };
+        return classMap[type] || 'info';
+    },
+
+    getToastIcon: function (type) {
+        const iconMap = {
+            'success': 'check-circle',
+            'error': 'x-circle',
+            'warning': 'exclamation-triangle',
+            'info': 'info-circle'
+        };
+        return iconMap[type] || 'info-circle';
+    },
+
+    // Loading state management
+    showLoading: function (message = 'Loading...') {
+        let loader = document.getElementById('globalLoader');
+        if (!loader) {
+            loader = document.createElement('div');
+            loader.id = 'globalLoader';
+            loader.className = 'position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center';
+            loader.style.cssText = `
+                background: rgba(255, 255, 255, 0.9);
+                z-index: 9999;
+                backdrop-filter: blur(2px);
+            `;
+            loader.innerHTML = `
+                <div class="text-center">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <div class="text-muted">${message}</div>
+                </div>
+            `;
+            document.body.appendChild(loader);
         }
+        loader.style.display = 'flex';
+    },
 
-        return container;
-    }
+    hideLoading: function () {
+        const loader = document.getElementById('globalLoader');
+        if (loader) {
+            loader.style.display = 'none';
+        }
+    },
 
-    /**
-     * Show success toast
-     * @param {string} message - Success message
-     * @param {string} title - Optional title
-     */
-    function showSuccess(message, title = null) {
-        return showToast(message, 'success', title);
-    }
-
-    /**
-     * Show error toast
-     * @param {string} message - Error message
-     * @param {string} title - Optional title
-     */
-    function showError(message, title = null) {
-        return showToast(message, 'error', title);
-    }
-
-    /**
-     * Show warning toast
-     * @param {string} message - Warning message
-     * @param {string} title - Optional title
-     */
-    function showWarning(message, title = null) {
-        return showToast(message, 'warning', title);
-    }
-
-    /**
-     * Show info toast
-     * @param {string} message - Info message
-     * @param {string} title - Optional title
-     */
-    function showInfo(message, title = null) {
-        return showToast(message, 'info', title);
-    }
-
-    /**
-     * Clear all toasts
-     */
-    function clearAllToasts() {
-        const containers = document.querySelectorAll('[class*="toast-container"]');
-        containers.forEach(container => {
-            const toasts = container.querySelectorAll('.toast');
-            toasts.forEach(toast => {
-                const toastInstance = bootstrap.Toast.getInstance(toast);
-                if (toastInstance) {
-                    toastInstance.hide();
-                } else {
-                    toast.remove();
-                }
-            });
-        });
-    }
-
-    /**
-     * Set loading state on a button
-     * @param {HTMLElement|string} button - Button element or selector
-     * @param {boolean} loading - Whether to show loading state
-     * @param {string} loadingText - Text to show when loading
-     */
-    function setButtonLoading(button, loading = true, loadingText = 'Loading...') {
-        const btn = typeof button === 'string' ? document.querySelector(button) : button;
-        if (!btn) return;
+    // Button loading state
+    setButtonLoading: function (button, loading, originalText = null) {
+        if (!button) return;
 
         if (loading) {
-            // Store original state
-            btn.dataset.originalText = btn.innerHTML;
-            btn.dataset.originalDisabled = btn.disabled;
-
-            // Set loading state
-            btn.disabled = true;
-            btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>${loadingText}`;
-        } else {
-            // Restore original state
-            btn.disabled = btn.dataset.originalDisabled === 'true';
-            btn.innerHTML = btn.dataset.originalText || btn.innerHTML;
-
-            // Clean up data attributes
-            delete btn.dataset.originalText;
-            delete btn.dataset.originalDisabled;
-        }
-    }
-
-    /**
-     * Create a loading overlay for an element
-     * @param {HTMLElement|string} target - Target element or selector
-     * @param {string} message - Loading message
-     */
-    function showElementLoading(target, message = 'Loading...') {
-        const element = typeof target === 'string' ? document.querySelector(target) : target;
-        if (!element) return;
-
-        // Remove existing overlay
-        hideElementLoading(element);
-
-        // Create overlay
-        const overlay = document.createElement('div');
-        overlay.className = 'ui-loading-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-75';
-        overlay.style.zIndex = '1000';
-        overlay.innerHTML = `
-            <div class="text-center">
-                <div class="spinner-border text-primary mb-2" role="status" aria-hidden="true"></div>
-                <div class="text-muted">${message}</div>
-            </div>
-        `;
-
-        // Ensure target is positioned
-        const position = window.getComputedStyle(element).position;
-        if (position === 'static') {
-            element.style.position = 'relative';
-            overlay.dataset.positionModified = 'true';
-        }
-
-        element.appendChild(overlay);
-    }
-
-    /**
-     * Hide loading overlay from an element
-     * @param {HTMLElement|string} target - Target element or selector
-     */
-    function hideElementLoading(target) {
-        const element = typeof target === 'string' ? document.querySelector(target) : target;
-        if (!element) return;
-
-        const overlay = element.querySelector('.ui-loading-overlay');
-        if (overlay) {
-            // Restore position if we modified it
-            if (overlay.dataset.positionModified) {
-                element.style.position = '';
+            if (!originalText) {
+                button.dataset.originalText = button.textContent;
+            } else {
+                button.dataset.originalText = originalText;
             }
-            overlay.remove();
+            button.disabled = true;
+            button.innerHTML = `
+                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                Loading...
+            `;
+        } else {
+            button.disabled = false;
+            button.textContent = button.dataset.originalText || 'Submit';
         }
+    },
+
+    // Date/Time utilities
+    formatDate: function (date, format = 'short') {
+        if (!date) return '';
+
+        if (typeof date === 'string') {
+            date = new Date(date);
+        }
+
+        if (isNaN(date.getTime())) return '';
+
+        const options = {
+            short: { month: 'short', day: 'numeric', year: 'numeric' },
+            long: { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' },
+            time: { hour: 'numeric', minute: '2-digit', hour12: true }
+        };
+
+        return date.toLocaleDateString('en-US', options[format] || options.short);
+    },
+
+    formatTime: function (time) {
+        if (!time) return '';
+
+        // Handle TimeSpan format (HH:mm:ss)
+        if (typeof time === 'string' && time.includes(':')) {
+            const parts = time.split(':');
+            if (parts.length >= 2) {
+                const hours = parseInt(parts[0]);
+                const minutes = parseInt(parts[1]);
+                const date = new Date();
+                date.setHours(hours, minutes, 0, 0);
+                return date.toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                });
+            }
+        }
+
+        // Handle Date object
+        if (time instanceof Date) {
+            return time.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+
+        return time.toString();
+    },
+
+    // Form utilities
+    getFormData: function (form) {
+        const formData = new FormData(form);
+        const data = {};
+
+        for (let [key, value] of formData.entries()) {
+            if (data[key]) {
+                // Handle multiple values (checkboxes, etc.)
+                if (Array.isArray(data[key])) {
+                    data[key].push(value);
+                } else {
+                    data[key] = [data[key], value];
+                }
+            } else {
+                data[key] = value;
+            }
+        }
+
+        return data;
+    },
+
+    // Validation utilities
+    validateRequired: function (fields) {
+        const errors = [];
+
+        fields.forEach(field => {
+            const element = typeof field === 'string' ? document.getElementById(field) : field;
+            if (element && !element.value.trim()) {
+                const label = element.labels && element.labels[0] ?
+                    element.labels[0].textContent.replace('*', '').trim() :
+                    element.name || element.id;
+                errors.push(`${label} is required`);
+                element.classList.add('is-invalid');
+            } else if (element) {
+                element.classList.remove('is-invalid');
+            }
+        });
+
+        return errors;
+    },
+
+    // API utilities
+    getAntiForgeryToken: function () {
+        const token = document.querySelector('input[name="__RequestVerificationToken"]');
+        return token ? token.value : '';
+    },
+
+    // URL utilities
+    buildUrl: function (path, params = {}) {
+        const url = new URL(path, window.location.origin);
+
+        Object.keys(params).forEach(key => {
+            if (params[key] !== null && params[key] !== undefined) {
+                url.searchParams.append(key, params[key]);
+            }
+        });
+
+        return url.toString();
+    },
+
+    // Local storage utilities (with error handling)
+    saveToStorage: function (key, data) {
+        try {
+            localStorage.setItem(key, JSON.stringify(data));
+            return true;
+        } catch (error) {
+            console.warn('Could not save to localStorage:', error);
+            return false;
+        }
+    },
+
+    loadFromStorage: function (key, defaultValue = null) {
+        try {
+            const item = localStorage.getItem(key);
+            return item ? JSON.parse(item) : defaultValue;
+        } catch (error) {
+            console.warn('Could not load from localStorage:', error);
+            return defaultValue;
+        }
+    },
+
+    // Debug utilities
+    log: function (message, data = null) {
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            console.log(`🔧 ${message}`, data);
+        }
+    },
+
+    error: function (message, error = null) {
+        console.error(`❌ ${message}`, error);
+    },
+
+    warn: function (message, data = null) {
+        console.warn(`⚠️ ${message}`, data);
     }
+};
 
-    // Public API
-    return {
-        // Loading functions
-        showLoading,
-        hideLoading,
-        setButtonLoading,
-        showElementLoading,
-        hideElementLoading,
+// Make utilities available globally
+window.Utils = window.UIUtils;
 
-        // Toast functions
-        showToast,
-        showSuccess,
-        showError,
-        showWarning,
-        showInfo,
-        clearAllToasts,
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function () {
+    console.log('🔧 Utilities loaded successfully');
 
-        // Utility functions
-        getOrCreateToastContainer
-    };
-})();
-
-// For backwards compatibility, expose commonly used functions globally
-window.showLoading = window.UIUtils.showLoading;
-window.hideLoading = window.UIUtils.hideLoading;
-window.showToast = window.UIUtils.showToast;
+    // Auto-remove old alerts/toasts
+    document.querySelectorAll('.alert').forEach(alert => {
+        if (alert.classList.contains('auto-dismiss')) {
+            setTimeout(() => {
+                if (alert.parentElement) {
+                    alert.remove();
+                }
+            }, 5000);
+        }
+    });
+});

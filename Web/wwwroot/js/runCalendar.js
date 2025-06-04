@@ -123,9 +123,7 @@ class FixedRunCalendar {
             this.showError(`Failed to load calendar data: ${error.message}`);
         } finally {
             this.isLoading = false;
-            if (showLoading) {
-                this.hideLoading();
-            }
+            // Note: Loading state is cleared by renderCalendar() or showError()
         }
     }
 
@@ -136,50 +134,221 @@ class FixedRunCalendar {
         try {
             console.log(`📡 Fetching runs from ${startDate.toISOString()} to ${endDate.toISOString()}`);
 
-            // FIXED: Try multiple API endpoints in order of preference
+            // Try multiple API endpoints in order of preference
             const response = await this.fetchRunsFromMultipleSources(startDate, endDate);
             this.runs = response;
 
-            console.log(`📋 Loaded ${this.runs.length} runs from API`);
+            // Show success message for real data
+            if (this.runs.length > 0 && this.runs[0].id && !this.runs[0].id.includes('mock')) {
+                console.log(`📋 ✅ Loaded ${this.runs.length} REAL runs from API successfully!`);
+                this.showSuccessToast(`Loaded ${this.runs.length} runs from server`);
+            } else {
+                console.log(`📋 Loaded ${this.runs.length} runs (mock data)`);
+            }
+
         } catch (error) {
-            console.warn('⚠️ All API fetch attempts failed, using mock data:', error.message);
+            console.warn('⚠️ All data fetch attempts failed:', error.message);
 
-            // Show user-friendly error message
-            this.showError('Unable to connect to server. Showing sample data.');
+            // Better error handling based on error type
+            const isAuthError = error.message.includes('Authentication') || error.message.includes('log in');
+            const isNotFound = error.message.includes('not found') || error.message.includes('404');
+            const isServerError = error.message.includes('Server error') || error.message.includes('500');
 
-            // Fallback to mock data for demonstration
-            await this.generateMockDataWithDelay();
+            if (this.isOnDashboard()) {
+                console.log('📊 On dashboard page - API not available, using fallback mock data');
+                // Don't show error to user on dashboard for missing API, just use mock data silently
+                if (isAuthError) {
+                    this.showWarningToast('Please log in to view real run data');
+                }
+                await this.generateMockDataWithDelay();
+            } else {
+                console.log('📄 On runs page - showing error message to user');
+
+                let errorMessage = 'Unable to load runs from server. ';
+                if (isAuthError) {
+                    errorMessage += 'Please log in to continue.';
+                } else if (isNotFound) {
+                    errorMessage += 'API endpoint not configured.';
+                } else if (isServerError) {
+                    errorMessage += 'Server error occurred.';
+                } else {
+                    errorMessage += 'Showing sample data.';
+                }
+
+                this.showError(errorMessage);
+                await this.generateMockDataWithDelay();
+            }
         }
     }
 
-    // FIXED: Try multiple API sources
-    async fetchRunsFromMultipleSources(startDate, endDate) {
-        const sources = [
-            // Primary API endpoint
-            () => this.fetchRunsFromAPI(startDate, endDate),
-            // Fallback: Get all runs and filter client-side
-            () => this.fetchAllRunsAndFilter(startDate, endDate),
-            // Last resort: Use existing table data
-            () => this.extractRunsFromTable()
+    // Success toast for real data loading
+    showSuccessToast(message) {
+        if (window.UIUtils && window.UIUtils.showToast) {
+            window.UIUtils.showToast(message, 'success', 3000);
+        } else {
+            console.log(`✅ SUCCESS: ${message}`);
+        }
+    }
+
+    // Warning toast for authentication issues
+    showWarningToast(message) {
+        if (window.UIUtils && window.UIUtils.showToast) {
+            window.UIUtils.showToast(message, 'warning', 4000);
+        } else {
+            console.log(`⚠️ WARNING: ${message}`);
+        }
+    }
+
+    // Check if we're on the dashboard page
+    isOnDashboard() {
+        return window.location.pathname.includes('/Dashboard') ||
+            window.location.pathname === '/' ||
+            document.querySelector('.dashboard-header') !== null;
+    }
+
+    // Generate mock data based on dashboard stats if available
+    async generateMockFromDashboardStats() {
+        console.log('📊 Generating mock data from dashboard stats');
+
+        // Add a small delay to simulate processing
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Try to get run count from dashboard stats
+        let runCount = 25; // default
+
+        try {
+            // Look for run count in dashboard stats cards
+            const statCards = document.querySelectorAll('.stats-card .fs-5, .stat-number');
+            if (statCards.length > 0) {
+                const firstStat = statCards[0].textContent.trim();
+                const parsedCount = parseInt(firstStat);
+                if (!isNaN(parsedCount) && parsedCount > 0) {
+                    runCount = Math.min(Math.max(parsedCount, 10), 50); // Between 10-50 runs
+                    console.log(`📊 Using dashboard run count: ${parsedCount}, generating ${runCount} mock runs`);
+                }
+            }
+        } catch (error) {
+            console.warn('⚠️ Could not extract stats from dashboard, using default count');
+        }
+
+        // Generate mock data with the determined count
+        return this.generateMockRunsWithCount(runCount);
+    }
+
+    generateMockRunsWithCount(count) {
+        const runs = [];
+        const startDate = new Date(this.currentYear, this.currentMonth - this.config.dateRangeMonths, 1);
+        const endDate = new Date(this.currentYear, this.currentMonth + this.config.dateRangeMonths + 1, 0);
+
+        const runTypes = ['pickup', 'training', 'tournament', 'youth', 'women'];
+        const skillLevels = ['Beginner', 'Intermediate', 'Advanced', 'All Levels'];
+        const locations = [
+            'Main Basketball Court',
+            'Practice Gym',
+            'Community Recreation Center',
+            'Youth Sports Complex',
+            'Westside Basketball Courts',
+            'Downtown Sports Center'
         ];
+
+        for (let i = 0; i < count; i++) {
+            // Create random date within range
+            const randomDate = new Date(startDate.getTime() + Math.random() * (endDate.getTime() - startDate.getTime()));
+
+            // Set random time (6 AM to 10 PM)
+            const randomHour = Math.floor(Math.random() * 16) + 6;
+            const randomMinute = Math.floor(Math.random() * 4) * 15; // 0, 15, 30, 45
+            randomDate.setHours(randomHour, randomMinute, 0, 0);
+
+            const type = runTypes[Math.floor(Math.random() * runTypes.length)];
+            const capacity = Math.floor(Math.random() * 20) + 5;
+            const participants = Math.floor(Math.random() * (capacity + 1));
+
+            const startTime = this.formatTime(randomDate);
+            const runEndDate = new Date(randomDate.getTime() + (1 + Math.random() * 2) * 60 * 60 * 1000); // 1-3 hours
+            const endTime = this.formatTime(runEndDate);
+
+            runs.push({
+                id: `dashboard-mock-run-${i + 1}`,
+                name: `${this.capitalize(type)} ${this.getRandomGameName()}`,
+                type: type,
+                date: randomDate,
+                startTime: startTime,
+                endTime: endTime,
+                location: locations[Math.floor(Math.random() * locations.length)],
+                skillLevel: skillLevels[Math.floor(Math.random() * skillLevels.length)],
+                participants: participants,
+                capacity: capacity,
+                description: this.generateRunDescription(type, skillLevels[Math.floor(Math.random() * skillLevels.length)]),
+                status: Math.random() > 0.05 ? 'Active' : 'Cancelled', // 5% chance of cancelled
+                isPublic: Math.random() > 0.15, // 85% public
+                profileId: `user-${Math.floor(Math.random() * 50) + 1}`
+            });
+        }
+
+        return runs.sort((a, b) => a.date - b.date);
+    }
+
+    // FIXED: Try multiple API sources based on current page
+    async fetchRunsFromMultipleSources(startDate, endDate) {
+        const sources = [];
+        const onDashboard = this.isOnDashboard();
+        const onRunsPage = this.isOnRunsPage();
+
+        console.log(`📍 Page detection: Dashboard=${onDashboard}, RunsPage=${onRunsPage}, Path=${window.location.pathname}`);
+
+        // Always try the primary API endpoint first
+        sources.push({
+            name: 'Primary API (/Run/GetRunsForCalendar)',
+            fn: () => this.fetchRunsFromAPI(startDate, endDate)
+        });
+
+        // If on dashboard, generate mock data directly (don't try other APIs)
+        if (onDashboard) {
+            sources.push({
+                name: 'Dashboard Mock Data Generator',
+                fn: () => this.generateMockFromDashboardStats()
+            });
+        }
+
+        // Only try table extraction if we're on the runs management page
+        if (onRunsPage && !onDashboard) {
+            sources.push({
+                name: 'Table Data Extraction',
+                fn: () => this.extractRunsFromTable()
+            });
+
+            // Try alternative API endpoints only on runs page
+            sources.push({
+                name: 'Alternative API (/Run/GetAllRunsForCalendar)',
+                fn: () => this.fetchAllRunsAndFilter(startDate, endDate)
+            });
+        }
 
         let lastError = null;
 
         for (let i = 0; i < sources.length; i++) {
             try {
-                console.log(`🔄 Trying data source ${i + 1}...`);
-                const result = await sources[i]();
+                console.log(`🔄 Trying data source ${i + 1}: ${sources[i].name}`);
+                const result = await sources[i].fn();
                 if (result && result.length >= 0) {
-                    console.log(`✅ Successfully fetched ${result.length} runs from source ${i + 1}`);
+                    console.log(`✅ Successfully fetched ${result.length} runs from: ${sources[i].name}`);
                     return result;
                 }
             } catch (error) {
-                console.warn(`⚠️ Source ${i + 1} failed:`, error.message);
+                console.warn(`⚠️ Source ${i + 1} (${sources[i].name}) failed:`, error.message);
                 lastError = error;
             }
         }
 
         throw lastError || new Error('All data sources failed');
+    }
+
+    // Check if we're on the runs management page
+    isOnRunsPage() {
+        return document.getElementById('runsTable') !== null ||
+            window.location.pathname.includes('/Run/Run') ||
+            window.location.pathname.includes('/Run');
     }
 
     // FIXED: Improved API fetch with better error handling
@@ -199,11 +368,12 @@ class FixedRunCalendar {
                 headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json',
-                    // FIXED: Only include CSRF token if it exists
+                    'X-Requested-With': 'XMLHttpRequest', // Help with CSRF
+                    // Include CSRF token if available
                     ...(this.getAntiForgeryToken() && { 'RequestVerificationToken': this.getAntiForgeryToken() })
                 },
                 signal: controller.signal,
-                credentials: 'same-origin' // FIXED: Include credentials for authentication
+                credentials: 'same-origin'
             });
 
             clearTimeout(timeoutId);
@@ -212,9 +382,18 @@ class FixedRunCalendar {
             console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
 
             if (!response.ok) {
-                const errorText = await response.text();
-                console.error('❌ API Error Response:', errorText);
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                // Handle specific HTTP status codes
+                if (response.status === 401) {
+                    throw new Error('Authentication required - please log in');
+                } else if (response.status === 403) {
+                    throw new Error('Access denied - insufficient permissions');
+                } else if (response.status === 404) {
+                    throw new Error('Calendar API endpoint not found');
+                } else {
+                    const errorText = await response.text();
+                    console.error('❌ API Error Response:', errorText);
+                    throw new Error(`Server error (${response.status}): ${response.statusText}`);
+                }
             }
 
             const data = await response.json();
@@ -224,22 +403,49 @@ class FixedRunCalendar {
                 throw new Error(data.message || 'API returned error status');
             }
 
+            // Validate response structure
+            if (!data.runs || !Array.isArray(data.runs)) {
+                console.warn('⚠️ API response missing runs array:', data);
+                throw new Error('Invalid API response format');
+            }
+
             // Transform API data to calendar format
-            return this.transformAPIData(data.runs || []);
+            const transformedRuns = this.transformAPIData(data.runs);
+
+            console.log(`✅ Successfully fetched and transformed ${transformedRuns.length} runs from API`);
+            return transformedRuns;
+
         } catch (error) {
             clearTimeout(timeoutId);
 
             if (error.name === 'AbortError') {
-                throw new Error('Request timed out');
+                throw new Error('Request timed out - server may be slow');
             }
 
+            // Re-throw with better context
+            console.error('📡 API Fetch Error:', error);
             throw error;
         }
     }
 
-    // FIXED: Fallback method to get all runs
+    // FIXED: Fallback method to get all runs - make this optional
     async fetchAllRunsAndFilter(startDate, endDate) {
         console.log('📡 Trying fallback: fetch all runs');
+
+        // Check if alternative endpoint exists by trying a HEAD request first
+        try {
+            const headResponse = await fetch('/Run/GetAllRunsForCalendar', {
+                method: 'HEAD',
+                credentials: 'same-origin'
+            });
+
+            if (!headResponse.ok) {
+                throw new Error('Alternative endpoint not available');
+            }
+        } catch (error) {
+            console.log('📡 Alternative endpoint not available, skipping');
+            throw new Error('Alternative API endpoint not found');
+        }
 
         const url = new URL('/Run/GetAllRunsForCalendar', window.location.origin);
 
@@ -380,49 +586,100 @@ class FixedRunCalendar {
         };
     }
 
-    // FIXED: Improved data transformation
+    // FIXED: Improved data transformation with better validation
     transformAPIData(apiRuns) {
         if (!Array.isArray(apiRuns)) {
             console.warn('⚠️ API runs data is not an array:', apiRuns);
             return [];
         }
 
-        return apiRuns.map(run => {
-            // Parse the date properly
-            let runDate;
-            if (run.runDate) {
-                runDate = new Date(run.runDate);
-                // If we have start time, try to combine it
-                if (run.startTime && run.startTime !== '12:00 AM') {
-                    const timeParts = this.parseTime(run.startTime);
-                    if (timeParts) {
-                        runDate.setHours(timeParts.hours, timeParts.minutes, 0, 0);
-                    }
-                }
-            } else {
-                runDate = new Date(); // Fallback to today
-            }
+        console.log(`🔄 Transforming ${apiRuns.length} API runs...`);
 
-            return {
-                id: run.runId || `run-${Date.now()}-${Math.random()}`,
-                name: run.name || 'Basketball Run',
-                type: (run.type || 'Pickup').toLowerCase(),
-                date: runDate,
-                startTime: run.startTime || '12:00 PM',
-                endTime: run.endTime || '2:00 PM',
-                location: run.location || this.buildLocationString(run),
-                skillLevel: run.skillLevel || 'All Levels',
-                participants: parseInt(run.playerCount) || 0,
-                capacity: parseInt(run.playerLimit) || 10,
-                description: run.description || '',
-                status: run.status || 'Active',
-                isPublic: run.isPublic !== false,
-                address: run.address || '',
-                city: run.city || '',
-                state: run.state || '',
-                profileId: run.profileId || ''
-            };
-        }).filter(run => run.date && !isNaN(run.date.getTime())); // Filter out invalid dates
+        const transformedRuns = apiRuns.map((run, index) => {
+            try {
+                // Parse the date properly
+                let runDate;
+                if (run.runDate) {
+                    runDate = new Date(run.runDate);
+                    // Validate date
+                    if (isNaN(runDate.getTime())) {
+                        console.warn(`⚠️ Invalid date for run ${index}:`, run.runDate);
+                        runDate = new Date(); // Fallback to today
+                    }
+                } else {
+                    console.warn(`⚠️ Missing runDate for run ${index}:`, run);
+                    runDate = new Date(); // Fallback to today
+                }
+
+                // Transform the run data
+                const transformedRun = {
+                    id: run.runId || `api-run-${index}-${Date.now()}`,
+                    name: run.name || run.clientName || 'Basketball Run',
+                    type: (run.type || 'pickup').toLowerCase(),
+                    date: runDate,
+                    startTime: run.startTime || '12:00 PM',
+                    endTime: run.endTime || '2:00 PM',
+                    location: run.location || this.buildLocationString(run),
+                    skillLevel: run.skillLevel || 'All Levels',
+                    participants: parseInt(run.playerCount) || 0,
+                    capacity: parseInt(run.playerLimit) || 10,
+                    description: run.description || '',
+                    status: run.status || 'Active',
+                    isPublic: run.isPublic !== false,
+                    address: run.address || '',
+                    city: run.city || '',
+                    state: run.state || '',
+                    zip: run.zip || '',
+                    profileId: run.profileId || '',
+                    clientId: run.clientId || '',
+                    clientName: run.clientName || ''
+                };
+
+                // Validate required fields
+                if (!transformedRun.name.trim()) {
+                    transformedRun.name = 'Basketball Run';
+                }
+
+                return transformedRun;
+            } catch (error) {
+                console.error(`❌ Error transforming run ${index}:`, error, run);
+                // Return a fallback run object
+                return {
+                    id: `error-run-${index}-${Date.now()}`,
+                    name: 'Basketball Run (Error)',
+                    type: 'pickup',
+                    date: new Date(),
+                    startTime: '12:00 PM',
+                    endTime: '2:00 PM',
+                    location: 'Location TBD',
+                    skillLevel: 'All Levels',
+                    participants: 0,
+                    capacity: 10,
+                    description: 'Error loading run details',
+                    status: 'Active',
+                    isPublic: true,
+                    address: '',
+                    city: '',
+                    state: '',
+                    zip: '',
+                    profileId: '',
+                    clientId: '',
+                    clientName: ''
+                };
+            }
+        });
+
+        // Filter out any runs with invalid dates
+        const validRuns = transformedRuns.filter(run => {
+            const isValid = run.date && !isNaN(run.date.getTime());
+            if (!isValid) {
+                console.warn('⚠️ Filtering out run with invalid date:', run);
+            }
+            return isValid;
+        });
+
+        console.log(`✅ Successfully transformed ${validRuns.length} out of ${apiRuns.length} runs`);
+        return validRuns;
     }
 
     buildLocationString(run) {
@@ -1196,6 +1453,80 @@ ${run.description ? `📝 Description:\n${run.description}` : ''}
         return [...this.runs];
     }
 
+    // Test API connection
+    async testAPIConnection() {
+        console.log('🧪 Testing API connection...');
+
+        try {
+            const testDate = new Date();
+            const startDate = new Date(testDate.getFullYear(), testDate.getMonth(), 1);
+            const endDate = new Date(testDate.getFullYear(), testDate.getMonth() + 1, 0);
+
+            const runs = await this.fetchRunsFromAPI(startDate, endDate);
+
+            console.log('✅ API Connection Test SUCCESS!');
+            console.log(`📋 API returned ${runs.length} runs`);
+            console.log('📊 Sample run:', runs[0]);
+
+            return {
+                success: true,
+                message: `API working! Found ${runs.length} runs`,
+                runs: runs,
+                endpoint: '/Run/GetRunsForCalendar'
+            };
+
+        } catch (error) {
+            console.error('❌ API Connection Test FAILED:', error);
+
+            return {
+                success: false,
+                message: error.message,
+                error: error,
+                endpoint: '/Run/GetRunsForCalendar'
+            };
+        }
+    }
+
+    // Check authentication status
+    async checkAuthStatus() {
+        console.log('🔐 Checking authentication status...');
+
+        try {
+            const response = await fetch('/Run/GetRunsForCalendar?startDate=2024-01-01&endDate=2024-01-02', {
+                method: 'HEAD', // Just check headers, don't need full response
+                credentials: 'same-origin'
+            });
+
+            if (response.status === 401) {
+                return { authenticated: false, message: 'Not logged in' };
+            } else if (response.status === 403) {
+                return { authenticated: false, message: 'Access denied' };
+            } else if (response.ok || response.status === 404) {
+                return { authenticated: true, message: 'Authenticated' };
+            } else {
+                return { authenticated: false, message: `HTTP ${response.status}` };
+            }
+
+        } catch (error) {
+            console.warn('Could not check auth status:', error);
+            return { authenticated: false, message: 'Connection error' };
+        }
+    }
+
+    goToDate(date) {
+        if (!(date instanceof Date)) {
+            date = new Date(date);
+        }
+
+        this.currentMonth = date.getMonth();
+        this.currentYear = date.getFullYear();
+        return this.loadCalendar();
+    }
+
+    getRuns() {
+        return [...this.runs];
+    }
+
     // Cleanup method
     destroy() {
         if (this.autoRefreshInterval) {
@@ -1208,6 +1539,10 @@ ${run.description ? `📝 Description:\n${run.description}` : ''}
 
 // Initialize calendar when DOM is loaded
 document.addEventListener('DOMContentLoaded', function () {
+    console.log('🗓️ Calendar initialization starting...');
+    console.log('📍 Current URL:', window.location.href);
+    console.log('📍 Current pathname:', window.location.pathname);
+
     if (document.getElementById('runCalendarModal')) {
         try {
             window.fixedRunCalendar = new FixedRunCalendar();
@@ -1222,13 +1557,53 @@ document.addEventListener('DOMContentLoaded', function () {
                     getRuns: () => window.fixedRunCalendar.getRuns(),
                     clearCache: () => window.fixedRunCalendar.clearCache(),
                     extractFromTable: () => window.fixedRunCalendar.extractRunsFromTable(),
-                    testAPI: () => window.fixedRunCalendar.fetchRunsFromAPI(new Date(), new Date())
+
+                    // API Testing
+                    testAPI: () => window.fixedRunCalendar.testAPIConnection(),
+                    checkAuth: () => window.fixedRunCalendar.checkAuthStatus(),
+                    fetchReal: () => {
+                        const now = new Date();
+                        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+                        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                        return window.fixedRunCalendar.fetchRunsFromAPI(start, end);
+                    },
+
+                    // Page Detection
+                    checkPage: () => ({
+                        isDashboard: window.fixedRunCalendar.isOnDashboard(),
+                        isRunsPage: window.fixedRunCalendar.isOnRunsPage(),
+                        pathname: window.location.pathname
+                    }),
+
+                    // Mock Data
+                    generateMockData: () => window.fixedRunCalendar.generateMockFromDashboardStats(),
+
+                    // Quick Tests
+                    quickTest: async () => {
+                        console.log('🚀 Running quick API test...');
+                        const authResult = await window.fixedRunCalendar.checkAuthStatus();
+                        console.log('🔐 Auth Status:', authResult);
+
+                        if (authResult.authenticated) {
+                            const apiResult = await window.fixedRunCalendar.testAPIConnection();
+                            console.log('📡 API Test:', apiResult);
+                            return { auth: authResult, api: apiResult };
+                        } else {
+                            console.log('❌ Cannot test API - not authenticated');
+                            return { auth: authResult, api: { success: false, message: 'Not authenticated' } };
+                        }
+                    }
                 };
                 console.log('🐛 Fixed Calendar debug tools available at window.calendarDebug');
+                console.log('🐛 Try: window.calendarDebug.quickTest() to test API connection');
+                console.log('🐛 Try: window.calendarDebug.checkPage() to check page detection');
+                console.log('🐛 Try: window.calendarDebug.testAPI() to test API directly');
             }
         } catch (error) {
             console.error('❌ Failed to initialize Fixed Run Calendar:', error);
         }
+    } else {
+        console.log('ℹ️ Run calendar modal not found - calendar not initialized');
     }
 
     window.addEventListener('beforeunload', () => {

@@ -30,7 +30,8 @@ namespace Domain.DtoModel
         public string? PaymentMethod { get; set; }
         public string? TeamType { get; set; }
         public int? PlayerLimit { get; set; }
-        
+        public bool? IsPublic { get; set; }
+
         public void UpdateRun(Run run)
         {
             

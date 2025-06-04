@@ -47,7 +47,6 @@ namespace Domain.DtoModel
         public string? ProfileId { get; set; }
         public string? Status { get; set; }
         public DateTime? RunDate { get; set; }
-      
         public decimal? Cost { get; set; }
         public string? Name { get; set; }
         public string? Address { get; set; }
@@ -64,6 +63,7 @@ namespace Domain.DtoModel
         public string? PaymentMethod { get; set; }
         public string? TeamType { get; set; }
         public int? PlayerLimit { get; set; }
+        public bool? IsPublic { get; set; }
         public Court Court { get; set; }
         public Client Client { get; set; }
         public IList<JoinedRun> JoinedRunList { get; set; }

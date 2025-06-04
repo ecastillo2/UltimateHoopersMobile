@@ -64,58 +64,99 @@ namespace Web.Controllers
             }
         }
 
-        // ENHANCED: Get runs for calendar view with better error handling
+        // Replace your GetRunsForCalendar method with this corrected version
+        // This handles RunDetailViewModelDto instead of Run objects
+
         [HttpGet]
         public async Task<IActionResult> GetRunsForCalendar(DateTime? startDate = null, DateTime? endDate = null, CancellationToken cancellationToken = default)
         {
             try
             {
+                _logger.LogInformation("GetRunsForCalendar called with startDate: {StartDate}, endDate: {EndDate}", startDate, endDate);
+
+                // Check authentication first
                 var accessToken = HttpContext.Session.GetString("UserToken");
+                var userRole = HttpContext.Session.GetString("UserRole");
+                var profileId = HttpContext.Session.GetString("ProfileId");
+
+                _logger.LogInformation("Session check - HasToken: {HasToken}, Role: {Role}, ProfileId: {ProfileId}",
+                    !string.IsNullOrEmpty(accessToken), userRole, profileId);
+
                 if (string.IsNullOrEmpty(accessToken))
                 {
-                    return Json(new { success = false, message = "Unauthorized" });
+                    _logger.LogWarning("No access token found in session");
+                    return Json(new
+                    {
+                        success = false,
+                        message = "Authentication required - please log in",
+                        errorCode = "AUTH_REQUIRED"
+                    });
                 }
 
-                // Set default date range if not provided (current month +/- 2 months)
+                // Set default date range if not provided
                 var now = DateTime.Now;
                 startDate ??= new DateTime(now.Year, now.Month, 1).AddMonths(-2);
                 endDate ??= new DateTime(now.Year, now.Month, 1).AddMonths(3).AddDays(-1);
 
-                _logger.LogInformation("Fetching runs for calendar from {StartDate} to {EndDate}", startDate, endDate);
+                _logger.LogInformation("Fetching calendar runs from {StartDate} to {EndDate}", startDate, endDate);
 
-                // Get runs within the date range
-                var runs = await GetRunsForDateRange(startDate.Value, endDate.Value, accessToken, cancellationToken);
-
-                // Transform runs for calendar display with proper data mapping and null safety
-                var calendarRuns = runs.Select(run => new
+                // Check if required services are available
+                if (_runApi == null)
                 {
-                    runId = run.RunId ?? "",
-                    // FIXED: Prioritize Client Name, then fall back to Run Name, then default
-                    name = !string.IsNullOrEmpty(run.Client?.Name)
-                        ? run.Client.Name
-                        : (!string.IsNullOrEmpty(run.Name) ? run.Name : "Basketball Run"),
-                    type = run.Type?.ToLower() ?? "pickup",
-                    runDate = run.RunDate?.ToString("yyyy-MM-dd") ?? "",
-                    startTime = DateTimeUtilities.FormatTimeSpanTo12Hour(run.StartTime ?? TimeSpan.Zero),
-                    endTime = DateTimeUtilities.FormatTimeSpanTo12Hour(run.EndTime ?? TimeSpan.Zero),
-                    location = BuildLocationStringFixed(run),
-                    skillLevel = run.SkillLevel ?? "All Levels",
-                    playerCount = run.PlayerCount ?? 0,
-                    playerLimit = run.PlayerLimit ?? 10,
-                    description = run.Description ?? "",
-                    status = run.Status ?? "Active",
-                    isPublic = run.IsPublic ?? true,
-                    address = run.Client?.Address ?? "",
-                    city = run.Client?.City ?? "",
-                    state = run.Client?.State ?? "",
-                    zip = run.Client?.Zip ?? "",
-                    profileId = run.ProfileId ?? "",
-                    // FIXED: Ensure ClientId is always included
-                    clientId = run.ClientId ?? "",
-                    clientName = run.Client?.Name ?? ""
-                }).ToList();
+                    _logger.LogError("RunApi service is null");
+                    return Json(new
+                    {
+                        success = false,
+                        message = "Run service not available",
+                        errorCode = "SERVICE_ERROR"
+                    });
+                }
 
-                _logger.LogInformation("Retrieved {Count} runs for calendar", calendarRuns.Count);
+                // Get runs using the correct return type
+                var runsResult = await GetRunDtosForDateRange(startDate.Value, endDate.Value, accessToken, cancellationToken);
+                _logger.LogInformation("Successfully retrieved {RunCount} run DTOs from API", runsResult.Count);
+
+                // Transform runs for calendar display
+                var calendarRuns = new List<object>();
+
+                foreach (var runDto in runsResult)
+                {
+                    try
+                    {
+                        var calendarRun = new
+                        {
+                            runId = runDto.RunId ?? "",
+                            name = GetRunDisplayName(runDto),
+                            type = (runDto.Type ?? "Pickup").ToLower(),
+                            runDate = runDto.RunDate?.ToString("yyyy-MM-dd") ?? "",
+                            startTime = FormatTimeForCalendarSafe(runDto.StartTime),
+                            endTime = FormatTimeForCalendarSafe(runDto.EndTime),
+                            location = BuildLocationStringFromDto(runDto),
+                            skillLevel = runDto.SkillLevel ?? "All Levels",
+                            playerCount = runDto.PlayerCount ?? 0,
+                            playerLimit = runDto.PlayerLimit ?? 10,
+                            description = runDto.Description ?? "",
+                            status = runDto.Status ?? "Active",
+                            isPublic = runDto.IsPublic ?? true,
+                            address = GetDtoAddress(runDto),
+                            city = GetDtoCity(runDto),
+                            state = GetDtoState(runDto),
+                            zip = GetDtoZip(runDto),
+                            profileId = runDto.ProfileId ?? "",
+                            clientId = runDto.ClientId ?? "",
+                            clientName = GetDtoClientName(runDto)
+                        };
+
+                        calendarRuns.Add(calendarRun);
+                    }
+                    catch (Exception transformEx)
+                    {
+                        _logger.LogWarning(transformEx, "Error transforming run DTO {RunId}, skipping", runDto.RunId);
+                        // Continue with other runs instead of failing completely
+                    }
+                }
+
+                _logger.LogInformation("Successfully transformed {Count} runs for calendar", calendarRuns.Count);
 
                 return Json(new
                 {
@@ -126,19 +167,314 @@ namespace Web.Controllers
                         startDate = startDate.Value.ToString("yyyy-MM-dd"),
                         endDate = endDate.Value.ToString("yyyy-MM-dd")
                     },
-                    totalCount = calendarRuns.Count
+                    totalCount = calendarRuns.Count,
+                    debug = new
+                    {
+                        originalRunCount = runsResult.Count,
+                        transformedRunCount = calendarRuns.Count,
+                        userRole = userRole,
+                        profileId = profileId,
+                        runDtoType = runsResult.FirstOrDefault()?.GetType().Name
+                    }
                 });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving runs for calendar");
+                _logger.LogError(ex, "Unexpected error in GetRunsForCalendar");
                 return Json(new
                 {
                     success = false,
-                    message = "Error loading calendar data",
-                    error = ex.GetType().Name
+                    message = "An unexpected error occurred while loading calendar data",
+                    errorCode = "UNEXPECTED_ERROR",
+                    error = ex.GetType().Name,
+                    details = ex.Message,
+                    stackTrace = ex.StackTrace
                 });
             }
+        }
+
+
+        private string GetRunDisplayName(RunDetailViewModelDto runDto)
+        {
+            // Try different possible property names for client/run name
+            try
+            {
+                // Adjust these property names based on your actual RunDetailViewModelDto structure
+                return runDto.Client.Name ?? runDto.Name ?? "Basketball Run";
+            }
+            catch
+            {
+                return "Basketball Run";
+            }
+        }
+
+        private string BuildLocationStringFromDto(RunDetailViewModelDto runDto)
+        {
+            try
+            {
+                var locationParts = new List<string>();
+
+                var address = GetDtoAddress(runDto);
+                var city = GetDtoCity(runDto);
+                var state = GetDtoState(runDto);
+
+                if (!string.IsNullOrEmpty(address))
+                    locationParts.Add(address);
+                if (!string.IsNullOrEmpty(city))
+                    locationParts.Add(city);
+                if (!string.IsNullOrEmpty(state) && locationParts.Any())
+                    locationParts.Add(state);
+
+                return locationParts.Any() ? string.Join(", ", locationParts) : "Location TBD";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error building location string for run DTO {RunId}", runDto.RunId);
+                return "Location TBD";
+            }
+        }
+
+        private string GetDtoAddress(RunDetailViewModelDto runDto)
+        {
+            try
+            {
+                // Adjust property name based on your actual DTO structure
+                return runDto.Address ?? runDto.Client.Address ?? "";
+            }
+            catch
+            {
+                return "";
+            }
+        }
+
+        private string GetDtoCity(RunDetailViewModelDto runDto)
+        {
+            try
+            {
+                return runDto.City ?? runDto.Client.City ?? "";
+            }
+            catch
+            {
+                return "";
+            }
+        }
+
+        private string GetDtoState(RunDetailViewModelDto runDto)
+        {
+            try
+            {
+                return runDto.State ?? runDto.Client.State ?? "";
+            }
+            catch
+            {
+                return "";
+            }
+        }
+
+        private string GetDtoZip(RunDetailViewModelDto runDto)
+        {
+            try
+            {
+                return runDto.Zip ?? runDto.Client.Zip ?? "";
+            }
+            catch
+            {
+                return "";
+            }
+        }
+
+        private string GetDtoClientName(RunDetailViewModelDto runDto)
+        {
+            try
+            {
+                return runDto.Client.Name ?? runDto.Name ?? "";
+            }
+            catch
+            {
+                return "";
+            }
+        }
+
+        private string FormatTimeForCalendarSafe(TimeSpan? timeSpan)
+        {
+            if (!timeSpan.HasValue) return "12:00 PM";
+
+            try
+            {
+                var dateTime = DateTime.Today.Add(timeSpan.Value);
+                return dateTime.ToString("h:mm tt");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error formatting time span: {TimeSpan}", timeSpan);
+                return "12:00 PM";
+            }
+        }
+        // Helper method that works with the correct DTO type
+        private async Task<List<RunDetailViewModelDto>> GetRunDtosForDateRange(DateTime startDate, DateTime endDate, string accessToken, CancellationToken cancellationToken)
+        {
+            var allRuns = new List<RunDetailViewModelDto>();
+            string cursor = null;
+            const int batchSize = 50;
+            const int maxRuns = 500;
+            int batchCount = 0;
+
+            _logger.LogInformation("Starting to fetch run DTOs in batches of {BatchSize}", batchSize);
+
+            try
+            {
+                do
+                {
+                    batchCount++;
+                    _logger.LogDebug("Fetching DTO batch {BatchNumber} with cursor: {Cursor}", batchCount, cursor ?? "null");
+
+                    var result = await _runApi.GetRunsWithCursorAsync(
+                        cursor: cursor,
+                        limit: batchSize,
+                        direction: "next",
+                        sortBy: "RunDate",
+                        accessToken: accessToken,
+                        cancellationToken: cancellationToken);
+
+                    if (result?.Items?.Any() == true)
+                    {
+                        _logger.LogDebug("DTO Batch {BatchNumber} returned {ItemCount} items of type {ItemType}",
+                            batchCount, result.Items.Count(), result.Items.First()?.GetType().Name);
+
+                        // Filter runs within date range - now using the correct DTO type
+                        var filteredRuns = result.Items.Where(runDto =>
+                            runDto.RunDate.HasValue &&
+                            runDto.RunDate.Value.Date >= startDate.Date &&
+                            runDto.RunDate.Value.Date <= endDate.Date).ToList();
+
+                        _logger.LogDebug("Filtered to {FilteredCount} run DTOs within date range", filteredRuns.Count);
+                        allRuns.AddRange(filteredRuns); // This should work now with the correct type
+
+                        // If we've moved past our end date, stop fetching
+                        if (result.Items.Any(runDto => runDto.RunDate.HasValue && runDto.RunDate.Value.Date > endDate.Date))
+                        {
+                            _logger.LogDebug("Reached run DTOs beyond end date, stopping");
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogDebug("DTO Batch {BatchNumber} returned no items", batchCount);
+                    }
+
+                    cursor = result?.NextCursor;
+
+                    if (allRuns.Count >= maxRuns)
+                    {
+                        _logger.LogWarning("Hit maximum run DTO limit of {MaxRuns}, stopping", maxRuns);
+                        break;
+                    }
+
+                } while (!string.IsNullOrEmpty(cursor));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in GetRunDtosForDateRange after {BatchCount} batches", batchCount);
+                throw;
+            }
+
+            _logger.LogInformation("Completed fetching {TotalRuns} run DTOs in {BatchCount} batches", allRuns.Count, batchCount);
+            return allRuns.OrderBy(r => r.RunDate).ThenBy(r => r.StartTime).ToList();
+        }
+
+     
+
+        private string BuildLocationStringSafe(Run run)
+        {
+            try
+            {
+                var locationParts = new List<string>();
+
+                if (!string.IsNullOrEmpty(run.Client?.Address))
+                    locationParts.Add(run.Client.Address);
+                if (!string.IsNullOrEmpty(run.Client?.City))
+                    locationParts.Add(run.Client.City);
+                if (!string.IsNullOrEmpty(run.Client?.State) && locationParts.Any())
+                    locationParts.Add(run.Client.State);
+
+                return locationParts.Any() ? string.Join(", ", locationParts) : "Location TBD";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error building location string for run {RunId}", run.RunId);
+                return "Location TBD";
+            }
+        }
+
+        // Helper method with enhanced logging
+        private async Task<List<Run>> GetRunsForDateRangeWithLogging(DateTime startDate, DateTime endDate, string accessToken, CancellationToken cancellationToken)
+        {
+            var allRuns = new List<Run>();
+            string cursor = null;
+            const int batchSize = 50;
+            const int maxRuns = 500;
+            int batchCount = 0;
+
+            _logger.LogInformation("Starting to fetch runs in batches of {BatchSize}", batchSize);
+
+            try
+            {
+                do
+                {
+                    batchCount++;
+                    _logger.LogDebug("Fetching batch {BatchNumber} with cursor: {Cursor}", batchCount, cursor ?? "null");
+
+                    var result = await _runApi.GetRunsWithCursorAsync(
+                        cursor: cursor,
+                        limit: batchSize,
+                        direction: "next",
+                        sortBy: "RunDate",
+                        accessToken: accessToken,
+                        cancellationToken: cancellationToken);
+
+                    if (result?.Items?.Any() == true)
+                    {
+                        _logger.LogDebug("Batch {BatchNumber} returned {ItemCount} items", batchCount, result.Items.Count());
+
+                        // Filter runs within date range
+                        var filteredRuns = result.Items.Where(run =>
+                            run.RunDate.HasValue &&
+                            run.RunDate.Value.Date >= startDate.Date &&
+                            run.RunDate.Value.Date <= endDate.Date).ToList();
+
+                        _logger.LogDebug("Filtered to {FilteredCount} runs within date range", filteredRuns.Count);
+                        allRuns.AddRange((IEnumerable<Run>)filteredRuns);
+
+                        // If we've moved past our end date, stop fetching
+                        if (result.Items.Any(run => run.RunDate.HasValue && run.RunDate.Value.Date > endDate.Date))
+                        {
+                            _logger.LogDebug("Reached runs beyond end date, stopping");
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogDebug("Batch {BatchNumber} returned no items", batchCount);
+                    }
+
+                    cursor = result?.NextCursor;
+
+                    if (allRuns.Count >= maxRuns)
+                    {
+                        _logger.LogWarning("Hit maximum run limit of {MaxRuns}, stopping", maxRuns);
+                        break;
+                    }
+
+                } while (!string.IsNullOrEmpty(cursor));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in GetRunsForDateRangeWithLogging after {BatchCount} batches", batchCount);
+                throw;
+            }
+
+            _logger.LogInformation("Completed fetching {TotalRuns} runs in {BatchCount} batches", allRuns.Count, batchCount);
+            return allRuns.OrderBy(r => r.RunDate).ThenBy(r => r.StartTime).ToList();
         }
 
 

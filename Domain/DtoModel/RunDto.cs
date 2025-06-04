@@ -24,7 +24,8 @@ namespace UltimateHoopers.Models
         public string CourtImageUrl { get; set; }
         public decimal Cost { get; set; }
         public double Distance { get; set; }
-        
+
+
         public ObservableCollection<Player> Players { get; set; } = new ObservableCollection<Player>();
 
         // Computed properties
@@ -35,7 +36,7 @@ namespace UltimateHoopers.Models
         public string DistanceText => $"{Distance:F1} miles away";
         public bool IsFull => CurrentPlayerCount >= PlayerLimit;
         public string CostText => Cost > 0 ? $"${Cost:F2}" : "Free";
-        public string PrivacyText => IsPublic ? "Public" : "Private";
+     
         public bool HasPlayers => Players != null && Players.Count > 0;
 
         public RunDto()
