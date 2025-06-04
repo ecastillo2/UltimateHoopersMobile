@@ -10,9 +10,9 @@ namespace Domain.DtoModel
     {
         public int ConversationId { get; set; }
         public int OtherUserId { get; set; }
-        public string OtherUserName { get; set; }
-        public string OtherUserAvatar { get; set; }
-        public string LastMessage { get; set; }
+        public string? OtherUserName { get; set; }
+        public string? OtherUserAvatar { get; set; }
+        public string? LastMessage { get; set; }
         public DateTime LastMessageTime { get; set; }
         public int UnreadCount { get; set; }
 
@@ -27,7 +27,7 @@ namespace Domain.DtoModel
         public int MessageId { get; set; }
         public int ConversationId { get; set; }
         public int SenderId { get; set; }
-        public string Content { get; set; }
+        public string? Content { get; set; }
         public string MessageType { get; set; } = "Text";
         public DateTime Timestamp { get; set; }
 
@@ -44,7 +44,7 @@ namespace Domain.DtoModel
     {
         public int? ConversationId { get; set; }
         public int RecipientId { get; set; }
-        public string Content { get; set; }
-        public string MessageType { get; set; }
+        public string? Content { get; set; }
+        public string? MessageType { get; set; }
     }
 }

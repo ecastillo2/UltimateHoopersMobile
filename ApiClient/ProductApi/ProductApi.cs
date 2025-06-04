@@ -68,8 +68,6 @@ namespace WebAPI.ApiClients
             return JsonSerializer.Deserialize<Product>(content, _jsonOptions);
         }
 
-
-
         /// <summary>
         /// Create a new Product
         /// </summary>
@@ -156,7 +154,16 @@ namespace WebAPI.ApiClients
             }
         }
 
-
+        /// <summary>
+        /// Get Products With Cursor Async
+        /// </summary>
+        /// <param name="cursor"></param>
+        /// <param name="limit"></param>
+        /// <param name="direction"></param>
+        /// <param name="sortBy"></param>
+        /// <param name="accessToken"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task<CursorPaginatedResultDto<ProductDetailViewModelDto>> GetProductsWithCursorAsync(string cursor = null, int limit = 20, string direction = "next", string sortBy = "Points", string accessToken = null, CancellationToken cancellationToken = default)
         {
             try

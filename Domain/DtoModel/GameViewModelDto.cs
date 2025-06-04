@@ -13,13 +13,13 @@ namespace Domain.DtoModel
         [JsonConstructor]
         public GameViewModelDto() { }
 
-        public string GameId { get; set; }
-        public string CourtId { get; set; }
-        public string RunId { get; set; }
+        public string? GameId { get; set; }
+        public string? CourtId { get; set; }
+        public string? RunId { get; set; }
         public DateTime? CreatedDate { get; set; }
-        public string RunNumber { get; set; }
-        public string GameNumber { get; set; }
-        public string Status { get; set; }
+        public string? RunNumber { get; set; }
+        public string? GameNumber { get; set; }
+        public string? Status { get; set; }
 
 
         public GameViewModelDto(Game game)

@@ -8,10 +8,10 @@ namespace Domain.DtoModel
 {
     public class ProfileDetailViewModelDto : ProfileViewModelDto
     {
-        public Profile Profile { get; set; }
-        public Setting Setting { get; set; }
+        public Profile? Profile { get; set; }
+        public Setting? Setting { get; set; }
         public ScoutingReport? ScoutingReport { get; set; }
-        public GameStatistics GameStatistics { get; set; }
+        public GameStatistics? GameStatistics { get; set; }
        
     }
 }
