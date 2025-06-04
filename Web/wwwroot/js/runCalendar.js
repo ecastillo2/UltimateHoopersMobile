@@ -1,7 +1,11 @@
 ﻿/**
- * Complete Enhanced Run Calendar Implementation
+ * Complete Enhanced Run Calendar Implementation - FIXED VERSION
  * Enhanced calendar view for displaying basketball runs with improved functionality
  * Integrates seamlessly with existing run management system
+ * 
+ * FIXES:
+ * - Fixed variable declaration conflict with 'endDate' in generateMockRuns function
+ * - Renamed inner loop endDate to runEndDate to avoid conflict
  */
 
 class EnhancedRunCalendar {
@@ -466,6 +470,7 @@ class EnhancedRunCalendar {
         this.runs = this.generateMockRuns();
     }
 
+    // FIXED: Variable declaration conflict resolved
     generateMockRuns() {
         const runs = [];
         const startDate = new Date(this.currentYear, this.currentMonth - this.config.dateRangeMonths, 1);
@@ -501,8 +506,10 @@ class EnhancedRunCalendar {
             const participants = Math.floor(Math.random() * (capacity + 1));
 
             const startTime = this.formatTime(randomDate);
-            const endDate = new Date(randomDate.getTime() + (1 + Math.random() * 2) * 60 * 60 * 1000); // 1-3 hours
-            const endTime = this.formatTime(endDate);
+
+            // FIXED: Renamed from 'endDate' to 'runEndDate' to avoid variable conflict
+            const runEndDate = new Date(randomDate.getTime() + (1 + Math.random() * 2) * 60 * 60 * 1000); // 1-3 hours
+            const endTime = this.formatTime(runEndDate);
 
             runs.push({
                 id: `mock-run-${i + 1}`,
