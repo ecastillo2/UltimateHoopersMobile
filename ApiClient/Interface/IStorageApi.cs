@@ -36,6 +36,16 @@ namespace WebAPI.ApiClients
         /// <returns>Success status</returns>
         Task<bool> UpdateProductImageFileAsync(string productId, IFormFile formFile, TimeSpan? timeStamp = null);
 
+        /// <summary>
+        /// Upload product image file to blob storage
+        /// </summary>
+        /// <param name="productId">Product identifier</param>
+        /// <param name="type">File type (image, video, etc.)</param>
+        /// <param name="formFile">Uploaded file</param>
+        /// <param name="timeStamp">Optional timestamp</param>
+        /// <returns>Success status</returns>
+        Task<bool> UpdateVideoFileAsync(string productId, IFormFile formFile, TimeSpan? timeStamp = null);
+
         // Additional methods that could be useful for a complete storage API
 
         /// <summary>
@@ -45,6 +55,14 @@ namespace WebAPI.ApiClients
         /// <param name="containerName">Container name (optional, uses default if not specified)</param>
         /// <returns>Success status</returns>
         Task<bool> RemoveProductImageFileAsync(string fileName, string containerName = null);
+
+        /// <summary>
+        /// Delete a file from blob storage
+        /// </summary>
+        /// <param name="fileName">Name of the file to delete</param>
+        /// <param name="containerName">Container name (optional, uses default if not specified)</param>
+        /// <returns>Success status</returns>
+        Task<bool> RemoveVideoFileAsync(string fileName, string containerName = null);
 
         /// <summary>
         /// Get a file URL from blob storage

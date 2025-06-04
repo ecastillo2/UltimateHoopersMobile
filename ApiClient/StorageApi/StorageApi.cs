@@ -417,6 +417,36 @@ namespace WebAPI.ApiClients
         }
 
         /// <summary>
+        /// Delete a Video file from blob storage
+        /// </summary>
+        /// <param name="fileName">Name of the file to delete</param>
+        /// <param name="containerName">Container name (optional, uses default if not specified)</param>
+        /// <returns>Success status</returns>
+        public async Task<bool> RemoveVideoFileAsync(string fileName, string containerName = null)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+            {
+                throw new ArgumentException("File name cannot be null or empty", nameof(fileName));
+            }
+
+            try
+            {
+                var containerClient = _blobServiceClient.GetBlobContainerClient(_productImageContainerName);
+                var blobClient = containerClient.GetBlobClient(fileName);
+
+                var response = await blobClient.DeleteIfExistsAsync();
+
+                _logger.LogInformation("File {FileName} deleted: {Success}", fileName, response.Value);
+                return response.Value;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting file {FileName}", fileName);
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Get a file URL from blob storage
         /// </summary>
         /// <param name="fileName">Name of the file</param>

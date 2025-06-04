@@ -1,7 +1,7 @@
-﻿@model Website.ViewModels.ProductsViewModel
+﻿@model Website.ViewModels.VideosViewModel
 
 @{
-    ViewData["Title"] = "Products";
+    ViewData["Title"] = "Videos";
     var userType = ViewData["UserType"]?.ToString() ?? "Admin";
 }
 
@@ -238,14 +238,14 @@
 
     <div class="row mb-4">
         <div class="col-12 text-end">
-            <button type="button" class="btn btn-orange" data-bs-toggle="modal" data-bs-target="#addProductModal">
-                <i class="bi bi-plus-circle me-2"></i>Add Product
+            <button type="button" class="btn btn-orange" data-bs-toggle="modal" data-bs-target="#addVideoModal">
+                <i class="bi bi-plus-circle me-2"></i>Add Video
             </button>
         </div>
     </div>
 
     <!-- DataTable -->
-    @if (Model?.ProductList != null && Model.ProductList.Any())
+    @if (Model?.VideoList != null && Model.VideoList.Any())
     {
         <div class="card shadow-sm">
             <div class="card-body">
@@ -253,68 +253,60 @@
                     <thead>
                         <tr>
                             <th>Product</th>
-                            <th>Price</th>
-                            <th>Points</th>
+                            <th>Date</th>
                             <th>Status</th>
-                            <th>Category</th>
-                            <th>Actions</th>
+                 
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var product in Model.ProductList)
+                        @foreach (var video in Model.VideoList)
                         {
-                            <tr data-status="@(product.Product.Status?.ToLower() ?? "active")"
-                                data-category="@(product.Product.Category?.ToLower() ?? "")"
-                                data-type="@(product.Product.Type?.ToLower() ?? "")"
-                                data-price="@(product.Product.Price ?? 0)"
-                                data-points="@(product.Product.Points ?? 0)"
-                                data-image-url="@product.Product.ImageURL"
-                                data-product-id="@product.Product.ProductId"
-                                data-product-title="@product.Product.Title"
-                                data-product-number="@product.Product.ProductNumber"
-                                data-description="@product.Product.Description"
-                                data-tag="@product.Product.Tag">
+                            <tr 
+                                data-videodate="@(video.Video.VideoDate)"
+                                data-createddate="@(video.Video.CreatedDate)"
+                                data-clientid="@(video.Video.ClientId)"
+                                data-image-url="@video.Video.VideoURL"
+                                data-product-id="@video.Video.VideoId"
+                                data-product-title="@video.Video.Title"
+                                data-product-number="@video.Video.VideoNumber">
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <div class="product-image-cell me-3">
-                                            @if (!string.IsNullOrEmpty(product.Product.ImageURL))
+                                            @if (!string.IsNullOrEmpty(video.Video.VideoURL))
                                             {
-                                                <img src="@product.Product.ImageURL" alt="@product.Product.Title" class="product-image"
+                                                <img src="@video.Video.VideoThumbnail" alt="@video.Video.Title" class="product-image"
                                                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
                                                      loading="lazy">
-                                                <div class="product-initials" style="display: none;">
-                                                    <span>@(product.Product.Title?.Substring(0, 1).ToUpper() ?? "P")</span>
+                                                <div class="video-initials" style="display: none;">
+                                                    <span>@(video.Video.Title?.Substring(0, 1).ToUpper() ?? "P")</span>
                                                 </div>
                                             }
                                             else
                                             {
                                                 <div class="product-initials">
-                                                    <span>@(product.Product.Title?.Substring(0, 1).ToUpper() ?? "P")</span>
+                                                    <span>@(video.Video.Title?.Substring(0, 1).ToUpper() ?? "P")</span>
                                                 </div>
                                             }
                                         </div>
                                         <div>
-                                            <div class="fw-semibold product-title">@product.Product.Title</div>
-                                            <div class="text-muted small product-number">#@(product.Product.ProductNumber)</div>
+                                            <div class="fw-semibold product-title">@video.Video.Title</div>
+                                            <div class="text-muted small product-number">#@(video.Video.VideoNumber)</div>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="product-price">$@(product.Product.Price?.ToString("F2") ?? "0.00")</td>
-                                <td class="product-points">@(product.Product.Points ?? 0)</td>
-                                <td>
-                                    <span class="badge bg-success badge-pill product-status">@(product.Product.Status ?? "Active")</span>
-                                </td>
-                                <td class="product-category">@(product.Product.Category ?? "N/A")</td>
+                                <td class="product-price">@(video.Video.VideoDate)</td>
+                                <td class="product-points">@(video.Video.Status)</td>
+                                
                                 <td>
                                     <div class="table-actions">
                                         <button type="button" class="btn btn-sm btn-outline-primary action-icon"
                                                 data-bs-toggle="modal"
-                                                data-bs-target="#editProductModal"
-                                                data-product-id="@product.Product.ProductId"
+                                                data-bs-target="#editVideoModal"
+                                                data-product-id="@video.Video.VideoId"
                                                 title="Edit">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                        <a href="@Url.Action("Details", "Product", new { id = product.Product.ProductId })"
+                                        <a href="@Url.Action("Details", "Video", new { id = video.Video.VideoId })"
                                            class="btn btn-sm btn-primary action-icon" title="View Details">
                                             <i class="bi bi-eye"></i>
                                         </a>

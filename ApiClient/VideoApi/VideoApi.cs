@@ -107,7 +107,7 @@ namespace WebAPI.ApiClients
         /// <param name="accessToken"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<bool> UpdateVideoAsync(Video model, string accessToken, CancellationToken cancellationToken = default)
+        public async Task<bool> UpdateVideoFileAsync(Video model, string accessToken, CancellationToken cancellationToken = default)
         {
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
@@ -127,7 +127,7 @@ namespace WebAPI.ApiClients
         /// <param name="accessToken"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<(bool Success, string ErrorMessage)> DeleteVideoAsync(string videoId, string accessToken, CancellationToken cancellationToken = default)
+        public async Task<(bool Success, string ErrorMessage)> DeleteVideoFileAsync(string videoId, string accessToken, CancellationToken cancellationToken = default)
         {
             try
             {

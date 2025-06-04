@@ -57,7 +57,7 @@ namespace WebAPI.ApiClients
         /// <param name="accessToken"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<bool> UpdateVideoAsync(Video video, string accessToken, CancellationToken cancellationToken = default);
+        Task<bool> UpdateVideoFileAsync(Video video, string accessToken, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Delete Vide oAsync
@@ -66,7 +66,7 @@ namespace WebAPI.ApiClients
         /// <param name="accessToken"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<(bool Success, string ErrorMessage)> DeleteVideoAsync(string VideoId, string accessToken, CancellationToken cancellationToken = default);
+        Task<(bool Success, string ErrorMessage)> DeleteVideoFileAsync(string VideoId, string accessToken, CancellationToken cancellationToken = default);
 
         
     }

@@ -374,7 +374,7 @@ namespace Web.Controllers
                 video.VideoNumber = existingVideo.VideoNumber; // Preserve original Video number
 
                 // Update Video
-                await _videoApi.UpdateVideoAsync(video, accessToken, cancellationToken);
+                await _videoApi.UpdateVideoFileAsync(video, accessToken, cancellationToken);
 
                 _logger.LogInformation("Video updated successfully: {VideoId}", video.VideoId);
 
@@ -417,7 +417,7 @@ namespace Web.Controllers
                 
 
                     // Delete product
-                    var result = await _videoApi.DeleteVideoAsync(id, accessToken, cancellationToken);
+                    var result = await _videoApi.DeleteVideoFileAsync(id, accessToken, cancellationToken);
 
                 if (result.Success)
                 {
@@ -516,7 +516,7 @@ namespace Web.Controllers
                         if (product != null)
                         {
                             product.VideoURL = imageUrl;
-                            await _videoApi.UpdateVideoAsync(product, accessToken, cancellationToken);
+                            await _videoApi.UpdateVideoFileAsync(product, accessToken, cancellationToken);
                         }
                     }
                     catch (Exception ex)
@@ -542,38 +542,19 @@ namespace Web.Controllers
 
         // ========== VALIDATION METHODS ==========
 
-        private ValidationResult ValidateProduct(Product product)
+        private ValidationResult ValidateVideo(Video video)
         {
-            if (string.IsNullOrWhiteSpace(product.Title))
+            if (string.IsNullOrWhiteSpace(video.Title))
             {
                 return new ValidationResult { IsValid = false, ErrorMessage = "Product title is required", Field = "Title" };
             }
 
-            if (product.Title.Length > 100)
+            if (video.Title.Length > 100)
             {
                 return new ValidationResult { IsValid = false, ErrorMessage = "Product title cannot exceed 100 characters", Field = "Title" };
             }
 
-            if (product.Price.HasValue && product.Price < 0)
-            {
-                return new ValidationResult { IsValid = false, ErrorMessage = "Price cannot be negative", Field = "Price" };
-            }
-
-            if (product.Points.HasValue && product.Points < 0)
-            {
-                return new ValidationResult { IsValid = false, ErrorMessage = "Points cannot be negative", Field = "Points" };
-            }
-
-            if (string.IsNullOrWhiteSpace(product.Type))
-            {
-                return new ValidationResult { IsValid = false, ErrorMessage = "Product type is required", Field = "Type" };
-            }
-
-            if (string.IsNullOrWhiteSpace(product.Category))
-            {
-                return new ValidationResult { IsValid = false, ErrorMessage = "Product category is required", Field = "Category" };
-            }
-
+          
             return new ValidationResult { IsValid = true };
         }
 
