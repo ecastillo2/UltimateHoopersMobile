@@ -1,14 +1,9 @@
 ﻿/**
- * Complete Enhanced Run Calendar Implementation - FIXED VERSION
- * Enhanced calendar view for displaying basketball runs with improved functionality
- * Integrates seamlessly with existing run management system
- * 
- * FIXES:
- * - Fixed variable declaration conflict with 'endDate' in generateMockRuns function
- * - Renamed inner loop endDate to runEndDate to avoid conflict
+ * FIXED Run Calendar Implementation
+ * Addresses API fetch issues and ensures consistent data with datatable
  */
 
-class EnhancedRunCalendar {
+class FixedRunCalendar {
     constructor() {
         this.currentDate = new Date();
         this.currentMonth = this.currentDate.getMonth();
@@ -23,24 +18,15 @@ class EnhancedRunCalendar {
         // Enhanced calendar configuration
         this.config = {
             maxRunsPerDay: 3,
-            dateRangeMonths: 3, // Increased for better data coverage
+            dateRangeMonths: 3,
             animationDuration: 300,
-            fetchTimeout: 30000,
-            refreshInterval: 5 * 60 * 1000, // 5 minutes
-            cacheTimeout: 2 * 60 * 1000, // 2 minutes cache
+            fetchTimeout: 15000, // Reduced timeout for faster feedback
+            refreshInterval: 5 * 60 * 1000,
+            cacheTimeout: 2 * 60 * 1000,
             enableKeyboardNavigation: true,
             enableTooltips: true,
-            enableAnimations: true,
-            responsive: {
-                mobile: 576,
-                tablet: 768,
-                desktop: 992
-            }
+            enableAnimations: true
         };
-
-        // Bind context for event handlers
-        this.handleKeyboardNavigation = this.handleKeyboardNavigation.bind(this);
-        this.handleResize = this.handleResize.bind(this);
 
         this.init();
     }
@@ -48,53 +34,26 @@ class EnhancedRunCalendar {
     init() {
         this.bindEvents();
         this.setupAutoRefresh();
-        this.initializeAccessibility();
-        console.log('🗓️ Enhanced Run Calendar initialized successfully');
+        console.log('🗓️ Fixed Run Calendar initialized successfully');
     }
 
     bindEvents() {
         // Navigation buttons
-        this.bindNavigationEvents();
-
-        // Modal events
-        this.bindModalEvents();
-
-        // Global events
-        this.bindGlobalEvents();
-
-        // Touch events for mobile
-        this.bindTouchEvents();
-    }
-
-    bindNavigationEvents() {
         const prevBtn = document.getElementById('prevMonth');
         const nextBtn = document.getElementById('nextMonth');
         const todayBtn = document.getElementById('todayBtn');
         const refreshBtn = document.getElementById('refreshCalendar');
 
-        if (prevBtn) {
-            prevBtn.addEventListener('click', () => this.previousMonth());
-        }
+        if (prevBtn) prevBtn.addEventListener('click', () => this.previousMonth());
+        if (nextBtn) nextBtn.addEventListener('click', () => this.nextMonth());
+        if (todayBtn) todayBtn.addEventListener('click', () => this.goToToday());
+        if (refreshBtn) refreshBtn.addEventListener('click', () => this.loadCalendar(true));
 
-        if (nextBtn) {
-            nextBtn.addEventListener('click', () => this.nextMonth());
-        }
-
-        if (todayBtn) {
-            todayBtn.addEventListener('click', () => this.goToToday());
-        }
-
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', () => this.loadCalendar(true));
-        }
-    }
-
-    bindModalEvents() {
+        // Modal events
         const modal = document.getElementById('runCalendarModal');
         if (modal) {
             modal.addEventListener('shown.bs.modal', () => {
                 this.loadCalendar();
-                this.announceToScreenReader('Calendar loaded');
             });
 
             modal.addEventListener('hidden.bs.modal', () => {
@@ -104,168 +63,12 @@ class EnhancedRunCalendar {
         }
     }
 
-    bindGlobalEvents() {
-        // Keyboard navigation
-        if (this.config.enableKeyboardNavigation) {
-            document.addEventListener('keydown', this.handleKeyboardNavigation);
-        }
-
-        // Window resize handler for responsive adjustments
-        let resizeTimeout;
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(this.handleResize, 250);
-        });
-
-        // Page visibility change (pause/resume auto-refresh)
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                this.pauseAutoRefresh();
-            } else {
-                this.resumeAutoRefresh();
-            }
-        });
-    }
-
-    bindTouchEvents() {
-        // Add touch support for mobile devices
-        const calendarGrid = document.getElementById('calendarGrid');
-        if (calendarGrid && 'ontouchstart' in window) {
-            let touchStartX = null;
-            let touchStartY = null;
-
-            calendarGrid.addEventListener('touchstart', (e) => {
-                touchStartX = e.touches[0].clientX;
-                touchStartY = e.touches[0].clientY;
-            });
-
-            calendarGrid.addEventListener('touchend', (e) => {
-                if (!touchStartX || !touchStartY) return;
-
-                const touchEndX = e.changedTouches[0].clientX;
-                const touchEndY = e.changedTouches[0].clientY;
-
-                const deltaX = touchStartX - touchEndX;
-                const deltaY = touchStartY - touchEndY;
-
-                // Swipe detection (horizontal swipes for month navigation)
-                if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
-                    if (deltaX > 0) {
-                        this.nextMonth(); // Swipe left = next month
-                    } else {
-                        this.previousMonth(); // Swipe right = previous month
-                    }
-                    e.preventDefault();
-                }
-
-                touchStartX = null;
-                touchStartY = null;
-            });
-        }
-    }
-
-    handleKeyboardNavigation(e) {
-        const modal = document.getElementById('runCalendarModal');
-        if (!modal || !modal.classList.contains('show')) return;
-
-        const activeElement = document.activeElement;
-        const isInputFocused = activeElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeElement.tagName);
-
-        if (isInputFocused) return; // Don't intercept if user is typing
-
-        switch (e.key) {
-            case 'ArrowLeft':
-                e.preventDefault();
-                this.previousMonth();
-                this.announceToScreenReader('Previous month');
-                break;
-            case 'ArrowRight':
-                e.preventDefault();
-                this.nextMonth();
-                this.announceToScreenReader('Next month');
-                break;
-            case 'Home':
-                e.preventDefault();
-                this.goToToday();
-                this.announceToScreenReader('Current month');
-                break;
-            case 'r':
-            case 'R':
-                if (e.ctrlKey || e.metaKey) {
-                    e.preventDefault();
-                    this.loadCalendar(true);
-                    this.announceToScreenReader('Calendar refreshed');
-                }
-                break;
-            case 'Escape':
-                this.hideTooltip();
-                break;
-            case 'f':
-            case 'F':
-                if (e.ctrlKey || e.metaKey) {
-                    e.preventDefault();
-                    this.focusSearchFilter();
-                }
-                break;
-        }
-    }
-
-    handleResize() {
-        if (this.isCalendarVisible()) {
-            this.adjustResponsiveLayout();
-            this.repositionTooltip();
-        }
-    }
-
     setupAutoRefresh() {
         this.autoRefreshInterval = setInterval(() => {
             if (this.isCalendarVisible() && !this.isLoading && !document.hidden) {
                 this.loadCalendar(false, false); // Silent refresh
             }
         }, this.config.refreshInterval);
-    }
-
-    pauseAutoRefresh() {
-        if (this.autoRefreshInterval) {
-            clearInterval(this.autoRefreshInterval);
-            this.autoRefreshInterval = null;
-        }
-    }
-
-    resumeAutoRefresh() {
-        if (!this.autoRefreshInterval) {
-            this.setupAutoRefresh();
-        }
-    }
-
-    initializeAccessibility() {
-        // Add ARIA labels and live regions
-        const calendarGrid = document.getElementById('calendarGrid');
-        if (calendarGrid) {
-            calendarGrid.setAttribute('role', 'grid');
-            calendarGrid.setAttribute('aria-label', 'Basketball runs calendar');
-        }
-
-        // Create live region for announcements
-        if (!document.getElementById('calendar-live-region')) {
-            const liveRegion = document.createElement('div');
-            liveRegion.id = 'calendar-live-region';
-            liveRegion.setAttribute('aria-live', 'polite');
-            liveRegion.setAttribute('aria-atomic', 'true');
-            liveRegion.style.position = 'absolute';
-            liveRegion.style.left = '-10000px';
-            liveRegion.style.width = '1px';
-            liveRegion.style.height = '1px';
-            liveRegion.style.overflow = 'hidden';
-            document.body.appendChild(liveRegion);
-        }
-    }
-
-    announceToScreenReader(message) {
-        const liveRegion = document.getElementById('calendar-live-region');
-        if (liveRegion) {
-            liveRegion.textContent = message;
-        }
     }
 
     isCalendarVisible() {
@@ -333,27 +136,59 @@ class EnhancedRunCalendar {
         try {
             console.log(`📡 Fetching runs from ${startDate.toISOString()} to ${endDate.toISOString()}`);
 
-            const response = await this.fetchRunsFromAPI(startDate, endDate);
+            // FIXED: Try multiple API endpoints in order of preference
+            const response = await this.fetchRunsFromMultipleSources(startDate, endDate);
             this.runs = response;
 
             console.log(`📋 Loaded ${this.runs.length} runs from API`);
         } catch (error) {
-            console.warn('⚠️ API fetch failed, using mock data:', error.message);
+            console.warn('⚠️ All API fetch attempts failed, using mock data:', error.message);
 
             // Show user-friendly error message
-            if (error.message.includes('fetch')) {
-                this.showError('Unable to connect to server. Showing sample data.');
-            }
+            this.showError('Unable to connect to server. Showing sample data.');
 
             // Fallback to mock data for demonstration
             await this.generateMockDataWithDelay();
         }
     }
 
+    // FIXED: Try multiple API sources
+    async fetchRunsFromMultipleSources(startDate, endDate) {
+        const sources = [
+            // Primary API endpoint
+            () => this.fetchRunsFromAPI(startDate, endDate),
+            // Fallback: Get all runs and filter client-side
+            () => this.fetchAllRunsAndFilter(startDate, endDate),
+            // Last resort: Use existing table data
+            () => this.extractRunsFromTable()
+        ];
+
+        let lastError = null;
+
+        for (let i = 0; i < sources.length; i++) {
+            try {
+                console.log(`🔄 Trying data source ${i + 1}...`);
+                const result = await sources[i]();
+                if (result && result.length >= 0) {
+                    console.log(`✅ Successfully fetched ${result.length} runs from source ${i + 1}`);
+                    return result;
+                }
+            } catch (error) {
+                console.warn(`⚠️ Source ${i + 1} failed:`, error.message);
+                lastError = error;
+            }
+        }
+
+        throw lastError || new Error('All data sources failed');
+    }
+
+    // FIXED: Improved API fetch with better error handling
     async fetchRunsFromAPI(startDate, endDate) {
         const url = new URL('/Run/GetRunsForCalendar', window.location.origin);
         url.searchParams.append('startDate', startDate.toISOString());
         url.searchParams.append('endDate', endDate.toISOString());
+
+        console.log('📡 Fetching from URL:', url.toString());
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), this.config.fetchTimeout);
@@ -362,21 +197,30 @@ class EnhancedRunCalendar {
             const response = await fetch(url.toString(), {
                 method: 'GET',
                 headers: {
+                    'Accept': 'application/json',
                     'Content-Type': 'application/json',
-                    'RequestVerificationToken': this.getAntiForgeryToken()
+                    // FIXED: Only include CSRF token if it exists
+                    ...(this.getAntiForgeryToken() && { 'RequestVerificationToken': this.getAntiForgeryToken() })
                 },
-                signal: controller.signal
+                signal: controller.signal,
+                credentials: 'same-origin' // FIXED: Include credentials for authentication
             });
 
             clearTimeout(timeoutId);
 
+            console.log('📡 Response status:', response.status);
+            console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
+
             if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ API Error Response:', errorText);
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 
             const data = await response.json();
+            console.log('📦 Raw API response:', data);
 
-            if (!data.success) {
+            if (data.success === false) {
                 throw new Error(data.message || 'API returned error status');
             }
 
@@ -393,7 +237,156 @@ class EnhancedRunCalendar {
         }
     }
 
+    // FIXED: Fallback method to get all runs
+    async fetchAllRunsAndFilter(startDate, endDate) {
+        console.log('📡 Trying fallback: fetch all runs');
+
+        const url = new URL('/Run/GetAllRunsForCalendar', window.location.origin);
+
+        const response = await fetch(url.toString(), {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            credentials: 'same-origin'
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success === false) {
+            throw new Error(data.message || 'API returned error status');
+        }
+
+        // Transform and filter runs
+        const allRuns = this.transformAPIData(data.runs || []);
+
+        // Filter by date range
+        return allRuns.filter(run => {
+            if (!run.date) return false;
+            return run.date >= startDate && run.date <= endDate;
+        });
+    }
+
+    // FIXED: Extract runs from existing table data
+    extractRunsFromTable() {
+        console.log('📋 Extracting runs from table data');
+
+        const runsTable = document.getElementById('runsTable');
+        if (!runsTable) {
+            throw new Error('No table data available');
+        }
+
+        const runs = [];
+        const rows = runsTable.querySelectorAll('tbody tr');
+
+        rows.forEach(row => {
+            try {
+                const run = this.extractRunFromTableRow(row);
+                if (run) {
+                    runs.push(run);
+                }
+            } catch (error) {
+                console.warn('⚠️ Error extracting run from row:', error);
+            }
+        });
+
+        console.log(`📋 Extracted ${runs.length} runs from table`);
+        return runs;
+    }
+
+    extractRunFromTableRow(row) {
+        // Extract data from table row attributes and cells
+        const cells = row.querySelectorAll('td');
+        if (cells.length < 4) return null;
+
+        // Get run name from first cell
+        const nameCell = cells[0];
+        const nameEl = nameCell.querySelector('.fw-semibold');
+        const name = nameEl ? nameEl.textContent.trim() : 'Basketball Run';
+
+        // Get type from first cell
+        const typeEl = nameCell.querySelector('.text-muted.small');
+        const typeText = typeEl ? typeEl.textContent.trim() : '';
+        const type = typeText.split('•')[0].trim().toLowerCase() || 'pickup';
+
+        // Get date and time from second cell
+        const dateTimeCell = cells[1];
+        const dateEl = dateTimeCell.querySelector('.fw-semibold');
+        const timeEl = dateTimeCell.querySelector('.text-muted.small');
+
+        let runDate = new Date();
+        if (dateEl) {
+            const dateText = dateEl.textContent.trim();
+            runDate = new Date(dateText);
+        }
+
+        let startTime = '12:00 PM';
+        let endTime = '2:00 PM';
+        if (timeEl) {
+            const timeText = timeEl.textContent.trim();
+            const times = timeText.split(' - ');
+            if (times.length >= 1) startTime = times[0];
+            if (times.length >= 2) endTime = times[1];
+        }
+
+        // Get location from third cell
+        const locationCell = cells[2];
+        const locationEl = locationCell.querySelector('.fw-semibold');
+        const location = locationEl ? locationEl.textContent.trim() : 'Location TBD';
+
+        // Get participants from fourth cell
+        const participantsCell = cells[3];
+        const capacityText = participantsCell.querySelector('.capacity-text');
+        let playerCount = 0;
+        let playerLimit = 10;
+
+        if (capacityText) {
+            const match = capacityText.textContent.match(/(\d+)\/(\d+)/);
+            if (match) {
+                playerCount = parseInt(match[1]) || 0;
+                playerLimit = parseInt(match[2]) || 10;
+            }
+        }
+
+        // Get status from fifth cell
+        const statusCell = cells[4];
+        const statusBadge = statusCell.querySelector('.badge');
+        const status = statusBadge ? statusBadge.textContent.trim() : 'Active';
+
+        // Get additional data from attributes
+        const runId = row.getAttribute('data-run-id') || `table-run-${Date.now()}-${Math.random()}`;
+        const skillLevel = row.getAttribute('data-skill-level') || 'All Levels';
+
+        return {
+            id: runId,
+            name: name,
+            type: type,
+            date: runDate,
+            startTime: startTime,
+            endTime: endTime,
+            location: location,
+            skillLevel: skillLevel,
+            participants: playerCount,
+            capacity: playerLimit,
+            description: `${name} - ${type} game`,
+            status: status,
+            isPublic: true,
+            profileId: row.getAttribute('data-profile-id') || ''
+        };
+    }
+
+    // FIXED: Improved data transformation
     transformAPIData(apiRuns) {
+        if (!Array.isArray(apiRuns)) {
+            console.warn('⚠️ API runs data is not an array:', apiRuns);
+            return [];
+        }
+
         return apiRuns.map(run => {
             // Parse the date properly
             let runDate;
@@ -470,7 +463,6 @@ class EnhancedRunCalendar {
         this.runs = this.generateMockRuns();
     }
 
-    // FIXED: Variable declaration conflict resolved
     generateMockRuns() {
         const runs = [];
         const startDate = new Date(this.currentYear, this.currentMonth - this.config.dateRangeMonths, 1);
@@ -484,9 +476,7 @@ class EnhancedRunCalendar {
             'Community Recreation Center',
             'Youth Sports Complex',
             'Westside Basketball Courts',
-            'Downtown Sports Center',
-            'Local High School Gym',
-            'University Recreation Center'
+            'Downtown Sports Center'
         ];
 
         // Generate 25-45 random runs for the period
@@ -506,8 +496,6 @@ class EnhancedRunCalendar {
             const participants = Math.floor(Math.random() * (capacity + 1));
 
             const startTime = this.formatTime(randomDate);
-
-            // FIXED: Renamed from 'endDate' to 'runEndDate' to avoid variable conflict
             const runEndDate = new Date(randomDate.getTime() + (1 + Math.random() * 2) * 60 * 60 * 1000); // 1-3 hours
             const endTime = this.formatTime(runEndDate);
 
@@ -544,28 +532,23 @@ class EnhancedRunCalendar {
         const templates = {
             pickup: [
                 `Open pickup game for ${skillLevel.toLowerCase()} players. Bring your A-game!`,
-                `Casual basketball run. ${skillLevel} level preferred. First come, first served.`,
-                `Good vibes and competitive play. Looking for ${skillLevel.toLowerCase()} players.`
+                `Casual basketball run. ${skillLevel} level preferred. First come, first served.`
             ],
             training: [
                 `${skillLevel} training session focused on fundamentals and conditioning.`,
-                `Skill development workout for ${skillLevel.toLowerCase()} players.`,
-                `Intensive training session. ${skillLevel} level recommended.`
+                `Skill development workout for ${skillLevel.toLowerCase()} players.`
             ],
             tournament: [
                 `${skillLevel} tournament bracket. Prizes for winners!`,
-                `Competitive tournament play. ${skillLevel} level required.`,
-                `3v3 tournament format. ${skillLevel} players welcome.`
+                `Competitive tournament play. ${skillLevel} level required.`
             ],
             youth: [
                 `Youth development program for ${skillLevel.toLowerCase()} young players.`,
-                `Kids basketball session. ${skillLevel} level appropriate.`,
-                `Fun and educational youth program. ${skillLevel} welcome.`
+                `Kids basketball session. ${skillLevel} level appropriate.`
             ],
             women: [
                 `Women's basketball session. ${skillLevel} level.`,
-                `Ladies only run. ${skillLevel} players encouraged to join.`,
-                `Supportive environment for women players. ${skillLevel} level.`
+                `Ladies only run. ${skillLevel} players encouraged to join.`
             ]
         };
 
@@ -582,7 +565,7 @@ class EnhancedRunCalendar {
             return;
         }
 
-        // Update title with enhanced information
+        // Update title
         const monthNames = [
             'January', 'February', 'March', 'April', 'May', 'June',
             'July', 'August', 'September', 'October', 'November', 'December'
@@ -591,7 +574,6 @@ class EnhancedRunCalendar {
         const currentMonthRuns = this.getRunsForMonth(this.currentMonth, this.currentYear);
         const monthTitle = `${monthNames[this.currentMonth]} ${this.currentYear}`;
         title.textContent = monthTitle;
-        title.setAttribute('aria-label', `${monthTitle}, ${currentMonthRuns.length} runs this month`);
 
         // Clear existing calendar (keep headers)
         const headers = grid.querySelectorAll('.calendar-day-header');
@@ -620,24 +602,7 @@ class EnhancedRunCalendar {
 
         grid.appendChild(fragment);
 
-        // Add fade in animation
-        if (this.config.enableAnimations) {
-            grid.classList.remove('show');
-            grid.classList.add('calendar-fade');
-
-            // Use requestAnimationFrame for smooth animation
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    grid.classList.add('show');
-                });
-            });
-        }
-
-        // Adjust responsive layout
-        this.adjustResponsiveLayout();
-
-        // Announce to screen reader
-        this.announceToScreenReader(`Calendar updated. ${currentMonthRuns.length} runs in ${monthTitle}`);
+        console.log(`✅ Calendar rendered with ${currentMonthRuns.length} runs for ${monthTitle}`);
     }
 
     createDayElement(date, today) {
@@ -652,15 +617,6 @@ class EnhancedRunCalendar {
 
         if (date.toDateString() === today.toDateString()) {
             dayDiv.classList.add('today');
-            const indicator = document.createElement('div');
-            indicator.className = 'today-indicator';
-            indicator.setAttribute('aria-label', 'Today');
-            dayDiv.appendChild(indicator);
-        }
-
-        // Add weekend class
-        if (date.getDay() === 0 || date.getDay() === 6) {
-            dayDiv.classList.add('weekend');
         }
 
         // Day number
@@ -676,23 +632,11 @@ class EnhancedRunCalendar {
             dayDiv.appendChild(runsContainer);
         }
 
-        // Enhanced click handler for day selection
+        // Click handler for day selection
         dayDiv.addEventListener('click', (e) => {
             if (!e.target.closest('.run-item') && !e.target.closest('.more-runs')) {
                 this.selectDate(date, dayRuns);
             }
-        });
-
-        // Enhanced accessibility
-        dayDiv.setAttribute('role', 'gridcell');
-        dayDiv.setAttribute('tabindex', date.getMonth() === this.currentMonth ? '0' : '-1');
-
-        const runsText = dayRuns.length === 1 ? '1 run' : `${dayRuns.length} runs`;
-        dayDiv.setAttribute('aria-label', `${date.toLocaleDateString()}, ${runsText}`);
-
-        // Add focus handling
-        dayDiv.addEventListener('focus', () => {
-            this.selectedDate = date;
         });
 
         return dayDiv;
@@ -750,7 +694,7 @@ class EnhancedRunCalendar {
             }
         }
 
-        // Create run content with enhanced layout
+        // Create run content
         const timeSpan = document.createElement('span');
         timeSpan.className = 'run-time';
         timeSpan.textContent = this.formatTimeShort(run.startTime);
@@ -758,14 +702,6 @@ class EnhancedRunCalendar {
         const nameSpan = document.createElement('span');
         nameSpan.className = 'run-name';
         nameSpan.textContent = this.truncateText(run.name, 20);
-
-        // Add capacity indicator for small display
-        if (run.capacity > 0) {
-            const capacitySpan = document.createElement('span');
-            capacitySpan.className = 'run-capacity';
-            capacitySpan.textContent = `${run.participants}/${run.capacity}`;
-            runDiv.appendChild(capacitySpan);
-        }
 
         runDiv.appendChild(timeSpan);
         runDiv.appendChild(nameSpan);
@@ -777,7 +713,7 @@ class EnhancedRunCalendar {
     }
 
     attachRunElementEvents(runDiv, run) {
-        // Enhanced tooltip events
+        // Tooltip events
         if (this.config.enableTooltips) {
             runDiv.addEventListener('mouseenter', (e) => {
                 this.showTooltip(e, run);
@@ -792,7 +728,7 @@ class EnhancedRunCalendar {
             });
         }
 
-        // Enhanced click handler with loading state
+        // Click handler
         runDiv.addEventListener('click', (e) => {
             e.stopPropagation();
             runDiv.classList.add('loading');
@@ -800,42 +736,16 @@ class EnhancedRunCalendar {
                 runDiv.classList.remove('loading');
             });
         });
-
-        // Enhanced keyboard accessibility
-        runDiv.setAttribute('tabindex', '0');
-        runDiv.setAttribute('role', 'button');
-
-        const capacityText = run.capacity > 0 ? `, ${run.participants} of ${run.capacity} participants` : '';
-        runDiv.setAttribute('aria-label', `${run.name} at ${run.startTime}${capacityText}`);
-
-        runDiv.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                this.openRunDetails(run);
-            }
-        });
     }
 
     createMoreRunsElement(count, date, allRuns) {
         const moreElement = document.createElement('div');
         moreElement.className = 'more-runs';
         moreElement.textContent = `+${count} more`;
-        moreElement.setAttribute('tabindex', '0');
-        moreElement.setAttribute('role', 'button');
-        moreElement.setAttribute('aria-label', `Show ${count} more runs for ${date.toLocaleDateString()}`);
 
-        const clickHandler = (e) => {
+        moreElement.addEventListener('click', (e) => {
             e.stopPropagation();
             this.showAllRunsForDate(date, allRuns);
-        };
-
-        moreElement.addEventListener('click', clickHandler);
-
-        moreElement.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                clickHandler(e);
-            }
         });
 
         return moreElement;
@@ -870,21 +780,10 @@ class EnhancedRunCalendar {
         }
 
         this.selectedDate = date;
-
         console.log(`📅 Selected ${date.toLocaleDateString()} with ${runs.length} runs`);
-
-        // Announce to screen reader
-        const runsText = runs.length === 1 ? '1 run' : `${runs.length} runs`;
-        this.announceToScreenReader(`Selected ${date.toLocaleDateString()}, ${runsText}`);
-
-        // Emit custom event for other components
-        document.dispatchEvent(new CustomEvent('calendarDateSelected', {
-            detail: { date, runs }
-        }));
     }
 
     showAllRunsForDate(date, runs) {
-        // Create a more user-friendly modal instead of alert
         const modal = this.createRunListModal(date, runs);
         document.body.appendChild(modal);
 
@@ -901,8 +800,6 @@ class EnhancedRunCalendar {
         const modal = document.createElement('div');
         modal.className = 'modal fade';
         modal.tabIndex = -1;
-        modal.setAttribute('aria-labelledby', 'runListModalLabel');
-        modal.setAttribute('aria-hidden', 'true');
 
         const sortedRuns = runs.sort((a, b) => {
             const timeA = this.parseTime(a.startTime);
@@ -935,10 +832,10 @@ class EnhancedRunCalendar {
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="runListModalLabel">
+                        <h5 class="modal-title">
                             Runs for ${date.toLocaleDateString()}
                         </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
                         <div class="list-group">
@@ -1062,16 +959,6 @@ class EnhancedRunCalendar {
         this.tooltip.style.top = top + 'px';
     }
 
-    repositionTooltip() {
-        if (this.tooltip && this.tooltip.classList.contains('show')) {
-            // Force recalculation of tooltip position
-            const rect = this.tooltip.getBoundingClientRect();
-            if (rect.right > window.innerWidth || rect.bottom > window.innerHeight) {
-                this.hideTooltip();
-            }
-        }
-    }
-
     hideTooltip() {
         if (this.tooltip) {
             this.tooltip.classList.remove('show');
@@ -1081,7 +968,7 @@ class EnhancedRunCalendar {
     async openRunDetails(run) {
         console.log('🔍 Opening run details for:', run.name);
 
-        // First, try to integrate with existing run management modal
+        // Try to integrate with existing run management modal
         if (await this.tryOpenExistingRunModal(run)) {
             return;
         }
@@ -1091,7 +978,6 @@ class EnhancedRunCalendar {
     }
 
     async tryOpenExistingRunModal(run) {
-        // Check if the existing run edit modal and functions exist
         const editModal = document.getElementById('editRunModal');
 
         if (editModal && typeof window.loadRunDataEnhanced === 'function') {
@@ -1141,78 +1027,7 @@ ${!run.isPublic ? '🔒 Private Run' : '🌐 Public Run'}
 ${run.description ? `📝 Description:\n${run.description}` : ''}
         `.trim();
 
-        // Use a proper modal instead of alert for better UX
-        const modal = this.createRunDetailsModal(run);
-        document.body.appendChild(modal);
-
-        const bootstrapModal = new bootstrap.Modal(modal);
-        bootstrapModal.show();
-
-        // Clean up modal after hiding
-        modal.addEventListener('hidden.bs.modal', () => {
-            document.body.removeChild(modal);
-        });
-    }
-
-    createRunDetailsModal(run) {
-        const modal = document.createElement('div');
-        modal.className = 'modal fade';
-        modal.tabIndex = -1;
-
-        const capacityPercent = run.capacity > 0 ? Math.round((run.participants / run.capacity) * 100) : 0;
-        const progressBarClass = capacityPercent >= 85 ? 'bg-warning' : 'bg-primary';
-
-        modal.innerHTML = `
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">
-                            ${!run.isPublic ? '🔒 ' : ''}${run.name}
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <p><i class="bi bi-calendar me-2"></i><strong>Date:</strong> ${run.date.toLocaleDateString()}</p>
-                                <p><i class="bi bi-clock me-2"></i><strong>Time:</strong> ${run.startTime} - ${run.endTime}</p>
-                                <p><i class="bi bi-geo-alt me-2"></i><strong>Location:</strong> ${run.location}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <p><i class="bi bi-star me-2"></i><strong>Skill Level:</strong> ${run.skillLevel}</p>
-                                <p><i class="bi bi-tag me-2"></i><strong>Type:</strong> <span class="badge bg-${this.getTypeColor(run.type)}">${this.capitalize(run.type)}</span></p>
-                                <p><i class="bi bi-info-circle me-2"></i><strong>Status:</strong> <span class="badge bg-${run.status === 'Active' ? 'success' : 'warning'}">${run.status}</span></p>
-                            </div>
-                        </div>
-                        
-                        <div class="mt-3">
-                            <p><strong>Participants (${run.participants}/${run.capacity}):</strong></p>
-                            <div class="progress">
-                                <div class="progress-bar ${progressBarClass}" role="progressbar" 
-                                     style="width: ${Math.min(capacityPercent, 100)}%" 
-                                     aria-valuenow="${capacityPercent}" aria-valuemin="0" aria-valuemax="100">
-                                    ${capacityPercent}%
-                                </div>
-                            </div>
-                        </div>
-                        
-                        ${run.description ? `
-                            <div class="mt-3">
-                                <p><strong>Description:</strong></p>
-                                <p class="text-muted">${run.description}</p>
-                            </div>
-                        ` : ''}
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        ${run.status === 'Active' && run.participants < run.capacity ?
-                '<button type="button" class="btn btn-primary">Join Run</button>' : ''}
-                    </div>
-                </div>
-            </div>
-        `;
-
-        return modal;
+        alert(details);
     }
 
     updateStats() {
@@ -1222,7 +1037,6 @@ ${run.description ? `📝 Description:\n${run.description}` : ''}
         const totalCapacity = activeRuns.reduce((sum, run) => sum + (run.capacity || 0), 0);
         const averageCapacity = totalCapacity > 0 ? Math.round((totalParticipants / totalCapacity) * 100) : 0;
 
-        // Animate the number changes
         this.animateNumber('totalRuns', this.runs.length);
         this.animateNumber('upcomingRuns', currentMonthRuns.length);
         this.animateNumber('totalParticipants', totalParticipants);
@@ -1241,9 +1055,7 @@ ${run.description ? `📝 Description:\n${run.description}` : ''}
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);
 
-            // Use easeOutQuart easing function
             const easeProgress = 1 - Math.pow(1 - progress, 4);
-
             const currentValue = Math.round(startValue + (targetValue - startValue) * easeProgress);
             element.textContent = currentValue + suffix;
 
@@ -1285,37 +1097,9 @@ ${run.description ? `📝 Description:\n${run.description}` : ''}
         console.log('📅 Navigated to current month');
 
         if (wasCurrentMonth) {
-            // Just refresh if we're already on current month
             this.loadCalendar(true);
         } else {
             this.loadCalendar();
-        }
-    }
-
-    adjustResponsiveLayout() {
-        const calendarGrid = document.getElementById('calendarGrid');
-        if (!calendarGrid) return;
-
-        const viewportWidth = window.innerWidth;
-        const isMobile = viewportWidth < this.config.responsive.mobile;
-        const isTablet = viewportWidth < this.config.responsive.tablet;
-
-        // Adjust calendar for different screen sizes
-        if (isMobile) {
-            calendarGrid.style.fontSize = '0.75rem';
-            this.config.maxRunsPerDay = 2;
-        } else if (isTablet) {
-            calendarGrid.style.fontSize = '0.85rem';
-            this.config.maxRunsPerDay = 2;
-        } else {
-            calendarGrid.style.fontSize = '';
-            this.config.maxRunsPerDay = 3;
-        }
-
-        // Re-render if runs are visible to apply new limits
-        if (this.runs.length > 0) {
-            const currentRuns = this.runs;
-            this.runs = currentRuns; // Trigger re-render with new layout
         }
     }
 
@@ -1339,10 +1123,6 @@ ${run.description ? `📝 Description:\n${run.description}` : ''}
         grid.appendChild(loading);
     }
 
-    hideLoading() {
-        // Loading is hidden when calendar renders
-    }
-
     showError(message) {
         const grid = document.getElementById('calendarGrid');
         if (!grid) return;
@@ -1358,11 +1138,16 @@ ${run.description ? `📝 Description:\n${run.description}` : ''}
             <i class="bi bi-exclamation-triangle text-danger" style="font-size: 3rem; margin-bottom: 1rem;"></i>
             <h5 class="text-danger">Error Loading Calendar</h5>
             <p class="text-muted">${message}</p>
-            <button class="btn btn-primary" onclick="window.runCalendar.loadCalendar(true)">
+            <button class="btn btn-primary" onclick="window.fixedRunCalendar.loadCalendar(true)">
                 <i class="bi bi-arrow-clockwise me-2"></i>Try Again
             </button>
         `;
         grid.appendChild(error);
+    }
+
+    clearCache() {
+        this.cache.clear();
+        console.log('📅 Calendar cache cleared');
     }
 
     // Enhanced utility methods
@@ -1375,7 +1160,6 @@ ${run.description ? `📝 Description:\n${run.description}` : ''}
     }
 
     formatTimeShort(timeString) {
-        // Convert "2:30 PM" to "2:30p" for compact display
         return timeString.replace(/\s?(AM|PM)/, m => m.trim().toLowerCase().charAt(0));
     }
 
@@ -1391,19 +1175,6 @@ ${run.description ? `📝 Description:\n${run.description}` : ''}
     getAntiForgeryToken() {
         const token = document.querySelector('input[name="__RequestVerificationToken"]');
         return token ? token.value : '';
-    }
-
-    clearCache() {
-        this.cache.clear();
-        console.log('📅 Calendar cache cleared');
-    }
-
-    focusSearchFilter() {
-        // Focus on search/filter if available
-        const searchInput = document.querySelector('#runCalendarModal .form-control[type="search"]');
-        if (searchInput) {
-            searchInput.focus();
-        }
     }
 
     // Public API methods
@@ -1422,70 +1193,47 @@ ${run.description ? `📝 Description:\n${run.description}` : ''}
     }
 
     getRuns() {
-        return [...this.runs]; // Return copy to prevent external modification
-    }
-
-    getRunsForDateRange(startDate, endDate) {
-        return this.runs.filter(run =>
-            run.date &&
-            run.date >= startDate &&
-            run.date <= endDate
-        );
+        return [...this.runs];
     }
 
     // Cleanup method
     destroy() {
-        // Remove event listeners
-        document.removeEventListener('keydown', this.handleKeyboardNavigation);
-        window.removeEventListener('resize', this.handleResize);
-
-        // Clear intervals
         if (this.autoRefreshInterval) {
             clearInterval(this.autoRefreshInterval);
         }
-
-        // Clear cache
         this.clearCache();
-
-        // Remove live region
-        const liveRegion = document.getElementById('calendar-live-region');
-        if (liveRegion) {
-            document.body.removeChild(liveRegion);
-        }
-
-        console.log('🗓️ Enhanced Run Calendar destroyed');
+        console.log('🗓️ Fixed Run Calendar destroyed');
     }
 }
 
 // Initialize calendar when DOM is loaded
 document.addEventListener('DOMContentLoaded', function () {
-    // Only initialize if we're on a page with the calendar modal
     if (document.getElementById('runCalendarModal')) {
         try {
-            window.runCalendar = new EnhancedRunCalendar();
-            console.log('🗓️ Enhanced Run Calendar initialized and ready');
+            window.fixedRunCalendar = new FixedRunCalendar();
+            console.log('🗓️ Fixed Run Calendar initialized and ready');
 
-            // Make calendar available globally for debugging
+            // Debug tools
             if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
                 window.calendarDebug = {
-                    instance: window.runCalendar,
-                    goToDate: (date) => window.runCalendar.goToDate(date),
-                    refresh: () => window.runCalendar.refresh(),
-                    getRuns: () => window.runCalendar.getRuns(),
-                    clearCache: () => window.runCalendar.clearCache(),
-                    goToToday: () => window.runCalendar.goToToday()
+                    instance: window.fixedRunCalendar,
+                    goToDate: (date) => window.fixedRunCalendar.goToDate(date),
+                    refresh: () => window.fixedRunCalendar.refresh(),
+                    getRuns: () => window.fixedRunCalendar.getRuns(),
+                    clearCache: () => window.fixedRunCalendar.clearCache(),
+                    extractFromTable: () => window.fixedRunCalendar.extractRunsFromTable(),
+                    testAPI: () => window.fixedRunCalendar.fetchRunsFromAPI(new Date(), new Date())
                 };
-                console.log('🐛 Enhanced Calendar debug tools available at window.calendarDebug');
+                console.log('🐛 Fixed Calendar debug tools available at window.calendarDebug');
             }
         } catch (error) {
-            console.error('❌ Failed to initialize Enhanced Run Calendar:', error);
+            console.error('❌ Failed to initialize Fixed Run Calendar:', error);
         }
     }
 
-    // Cleanup on page unload
     window.addEventListener('beforeunload', () => {
-        if (window.runCalendar && typeof window.runCalendar.destroy === 'function') {
-            window.runCalendar.destroy();
+        if (window.fixedRunCalendar && typeof window.fixedRunCalendar.destroy === 'function') {
+            window.fixedRunCalendar.destroy();
         }
     });
 });
