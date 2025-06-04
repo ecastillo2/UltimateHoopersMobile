@@ -779,48 +779,206 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
+    // ========== COMPLETELY REWRITTEN FORM HANDLER ==========
     function handleEditFormSubmit(e) {
         e.preventDefault();
-        console.log('📤 Edit product form submitted (FIXED VERSION)');
+        console.log('📤 Edit product form submitted - DEBUG VERSION');
 
-        // Get the form element
         const form = e.target;
-
-        // Create FormData object (this preserves file uploads and form structure)
-        const formData = new FormData(form);
-
-        // Log form data for debugging
-        console.log('📋 Form data being sent:');
-        for (let [key, value] of formData.entries()) {
-            if (value instanceof File) {
-                console.log(`${key}: File - ${value.name} (${value.size} bytes)`);
-            } else {
-                console.log(`${key}: ${value}`);
-            }
-        }
-
         const submitBtn = form.querySelector('button[type="submit"]');
+
+        // Show loading state
         if (submitBtn && window.UIUtils) {
             window.UIUtils.setButtonLoading(submitBtn, true, 'Saving...');
         }
 
-        const token = getAntiForgeryToken();
+        // DEBUG: Log all form elements
+        console.log('🔍 DEBUGGING FORM SUBMISSION:');
+        console.log('Form element:', form);
+        console.log('Form action:', form.action);
+        console.log('Form method:', form.method);
+        console.log('Form enctype:', form.enctype);
 
-        // FIXED: Send as FormData, not JSON
+        // Get all form inputs and log them
+        const formElements = form.querySelectorAll('input, select, textarea');
+        console.log('📋 All form elements:');
+        formElements.forEach(element => {
+            console.log(`  ${element.name || element.id}: "${element.value}" (type: ${element.type})`);
+        });
+
+        // Create FormData and log contents
+        const formData = new FormData(form);
+        console.log('📦 FormData contents:');
+        for (let [key, value] of formData.entries()) {
+            if (value instanceof File) {
+                console.log(`  ${key}: File - ${value.name} (${value.size} bytes)`);
+            } else {
+                console.log(`  ${key}: "${value}"`);
+            }
+        }
+
+        // Check if required fields are present
+        const requiredFields = ['ProductId', 'Title', 'Type', 'Category'];
+        const missingFields = [];
+
+        requiredFields.forEach(field => {
+            const value = formData.get(field);
+            if (!value || value.trim() === '') {
+                missingFields.push(field);
+            }
+        });
+
+        if (missingFields.length > 0) {
+            console.error('❌ Missing required fields:', missingFields);
+            if (submitBtn && window.UIUtils) {
+                window.UIUtils.setButtonLoading(submitBtn, false);
+            }
+            showToast(`Missing required fields: ${missingFields.join(', ')}`, 'error');
+            return;
+        }
+
+        // Get anti-forgery token
+        const tokenInput = form.querySelector('input[name="__RequestVerificationToken"]');
+        console.log('🔒 Anti-forgery token element:', tokenInput);
+        console.log('🔒 Token value:', tokenInput?.value);
+
+        if (!tokenInput || !tokenInput.value) {
+            console.error('❌ Anti-forgery token missing');
+            if (submitBtn && window.UIUtils) {
+                window.UIUtils.setButtonLoading(submitBtn, false);
+            }
+            showToast('Security token missing. Please refresh the page.', 'error');
+            return;
+        }
+
+        // Add token to headers
+        const headers = {
+            'RequestVerificationToken': tokenInput.value
+        };
+
+        console.log('📡 Request headers:', headers);
+        console.log('🚀 Submitting to: /Product/Edit');
+
+        // Submit using fetch with FormData
         fetch('/Product/Edit', {
             method: 'POST',
-            headers: {
-                // Remove 'Content-Type' header - let the browser set it for FormData
-                'RequestVerificationToken': token
-            },
-            body: formData  // Send FormData directly, not JSON
+            headers: headers,
+            body: formData
         })
             .then(response => {
+                console.log('📡 Response status:', response.status);
+                console.log('📡 Response headers:', response.headers);
+
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
-                return response.json();
+                return response.text(); // Get as text first to see raw response
             })
+            .then(responseText => {
+                console.log('📦 Raw response:', responseText);
+
+                // Try to parse as JSON
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                    console.log('📦 Parsed response:', result);
+                } catch (e) {
+                    console.error('❌ Failed to parse JSON response:', e);
+                    throw new Error('Invalid JSON response from server');
+                }
+
+                if (submitBtn && window.UIUtils) {
+                    window.UIUtils.setButtonLoading(submitBtn, false);
+                }
+
+                if (result.success) {
+                    showToast('Product updated successfully!', 'success');
+                    setTimeout(() => {
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('editProductModal'));
+                        if (modal) modal.hide();
+                        location.reload();
+                    }, 1000);
+                } else {
+                    console.error('❌ Server returned error:', result);
+                    showToast(`Error updating product: ${result.message || 'Unknown error'}`, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('❌ Fetch error:', error);
+                if (submitBtn && window.UIUtils) {
+                    window.UIUtils.setButtonLoading(submitBtn, false);
+                }
+                showToast(`Error updating product: ${error.message}`, 'error');
+            });
+    }
+
+    // ========== ALTERNATIVE: LET THE BROWSER HANDLE IT ==========
+    function handleEditFormSubmitNative(e) {
+        // Don't prevent default - let the browser submit normally
+        console.log('📤 Letting browser handle form submission');
+
+        const form = e.target;
+        const submitBtn = form.querySelector('button[type="submit"]');
+
+        // Just show loading state and let the form submit
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+        }
+
+        // The form will submit normally to the controller
+    }
+
+    // ========== MANUAL FORM DATA CONSTRUCTION ==========
+    function handleEditFormSubmitManual(e) {
+        e.preventDefault();
+        console.log('📤 Manual form data construction');
+
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        if (submitBtn && window.UIUtils) {
+            window.UIUtils.setButtonLoading(submitBtn, true, 'Saving...');
+        }
+
+        // Manually construct form data
+        const formData = new FormData();
+
+        // Add all the product fields manually
+        const fields = [
+            'ProductId', 'Title', 'Description', 'Price', 'Points',
+            'Tag', 'Type', 'Category', 'Status', 'ProductNumber', 'ImageURL'
+        ];
+
+        fields.forEach(field => {
+            const element = document.getElementById(`edit${field}`);
+            if (element) {
+                const value = element.value || '';
+                formData.append(field, value);
+                console.log(`✅ Added ${field}: "${value}"`);
+            } else {
+                console.warn(`⚠️ Element edit${field} not found`);
+            }
+        });
+
+        // Add image file if present
+        const imageFile = document.getElementById('editImageFile');
+        if (imageFile && imageFile.files.length > 0) {
+            formData.append('ImageFile', imageFile.files[0]);
+            console.log('✅ Added ImageFile:', imageFile.files[0].name);
+        }
+
+        // Add anti-forgery token
+        const token = getAntiForgeryToken();
+        if (token) {
+            formData.append('__RequestVerificationToken', token);
+            console.log('✅ Added anti-forgery token');
+        }
+
+        // Submit
+        fetch('/Product/Edit', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
             .then(result => {
                 if (submitBtn && window.UIUtils) {
                     window.UIUtils.setButtonLoading(submitBtn, false);
@@ -828,25 +986,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if (result.success) {
                     showToast('Product updated successfully!', 'success');
-
-                    // Update stored data
-                    window.currentProductData = { ...window.currentProductData, ...Object.fromEntries(formData) };
-
                     setTimeout(() => {
                         const modal = bootstrap.Modal.getInstance(document.getElementById('editProductModal'));
                         if (modal) modal.hide();
                         location.reload();
                     }, 1000);
                 } else {
-                    showToast(`Error updating product: ${result.message || 'Unknown error'}`, 'error');
+                    showToast(`Error: ${result.message}`, 'error');
                 }
             })
             .catch(error => {
                 if (submitBtn && window.UIUtils) {
                     window.UIUtils.setButtonLoading(submitBtn, false);
                 }
-                console.error('Error updating product:', error);
-                showToast(`Error updating product: ${error.message}`, 'error');
+                showToast(`Error: ${error.message}`, 'error');
             });
     }
 
