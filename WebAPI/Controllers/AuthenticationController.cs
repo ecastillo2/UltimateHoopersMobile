@@ -1,16 +1,10 @@
 ﻿using DataLayer.Context;
-using DataLayer.DAL;
-using DataLayer.DAL.Context;
 using DataLayer.DAL.Interface;
 using DataLayer.DAL.Repository;
 using Domain;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using System.Threading;
-using System.Threading.Tasks;
 using WebAPI.Services;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace WebAPI.Controllers
 {
@@ -27,9 +21,13 @@ namespace WebAPI.Controllers
         private readonly IConfiguration _configuration;
 
         /// <summary>
-        /// Initializes a new instance of the AuthenticationController
+        /// Authentication Controller
         /// </summary>
-        /// <param name="authenticateService">Service for authentication operations</param>
+        /// <param name="appcontext"></param>
+        /// <param name="authenticateService"></param>
+        /// <param name="context"></param>
+        /// <param name="configuration"></param>
+        /// <exception cref="ArgumentNullException"></exception>
         public AuthenticationController(ApplicationContext appcontext, IAuthService authenticateService, ApplicationContext context, IConfiguration configuration)
         {
             _context = appcontext ?? throw new ArgumentNullException(nameof(context));

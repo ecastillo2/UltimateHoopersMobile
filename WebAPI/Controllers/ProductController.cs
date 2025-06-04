@@ -199,7 +199,6 @@ namespace WebAPI.Controllers
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         [HttpDelete("{id}/DeleteProductAsync")]
-        
         public async Task<IActionResult> DeleteProductAsync(string id, CancellationToken cancellationToken)
         {
             try

@@ -1,18 +1,10 @@
 ﻿using DataLayer.Context;
-using DataLayer.DAL;
-using DataLayer.DAL.Context;
 using DataLayer.DAL.Interface;
 using DataLayer.DAL.Repository;
 using Domain;
 using Domain.DtoModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-
 
 namespace WebAPI.Controllers
 {
@@ -47,10 +39,7 @@ namespace WebAPI.Controllers
         [HttpGet("cursor")]
         [ProducesResponseType(typeof(CursorPaginatedResultDto<Post>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetPostsWithCursor(
-            [FromQuery] string cursor = null,
-            [FromQuery] int limit = 10,
-            CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetPostsWithCursor([FromQuery] string cursor = null,[FromQuery] int limit = 10,CancellationToken cancellationToken = default)
         {
             try
             {
@@ -68,7 +57,7 @@ namespace WebAPI.Controllers
                 {
                     Items = posts,
                     NextCursor = nextCursor,
-                    HasMore = hasMore
+                    //HasMore = hasMore
                 });
             }
             catch (OperationCanceledException)
@@ -107,7 +96,6 @@ namespace WebAPI.Controllers
             }
         }
 
-       
 
         /// <summary>
         /// Get posts by profile ID
@@ -119,7 +107,6 @@ namespace WebAPI.Controllers
         {
             try
             {
-                var timeZone = Request.Headers.TryGetValue("TimeZone", out var tz) ? tz.ToString() : "America/New_York";
                 var posts = await _repository.GetPostsByProfileId(profileId);
                 return Ok(posts);
             }
@@ -143,7 +130,6 @@ namespace WebAPI.Controllers
         {
             try
             {
-                var timeZone = Request.Headers.TryGetValue("TimeZone", out var tz) ? tz.ToString() : "America/New_York";
                 var post = await _repository.GetPostById(id);
 
                 if (post == null)
@@ -344,7 +330,6 @@ namespace WebAPI.Controllers
         {
             try
             {
-                var timeZone = Request.Headers.TryGetValue("TimeZone", out var tz) ? tz.ToString() : "America/New_York";
                 var posts = await _repository.GetPostsWithTagByTagId(tagId);
                 return Ok(posts);
             }
@@ -369,7 +354,6 @@ namespace WebAPI.Controllers
         {
             try
             {
-                var timeZone = Request.Headers.TryGetValue("TimeZone", out var tz) ? tz.ToString() : "America/New_York";
                 var posts = await _repository.GetSavedPostsByProfileId(profileId);
                 return Ok(posts);
             }
@@ -393,7 +377,6 @@ namespace WebAPI.Controllers
         {
             try
             {
-                var timeZone = Request.Headers.TryGetValue("TimeZone", out var tz) ? tz.ToString() : "America/New_York";
                 var posts = await _repository.GetPostsMentionProfileId(profileId);
                 return Ok(posts);
             }

@@ -47,7 +47,7 @@ namespace WebAPI.Controllers
                     {
                         Items = new List<UserDetailViewModelDto>(),
                         NextCursor = null,
-                        HasMore = false,
+                        //HasMore = false,
                         Direction = direction,
                         SortBy = sortBy
                     });
@@ -150,7 +150,7 @@ namespace WebAPI.Controllers
                 {
                     Items = detailedViewModels,
                     NextCursor = nextCursor,
-                    HasMore = !string.IsNullOrEmpty(nextCursor),
+                    //HasMore = !string.IsNullOrEmpty(nextCursor),
                     Direction = direction,
                     SortBy = sortBy
                 });

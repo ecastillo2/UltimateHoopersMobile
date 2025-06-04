@@ -1,7 +1,6 @@
 ﻿using DataLayer.DAL.Interface;
 using Domain;
 using Domain.DtoModel;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebAPI.Controllers
@@ -128,7 +127,7 @@ namespace WebAPI.Controllers
                 {
                     Items = detailedViewModels,
                     NextCursor = nextCursor,
-                    HasMore = !string.IsNullOrEmpty(nextCursor),
+                    //HasMore = !string.IsNullOrEmpty(nextCursor),
                     Direction = direction,
                     SortBy = sortBy
                 };

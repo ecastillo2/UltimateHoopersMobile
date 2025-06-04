@@ -19,7 +19,7 @@ namespace WebAPI.Controllers
         }
 
         /// <summary>
-        /// GetC ourts
+        /// Get Courts
         /// </summary>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
@@ -101,7 +101,7 @@ namespace WebAPI.Controllers
                 {
                     Items = viewModels,
                     NextCursor = nextCursor,
-                    HasMore = !string.IsNullOrEmpty(nextCursor),
+                    //HasMore = !string.IsNullOrEmpty(nextCursor),
                     Direction = direction,
                     SortBy = sortBy
                 };
@@ -144,7 +144,7 @@ namespace WebAPI.Controllers
 
 
         /// <summary>
-        /// UpdateC ourt
+        /// Update Court
         /// </summary>
         /// <param name="id"></param>
         /// <param name="model"></param>

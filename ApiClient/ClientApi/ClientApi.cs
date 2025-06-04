@@ -36,8 +36,11 @@ namespace WebAPI.ApiClients
         }
 
         /// <summary>
-        /// Get all Clients
+        /// Get Clients Async
         /// </summary>
+        /// <param name="accessToken"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task<List<Client>> GetClientsAsync(string accessToken, CancellationToken cancellationToken = default)
         {
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);

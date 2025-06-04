@@ -1,8 +1,6 @@
 ﻿using DataLayer.DAL.Interface;
-using DataLayer.DAL.Repository;
 using Domain;
 using Domain.DtoModel;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebAPI.Controllers
@@ -73,12 +71,7 @@ namespace WebAPI.Controllers
         /// </summary>
         [HttpGet("cursor")]
         [ProducesResponseType(typeof(CursorPaginatedResultDto<ClientViewModelDto>), 200)]
-        public async Task<IActionResult> GetClientsWithCursor(
-            [FromQuery] string cursor = null,
-            [FromQuery] int limit = 20,
-            [FromQuery] string direction = "next",
-            [FromQuery] string sortBy = "Points",
-            CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetClientsWithCursor([FromQuery] string cursor = null,[FromQuery] int limit = 20,[FromQuery] string direction = "next",[FromQuery] string sortBy = "Points",CancellationToken cancellationToken = default)
         {
             try
             {
@@ -115,7 +108,7 @@ namespace WebAPI.Controllers
                 {
                     Items = detailedViewModels,
                     NextCursor = nextCursor,
-                    HasMore = !string.IsNullOrEmpty(nextCursor),
+                    //HasMore = !string.IsNullOrEmpty(nextCursor),
                     Direction = direction,
                     SortBy = sortBy
                 };

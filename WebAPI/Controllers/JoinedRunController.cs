@@ -1,16 +1,8 @@
 ﻿using DataLayer.DAL.Interface;
-using DataLayer.DAL.Repository;
 using Domain;
 using Domain.DtoModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Mono.TextTemplating;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Net;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace WebAPI.Controllers
 {

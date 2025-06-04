@@ -8,10 +8,34 @@ namespace Domain.DtoModel
 {
     public class CursorPaginatedResultDto<T>
     {
-        public List<T> Items { get; set; }
+        /// <summary>
+        /// The data items for this page
+        /// </summary>
+        public List<T> Items { get; set; } = new List<T>();
+
+        /// <summary>
+        /// Cursor for the next page (null if no more pages)
+        /// </summary>
         public string NextCursor { get; set; }
-        public bool HasMore { get; set; }
-        public string Direction { get; set; }
-        public string SortBy { get; set; }
+
+        /// <summary>
+        /// Indicates if there are more pages available
+        /// </summary>
+        public bool HasMore => !string.IsNullOrEmpty(NextCursor);
+
+        /// <summary>
+        /// Direction of the current pagination
+        /// </summary>
+        public string Direction { get; set; } = "next";
+
+        /// <summary>
+        /// Field used for sorting
+        /// </summary>
+        public string SortBy { get; set; } = "CreatedDate";
+
+        /// <summary>
+        /// Number of items in this page
+        /// </summary>
+        public int Count => Items?.Count ?? 0;
     }
 }
