@@ -1,12 +1,7 @@
 ﻿using Common;
-using Common.Utilities;
 using Domain;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.WindowsAzure.Storage;
-using System.IO;
 using WebAPI.ApiClients;
-using Website.Models;
 using Website.ViewModels;
 
 namespace Web.Controllers
@@ -24,6 +19,15 @@ namespace Web.Controllers
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
+        /// <summary>
+        /// Product
+        /// </summary>
+        /// <param name="cursor"></param>
+        /// <param name="limit"></param>
+        /// <param name="direction"></param>
+        /// <param name="sortBy"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpGet]
         public async Task<IActionResult> Product(string cursor = null, int limit = 10, string direction = "next", string sortBy = "Title", CancellationToken cancellationToken = default)
         {
@@ -64,6 +68,12 @@ namespace Web.Controllers
             }
         }
 
+        /// <summary>
+        /// Get Product Data
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpGet]
         public async Task<IActionResult> GetProductData(string id, CancellationToken cancellationToken = default)
         {

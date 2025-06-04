@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Runtime.CompilerServices;
 using Domain;
 
 namespace DataLayer.DAL.Interface
@@ -20,10 +16,7 @@ namespace DataLayer.DAL.Interface
         /// <summary>
         /// Get Products with offset-based pagination
         /// </summary>
-        Task<(List<Product> Products, int TotalCount, int TotalPages)> GetProductsPaginatedAsync(
-            int page = 1,
-            int pageSize = 20,
-            CancellationToken cancellationToken = default);
+        Task<(List<Product> Products, int TotalCount, int TotalPages)> GetProductsPaginatedAsync(int page = 1,int pageSize = 20,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get Products with cursor-based pagination for efficient scrolling
@@ -34,26 +27,17 @@ namespace DataLayer.DAL.Interface
         /// <param name="sortBy">Field to sort by (e.g., "Points", "PlayerNumber", "Status")</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>Courts and the next cursor value</returns>
-        Task<(List<Product> Products, string NextCursor)> GetProductsWithCursorAsync(
-            string cursor = null,
-            int limit = 20,
-            string direction = "next",
-            string sortBy = "Points",
-            CancellationToken cancellationToken = default);
+        Task<(List<Product> Products, string NextCursor)> GetProductsWithCursorAsync(string cursor = null,int limit = 20,string direction = "next",string sortBy = "Points",CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Stream all PrivateRuns for efficient memory usage with large datasets
         /// </summary>
-        IAsyncEnumerable<Product> StreamAllProductsAsync(
-            [EnumeratorCancellation] CancellationToken cancellationToken = default);
-
+        IAsyncEnumerable<Product> StreamAllProductsAsync([EnumeratorCancellation] CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get Product by ID
         /// </summary>
-        Task<Product> GetProductByIdAsync(
-            string privateRunId,
-            CancellationToken cancellationToken = default);
+        Task<Product> GetProductByIdAsync(string privateRunId,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Insert Product
@@ -79,9 +63,7 @@ namespace DataLayer.DAL.Interface
         /// <summary>
         /// Batch update multiple Run at once
         /// </summary>
-        Task<int> BatchUpdateProductsAsync(
-            IEnumerable<Product> product,
-            CancellationToken cancellationToken = default);
+        Task<int> BatchUpdateProductsAsync(IEnumerable<Product> product,CancellationToken cancellationToken = default);
 
 
         /// <summary>

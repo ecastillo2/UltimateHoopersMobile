@@ -13,12 +13,7 @@ namespace DataLayer.DAL.Interface
         /// <param name="sortBy">Field to sort by (e.g., "CreatedDate", "GameId")</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>Games and the next cursor value</returns>
-        Task<(List<Game> Games, string NextCursor)> GetGamesWithCursorAsync(
-            string cursor = null,
-            int limit = 20,
-            string direction = "next",
-            string sortBy = "CreatedDate",
-            CancellationToken cancellationToken = default);
+        Task<(List<Game> Games, string NextCursor)> GetGamesWithCursorAsync(string cursor = null,int limit = 20,string direction = "next",string sortBy = "CreatedDate",CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get Games By ProfileId with cursor-based pagination for efficient scrolling
@@ -30,13 +25,7 @@ namespace DataLayer.DAL.Interface
         /// <param name="sortBy">Field to sort by (e.g., "CreatedDate", "GameId")</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>Games and the next cursor value</returns>
-        Task<(List<Game> Games, string NextCursor)> GetGamesByProfileIdWithCursorAsync(
-            string profileId,
-            string cursor = null,
-            int limit = 20,
-            string direction = "next",
-            string sortBy = "CreatedDate",
-            CancellationToken cancellationToken = default);
+        Task<(List<Game> Games, string NextCursor)> GetGamesByProfileIdWithCursorAsync(string profileId,string cursor = null,int limit = 20,string direction = "next",string sortBy = "CreatedDate",CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get Games By Client Id with cursor-based pagination for efficient scrolling
@@ -48,13 +37,7 @@ namespace DataLayer.DAL.Interface
         /// <param name="sortBy">Field to sort by (e.g., "CreatedDate", "GameId")</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>Games and the next cursor value</returns>
-        Task<(List<Game> Games, string NextCursor)> GetGamesByClientIdWithCursorAsync(
-            string clientId,
-            string cursor = null,
-            int limit = 20,
-            string direction = "next",
-            string sortBy = "CreatedDate",
-            CancellationToken cancellationToken = default);
+        Task<(List<Game> Games, string NextCursor)> GetGamesByClientIdWithCursorAsync(string clientId,string cursor = null,int limit = 20,string direction = "next",string sortBy = "CreatedDate",CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get all games

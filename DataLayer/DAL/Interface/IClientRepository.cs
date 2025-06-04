@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Runtime.CompilerServices;
 using Domain;
 
 namespace DataLayer.DAL.Interface
@@ -20,10 +16,7 @@ namespace DataLayer.DAL.Interface
         /// <summary>
         /// Get PrivateRuns with offset-based pagination
         /// </summary>
-        Task<(List<Client> Clients, int TotalCount, int TotalPages)> GetClientsPaginatedAsync(
-            int page = 1,
-            int pageSize = 20,
-            CancellationToken cancellationToken = default);
+        Task<(List<Client> Clients, int TotalCount, int TotalPages)> GetClientsPaginatedAsync(int page = 1,int pageSize = 20,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get PrivateRuns with cursor-based pagination for efficient scrolling
@@ -34,55 +27,37 @@ namespace DataLayer.DAL.Interface
         /// <param name="sortBy">Field to sort by (e.g., "Points", "PlayerNumber", "Status")</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>Courts and the next cursor value</returns>
-        Task<(List<Client> Clients, string NextCursor)> GetClientsWithCursorAsync(
-            string cursor = null,
-            int limit = 20,
-            string direction = "next",
-            string sortBy = "Points",
-            CancellationToken cancellationToken = default);
+        Task<(List<Client> Clients, string NextCursor)> GetClientsWithCursorAsync(string cursor = null,int limit = 20,string direction = "next",string sortBy = "Points",CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Stream all PrivateRuns for efficient memory usage with large datasets
         /// </summary>
-        IAsyncEnumerable<Client> StreamAllClientsAsync(
-            [EnumeratorCancellation] CancellationToken cancellationToken = default);
-
+        IAsyncEnumerable<Client> StreamAllClientsAsync([EnumeratorCancellation] CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get PrivateRun by ID
         /// </summary>
-        Task<Client> GetClientByIdAsync(
-            string privateRunId,
-            CancellationToken cancellationToken = default);
+        Task<Client> GetClientByIdAsync(string privateRunId,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get PrivateRun by ID
         /// </summary>
-        Task<List<Court>> GetCourtByClientIdAsync(
-            string clientId,
-            CancellationToken cancellationToken = default);
+        Task<List<Court>> GetCourtByClientIdAsync(string clientId,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get PrivateRun by ID
         /// </summary>
-        Task<List<Court>> GetClientCourtsAsync(
-            string clientId,
-            CancellationToken cancellationToken = default);
+        Task<List<Court>> GetClientCourtsAsync(string clientId,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Update a profile
         /// </summary>
-        Task<bool> UpdateClientAsync(
-            Client privateRun,
-            CancellationToken cancellationToken = default);
+        Task<bool> UpdateClientAsync(Client privateRun,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Batch update multiple Run at once
         /// </summary>
-        Task<int> BatchUpdateClientsAsync(
-            IEnumerable<Client> PrivateRuns,
-            CancellationToken cancellationToken = default);
-
+        Task<int> BatchUpdateClientsAsync(IEnumerable<Client> PrivateRuns,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Save changes to database

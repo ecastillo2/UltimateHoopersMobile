@@ -1,5 +1,4 @@
 ﻿using Domain;
-using Domain.DtoModel;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.RegularExpressions;
 using System.Web;
@@ -19,6 +18,16 @@ namespace Website.Controllers
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
+        /// <summary>
+        /// Get posts with cursor pagination
+        /// </summary>
+        /// <param name="postType"></param>
+        /// <param name="cursor"></param>
+        /// <param name="limit"></param>
+        /// <param name="direction"></param>
+        /// <param name="sortBy"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpGet]
         public async Task<IActionResult> Post(string postType, string cursor = null, int limit = 10, string direction = "next", string sortBy = "StartDate", CancellationToken cancellationToken = default)
         {
@@ -55,6 +64,12 @@ namespace Website.Controllers
             }
         }
 
+        /// <summary>
+        /// Get Post Data
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpGet]
         public async Task<IActionResult> GetPostData(string id, CancellationToken cancellationToken = default)
         {
@@ -152,6 +167,12 @@ namespace Website.Controllers
             }
         }
 
+        /// <summary>
+        ///  Details
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpGet]
         public async Task<IActionResult> Details(string id, CancellationToken cancellationToken = default)
         {
@@ -201,6 +222,10 @@ namespace Website.Controllers
             }
         }
 
+        /// <summary>
+        /// Create
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         public IActionResult Create()
         {
@@ -215,6 +240,12 @@ namespace Website.Controllers
             return View(new Post());
         }
 
+        /// <summary>
+        /// Create
+        /// </summary>
+        /// <param name="post"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Post post, CancellationToken cancellationToken = default)
@@ -266,6 +297,12 @@ namespace Website.Controllers
             }
         }
 
+        /// <summary>
+        /// Edit
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpGet]
         public async Task<IActionResult> Edit(string id, CancellationToken cancellationToken = default)
         {
@@ -306,6 +343,12 @@ namespace Website.Controllers
             }
         }
 
+        /// <summary>
+        /// Edit
+        /// </summary>
+        /// <param name="post"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(Post post, CancellationToken cancellationToken = default)
@@ -373,6 +416,12 @@ namespace Website.Controllers
             }
         }
 
+        /// <summary>
+        /// Delete
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(string id, CancellationToken cancellationToken = default)

@@ -20,10 +20,7 @@ namespace DataLayer.DAL.Interface
         /// <summary>
         /// Get profiles with offset-based pagination
         /// </summary>
-        Task<(List<Profile> Profiles, int TotalCount, int TotalPages)> GetProfilesPaginatedAsync(
-            int page = 1,
-            int pageSize = 20,
-            CancellationToken cancellationToken = default);
+        Task<(List<Profile> Profiles, int TotalCount, int TotalPages)> GetProfilesPaginatedAsync(int page = 1,int pageSize = 20,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get profiles with cursor-based pagination for efficient scrolling
@@ -34,32 +31,22 @@ namespace DataLayer.DAL.Interface
         /// <param name="sortBy">Field to sort by (e.g., "Points", "PlayerNumber", "Status")</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>Profiles and the next cursor value</returns>
-        Task<(List<Profile> Profiles, string NextCursor)> GetProfilesWithCursorAsync(
-            string cursor = null,
-            int limit = 20,
-            string direction = "next",
-            string sortBy = "Points",
-            CancellationToken cancellationToken = default);
+        Task<(List<Profile> Profiles, string NextCursor)> GetProfilesWithCursorAsync(string cursor = null,int limit = 20,string direction = "next",string sortBy = "Points",CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Stream all profiles for efficient memory usage with large datasets
         /// </summary>
-        IAsyncEnumerable<Profile> StreamAllProfilesAsync(
-            [EnumeratorCancellation] CancellationToken cancellationToken = default);
+        IAsyncEnumerable<Profile> StreamAllProfilesAsync([EnumeratorCancellation] CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get profiles that the specified profile is following
         /// </summary>
-        Task<List<Profile>> GetFollowingProfilesAsync(
-            string profileId,
-            CancellationToken cancellationToken = default);
+        Task<List<Profile>> GetFollowingProfilesAsync(string profileId,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get profiles that follow the specified profile
         /// </summary>
-        Task<List<Profile>> GetFollowerProfilesAsync(
-            string profileId,
-            CancellationToken cancellationToken = default);
+        Task<List<Profile>> GetFollowerProfilesAsync(string profileId,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get profile by ID

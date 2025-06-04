@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Domain;
+﻿using Domain;
 
 namespace DataLayer.DAL.Interface
 {
@@ -26,11 +20,7 @@ namespace DataLayer.DAL.Interface
         /// <param name="timeZone">Timezone for relative time calculation</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>Tuple containing posts, next cursor, and whether more posts exist</returns>
-        Task<(List<Post> Posts, string NextCursor, bool HasMore)> GetPostsWithCursorAsync(
-            string cursor = null,
-            int limit = 10,
-            string timeZone = "America/New_York",
-            CancellationToken cancellationToken = default);
+        Task<(List<Post> Posts, string NextCursor, bool HasMore)> GetPostsWithCursorAsync(string cursor = null,int limit = 10,string timeZone = "America/New_York",CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Invalidate the posts cache
