@@ -19,6 +19,7 @@ namespace WebAPI.ApiClients
         private readonly ILogger<StorageApi> _logger;
         private readonly string _connectionString;
         private readonly string _productImageContainerName;
+        private readonly string _videoFileContainerName;
         private readonly BlobServiceClient _blobServiceClient;
         private readonly HttpClient _httpClient;
         private const int MAX_IMAGE_WIDTH = 1200;
@@ -42,7 +43,10 @@ namespace WebAPI.ApiClients
                 ?? throw new InvalidOperationException("Blob storage connection string is not configured");
 
             _productImageContainerName = configuration["BlobStorage:ProductContainerName"] ?? ""
-                ?? throw new InvalidOperationException("Profile container name is not configured");
+                ?? throw new InvalidOperationException("Product container name is not configured");
+
+            _videoFileContainerName = configuration["BlobStorage:VideoContainerName"] ?? ""
+                ?? throw new InvalidOperationException("Video container name is not configured");
 
             _blobServiceClient = new BlobServiceClient(_connectionString);
         }
@@ -266,7 +270,7 @@ namespace WebAPI.ApiClients
                     return false;
                 }
 
-                var containerClient = _blobServiceClient.GetBlobContainerClient(_productImageContainerName);
+                var containerClient = _blobServiceClient.GetBlobContainerClient(_videoFileContainerName);
                 await containerClient.CreateIfNotExistsAsync(PublicAccessType.Blob);
 
                 var fileName = $"{videoId}.mp4";
@@ -431,7 +435,7 @@ namespace WebAPI.ApiClients
 
             try
             {
-                var containerClient = _blobServiceClient.GetBlobContainerClient(_productImageContainerName);
+                var containerClient = _blobServiceClient.GetBlobContainerClient(_videoFileContainerName);
                 var blobClient = containerClient.GetBlobClient(fileName);
 
                 var response = await blobClient.DeleteIfExistsAsync();
