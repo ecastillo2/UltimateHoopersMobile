@@ -1,10 +1,10 @@
 ﻿/**
- * Enhanced Video Management with Comprehensive Video Handling
- * Complete solution for video management, similar to product management but adapted for videos
+ * Complete Fixed Video Management JavaScript
+ * Enhanced video upload functionality with comprehensive error handling
  */
 
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('🚀 Initializing Enhanced Video Management');
+    console.log('🚀 Initializing Complete Fixed Video Management');
 
     // Global storage for current video data
     window.currentVideoData = null;
@@ -14,8 +14,9 @@ document.addEventListener('DOMContentLoaded', function () {
     initializeModals();
     initializeForms();
     initializeVideoHandlers();
+    initializeFormDefaults();
 
-    console.log('✅ Complete Video Management loaded successfully');
+    console.log('✅ Complete Fixed Video Management loaded successfully');
 
     // ========== DATATABLE INITIALIZATION ==========
     function initializeDataTable() {
@@ -39,10 +40,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     { orderable: false, targets: [4] }
                 ],
                 order: [[1, 'desc']],
-                // Add callback to initialize filters after table is ready
                 initComplete: function () {
                     console.log('📊 DataTable initialization complete, setting up filters...');
-                    // Small delay to ensure DOM is ready
                     setTimeout(function () {
                         initializeFilters();
                     }, 100);
@@ -50,7 +49,6 @@ document.addEventListener('DOMContentLoaded', function () {
             });
             console.log('📊 DataTable initialized successfully');
         } else {
-            // If no data, still try to initialize filters after a delay
             setTimeout(function () {
                 initializeFilters();
             }, 500);
@@ -82,7 +80,6 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // Apply filter function
         function applyFilters() {
             console.log('🔍 Applying filters...', {
                 status: statusFilter.val(),
@@ -98,14 +95,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 );
             }
 
-            // Create a new custom filter function
             const customFilter = function (settings, data, dataIndex) {
-                // Only apply this filter to our videosTable
                 if (settings.nTable.id !== 'videosTable') return true;
 
                 const row = $(table.row(dataIndex).node());
 
-                // Skip filtering if all filters are set to 'all'
                 if (statusFilter.val() === 'all' &&
                     clientFilter.val() === 'all' &&
                     dateFilter.val() === 'all' &&
@@ -117,15 +111,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     // Status filtering
                     if (statusFilter.val() !== 'all') {
                         const statusValue = statusFilter.val().toLowerCase();
-
-                        // Get status from data attributes or cell content
                         const rowStatus = (row.attr('data-status') || '').toLowerCase();
-                        const statusCell = row.find('td:nth-child(3)'); // Status column
+                        const statusCell = row.find('td:nth-child(3)');
                         const statusText = statusCell.find('.badge').text().toLowerCase() ||
                             statusCell.text().toLowerCase();
 
                         const matchesStatus = rowStatus === statusValue || statusText.includes(statusValue);
-
                         if (!matchesStatus) {
                             return false;
                         }
@@ -134,14 +125,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     // Client filtering
                     if (clientFilter.val() !== 'all') {
                         const clientValue = clientFilter.val().toLowerCase();
-
-                        // Get client from data attributes or cell content
                         const rowClient = (row.attr('data-client-id') || '').toLowerCase();
-                        const clientCell = row.find('td:nth-child(4)'); // Client column
+                        const clientCell = row.find('td:nth-child(4)');
                         const clientText = clientCell.text().toLowerCase();
 
                         const matchesClient = rowClient === clientValue || clientText.includes(clientValue);
-
                         if (!matchesClient) {
                             return false;
                         }
@@ -154,31 +142,16 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
                     }
 
-                    // Duration filtering (placeholder for now)
-                    if (durationFilter.val() !== 'all') {
-                        // This would require video duration data
-                        // For now, just pass through
-                    }
-
-                    // If we got here, the row passes all filters
                     return true;
-
                 } catch (error) {
                     console.error('❌ Error in filter function:', error);
-                    return true; // Show row if there's an error
+                    return true;
                 }
             };
 
-            // Mark the filter function for identification
             customFilter.name = 'videoTableFilter';
-
-            // Add the custom filter
             $.fn.dataTable.ext.search.push(customFilter);
-
-            // Redraw the table to apply filters
             table.draw();
-
-            // Update the active filters display
             updateActiveFilters();
         }
 
@@ -221,21 +194,17 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        // Update the active filters display
         function updateActiveFilters() {
             if (!activeFiltersContainer.length) return;
 
-            // Clear the current active filters display (except the label)
             activeFiltersContainer.find('.filter-badge, .filter-none').remove();
 
-            // Check if any filters are active
             const hasActiveFilters =
                 statusFilter.val() !== 'all' ||
                 clientFilter.val() !== 'all' ||
                 dateFilter.val() !== 'all' ||
                 durationFilter.val() !== 'all';
 
-            // If no filters are active, show "None"
             if (!hasActiveFilters) {
                 activeFiltersContainer.append(
                     $('<span>').addClass('text-muted filter-none').text('None')
@@ -243,7 +212,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            // Add badges for active filters
             if (statusFilter.val() !== 'all') {
                 addFilterBadge('Status', formatFilterValue(statusFilter.val()), function () {
                     statusFilter.val('all');
@@ -273,7 +241,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        // Helper function to format filter values for display
         function formatFilterValue(value) {
             return value
                 .split('-')
@@ -281,7 +248,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 .join(' ');
         }
 
-        // Add a filter badge to the display
         function addFilterBadge(label, value, removeCallback) {
             const badge = $('<span>')
                 .addClass('badge bg-primary me-2 filter-badge')
@@ -300,7 +266,7 @@ document.addEventListener('DOMContentLoaded', function () {
             activeFiltersContainer.append(badge);
         }
 
-        // Add event listeners to filters
+        // Event listeners
         statusFilter.on('change', function () {
             console.log('Status filter changed to:', this.value);
             applyFilters();
@@ -321,7 +287,6 @@ document.addEventListener('DOMContentLoaded', function () {
             applyFilters();
         });
 
-        // Reset filters button
         if (resetFiltersBtn.length) {
             resetFiltersBtn.on('click', function () {
                 console.log('🔄 Resetting all filters');
@@ -333,9 +298,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
-        // Initialize with current filter values
         applyFilters();
-
         console.log('✅ Video table filters initialized successfully');
     }
 
@@ -346,16 +309,20 @@ document.addEventListener('DOMContentLoaded', function () {
             editVideoModal.addEventListener('show.bs.modal', handleEditModalShow);
             editVideoModal.addEventListener('hidden.bs.modal', handleEditModalHide);
 
-            // Tab switching handlers
             const tabButtons = editVideoModal.querySelectorAll('button[data-bs-toggle="tab"]');
             tabButtons.forEach(button => {
                 button.addEventListener('shown.bs.tab', handleTabSwitch);
             });
 
-            console.log('📝 Modal event handlers initialized');
+            console.log('📝 Edit modal event handlers initialized');
         }
 
-        // Delete button handler
+        const addVideoModal = document.getElementById('addVideoModal');
+        if (addVideoModal) {
+            addVideoModal.addEventListener('hidden.bs.modal', handleAddModalHide);
+            console.log('📝 Add modal event handlers initialized');
+        }
+
         const deleteVideoBtn = document.getElementById('deleteVideoBtn');
         if (deleteVideoBtn) {
             deleteVideoBtn.addEventListener('click', handleDeleteVideo);
@@ -374,14 +341,10 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // Set video IDs in forms
         safeSetValue('editVideoId', videoId);
         safeSetValue('deleteVideoId', videoId);
 
-        // Clear previous data
         clearAllForms();
-
-        // Load video data
         loadVideoDataEnhanced(videoId);
     }
 
@@ -389,6 +352,23 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('🚪 Edit modal closed, clearing forms');
         clearAllForms();
         window.currentVideoData = null;
+    }
+
+    function handleAddModalHide() {
+        console.log('🚪 Add modal closed, clearing form');
+        const form = document.getElementById('addVideoForm');
+        if (form) {
+            form.reset();
+            clearValidationErrors(form);
+            clearVideoPreview();
+
+            // Reset date to today
+            const videoDateInput = document.getElementById('addVideoDate');
+            if (videoDateInput) {
+                const today = new Date().toISOString().split('T')[0];
+                videoDateInput.value = today;
+            }
+        }
     }
 
     function handleTabSwitch(event) {
@@ -401,7 +381,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         switch (targetTab) {
             case '#video-details-tab-pane':
-                // Already handled in main load function
                 break;
             case '#video-info-tab-pane':
                 console.log('📊 Loading video info tab');
@@ -430,6 +409,630 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // ========== ENHANCED FORM HANDLERS ==========
+    function initializeForms() {
+        // Add Video Form - FIXED
+        const addVideoForm = document.getElementById('addVideoForm');
+        if (addVideoForm) {
+            addVideoForm.addEventListener('submit', handleAddFormSubmitFixed);
+            console.log('✅ Fixed add form handler attached');
+        }
+
+        // Edit Video Form  
+        const editVideoForm = document.getElementById('editVideoForm');
+        if (editVideoForm) {
+            editVideoForm.addEventListener('submit', handleEditFormSubmitFixed);
+            console.log('✅ Fixed edit form handler attached');
+        }
+
+        // Initialize form validation
+        initializeFormValidation();
+    }
+
+    function handleAddFormSubmitFixed(e) {
+        e.preventDefault();
+        console.log('📤 Add video form submitted (FIXED VERSION)');
+
+        // Validate form before submission
+        if (!validateVideoForm(e.target)) {
+            console.log('❌ Form validation failed');
+            return;
+        }
+
+        const formData = new FormData(e.target);
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+
+        // Debug: Log all form data
+        console.log('📋 Form data being sent:');
+        for (let [key, value] of formData.entries()) {
+            if (value instanceof File) {
+                console.log(`${key}: File - ${value.name} (${value.size} bytes, ${value.type})`);
+            } else {
+                console.log(`${key}: ${value}`);
+            }
+        }
+
+        // Show loading state
+        if (submitBtn && window.UIUtils) {
+            window.UIUtils.setButtonLoading(submitBtn, true, 'Uploading Video...');
+        }
+
+        const token = getAntiForgeryToken();
+        if (!token) {
+            console.error('❌ No anti-forgery token found');
+            showToast('Security token missing. Please refresh the page.', 'error');
+            if (submitBtn && window.UIUtils) {
+                window.UIUtils.setButtonLoading(submitBtn, false);
+            }
+            return;
+        }
+
+        // FIXED: Use XMLHttpRequest for better upload progress and error handling
+        const xhr = new XMLHttpRequest();
+
+        // Upload progress
+        xhr.upload.addEventListener('progress', function (e) {
+            if (e.lengthComputable) {
+                const percentComplete = Math.round((e.loaded / e.total) * 100);
+                console.log(`📊 Upload progress: ${percentComplete}%`);
+
+                if (submitBtn) {
+                    submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Uploading... ${percentComplete}%`;
+                }
+
+                // Update progress bar if it exists
+                const progressBar = document.querySelector('#uploadProgress .progress-bar');
+                const progressContainer = document.getElementById('uploadProgress');
+                if (progressBar && progressContainer) {
+                    progressContainer.style.display = 'block';
+                    progressBar.style.width = percentComplete + '%';
+                    progressBar.setAttribute('aria-valuenow', percentComplete);
+                }
+            }
+        });
+
+        // Handle response
+        xhr.addEventListener('load', function () {
+            console.log('📡 Server response received:', xhr.status);
+
+            if (submitBtn && window.UIUtils) {
+                window.UIUtils.setButtonLoading(submitBtn, false);
+            }
+
+            // Hide progress bar
+            const progressContainer = document.getElementById('uploadProgress');
+            if (progressContainer) {
+                progressContainer.style.display = 'none';
+            }
+
+            try {
+                if (xhr.status === 200) {
+                    const result = JSON.parse(xhr.responseText);
+                    console.log('📦 Parsed response:', result);
+
+                    if (result.success) {
+                        showToast('Video uploaded successfully!', 'success');
+
+                        // Clear form
+                        e.target.reset();
+                        clearVideoPreview();
+
+                        // Close modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('addVideoModal'));
+                        if (modal) modal.hide();
+
+                        // Reload page to show new video
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        console.error('❌ Server returned error:', result.message);
+                        showToast(`Upload failed: ${result.message || 'Unknown error'}`, 'error');
+
+                        if (result.field) {
+                            highlightErrorField(result.field);
+                        }
+                    }
+                } else {
+                    console.error('❌ HTTP error:', xhr.status, xhr.statusText);
+                    let errorMessage = `HTTP ${xhr.status}: ${xhr.statusText}`;
+
+                    try {
+                        const errorResponse = JSON.parse(xhr.responseText);
+                        if (errorResponse.message) {
+                            errorMessage = errorResponse.message;
+                        }
+                    } catch (e) {
+                        // Response is not JSON, use status text
+                    }
+
+                    showToast(`Upload failed: ${errorMessage}`, 'error');
+                }
+            } catch (error) {
+                console.error('❌ Error parsing response:', error);
+                showToast('Upload failed: Invalid server response', 'error');
+            }
+        });
+
+        // Handle network errors
+        xhr.addEventListener('error', function () {
+            console.error('❌ Network error during upload');
+            if (submitBtn && window.UIUtils) {
+                window.UIUtils.setButtonLoading(submitBtn, false);
+            }
+            const progressContainer = document.getElementById('uploadProgress');
+            if (progressContainer) {
+                progressContainer.style.display = 'none';
+            }
+            showToast('Upload failed: Network error. Please check your connection.', 'error');
+        });
+
+        // Handle timeout
+        xhr.addEventListener('timeout', function () {
+            console.error('❌ Upload timeout');
+            if (submitBtn && window.UIUtils) {
+                window.UIUtils.setButtonLoading(submitBtn, false);
+            }
+            const progressContainer = document.getElementById('uploadProgress');
+            if (progressContainer) {
+                progressContainer.style.display = 'none';
+            }
+            showToast('Upload failed: Request timed out. The file might be too large.', 'error');
+        });
+
+        // Configure request
+        xhr.timeout = 900000; // 15 minutes timeout for large video files (up to 800MB)
+        xhr.open('POST', '/Video/Create', true);
+        xhr.setRequestHeader('RequestVerificationToken', token);
+
+        // Send the request
+        console.log('🚀 Starting video upload...');
+        xhr.send(formData);
+    }
+
+    function handleEditFormSubmitFixed(e) {
+        e.preventDefault();
+        console.log('📤 Edit video form submitted (FIXED VERSION)');
+
+        if (!validateVideoForm(e.target)) {
+            console.log('❌ Form validation failed');
+            return;
+        }
+
+        const formData = new FormData(e.target);
+        const videoData = {};
+
+        // Convert FormData to object for JSON submission
+        for (const [key, value] of formData.entries()) {
+            if (value instanceof File && value.size === 0) {
+                continue;
+            }
+            videoData[key] = value;
+        }
+
+        console.log('📋 Video data for edit:', videoData);
+
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        if (submitBtn && window.UIUtils) {
+            window.UIUtils.setButtonLoading(submitBtn, true, 'Saving...');
+        }
+
+        const token = getAntiForgeryToken();
+
+        fetch('/Video/Edit', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': token
+            },
+            body: JSON.stringify(videoData)
+        })
+            .then(response => {
+                console.log('📡 Edit response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(result => {
+                console.log('📦 Edit response:', result);
+
+                if (submitBtn && window.UIUtils) {
+                    window.UIUtils.setButtonLoading(submitBtn, false);
+                }
+
+                if (result.success) {
+                    showToast('Video updated successfully!', 'success');
+
+                    window.currentVideoData = { ...window.currentVideoData, ...videoData };
+
+                    setTimeout(() => {
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('editVideoModal'));
+                        if (modal) modal.hide();
+                        location.reload();
+                    }, 1000);
+                } else {
+                    showToast(`Error updating video: ${result.message || 'Unknown error'}`, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('❌ Error updating video:', error);
+                if (submitBtn && window.UIUtils) {
+                    window.UIUtils.setButtonLoading(submitBtn, false);
+                }
+                showToast(`Error updating video: ${error.message}`, 'error');
+            });
+    }
+
+    // ========== FORM VALIDATION ==========
+    function validateVideoForm(form) {
+        console.log('🔍 Validating video form...');
+
+        const title = form.querySelector('#addTitle, #editTitle');
+        const videoFile = form.querySelector('#addVideoFile, #editVideoFile');
+        const videoURL = form.querySelector('#addVideoURL, #editVideoURL');
+
+        let isValid = true;
+        const errors = [];
+
+        clearValidationErrors(form);
+
+        // Title validation
+        if (!title || !title.value.trim()) {
+            errors.push('Video title is required');
+            if (title) highlightErrorField('Title');
+            isValid = false;
+        } else if (title.value.length > 100) {
+            errors.push('Video title cannot exceed 100 characters');
+            highlightErrorField('Title');
+            isValid = false;
+        }
+
+        // Video source validation
+        const hasFile = videoFile && videoFile.files && videoFile.files.length > 0;
+        const hasURL = videoURL && videoURL.value.trim();
+        const isEditForm = form.id === 'editVideoForm';
+
+        if (!isEditForm && !hasFile && !hasURL) {
+            errors.push('Please either upload a video file or provide a video URL');
+            if (videoFile) highlightErrorField('VideoFile');
+            if (videoURL) highlightErrorField('VideoURL');
+            isValid = false;
+        }
+
+        // File validation
+        if (hasFile) {
+            const file = videoFile.files[0];
+            const validation = validateVideoFileClient(file);
+            if (!validation.isValid) {
+                errors.push(validation.errorMessage);
+                highlightErrorField('VideoFile');
+                isValid = false;
+            }
+        }
+
+        // URL validation
+        if (hasURL) {
+            if (!isValidURL(videoURL.value)) {
+                errors.push('Please enter a valid video URL');
+                highlightErrorField('VideoURL');
+                isValid = false;
+            }
+        }
+
+        if (!isValid) {
+            const errorMessage = errors.length === 1
+                ? errors[0]
+                : `Please fix the following errors:\n• ${errors.join('\n• ')}`;
+            showToast(errorMessage, 'error');
+        }
+
+        console.log(`✅ Form validation ${isValid ? 'passed' : 'failed'}`);
+        return isValid;
+    }
+
+    function validateVideoFileClient(file) {
+        const maxFileSize = 800 * 1024 * 1024; // 800MB
+        const allowedExtensions = ['.mp4', '.webm', '.ogg', '.avi', '.mov', '.wmv', '.flv', '.mkv'];
+        const allowedTypes = [
+            'video/mp4', 'video/webm', 'video/ogg', 'video/avi',
+            'video/quicktime', 'video/x-msvideo', 'video/x-flv', 'video/x-matroska'
+        ];
+
+        console.log('🔍 Validating video file:', file.name, file.size, file.type);
+
+        if (file.size > maxFileSize) {
+            return {
+                isValid: false,
+                errorMessage: `File size (${formatFileSize(file.size)}) exceeds maximum allowed size (800MB)`
+            };
+        }
+
+        const extension = getFileExtension(file.name).toLowerCase();
+        if (!allowedExtensions.includes(extension)) {
+            return {
+                isValid: false,
+                errorMessage: `File type "${extension}" not supported. Allowed types: ${allowedExtensions.join(', ')}`
+            };
+        }
+
+        if (file.type && !file.type.startsWith('video/') && !allowedTypes.includes(file.type)) {
+            console.warn('⚠️ Unexpected content type:', file.type);
+        }
+
+        return { isValid: true };
+    }
+
+    function initializeFormValidation() {
+        // Real-time title validation
+        const titleInputs = document.querySelectorAll('#addTitle, #editTitle');
+        titleInputs.forEach(input => {
+            input.addEventListener('input', function () {
+                validateTitleField(this);
+            });
+        });
+
+        // File input validation
+        const fileInputs = document.querySelectorAll('#addVideoFile, #editVideoFile');
+        fileInputs.forEach(input => {
+            input.addEventListener('change', function () {
+                if (this.files.length > 0) {
+                    validateVideoFileField(this);
+                }
+            });
+        });
+
+        // URL input validation
+        const urlInputs = document.querySelectorAll('#addVideoURL, #editVideoURL');
+        urlInputs.forEach(input => {
+            input.addEventListener('blur', function () {
+                if (this.value.trim()) {
+                    validateURLField(this);
+                }
+            });
+        });
+    }
+
+    function validateTitleField(input) {
+        const value = input.value.trim();
+        const isValid = value.length > 0 && value.length <= 100;
+
+        if (isValid) {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+        } else {
+            input.classList.remove('is-valid');
+            if (value.length > 0) {
+                input.classList.add('is-invalid');
+            }
+        }
+
+        return isValid;
+    }
+
+    function validateVideoFileField(input) {
+        if (input.files.length === 0) return true;
+
+        const file = input.files[0];
+        const validation = validateVideoFileClient(file);
+
+        if (validation.isValid) {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+
+            const infoDiv = input.parentElement.querySelector('.file-info') || createFileInfoDiv(input);
+            infoDiv.innerHTML = `
+                <small class="text-success">
+                    <i class="bi bi-check-circle me-1"></i>
+                    ${file.name} (${formatFileSize(file.size)})
+                </small>
+            `;
+        } else {
+            input.classList.remove('is-valid');
+            input.classList.add('is-invalid');
+
+            const infoDiv = input.parentElement.querySelector('.file-info') || createFileInfoDiv(input);
+            infoDiv.innerHTML = `
+                <small class="text-danger">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    ${validation.errorMessage}
+                </small>
+            `;
+        }
+
+        return validation.isValid;
+    }
+
+    function validateURLField(input) {
+        const value = input.value.trim();
+        const isValid = !value || isValidURL(value);
+
+        if (isValid) {
+            input.classList.remove('is-invalid');
+            if (value) input.classList.add('is-valid');
+        } else {
+            input.classList.remove('is-valid');
+            input.classList.add('is-invalid');
+        }
+
+        return isValid;
+    }
+
+    function createFileInfoDiv(input) {
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'file-info mt-1';
+        input.parentElement.appendChild(infoDiv);
+        return infoDiv;
+    }
+
+    function clearValidationErrors(form) {
+        const inputs = form.querySelectorAll('.is-invalid, .is-valid');
+        inputs.forEach(input => {
+            input.classList.remove('is-invalid', 'is-valid');
+        });
+
+        const fileInfos = form.querySelectorAll('.file-info');
+        fileInfos.forEach(info => info.remove());
+    }
+
+    function highlightErrorField(fieldName) {
+        const field = document.getElementById(`add${fieldName}`) || document.getElementById(`edit${fieldName}`);
+        if (field) {
+            field.classList.add('is-invalid');
+            field.focus();
+        }
+    }
+
+    // ========== VIDEO HANDLERS ==========
+    function initializeVideoHandlers() {
+        // Video file input handlers
+        const videoFileInputs = document.querySelectorAll('input[type="file"][accept*="video"]');
+        videoFileInputs.forEach(input => {
+            input.addEventListener('change', function (e) {
+                const file = e.target.files[0];
+                if (file) {
+                    handleVideoPreviewFixed(file, input);
+                }
+            });
+        });
+
+        // Video URL input handlers
+        const videoUrlInputs = document.querySelectorAll('input[name="VideoURL"]');
+        videoUrlInputs.forEach(input => {
+            input.addEventListener('blur', function () {
+                if (this.value) {
+                    updateVideoPreview(this.value);
+                }
+            });
+        });
+
+        // Clear video buttons
+        const clearButtons = document.querySelectorAll('#clearAddVideo, #clearEditVideo');
+        clearButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                clearVideoPreview();
+            });
+        });
+
+        // Media tab video controls
+        const downloadBtn = document.getElementById('downloadVideoBtn');
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', downloadVideo);
+        }
+
+        const fullscreenBtn = document.getElementById('fullscreenVideoBtn');
+        if (fullscreenBtn) {
+            fullscreenBtn.addEventListener('click', toggleFullscreen);
+        }
+
+        const removeBtn = document.getElementById('removeVideoBtn');
+        if (removeBtn) {
+            removeBtn.addEventListener('click', removeVideo);
+        }
+    }
+
+    function handleVideoPreviewFixed(file, input) {
+        console.log('🎬 Handling video preview for:', file.name);
+
+        // Create object URL for preview
+        const videoUrl = URL.createObjectURL(file);
+
+        // Update preview
+        updateVideoPreview(videoUrl);
+
+        // Clean up object URL after a delay to prevent memory leaks
+        setTimeout(() => {
+            URL.revokeObjectURL(videoUrl);
+        }, 10000);
+    }
+
+    function updateVideoPreview(videoUrl) {
+        const currentVideo = document.getElementById('currentVideo') || document.getElementById('addPreviewVideo');
+        const placeholder = document.getElementById('currentVideoPlaceholder') || document.getElementById('addVideoPlaceholder');
+
+        if (!currentVideo || !placeholder) {
+            console.warn('⚠️ Video preview elements not found');
+            return;
+        }
+
+        if (videoUrl && videoUrl.trim()) {
+            currentVideo.src = videoUrl;
+            currentVideo.style.display = 'block';
+            placeholder.style.display = 'none';
+            console.log('🎬 Video preview updated');
+        } else {
+            currentVideo.style.display = 'none';
+            placeholder.style.display = 'flex';
+            currentVideo.src = '';
+            console.log('🎬 Video preview cleared');
+        }
+    }
+
+    function clearVideoPreview() {
+        updateVideoPreview('');
+
+        // Clear file inputs
+        const fileInputs = document.querySelectorAll('input[type="file"][accept*="video"]');
+        fileInputs.forEach(input => {
+            input.value = '';
+            input.classList.remove('is-invalid', 'is-valid');
+        });
+
+        // Clear URL inputs
+        const urlInputs = document.querySelectorAll('input[name="VideoURL"]');
+        urlInputs.forEach(input => {
+            input.value = '';
+            input.classList.remove('is-invalid', 'is-valid');
+        });
+    }
+
+    function downloadVideo() {
+        const videoUrl = getCurrentVideoUrl();
+        if (videoUrl) {
+            const link = document.createElement('a');
+            link.href = videoUrl;
+            link.download = 'video';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast('Download started', 'success');
+        } else {
+            showToast('No video to download', 'warning');
+        }
+    }
+
+    function toggleFullscreen() {
+        const video = document.querySelector('#videoContent video');
+        if (video) {
+            if (video.requestFullscreen) {
+                video.requestFullscreen();
+            } else if (video.webkitRequestFullscreen) {
+                video.webkitRequestFullscreen();
+            } else if (video.msRequestFullscreen) {
+                video.msRequestFullscreen();
+            }
+        }
+    }
+
+    function removeVideo() {
+        if (confirm('Are you sure you want to remove this video?')) {
+            safeSetValue('editVideoURL', '');
+            updateVideoPreview('');
+            showNoVideoFallback();
+            showToast('Video removed', 'success');
+        }
+    }
+
+    // ========== FORM DEFAULTS ==========
+    function initializeFormDefaults() {
+        console.log('🎬 Initializing form defaults');
+
+        // Set today's date as default for new videos
+        const videoDateInput = document.getElementById('addVideoDate');
+        if (videoDateInput && !videoDateInput.value) {
+            const today = new Date().toISOString().split('T')[0];
+            videoDateInput.value = today;
+        }
+    }
+
     // ========== DATA LOADING FUNCTIONS ==========
     function loadVideoDataEnhanced(videoId) {
         console.log('📥 Loading enhanced video data for ID:', videoId);
@@ -441,7 +1044,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         showLoadingState();
 
-        // Try to populate from table data first
         const row = findVideoRowById(videoId);
         if (row) {
             console.log('📋 Found table row, extracting data...');
@@ -449,7 +1051,6 @@ document.addEventListener('DOMContentLoaded', function () {
             populateFromTableData(tableData);
         }
 
-        // Always call API for complete data
         if (!window.appUrls?.getVideoData) {
             console.error('🚨 GetVideoData API URL not configured');
             hideLoadingState();
@@ -487,7 +1088,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         console.log('📋 Extracting data from table row');
 
-        // Get data attributes
         const dataFromAttributes = {
             videoId: row.getAttribute('data-video-id'),
             title: row.getAttribute('data-video-title'),
@@ -501,10 +1101,8 @@ document.addEventListener('DOMContentLoaded', function () {
             videoNumber: row.getAttribute('data-video-number')
         };
 
-        // Extract from cell content as fallback
         const cells = row.querySelectorAll('td');
         if (cells.length >= 4) {
-            // Video info from first column
             const videoCell = cells[0];
             const titleEl = videoCell.querySelector('.video-title, .fw-semibold');
             const numberEl = videoCell.querySelector('.video-number, .text-muted.small');
@@ -516,12 +1114,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 dataFromAttributes.videoNumber = numberEl.textContent.trim();
             }
 
-            // Date from second column
             if (cells[1] && !dataFromAttributes.videoDate) {
                 dataFromAttributes.videoDate = cells[1].textContent.trim();
             }
 
-            // Status from third column
             if (cells[2] && !dataFromAttributes.status) {
                 const statusEl = cells[2].querySelector('.badge, .video-status');
                 if (statusEl) {
@@ -529,7 +1125,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
 
-            // Client from fourth column
             if (cells[3] && !dataFromAttributes.clientId) {
                 dataFromAttributes.clientId = cells[3].textContent.trim();
             }
@@ -542,29 +1137,24 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('📝 Populating form from table data:', data);
 
         try {
-            // Store data globally
             window.currentVideoData = data;
 
-            // Populate form fields
             safeSetValue('editTitle', data.title);
             safeSetValue('editVideoName', data.videoName);
             safeSetValue('editClientId', data.clientId);
             safeSetValue('editVideoNumber', data.videoNumber);
 
-            // Handle video URL
             if (data.videoUrl) {
                 safeSetValue('editVideoURL', data.videoUrl);
                 updateVideoPreview(data.videoUrl);
             }
 
-            // Handle date
             if (data.videoDate) {
                 safeSetValue('editVideoDate', formatDateForInput(data.videoDate));
             } else if (data.createdDate) {
                 safeSetValue('editVideoDate', formatDateForInput(data.createdDate));
             }
 
-            // Select fields
             safeSetSelect('editStatus', data.status || 'Active');
 
             console.log('✅ Table data populated successfully');
@@ -577,37 +1167,29 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('🌐 Populating form from enhanced API data:', data);
 
         try {
-            // Handle different possible data structures
             const videoData = data.video || data;
-
-            // Store data globally for video info tab access
             window.currentVideoData = videoData;
 
-            // Basic information
             safeSetValue('editTitle', videoData.title || videoData.Title);
             safeSetValue('editVideoName', videoData.videoName || videoData.VideoName);
             safeSetValue('editClientId', videoData.clientId || videoData.ClientId);
             safeSetValue('editVideoNumber', videoData.videoNumber || videoData.VideoNumber);
 
-            // Video URL handling
             const videoUrl = videoData.videoURL || videoData.VideoURL || videoData.videoUrl;
             if (videoUrl) {
                 safeSetValue('editVideoURL', videoUrl);
                 updateVideoPreview(videoUrl);
             }
 
-            // Date handling
             const videoDate = videoData.videoDate || videoData.VideoDate || videoData.createdDate || videoData.CreatedDate;
             if (videoDate) {
                 safeSetValue('editVideoDate', formatDateForInput(videoDate));
             }
 
-            // Select fields
             safeSetSelect('editStatus', videoData.status || videoData.Status || 'Active');
 
             console.log('✅ Enhanced API data populated successfully');
 
-            // Update Video Info tab immediately if it's active
             const activeTab = document.querySelector('#editVideoTabs .nav-link.active');
             if (activeTab && activeTab.getAttribute('data-bs-target') === '#video-info-tab-pane') {
                 updateVideoInfoDisplayFromCurrentData();
@@ -617,13 +1199,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // ========== VIDEO INFO TAB FUNCTIONALITY ==========
+    // ========== VIDEO INFO TAB ==========
     function updateVideoInfoDisplayFromCurrentData() {
         console.log('📊 Updating video info display from current data');
 
         let videoData = window.currentVideoData;
 
-        // Fallback to form data if no stored data
         if (!videoData) {
             videoData = {
                 title: safeGetValue('editTitle'),
@@ -654,7 +1235,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const videoName = videoData.videoName || videoData.VideoName || '--';
         const videoDate = videoData.videoDate || videoData.VideoDate || '--';
 
-        // Update avatar and basic info
         const initials = getVideoInitials(title);
         safeUpdateElement('videoInfoInitials', initials);
         safeUpdateElement('videoInfoTitle', title);
@@ -662,20 +1242,17 @@ document.addEventListener('DOMContentLoaded', function () {
         safeUpdateElement('videoInfoStatus', status);
         safeUpdateElement('videoInfoClient', clientId);
 
-        // Update video information section
         safeUpdateElement('videoInfoTitleDetail', title);
         safeUpdateElement('videoInfoVideoName', videoName);
         safeUpdateElement('videoInfoDate', formatDisplayDate(videoDate));
         safeUpdateElement('videoInfoClientDetail', clientId);
-        safeUpdateElement('videoInfoSize', 'Unknown'); // Would need actual file size
+        safeUpdateElement('videoInfoSize', 'Unknown');
 
-        // Update status badge color
         const statusBadge = document.getElementById('videoInfoStatus');
         if (statusBadge) {
             statusBadge.className = 'badge ' + getStatusBadgeClass(status);
         }
 
-        // Update statistics (mock data for now)
         safeUpdateElement('videoInfoViews', Math.floor(Math.random() * 1000));
         safeUpdateElement('videoInfoDownloads', Math.floor(Math.random() * 100));
         safeUpdateElement('videoInfoRating', (Math.random() * 2 + 3).toFixed(1));
@@ -683,32 +1260,25 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('✅ Video info display updated successfully');
     }
 
-    // ========== VIDEO MEDIA TAB FUNCTIONALITY ==========
+    // ========== VIDEO MEDIA TAB ==========
     function loadVideoMediaTab(videoId) {
         console.log('🎬 Loading video media tab for:', videoId);
 
-        // Get current video data
         const currentVideoUrl = getCurrentVideoUrl();
 
         console.log('🎬 Current video URL:', currentVideoUrl);
 
         if (currentVideoUrl) {
-            // Load existing video
             loadVideoDirectly(currentVideoUrl);
-
-            // Update video information
             updateVideoInfoFromCurrentVideo(currentVideoUrl);
 
-            // Hide upload area
             const uploadArea = document.getElementById('videoUploadArea');
             if (uploadArea) {
                 uploadArea.style.display = 'none';
             }
         } else {
-            // No video available
             showNoVideoFallback();
 
-            // Show upload area
             const uploadArea = document.getElementById('videoUploadArea');
             if (uploadArea) {
                 uploadArea.style.display = 'block';
@@ -717,7 +1287,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function getCurrentVideoUrl() {
-        // Try multiple sources for video URL
         const sources = [
             () => document.getElementById('editVideoURL')?.value,
             () => document.getElementById('currentVideo')?.src,
@@ -763,10 +1332,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         console.log('🎬 Loading video directly:', videoUrl);
 
-        // Clear existing content
         videoContent.innerHTML = '';
 
-        // Create video element
         const video = document.createElement('video');
         video.src = videoUrl;
         video.className = 'video-player';
@@ -820,14 +1387,12 @@ document.addEventListener('DOMContentLoaded', function () {
     function updateVideoInfoFromCurrentVideo(videoUrl) {
         console.log('📝 Updating video info for:', videoUrl);
 
-        // Update video format
         const formatElement = document.getElementById('mediaFormat');
         if (formatElement) {
             const extension = videoUrl.split('.').pop().toLowerCase();
             formatElement.textContent = extension.toUpperCase();
         }
 
-        // Update video URL
         const urlElement = document.getElementById('mediaUrl');
         if (urlElement) {
             const shortUrl = videoUrl.length > 30 ? videoUrl.substring(0, 27) + '...' : videoUrl;
@@ -835,19 +1400,16 @@ document.addEventListener('DOMContentLoaded', function () {
             urlElement.title = videoUrl;
         }
 
-        // Update file size (placeholder for now)
         const sizeElement = document.getElementById('mediaFileSize');
         if (sizeElement) {
             sizeElement.textContent = 'Unknown';
         }
 
-        // Update dimensions (will be set when video loads)
         const resolutionElement = document.getElementById('mediaResolution');
         if (resolutionElement) {
             resolutionElement.textContent = 'Loading...';
         }
 
-        // Update duration (will be set when video loads)
         const durationElement = document.getElementById('mediaDuration');
         if (durationElement) {
             durationElement.textContent = 'Loading...';
@@ -870,212 +1432,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // ========== FORM HANDLERS ==========
-    function initializeForms() {
-        // Add Video Form
-        const addVideoForm = document.getElementById('addVideoForm');
-        if (addVideoForm) {
-            addVideoForm.addEventListener('submit', handleAddFormSubmit);
-            console.log('✅ Add form handler attached');
-        }
-
-        // Edit Video Form  
-        const editVideoForm = document.getElementById('editVideoForm');
-        if (editVideoForm) {
-            editVideoForm.addEventListener('submit', handleEditFormSubmit);
-            console.log('✅ Edit form handler attached');
-        }
-    }
-
-    function handleAddFormSubmit(e) {
-        e.preventDefault();
-        console.log('📤 Add video form submitted');
-
-        const formData = new FormData(e.target);
-        const submitBtn = e.target.querySelector('button[type="submit"]');
-
-        if (submitBtn && window.UIUtils) {
-            window.UIUtils.setButtonLoading(submitBtn, true, 'Adding Video...');
-        }
-
-        const token = getAntiForgeryToken();
-
-        fetch('/Video/Create', {
-            method: 'POST',
-            headers: {
-                'RequestVerificationToken': token
-            },
-            body: formData
-        })
-            .then(response => response.json())
-            .then(result => {
-                if (submitBtn && window.UIUtils) {
-                    window.UIUtils.setButtonLoading(submitBtn, false);
-                }
-
-                if (result.success) {
-                    showToast('Video created successfully!', 'success');
-
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('addVideoModal'));
-                    if (modal) modal.hide();
-
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    showToast(`Error creating video: ${result.message || 'Unknown error'}`, 'error');
-                }
-            })
-            .catch(error => {
-                if (submitBtn && window.UIUtils) {
-                    window.UIUtils.setButtonLoading(submitBtn, false);
-                }
-                console.error('Error creating video:', error);
-                showToast(`Error creating video: ${error.message}`, 'error');
-            });
-    }
-
-    function handleEditFormSubmit(e) {
-        e.preventDefault();
-        console.log('📤 Edit video form submitted');
-
-        const formData = new FormData(e.target);
-        const videoData = {};
-
-        for (const [key, value] of formData.entries()) {
-            videoData[key] = value;
-        }
-
-        const submitBtn = e.target.querySelector('button[type="submit"]');
-        if (submitBtn && window.UIUtils) {
-            window.UIUtils.setButtonLoading(submitBtn, true, 'Saving...');
-        }
-
-        const token = getAntiForgeryToken();
-
-        fetch('/Video/Edit', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': token
-            },
-            body: JSON.stringify(videoData)
-        })
-            .then(response => response.json())
-            .then(result => {
-                if (submitBtn && window.UIUtils) {
-                    window.UIUtils.setButtonLoading(submitBtn, false);
-                }
-
-                if (result.success) {
-                    showToast('Video updated successfully!', 'success');
-
-                    // Update stored data
-                    window.currentVideoData = { ...window.currentVideoData, ...videoData };
-
-                    setTimeout(() => {
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('editVideoModal'));
-                        if (modal) modal.hide();
-                        location.reload();
-                    }, 1000);
-                } else {
-                    showToast(`Error updating video: ${result.message || 'Unknown error'}`, 'error');
-                }
-            })
-            .catch(error => {
-                if (submitBtn && window.UIUtils) {
-                    window.UIUtils.setButtonLoading(submitBtn, false);
-                }
-                console.error('Error updating video:', error);
-                showToast(`Error updating video: ${error.message}`, 'error');
-            });
-    }
-
-    // ========== VIDEO HANDLERS ==========
-    function initializeVideoHandlers() {
-        // Video file input handlers
-        const videoFileInputs = document.querySelectorAll('input[type="file"][accept*="video"]');
-        videoFileInputs.forEach(input => {
-            input.addEventListener('change', function (e) {
-                const file = e.target.files[0];
-                if (file) {
-                    handleVideoPreview(file, input);
-                }
-            });
-        });
-
-        // Video URL input handlers
-        const videoUrlInputs = document.querySelectorAll('input[name="VideoURL"]');
-        videoUrlInputs.forEach(input => {
-            input.addEventListener('blur', function () {
-                if (this.value) {
-                    updateVideoPreview(this.value);
-                }
-            });
-        });
-
-        // Media tab video controls
-        const downloadBtn = document.getElementById('downloadVideoBtn');
-        if (downloadBtn) {
-            downloadBtn.addEventListener('click', downloadVideo);
-        }
-
-        const fullscreenBtn = document.getElementById('fullscreenVideoBtn');
-        if (fullscreenBtn) {
-            fullscreenBtn.addEventListener('click', toggleFullscreen);
-        }
-
-        const removeBtn = document.getElementById('removeVideoBtn');
-        if (removeBtn) {
-            removeBtn.addEventListener('click', removeVideo);
-        }
-    }
-
-    function handleVideoPreview(file, input) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            const videoUrl = e.target.result;
-            updateVideoPreview(videoUrl);
-        };
-        reader.readAsDataURL(file);
-    }
-
-    function downloadVideo() {
-        const videoUrl = getCurrentVideoUrl();
-        if (videoUrl) {
-            const link = document.createElement('a');
-            link.href = videoUrl;
-            link.download = 'video';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            showToast('Download started', 'success');
-        } else {
-            showToast('No video to download', 'warning');
-        }
-    }
-
-    function toggleFullscreen() {
-        const video = document.querySelector('#videoContent video');
-        if (video) {
-            if (video.requestFullscreen) {
-                video.requestFullscreen();
-            } else if (video.webkitRequestFullscreen) {
-                video.webkitRequestFullscreen();
-            } else if (video.msRequestFullscreen) {
-                video.msRequestFullscreen();
-            }
-        }
-    }
-
-    function removeVideo() {
-        if (confirm('Are you sure you want to remove this video?')) {
-            // Clear video URL
-            safeSetValue('editVideoURL', '');
-            updateVideoPreview('');
-            showNoVideoFallback();
-            showToast('Video removed', 'success');
-        }
-    }
-
     // ========== UI STATE MANAGEMENT ==========
     function clearAllForms() {
         clearVideoDetailsForm();
@@ -1091,7 +1447,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         fields.forEach(field => safeSetValue(field, ''));
 
-        // Reset select fields
         const selects = ['editStatus'];
         selects.forEach(select => {
             const element = document.getElementById(select);
@@ -1116,7 +1471,6 @@ document.addEventListener('DOMContentLoaded', function () {
     function clearVideoMediaTab() {
         showNoVideoFallback();
 
-        // Clear media info
         const mediaInfoElements = ['mediaFormat', 'mediaDuration', 'mediaResolution', 'mediaFileSize', 'mediaUrl'];
         mediaInfoElements.forEach(id => {
             const element = document.getElementById(id);
@@ -1199,7 +1553,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         console.log('🔍 Looking for row with video ID:', videoId);
 
-        // Try different strategies to find the row
         let row = document.querySelector(`tr[data-video-id="${videoId}"]`);
         if (row) return row;
 
@@ -1209,7 +1562,6 @@ document.addEventListener('DOMContentLoaded', function () {
             if (row) return row;
         }
 
-        // Search within table body
         const tableBody = document.querySelector('#videosTable tbody');
         if (tableBody) {
             const allRows = tableBody.querySelectorAll('tr');
@@ -1223,25 +1575,27 @@ document.addEventListener('DOMContentLoaded', function () {
         return null;
     }
 
-    function updateVideoPreview(videoUrl) {
-        const currentVideo = document.getElementById('currentVideo');
-        const placeholder = document.getElementById('currentVideoPlaceholder');
-
-        if (!currentVideo || !placeholder) {
-            console.warn('⚠️ Video preview elements not found');
-            return;
+    function isValidURL(string) {
+        try {
+            const url = new URL(string);
+            return url.protocol === 'http:' || url.protocol === 'https:';
+        } catch (_) {
+            return false;
         }
+    }
 
-        if (videoUrl && videoUrl.trim()) {
-            currentVideo.src = videoUrl;
-            currentVideo.style.display = 'block';
-            placeholder.style.display = 'none';
-            console.log('🎬 Video preview updated');
-        } else {
-            currentVideo.style.display = 'none';
-            placeholder.style.display = 'flex';
-            console.log('🎬 Video preview cleared');
-        }
+    function getFileExtension(filename) {
+        const lastDotIndex = filename.lastIndexOf('.');
+        if (lastDotIndex === -1) return '';
+        return filename.slice(lastDotIndex); // Include the dot
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
     function getVideoInitials(title) {
@@ -1283,7 +1637,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function getAntiForgeryToken() {
         const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
-        return tokenInput ? tokenInput.value : '';
+        if (!tokenInput) {
+            console.error('❌ Anti-forgery token not found');
+            return null;
+        }
+        return tokenInput.value;
     }
 
     function showToast(message, type = 'success') {
@@ -1291,12 +1649,20 @@ document.addEventListener('DOMContentLoaded', function () {
             window.UIUtils.showToast(message, type);
         } else {
             console.log(`${type}: ${message}`);
+            alert(`${type}: ${message}`);
         }
     }
 
     // ========== GLOBAL API ==========
-    // Expose functions for debugging and external access
-    window.videoDebug = {
+    window.videoDebugFixed = {
+        validateVideoForm,
+        validateVideoFileClient,
+        handleVideoPreviewFixed,
+        updateVideoPreview,
+        clearVideoPreview,
+        formatFileSize,
+        getFileExtension,
+        isValidURL,
         loadVideoDataEnhanced,
         findVideoRowById,
         populateFromTableData,
@@ -1308,13 +1674,9 @@ document.addEventListener('DOMContentLoaded', function () {
         getCurrentVideoUrl,
         clearAllForms,
         currentVideoData: () => window.currentVideoData,
-        initializeFilters,
-        applyFilters: () => {
-            const table = $('#videosTable').DataTable();
-            if (table) table.draw();
-        }
+        initializeFilters
     };
 
-    console.log('✅ Complete Video Management loaded successfully');
-    console.log('🐛 Debug functions available: window.videoDebug');
+    console.log('✅ Complete Fixed Video Management loaded successfully');
+    console.log('🐛 Debug functions available: window.videoDebugFixed');
 });

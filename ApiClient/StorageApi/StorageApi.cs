@@ -255,16 +255,16 @@ namespace WebAPI.ApiClients
                     return false;
                 }
 
-                // Validate file type
-                var allowedTypes = new[] { "video/mp4" };
+                // Validate file type - support multiple video formats
+                var allowedTypes = new[] { "video/mp4", "video/webm", "video/ogg", "video/avi", "video/mov", "video/wmv" };
                 if (!allowedTypes.Contains(formFile.ContentType.ToLower()))
                 {
                     _logger?.LogError($"Unsupported file type: {formFile.ContentType}");
                     return false;
                 }
 
-                // Validate file size (e.g., max 10MB)
-                if (formFile.Length > 10 * 1024 * 1024)
+                // Validate file size (e.g., max 800MB)
+                if (formFile.Length > 800 * 1024 * 1024)
                 {
                     _logger?.LogError($"File size too large: {formFile.Length} bytes");
                     return false;
@@ -273,53 +273,54 @@ namespace WebAPI.ApiClients
                 var containerClient = _blobServiceClient.GetBlobContainerClient(_videoFileContainerName);
                 await containerClient.CreateIfNotExistsAsync(PublicAccessType.Blob);
 
-                var fileName = $"{videoId}.mp4";
-                var blobClient = containerClient.GetBlobClient(fileName);
-
-                // Process image and upload
-                using var processedImageStream = await ProcessImageForWebP(formFile);
-
-                if (processedImageStream == null || processedImageStream.Length == 0)
+                // Get file extension from the uploaded file
+                var fileExtension = Path.GetExtension(formFile.FileName)?.ToLowerInvariant();
+                if (string.IsNullOrEmpty(fileExtension))
                 {
-                    _logger?.LogError("Processed image stream is null or empty");
-                    return false;
+                    // Default to .mp4 if no extension
+                    fileExtension = ".mp4";
                 }
 
-                // Reset stream position to beginning
-                processedImageStream.Position = 0;
+                var fileName = $"{videoId}{fileExtension}";
+                var blobClient = containerClient.GetBlobClient(fileName);
+
+                // Upload video file directly (no processing needed like images)
+                using var videoStream = formFile.OpenReadStream();
 
                 var uploadOptions = new BlobUploadOptions
                 {
                     HttpHeaders = new BlobHttpHeaders
                     {
-                        ContentType = "image/webp",
+                        ContentType = formFile.ContentType, // Use the actual video content type
                         CacheControl = "public, max-age=31536000" // 1 year cache
                     },
                     Conditions = null, // Allow overwrite
                     ProgressHandler = null
                 };
 
-                await blobClient.UploadAsync(processedImageStream, uploadOptions);
+                await blobClient.UploadAsync(videoStream, uploadOptions);
 
-                _logger?.LogInformation($"Successfully uploaded image for product {videoId}");
+                _logger?.LogInformation($"Successfully uploaded video for video ID {videoId}");
                 return true;
             }
             catch (ArgumentException ex)
             {
-                _logger?.LogError(ex, $"Invalid parameter while processing image for product {videoId}: {ex.Message}");
+                _logger?.LogError(ex, $"Invalid parameter while processing video for video ID {videoId}: {ex.Message}");
                 return false;
             }
             catch (NotSupportedException ex)
             {
-                _logger?.LogError(ex, $"Image format not supported for product {videoId}: {ex.Message}");
+                _logger?.LogError(ex, $"Video format not supported for video ID {videoId}: {ex.Message}");
                 return false;
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, $"Error uploading image for product {videoId}: {ex.Message}");
+                _logger?.LogError(ex, $"Error uploading video for video ID {videoId}: {ex.Message}");
                 return false;
             }
         }
+
+
 
         private async Task<MemoryStream> ProcessImageForWebP(IFormFile formFile)
         {

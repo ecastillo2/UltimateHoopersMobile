@@ -371,14 +371,14 @@
                 <h5 class="modal-title" id="addVideoModalLabel">Add New Video</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="addVideoForm" method="post" action="@Url.Action("Create", "Video")" enctype="multipart/form-data">
+            <form id="addVideoForm" method="post" action="/Video/Create" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
                 <div class="modal-body">
 
                     <!-- Video Upload Section -->
                     <div class="row mb-4">
                         <div class="col-md-12">
-                            <label class="form-label fw-bold">Video File</label>
+                            <label class="form-label fw-bold">Video File <span class="text-danger">*</span></label>
                             <div class="row">
                                 <div class="col-md-4">
                                     <div class="video-preview-container mb-3">
@@ -417,14 +417,16 @@
                     <div class="row mb-3">
                         <div class="col-md-12">
                             <label for="addTitle" class="form-label">Video Title <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="addTitle" name="Title" required>
+                            <input type="text" class="form-control" id="addTitle" name="Title" required maxlength="100">
+                            <div class="form-text">Required. Maximum 100 characters.</div>
                         </div>
                     </div>
 
                     <div class="row mb-3">
                         <div class="col-md-12">
                             <label for="addVideoName" class="form-label">Video Name</label>
-                            <input type="text" class="form-control" id="addVideoName" name="VideoName" placeholder="Enter video file name...">
+                            <input type="text" class="form-control" id="addVideoName" name="VideoName" placeholder="Enter video file name..." maxlength="100">
+                            <div class="form-text">Optional. If not provided, will use the video title.</div>
                         </div>
                     </div>
 
@@ -432,10 +434,12 @@
                         <div class="col-md-6">
                             <label for="addClientId" class="form-label">Client ID</label>
                             <input type="text" class="form-control" id="addClientId" name="ClientId" placeholder="Enter client ID...">
+                            <div class="form-text">Optional. Associate this video with a specific client.</div>
                         </div>
                         <div class="col-md-6">
                             <label for="addVideoDate" class="form-label">Video Date</label>
                             <input type="date" class="form-control" id="addVideoDate" name="VideoDate">
+                            <div class="form-text">Optional. Defaults to today's date.</div>
                         </div>
                     </div>
 
@@ -449,13 +453,25 @@
                             </select>
                         </div>
                     </div>
+
+                    <!-- Progress indicator (hidden by default) -->
+                    <div id="uploadProgress" class="row mb-3" style="display: none;">
+                        <div class="col-md-12">
+                            <label class="form-label">Upload Progress</label>
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <small class="text-muted">Uploading video...</small>
+                        </div>
+                    </div>
+
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
                         <i class="bi bi-x-circle me-2"></i>Cancel
                     </button>
                     <button type="submit" class="btn btn-orange">
-                        <i class="bi bi-plus-circle me-2"></i>Add Video
+                        <i class="bi bi-cloud-upload me-2"></i>Upload Video
                     </button>
                 </div>
             </form>
