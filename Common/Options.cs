@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using System.Web.Mvc;
 
-namespace SCommon
+namespace Common
 {
     public class Options
     {
