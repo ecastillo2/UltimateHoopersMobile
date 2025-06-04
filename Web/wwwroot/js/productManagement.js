@@ -781,31 +781,46 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function handleEditFormSubmit(e) {
         e.preventDefault();
-        console.log('📤 Edit product form submitted');
+        console.log('📤 Edit product form submitted (FIXED VERSION)');
 
-        const formData = new FormData(e.target);
-        const productData = {};
+        // Get the form element
+        const form = e.target;
 
-        for (const [key, value] of formData.entries()) {
-            productData[key] = value;
+        // Create FormData object (this preserves file uploads and form structure)
+        const formData = new FormData(form);
+
+        // Log form data for debugging
+        console.log('📋 Form data being sent:');
+        for (let [key, value] of formData.entries()) {
+            if (value instanceof File) {
+                console.log(`${key}: File - ${value.name} (${value.size} bytes)`);
+            } else {
+                console.log(`${key}: ${value}`);
+            }
         }
 
-        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const submitBtn = form.querySelector('button[type="submit"]');
         if (submitBtn && window.UIUtils) {
             window.UIUtils.setButtonLoading(submitBtn, true, 'Saving...');
         }
 
         const token = getAntiForgeryToken();
 
+        // FIXED: Send as FormData, not JSON
         fetch('/Product/Edit', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                // Remove 'Content-Type' header - let the browser set it for FormData
                 'RequestVerificationToken': token
             },
-            body: JSON.stringify(productData)
+            body: formData  // Send FormData directly, not JSON
         })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
             .then(result => {
                 if (submitBtn && window.UIUtils) {
                     window.UIUtils.setButtonLoading(submitBtn, false);
@@ -815,7 +830,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     showToast('Product updated successfully!', 'success');
 
                     // Update stored data
-                    window.currentProductData = { ...window.currentProductData, ...productData };
+                    window.currentProductData = { ...window.currentProductData, ...Object.fromEntries(formData) };
 
                     setTimeout(() => {
                         const modal = bootstrap.Modal.getInstance(document.getElementById('editProductModal'));
