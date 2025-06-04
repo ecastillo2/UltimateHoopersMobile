@@ -2,12 +2,17 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Domain.DtoModel
 {
     public class GameViewModelDto
     {
+        // Add a parameterless constructor for JSON deserialization
+        [JsonConstructor]
+        public GameViewModelDto() { }
+
         public string GameId { get; set; }
         public string CourtId { get; set; }
         public string RunId { get; set; }

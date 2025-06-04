@@ -45,7 +45,7 @@ namespace DataLayer.DAL
         public IUserRepository User => _userRepository ??= new UserRepository(_context, null);
         public IProfileRepository Profile => _profileRepository ??= new ProfileRepository(_context, null);
         public IPostRepository Post => _postRepository ??= new PostRepository(_context, null);
-        public IGameRepository Game => _gameRepository ??= new GameRepository(_context);
+        public IGameRepository Game => _gameRepository ??= new GameRepository(_context, null);
         public INotificationRepository Notification => _notificationRepository ??= new NotificationRepository(_context);
         public ICourtRepository Court => _courtRepository ??= new CourtRepository(_context, null);
         public IProductRepository Product => _productRepository ??= new ProductRepository(_context, null);

@@ -79,7 +79,7 @@ namespace WebAPI.Controllers
                 {
                     Items = detailedViewModels,
                     NextCursor = nextCursor,
-                    HasMore = !string.IsNullOrEmpty(nextCursor),
+                   // HasMore = !string.IsNullOrEmpty(nextCursor),
                     Direction = direction,
                     SortBy = sortBy
                 };

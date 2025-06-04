@@ -62,7 +62,7 @@ namespace DataLayer.DAL
         /// <summary>
         /// Gets the game repository
         /// </summary>
-        public IGameRepository Game => _gameRepository ??= new GameRepository(_context);
+        public IGameRepository Game => _gameRepository ??= new GameRepository(_context, null);
 
         /// <summary>
         /// Gets the notification repository

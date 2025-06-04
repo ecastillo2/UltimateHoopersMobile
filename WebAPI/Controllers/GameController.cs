@@ -27,7 +27,202 @@ namespace WebAPI.Controllers
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-      
+        /// <summary>
+        /// Get games with cursor-based pagination for efficient scrolling
+        /// </summary>
+        /// <param name="cursor">Cursor for pagination</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="direction">Direction of scrolling (next/previous)</param>
+        /// <param name="sortBy">Field to sort by</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>Paginated games result</returns>
+        [HttpGet("cursor")]
+        [ProducesResponseType(typeof(CursorPaginatedResultDto<GameDetailViewModelDto>), 200)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetGamesWithCursor(
+            [FromQuery] string cursor = null,
+            [FromQuery] int limit = 20,
+            [FromQuery] string direction = "next",
+            [FromQuery] string sortBy = "CreatedDate",
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                // Validate parameters
+                if (limit <= 0 || limit > 100)
+                    return BadRequest(new { message = "Limit must be between 1 and 100" });
+
+                if (direction != "next" && direction != "previous")
+                    return BadRequest(new { message = "Direction must be 'next' or 'previous'" });
+
+                var (games, nextCursor) = await _repository.GetGamesWithCursorAsync(cursor, limit, direction, sortBy, cancellationToken);
+
+                // Map games to detailed view models
+                var detailedViewModels = games.Select(game => new GameDetailViewModelDto
+                {
+                    GameId = game.GameId,
+                    GameNumber = game.GameNumber,
+                    Status = game.Status,
+                    CreatedDate = game.CreatedDate,
+                    
+                    RunId = game.RunId,
+                    CourtId = game.CourtId,
+                    ClientId = game.ClientId,
+                    ProfileList = game.ProfileList ?? new List<Profile>(),
+                    Run = game.Run,
+                    Court = game.Court
+                }).ToList();
+
+                var result = new CursorPaginatedResultDto<GameDetailViewModelDto>
+                {
+                    Items = detailedViewModels,
+                    NextCursor = nextCursor,
+                   // HasMore = !string.IsNullOrEmpty(nextCursor),
+                    Direction = direction,
+                    SortBy = sortBy,
+                    //Count = detailedViewModels.Count
+                };
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving games with cursor pagination");
+                return StatusCode(500, new { message = "An error occurred while retrieving games" });
+            }
+        }
+
+        /// <summary>
+        /// Get games by profile ID with cursor-based pagination
+        /// </summary>
+        /// <param name="profileId">Profile ID to filter games by</param>
+        /// <param name="cursor">Cursor for pagination</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="direction">Direction of scrolling (next/previous)</param>
+        /// <param name="sortBy">Field to sort by</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>Paginated games result for the profile</returns>
+        [HttpGet("{profileId}/cursor")]
+        [ProducesResponseType(typeof(CursorPaginatedResultDto<GameDetailViewModelDto>), 200)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetGamesByProfileIdWithCursor(
+            string profileId,
+            [FromQuery] string cursor = null,
+            [FromQuery] int limit = 20,
+            [FromQuery] string direction = "next",
+            [FromQuery] string sortBy = "CreatedDate",
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(profileId))
+                    return BadRequest(new { message = "Profile ID is required" });
+
+                if (limit <= 0 || limit > 100)
+                    return BadRequest(new { message = "Limit must be between 1 and 100" });
+
+                var (games, nextCursor) = await _repository.GetGamesByProfileIdWithCursorAsync(profileId, cursor, limit, direction, sortBy, cancellationToken);
+
+                var detailedViewModels = games.Select(game => new GameDetailViewModelDto
+                {
+                    GameId = game.GameId,
+                    GameNumber = game.GameNumber,
+                    Status = game.Status,
+                    CreatedDate = game.CreatedDate,
+                    //UpdatedDate = game.UpdatedDate,
+                    RunId = game.RunId,
+                    CourtId = game.CourtId,
+                    ClientId = game.ClientId,
+                    ProfileList = game.ProfileList ?? new List<Profile>(),
+                    Run = game.Run,
+                    Court = game.Court
+                }).ToList();
+
+                var result = new CursorPaginatedResultDto<GameDetailViewModelDto>
+                {
+                    Items = detailedViewModels,
+                    NextCursor = nextCursor,
+                    //HasMore = !string.IsNullOrEmpty(nextCursor),
+                    Direction = direction,
+                    SortBy = sortBy,
+                    //Count = detailedViewModels.Count
+                };
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving games by profile ID {ProfileId} with cursor", profileId);
+                return StatusCode(500, new { message = "An error occurred while retrieving games for the profile" });
+            }
+        }
+
+        /// <summary>
+        /// Get games by client ID with cursor-based pagination
+        /// </summary>
+        /// <param name="clientId">Client ID to filter games by</param>
+        /// <param name="cursor">Cursor for pagination</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="direction">Direction of scrolling (next/previous)</param>
+        /// <param name="sortBy">Field to sort by</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>Paginated games result for the client</returns>
+        [HttpGet("client/{clientId}/cursor")]
+        [ProducesResponseType(typeof(CursorPaginatedResultDto<GameDetailViewModelDto>), 200)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetGamesByClientIdWithCursor(
+            string clientId,
+            [FromQuery] string cursor = null,
+            [FromQuery] int limit = 20,
+            [FromQuery] string direction = "next",
+            [FromQuery] string sortBy = "CreatedDate",
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(clientId))
+                    return BadRequest(new { message = "Client ID is required" });
+
+                if (limit <= 0 || limit > 100)
+                    return BadRequest(new { message = "Limit must be between 1 and 100" });
+
+                var (games, nextCursor) = await _repository.GetGamesByClientIdWithCursorAsync(clientId, cursor, limit, direction, sortBy, cancellationToken);
+
+                var detailedViewModels = games.Select(game => new GameDetailViewModelDto
+                {
+                    GameId = game.GameId,
+                    GameNumber = game.GameNumber,
+                    Status = game.Status,
+                    CreatedDate = game.CreatedDate,
+                    //UpdatedDate = game.UpdatedDate,
+                    RunId = game.RunId,
+                    CourtId = game.CourtId,
+                    ClientId = game.ClientId,
+                    ProfileList = game.ProfileList ?? new List<Profile>(),
+                    Run = game.Run,
+                    Court = game.Court
+                }).ToList();
+
+                var result = new CursorPaginatedResultDto<GameDetailViewModelDto>
+                {
+                    Items = detailedViewModels,
+                    NextCursor = nextCursor,
+                   // HasMore = !string.IsNullOrEmpty(nextCursor),
+                    Direction = direction,
+                    SortBy = sortBy,
+                    //Count = detailedViewModels.Count
+                };
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving games by client ID {ClientId} with cursor", clientId);
+                return StatusCode(500, new { message = "An error occurred while retrieving games for the client" });
+            }
+        }
 
         /// <summary>
         /// Get all games
@@ -59,16 +254,21 @@ namespace WebAPI.Controllers
         /// <param name="gameId">The ID of the game to retrieve</param>
         /// <returns>The game with the specified ID</returns>
         /// <response code="200">Returns the game</response>
+        /// <response code="400">If the game ID is invalid</response>
         /// <response code="404">If the game was not found</response>
         /// <response code="500">If an error occurred while retrieving the game</response>
-        [HttpGet("GetGameById")]
+        [HttpGet("{gameId}")]
         [ProducesResponseType(typeof(Game), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetGameById(string gameId)
         {
             try
             {
+                if (string.IsNullOrEmpty(gameId))
+                    return BadRequest(new { message = "Game ID is required" });
+
                 var game = await _repository.GetGameById(gameId);
 
                 if (game == null)
@@ -85,33 +285,32 @@ namespace WebAPI.Controllers
         }
 
         /// <summary>
-        /// Get a game by Client ID
+        /// Get games by client ID
         /// </summary>
-        /// <param name="gameId">The ID of the game to retrieve</param>
-        /// <returns>The game with the specified ID</returns>
-        /// <response code="200">Returns the game</response>
-        /// <response code="404">If the game was not found</response>
-        /// <response code="500">If an error occurred while retrieving the game</response>
-        [HttpGet("GetGameByClientId")]
-        [ProducesResponseType(typeof(Game), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        /// <param name="clientId">The client ID to filter games by</param>
+        /// <returns>List of games with the specified client ID</returns>
+        /// <response code="200">Returns the list of games</response>
+        /// <response code="400">If the client ID is invalid</response>
+        /// <response code="500">If an error occurred while retrieving games</response>
+        [HttpGet("{clientId}/GetGameByClientIdAsync")]
+        [ProducesResponseType(typeof(List<Game>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetGameByClientId(string gameId)
+        public async Task<IActionResult> GetGameByClientIdAsync(string clientId)
         {
             try
             {
-                var game = await _repository.GetGameByClientId(gameId);
+                if (string.IsNullOrEmpty(clientId))
+                    return BadRequest(new { message = "Client ID is required" });
 
-                if (game == null)
-                    return NotFound(new { message = $"Game with ID {gameId} not found" });
-
-                return Ok(game);
+                var games = await _repository.GetGameByClientId(clientId);
+                return Ok(games);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving game {GameId}", gameId);
+                _logger.LogError(ex, "Error retrieving games for client {ClientId}", clientId);
                 return StatusCode(StatusCodes.Status500InternalServerError,
-                    new { message = "An error occurred while retrieving the game" });
+                    new { message = "An error occurred while retrieving games for the client" });
             }
         }
 
@@ -121,14 +320,19 @@ namespace WebAPI.Controllers
         /// <param name="profileId">The ID of the profile</param>
         /// <returns>List of games for the specified profile</returns>
         /// <response code="200">Returns the list of games</response>
+        /// <response code="400">If the profile ID is invalid</response>
         /// <response code="500">If an error occurred while retrieving games</response>
-        [HttpGet("GetGamesByProfileId")]
+        [HttpGet("{profileId}/GetGameByProfileIdAsync")]
         [ProducesResponseType(typeof(List<Game>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetGamesByProfileId(string profileId)
+        public async Task<IActionResult> GetGameByProfileIdAsync(string profileId)
         {
             try
             {
+                if (string.IsNullOrEmpty(profileId))
+                    return BadRequest(new { message = "Profile ID is required" });
+
                 var games = await _repository.GetGamesByProfileId(profileId);
                 return Ok(games);
             }
@@ -150,7 +354,7 @@ namespace WebAPI.Controllers
         /// <response code="500">If an error occurred while creating the game</response>
         [HttpPost("CreateGame")]
         [Authorize]
-        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(Game), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> CreateGame([FromBody] Game game)
@@ -249,17 +453,22 @@ namespace WebAPI.Controllers
         /// <param name="gameId">The ID of the game to delete</param>
         /// <returns>Result of the deletion operation</returns>
         /// <response code="204">If the game was deleted successfully</response>
+        /// <response code="400">If the game ID is invalid</response>
         /// <response code="404">If the game was not found</response>
         /// <response code="500">If an error occurred while deleting the game</response>
-        [HttpDelete("DeleteGame")]
+        [HttpDelete("{gameId}/DeleteGameAsync")]
         [Authorize]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> DeleteGame(string gameId)
+        public async Task<IActionResult> DeleteGameAsync(string gameId)
         {
             try
             {
+                if (string.IsNullOrEmpty(gameId))
+                    return BadRequest(new { message = "Game ID is required" });
+
                 var existingGame = await _repository.GetGameById(gameId);
                 if (existingGame == null)
                     return NotFound(new { message = $"Game with ID {gameId} not found" });
@@ -275,5 +484,60 @@ namespace WebAPI.Controllers
                     new { message = "An error occurred while deleting the game" });
             }
         }
+    }
+
+    /// <summary>
+    /// DTO for cursor-based paginated results
+    /// </summary>
+    /// <typeparam name="T">Type of items in the result</typeparam>
+    public class CursorPaginatedResultDto<T>
+    {
+        /// <summary>
+        /// The data items for this page
+        /// </summary>
+        public List<T> Items { get; set; } = new List<T>();
+
+        /// <summary>
+        /// Cursor for the next page (null if no more pages)
+        /// </summary>
+        public string NextCursor { get; set; }
+
+        /// <summary>
+        /// Indicates if there are more pages available
+        /// </summary>
+        public bool HasMore => !string.IsNullOrEmpty(NextCursor);
+
+        /// <summary>
+        /// Direction of the current pagination
+        /// </summary>
+        public string Direction { get; set; } = "next";
+
+        /// <summary>
+        /// Field used for sorting
+        /// </summary>
+        public string SortBy { get; set; } = "CreatedDate";
+
+        /// <summary>
+        /// Number of items in this page
+        /// </summary>
+        public int Count => Items?.Count ?? 0;
+    }
+
+    /// <summary>
+    /// Detailed view model for Game data
+    /// </summary>
+    public class GameDetailViewModelDto
+    {
+        public string GameId { get; set; }
+        public string GameNumber { get; set; }
+        public string Status { get; set; }
+        public DateTime? CreatedDate { get; set; }
+        public DateTime? UpdatedDate { get; set; }
+        public string RunId { get; set; }
+        public string CourtId { get; set; }
+        public string ClientId { get; set; }
+        public List<Profile> ProfileList { get; set; } = new List<Profile>();
+        public Run Run { get; set; }
+        public Court Court { get; set; }
     }
 }
