@@ -193,33 +193,33 @@
                     <tbody>
                         @foreach (var game in Model.GameList)
                         {
-                            <tr data-status="@(game.Game.Status?.ToLower() ?? "scheduled")"
-                                data-court-id="@game.Game.CourtId"
-                                data-client-id="@game.Game.ClientId"
-                                data-run-id="@game.Game.RunId"
-                                data-game-id="@game.Game.GameId"
-                                data-game-number="@game.Game.GameNumber"
-                                data-created-date="@game.Game.CreatedDate?.ToString("yyyy-MM-dd")">
+                            <tr data-status="@(game.Status?.ToLower() ?? "scheduled")"
+                                data-court-id="@game.CourtId"
+                                data-client-id="@game.ClientId"
+                                data-run-id="@game.RunId"
+                                data-game-id="@game.GameId"
+                                data-game-number="@game.GameNumber"
+                                data-created-date="@game.CreatedDate?.ToString("yyyy-MM-dd")">
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <div class="game-icon me-3">
                                             <i class="bi bi-dribbble"></i>
                                         </div>
                                         <div class="game-details">
-                                            <div class="fw-semibold game-title">Game #@(game.Game.GameNumber)</div>
-                                            <div class="text-muted small game-id">ID: @(game.Game.GameId)</div>
-                                            @if (game.Game.Run != null)
+                                            <div class="fw-semibold game-title">Game #@(game.GameNumber)</div>
+                                            <div class="text-muted small game-id">ID: @(game.GameId)</div>
+                                            @if (game.Run != null)
                                             {
-                                                <div class="text-muted small">Run: @game.Game.Run.Name</div>
+                                                <div class="text-muted small">Run: @game.Run.Name</div>
                                             }
                                         </div>
                                     </div>
                                 </td>
                                 <td class="game-date">
-                                    @if (game.Game.CreatedDate.HasValue)
+                                    @if (game.CreatedDate.HasValue)
                                     {
-                                        <div class="fw-semibold">@game.Game.CreatedDate.Value.ToString("MMM dd, yyyy")</div>
-                                        <div class="text-muted small">@game.Game.CreatedDate.Value.ToString("h:mm tt")</div>
+                                        <div class="fw-semibold">@game.CreatedDate.Value.ToString("MMM dd, yyyy")</div>
+                                        <div class="text-muted small">@game.CreatedDate.Value.ToString("h:mm tt")</div>
                                     }
                                     else
                                     {
@@ -227,9 +227,9 @@
                                     }
                                 </td>
                                 <td class="game-court">
-                                    @if (game.Game.Court != null)
+                                    @if (game.Court != null)
                                     {
-                                        <span>@game.Game.Court.Name</span>
+                                        <span>@game.Court.Name</span>
                                     }
                                     else
                                     {
@@ -239,16 +239,16 @@
                                 <td class="game-players">
                                     <div class="d-flex align-items-center">
                                         <i class="bi bi-people me-1"></i>
-                                        <span>@(game.Game.ProfileList?.Count ?? 0)</span>
-                                        @if (game.Game.Run != null && game.Game.Run.PlayerLimit.HasValue)
+                                        <span>@(game.ProfileList?.Count ?? 0)</span>
+                                        @if (game.Run != null && game.Run.PlayerLimit.HasValue)
                                         {
-                                            <span class="text-muted">/@game.Game.Run.PlayerLimit</span>
+                                            <span class="text-muted">/@game.Run.PlayerLimit</span>
                                         }
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="badge game-status-badge @GetStatusBadgeClass(game.Game.Status)">
-                                        @(game.Game.Status ?? "Scheduled")
+                                    <span class="badge game-status-badge @GetStatusBadgeClass(game.Status)">
+                                        @(game.Status ?? "Scheduled")
                                     </span>
                                 </td>
                                 <td>
@@ -256,16 +256,16 @@
                                         <button type="button" class="btn btn-sm btn-outline-primary action-icon"
                                                 data-bs-toggle="modal"
                                                 data-bs-target="#editGameModal"
-                                                data-game-id="@game.Game.GameId"
+                                                data-game-id="@game.GameId"
                                                 title="Edit">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                        <a href="@Url.Action("Details", "Game", new { id = game.Game.GameId })"
+                                        <a href="@Url.Action("Details", "Game", new { id = game.GameId })"
                                            class="btn btn-sm btn-primary action-icon" title="View Details">
                                             <i class="bi bi-eye"></i>
                                         </a>
                                         <button type="button" class="btn btn-sm btn-outline-success action-icon"
-                                                onclick="startGame('@game.Game.GameId')" title="Start Game">
+                                                onclick="startGame('@game.GameId')" title="Start Game">
                                             <i class="bi bi-play"></i>
                                         </button>
                                     </div>
