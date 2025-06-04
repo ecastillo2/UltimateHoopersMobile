@@ -750,10 +750,20 @@
                             <input type="hidden" id="editRunId" name="RunId" value="" />
                             <input type="hidden" id="editProfileId" name="ProfileId" value="" />
 
+                            <!-- Basic Run Information Section -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h6 class="text-primary mb-3">
+                                        <i class="bi bi-info-circle me-2"></i>Basic Information
+                                    </h6>
+                                </div>
+                            </div>
+
                             <div class="row mb-3">
                                 <div class="col-md-12">
-                                    <label for="editRunTitle" class="form-label form-field-required">Name</label>
-                                    <input type="text" class="form-control" id="editRunTitle" name="Name" required>
+                                    <label for="editRunTitle" class="form-label form-field-required">Run Name</label>
+                                    <input type="text" class="form-control" id="editRunTitle" name="Name" placeholder="e.g. Evening Basketball Run" required>
+                                    <div class="form-text">Give your run a descriptive name that players will recognize</div>
                                 </div>
                             </div>
 
@@ -772,13 +782,114 @@
                                 <div class="col-md-6">
                                     <label for="editEndTime" class="form-label">End Time</label>
                                     <input type="time" class="form-control time-picker" id="editEndTime" name="EndTime">
+                                    <div class="form-text">Optional - helps players plan their schedule</div>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="editCourtType" class="form-label">Court Type</label>
                                     <select class="form-select" id="editCourtType" name="IsOutdoor">
-                                        <option value="false">Indoor</option>
-                                        <option value="true">Outdoor</option>
+                                        <option value="false" selected>Indoor Court</option>
+                                        <option value="true">Outdoor Court</option>
                                     </select>
+                                </div>
+                            </div>
+
+                            <!-- Enhanced Address Section -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h6 class="text-primary mb-3">
+                                        <i class="bi bi-geo-alt me-2"></i>Location & Address
+                                    </h6>
+                                </div>
+                            </div>
+
+                            <!-- Custom Address Toggle -->
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <div class="card border-0 bg-light">
+                                        <div class="card-body p-3">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="useCustomAddress" name="UseCustomAddress">
+                                                <label class="form-check-label fw-semibold" for="useCustomAddress">
+                                                    Use custom address for this run
+                                                </label>
+                                                <div class="form-text">
+                                                    Check this box if you want to use a different address than the client's default location
+                                                </div>
+                                            </div>
+
+                                            <!-- Address Source Indicator -->
+                                            <div class="mt-2">
+                                                <span id="addressSourceText" class="text-muted small">
+                                                    <i class="bi bi-building text-muted me-1"></i>Client Address
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Address Source Indicators -->
+                            <div class="row mb-2">
+                                <div class="col-12">
+                                    <div id="clientAddressIndicator" class="alert alert-info py-2 px-3" style="display: block;">
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        <small>Using the default client address. Check the box above to enter a custom address for this specific run.</small>
+                                    </div>
+                                    <div id="customAddressIndicator" class="alert alert-warning py-2 px-3" style="display: none;">
+                                        <i class="bi bi-exclamation-triangle me-2"></i>
+                                        <small>Using custom address. This will override the client's default address for this run only.</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Address Fields Container -->
+                            <div id="addressFieldsContainer" class="address-fields-container">
+                                <div class="row mb-3">
+                                    <div class="col-md-12">
+                                        <label for="editAddress" class="form-label">Street Address</label>
+                                        <input type="text" class="form-control bg-light" id="editAddress" name="Address"
+                                               placeholder="e.g. 123 Basketball Court St" disabled>
+                                        <input type="hidden" id="editCustomAddress" name="CustomAddress">
+                                    </div>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <label for="editCity" class="form-label">City</label>
+                                        <input type="text" class="form-control bg-light" id="editCity" name="City"
+                                               placeholder="City" disabled>
+                                        <input type="hidden" id="editCustomCity" name="CustomCity">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="editState" class="form-label">State</label>
+                                        <input type="text" class="form-control bg-light" id="editState" name="State"
+                                               placeholder="State" disabled>
+                                        <input type="hidden" id="editCustomState" name="CustomState">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="editZip" class="form-label">Zip Code</label>
+                                        <input type="text" class="form-control bg-light" id="editZip" name="Zip"
+                                               placeholder="Zip" disabled>
+                                        <input type="hidden" id="editCustomZip" name="CustomZip">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Address Preview -->
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <div id="addressPreview" class="address-preview-container">
+                                        <!-- Address preview will be populated by JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Court Selection Section -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h6 class="text-primary mb-3">
+                                        <i class="bi bi-dribbble me-2"></i>Court & Client Information
+                                    </h6>
                                 </div>
                             </div>
 
@@ -788,32 +899,39 @@
                                     <select class="form-select" id="editCourtList" name="CourtId">
                                         <option value="">Loading courts...</option>
                                     </select>
+                                    <div class="form-text">Available courts for the selected client</div>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="editClientId" class="form-label">Client Id</label>
-                                    <input type="text" class="form-control" id="editClientId" name="ClientId" readonly>
+                                    <label for="editClientId" class="form-label">Client ID</label>
+                                    <input type="text" class="form-control bg-light" id="editClientId" name="ClientId" readonly>
+                                    <div class="form-text">The client associated with this run</div>
+                                </div>
+                            </div>
+
+                            <!-- Run Settings Section -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h6 class="text-primary mb-3">
+                                        <i class="bi bi-gear me-2"></i>Run Settings
+                                    </h6>
                                 </div>
                             </div>
 
                             <div class="row mb-3">
-                                <div class="col-md-12">
-                                    <label for="editAddress" class="form-label">Address</label>
-                                    <input type="text" class="form-control" id="editAddress" name="Address">
+                                <div class="col-md-6">
+                                    <label for="editMaxParticipants" class="form-label form-field-required">Maximum Participants</label>
+                                    <input type="number" class="form-control" id="editMaxParticipants" name="PlayerLimit"
+                                           min="2" max="30" required>
+                                    <div class="form-text">How many players can join this run</div>
                                 </div>
-                            </div>
-
-                            <div class="row mb-3">
-                                <div class="col-md-4">
-                                    <label for="editCity" class="form-label">City</label>
-                                    <input type="text" class="form-control" id="editCity" name="City">
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="editState" class="form-label">State</label>
-                                    <input type="text" class="form-control" id="editState" name="State">
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="editZip" class="form-label">Zip Code</label>
-                                    <input type="text" class="form-control" id="editZip" name="Zip">
+                                <div class="col-md-6">
+                                    <label for="editStatus" class="form-label">Status</label>
+                                    <select class="form-select" id="editStatus" name="Status">
+                                        <option value="Active">Active</option>
+                                        <option value="Inactive">Inactive</option>
+                                        <option value="Cancelled">Cancelled</option>
+                                        <option value="Completed">Completed</option>
+                                    </select>
                                 </div>
                             </div>
 
@@ -821,8 +939,8 @@
                                 <div class="col-md-6">
                                     <label for="editIsPublic" class="form-label">Visibility</label>
                                     <select class="form-select" id="editIsPublic" name="IsPublic">
-                                        <option value="true">Public</option>
-                                        <option value="false">Private</option>
+                                        <option value="true">Public - Anyone can join</option>
+                                        <option value="false">Private - Invitation only</option>
                                     </select>
                                 </div>
                                 <div class="col-md-6">
@@ -832,22 +950,6 @@
                                         <option value="Intermediate">Intermediate</option>
                                         <option value="Advanced">Advanced</option>
                                         <option value="All Levels">All Levels</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="editMaxParticipants" class="form-label form-field-required">Maximum Participants</label>
-                                    <input type="number" class="form-control" id="editMaxParticipants" name="PlayerLimit" min="2" max="30" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="editStatus" class="form-label">Status</label>
-                                    <select class="form-select" id="editStatus" name="Status">
-                                        <option value="Active">Active</option>
-                                        <option value="Inactive">Inactive</option>
-                                        <option value="Cancelled">Cancelled</option>
-                                        <option value="Completed">Completed</option>
                                     </select>
                                 </div>
                             </div>
@@ -872,17 +974,23 @@
                                 </div>
                             </div>
 
+                            <!-- Description Section -->
                             <div class="row mb-3">
                                 <div class="col-md-12">
                                     <label for="editRunDescription" class="form-label form-field-required">Description</label>
-                                    <textarea class="form-control" id="editRunDescription" name="Description" rows="3" required></textarea>
+                                    <textarea class="form-control" id="editRunDescription" name="Description" rows="3"
+                                              placeholder="Describe the run, what to expect, what to bring, etc." required></textarea>
+                                    <div class="form-text">Help players understand what to expect from this run</div>
                                 </div>
                             </div>
 
-                            <div class="modal-footer">
+                            <!-- Form Actions -->
+                            <div class="modal-footer border-top mt-4 px-0">
                                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                                 <button type="button" class="btn btn-danger me-auto" id="deleteRunBtn">Delete Run</button>
-                                <button type="submit" class="btn btn-orange">Save Changes</button>
+                                <button type="submit" class="btn btn-orange">
+                                    <i class="bi bi-check-circle me-2"></i>Save Changes
+                                </button>
                             </div>
                         </form>
                     </div>
