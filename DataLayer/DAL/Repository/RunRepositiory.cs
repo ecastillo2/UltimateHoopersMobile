@@ -172,11 +172,19 @@ namespace DataLayer.DAL.Repository
         {
             try
             {
-                return await (from run in _context.Run.AsNoTracking()
-                              join client in _context.Client on run.ClientId equals client.ClientId
-                              where run.RunId == runId
-                              select run) // Only select the run, not the client
-                             .FirstOrDefaultAsync(cancellationToken);
+                var result = await (from run in _context.Run.AsNoTracking()
+                                    join client in _context.Client on run.ClientId equals client.ClientId
+                                    where run.RunId == runId
+                                    select new { Run = run, Client = client })
+                                   .FirstOrDefaultAsync(cancellationToken);
+
+                if (result == null)
+                    return null;
+
+                // Manually populate the NotMapped Client property
+                result.Run.Client = result.Client;
+
+                return result.Run;
             }
             catch (Exception ex)
             {
