@@ -1104,9 +1104,9 @@ namespace BasketballGameAnalyzer
 
     public class ScoringCandidate
     {
-        public string Team { get; set; }
+        public string? Team { get; set; }
         public TimeSpan GameTime { get; set; }
-        public string Basket { get; set; }
-        public double Confidence { get; set; }
+        public string? Basket { get; set; }
+        public double? Confidence { get; set; }
     }
 }

@@ -8,8 +8,8 @@ namespace Domain.DtoModel
 {
     public class ProductDetailViewModelDto : ProductViewModelDto
     {
-        public Product Product { get; set; }
-        public IList<Product> ProductList { get; set; }
+        public Product? Product { get; set; }
+        public IList<Product>? ProductList { get; set; }
        
 
 

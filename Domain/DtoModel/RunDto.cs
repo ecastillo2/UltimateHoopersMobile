@@ -103,10 +103,10 @@ namespace UltimateHoopers.Models
     public class Player
     {
         // Basic properties
-        public string Id { get; set; }
-        public string Name { get; set; }
-        public string Username { get; set; }
-        public string ProfileImageUrl { get; set; }
+        public string? Id { get; set; }
+        public string? Name { get; set; }
+        public string? Username { get; set; }
+        public string? ProfileImageUrl { get; set; }
         public bool IsHost { get; set; }
         public bool HasJoined { get; set; }
 
