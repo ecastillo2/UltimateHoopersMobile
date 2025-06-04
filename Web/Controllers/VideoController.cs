@@ -172,6 +172,27 @@ namespace Web.Controllers
                 _logger.LogInformation("Create Video - VideoFile: {FileName}, Size: {Size}",
                     VideoFile?.FileName, VideoFile?.Length);
 
+                // Log all form keys to see what's actually being sent
+                _logger.LogInformation("Form keys: {Keys}", string.Join(", ", Request.Form.Keys));
+                _logger.LogInformation("File keys: {FileKeys}", string.Join(", ", Request.Form.Files.Select(f => f.Name)));
+
+                // If VideoFile is null, try to get it from different possible names
+                if (VideoFile == null && Request.Form.Files.Any())
+                {
+                    // Try common file input names
+                    VideoFile = Request.Form.Files["VideoFile"] ??
+                               Request.Form.Files["videoFile"] ??
+                               Request.Form.Files["ImageFile"] ?? // In case the view is still using ImageFile
+                               Request.Form.Files["imageFile"] ??
+                               Request.Form.Files.FirstOrDefault();
+
+                    if (VideoFile != null)
+                    {
+                        _logger.LogInformation("Found video file with name: {Name}, FileName: {FileName}",
+                            VideoFile.Name, VideoFile.FileName);
+                    }
+                }
+
                 // If video is null, try to create from form data manually
                 if (video == null)
                 {
@@ -215,11 +236,18 @@ namespace Web.Controllers
                 // Validate video file if provided
                 if (VideoFile != null)
                 {
+                    _logger.LogInformation("Validating video file: {FileName}, Size: {Size}, ContentType: {ContentType}",
+                        VideoFile.FileName, VideoFile.Length, VideoFile.ContentType);
+
                     var fileValidation = ValidateVideoFile(VideoFile);
                     if (!fileValidation.IsValid)
                     {
                         return Json(new { success = false, message = fileValidation.ErrorMessage });
                     }
+                }
+                else
+                {
+                    _logger.LogWarning("No video file received in request");
                 }
 
                 // Set default values
@@ -242,6 +270,7 @@ namespace Web.Controllers
                         {
                             videoUrl = $"/api/storage/video/{fileName}";
                             video.VideoURL = videoUrl;
+                            _logger.LogInformation("Video uploaded successfully: {VideoUrl}", videoUrl);
                         }
                         else
                         {
