@@ -2,6 +2,7 @@
 using Domain;
 using Domain.DtoModel;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using WebAPI.ApiClients;
 using Website.Attributes;
@@ -78,6 +79,155 @@ namespace Web.Controllers
             }
         }
 
+        // NEW: Get runs for calendar view
+        [HttpGet]
+        public async Task<IActionResult> GetRunsForCalendar(
+            DateTime? startDate = null,
+            DateTime? endDate = null,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var accessToken = HttpContext.Session.GetString("UserToken");
+                if (string.IsNullOrEmpty(accessToken))
+                {
+                    return Json(new { success = false, message = "Unauthorized" });
+                }
+
+                // Set default date range if not provided (current month +/- 2 months)
+                var now = DateTime.Now;
+                startDate ??= new DateTime(now.Year, now.Month, 1).AddMonths(-2);
+                endDate ??= new DateTime(now.Year, now.Month, 1).AddMonths(3).AddDays(-1);
+
+                _logger.LogInformation("Fetching runs for calendar from {StartDate} to {EndDate}", startDate, endDate);
+
+                // Get runs within the date range
+                var runs = await GetRunsForDateRange(startDate.Value, endDate.Value, accessToken, cancellationToken);
+
+                // Transform runs for calendar display
+                var calendarRuns = runs.Select(run => new
+                {
+                    runId = run.RunId ?? "",
+                    name = run.Name ?? "Basketball Run",
+                    type = run.Type?.ToLower() ?? "pickup",
+                    runDate = run.RunDate?.ToString("yyyy-MM-dd"),
+                    startTime = DateTimeUtilities.FormatTimeSpanTo12Hour(run.StartTime ?? TimeSpan.Zero),
+                    endTime = DateTimeUtilities.FormatTimeSpanTo12Hour(run.EndTime ?? TimeSpan.Zero),
+                    location = BuildLocationString(run),
+                    skillLevel = run.SkillLevel ?? "All Levels",
+                    playerCount = run.PlayerCount ?? 0,
+                    playerLimit = run.PlayerLimit ?? 10,
+                    description = run.Description ?? "",
+                    status = run.Status ?? "Active",
+                    isPublic = run.IsPublic ?? true,
+                    address = "",
+                    city =  "",
+                    state =  "",
+                    profileId = run.ProfileId ?? ""
+                }).ToList();
+
+                _logger.LogInformation("Retrieved {Count} runs for calendar", calendarRuns.Count);
+
+                return Json(new
+                {
+                    success = true,
+                    runs = calendarRuns,
+                    dateRange = new
+                    {
+                        startDate = startDate.Value.ToString("yyyy-MM-dd"),
+                        endDate = endDate.Value.ToString("yyyy-MM-dd")
+                    },
+                    totalCount = calendarRuns.Count
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving runs for calendar");
+                return Json(new
+                {
+                    success = false,
+                    message = "Error loading calendar data",
+                    error = ex.GetType().Name
+                });
+            }
+        }
+
+        // Helper method to get runs for a date range
+        private async Task<List<Run>> GetRunsForDateRange(
+            DateTime startDate,
+            DateTime endDate,
+            string accessToken,
+            CancellationToken cancellationToken)
+        {
+            var allRuns = new List<Run>();
+            string cursor = null;
+            const int batchSize = 50;
+            const int maxRuns = 500; // Prevent runaway queries
+
+            try
+            {
+                do
+                {
+                    var result = await _runApi.GetRunsWithCursorAsync(
+                        cursor: cursor,
+                        limit: batchSize,
+                        direction: "next",
+                        sortBy: "RunDate",
+                        accessToken: accessToken,
+                        cancellationToken: cancellationToken);
+
+                    if (result.Items?.Any() == true)
+                    {
+                        // Filter runs within the date range
+                        var filteredRuns = result.Items.Where(run =>
+                            run.RunDate.HasValue &&
+                            run.RunDate.Value.Date >= startDate.Date &&
+                            run.RunDate.Value.Date <= endDate.Date).ToList();
+
+                        allRuns.AddRange((IEnumerable<Run>)filteredRuns);
+
+                        // If we've found runs past our end date, we can stop
+                        if (result.Items.Any(run => run.RunDate.HasValue && run.RunDate.Value.Date > endDate.Date))
+                        {
+                            break;
+                        }
+                    }
+
+                    cursor = result.NextCursor;
+
+                    // Safety check to prevent infinite loops
+                    if (allRuns.Count >= maxRuns)
+                    {
+                        _logger.LogWarning("Calendar query hit maximum run limit of {MaxRuns}", maxRuns);
+                        break;
+                    }
+
+                } while (!string.IsNullOrEmpty(cursor));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in GetRunsForDateRange");
+                throw;
+            }
+
+            return allRuns.OrderBy(r => r.RunDate).ThenBy(r => r.StartTime).ToList();
+        }
+
+        // Helper method to build location string
+        private string BuildLocationString(Run run)
+        {
+            var locationParts = new List<string>();
+
+            if (!string.IsNullOrEmpty("test"))
+                locationParts.Add("test");
+            if (!string.IsNullOrEmpty("test"))
+                locationParts.Add("test");
+            if (!string.IsNullOrEmpty("test") && locationParts.Any())
+                locationParts.Add("test");
+
+            return locationParts.Any() ? string.Join(", ", locationParts) : "Location TBD";
+        }
+
         // Fixed GetRunData method in RunController.cs
         // Replace the existing GetRunData method in Web/Controllers/RunController.cs with this implementation
         [HttpGet]
@@ -127,11 +277,11 @@ namespace Web.Controllers
                     courtListData = clientCourtList.Select(c => new
                     {
                         courtId = c.CourtId ?? "",
-                        name = c.Name + " - "+ c.CourtType ?? "Unnamed Court",
+                        name = c.Name + " - " + c.CourtType ?? "Unnamed Court",
                         // Add additional court properties if needed
                         address = c.Address ?? "",
-                        isIndoor =  true,
-                        isActive =  true
+                        isIndoor = true,
+                        isActive = true
                     }).Cast<object>().ToList();
 
                     _logger.LogInformation("Transformed {CourtCount} courts for API response", courtListData.Count);
@@ -156,9 +306,9 @@ namespace Web.Controllers
                     endTime = DateTimeUtilities.FormatTimeSpanTo12Hour(run.EndTime ?? TimeSpan.Zero),
 
                     // Address fields with defaults
-                    address =  "",
-                    city =  "",
-                    state =  "",
+                    address = "",
+                    city = "",
+                    state ="",
                     zip =  "",
 
                     // Safe numeric conversions
@@ -247,7 +397,7 @@ namespace Web.Controllers
                     name = c.Name ?? "Unnamed Court",
                     address = c.Address ?? "",
                     isIndoor = true,
-                    isActive =  true
+                    isActive = true
                 }).ToList();
 
                 _logger.LogInformation("Successfully retrieved {CourtCount} courts for client {ClientId}",
@@ -273,7 +423,7 @@ namespace Web.Controllers
             }
         }
 
-       
+
 
         // Helper method to safely get court ID from run data
         private string GetCourtIdFromRun(dynamic run)
@@ -284,21 +434,21 @@ namespace Web.Controllers
                 if (run.CourtId != null)
                 {
                     var courtId = run.CourtId.ToString();
-                   // _logger.LogDebug("Found CourtId: {CourtId}", courtId);
+                    // _logger.LogDebug("Found CourtId: {CourtId}", courtId);
                     return courtId;
                 }
 
                 if (run.Court?.CourtId != null)
                 {
                     var courtId = run.Court.CourtId.ToString();
-                  //  _logger.LogWarning("Found Court.CourtId: {CourtId}", courtId);
+                    //  _logger.LogWarning("Found Court.CourtId: {CourtId}", courtId);
                     return courtId;
                 }
 
                 if (run.VenueId != null)
                 {
                     var venueId = run.VenueId.ToString();
-                   // _logger.LogDebug("Found VenueId (using as CourtId): {VenueId}", venueId);
+                    // _logger.LogDebug("Found VenueId (using as CourtId): {VenueId}", venueId);
                     return venueId;
                 }
 
@@ -852,10 +1002,10 @@ namespace Web.Controllers
 
             // Preserve creation metadata
             run.CreatedDate = existingRun.CreatedDate;
-           // run.CreatedBy = existingRun.CreatedBy;
+            // run.CreatedBy = existingRun.CreatedBy;
 
             // Set update metadata
-           // run.UpdatedDate = DateTime.UtcNow;
+            // run.UpdatedDate = DateTime.UtcNow;
             //run.UpdatedBy = HttpContext.Session.GetString("ProfileId");
         }
 
@@ -955,7 +1105,7 @@ namespace Web.Controllers
         }
     }
 
-    
+
 
     // Request models for API calls
     public class RemoveParticipantRequest
@@ -970,5 +1120,3 @@ namespace Web.Controllers
         public string ProfileId { get; set; }
     }
 }
-
-   
