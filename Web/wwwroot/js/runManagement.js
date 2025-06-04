@@ -264,7 +264,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     throw new Error(data.message || 'API returned error');
                 }
 
-                // Populate all data
+                // Populate all data with enhanced client handling
                 populateRunDataComplete(data);
 
                 console.log('✅ Run data loaded and populated successfully');
@@ -284,10 +284,29 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('📝 Populating complete run data:', data);
 
         try {
-            // Basic run information
-            safeSetValue('editRunTitle', data.name || data.runName || '');
+            // ENHANCED: Handle run name with client name priority
+            const effectiveName = data.name || data.clientName || data.runName || 'Basketball Run';
+            console.log('🏷️ Using effective name:', effectiveName, {
+                clientName: data.clientName,
+                originalName: data.runName,
+                fallbackName: data.name
+            });
+
+            // Basic run information - use client name as primary name
+            safeSetValue('editRunTitle', effectiveName);
             safeSetValue('editRunDescription', data.description || '');
             safeSetValue('editMaxParticipants', data.playerLimit || 10);
+
+            // ENHANCED: Client ID population with multiple fallbacks
+            const clientId = data.clientId || data.ClientId || '';
+            console.log('🏢 Setting client ID:', clientId);
+            safeSetValue('editClientId', clientId);
+
+            // Also set in any hidden fields that might need it
+            safeSetValue('clientId', clientId);
+
+            // Set client name display field if it exists
+            safeSetValue('editClientName', data.clientName || data.ClientName || '');
 
             // Date and time
             if (data.runDate) {
@@ -309,8 +328,20 @@ document.addEventListener('DOMContentLoaded', function () {
             safeSetSelect('editStatus', data.status || 'Active');
             safeSetSelect('editIsPublic', data.isPublic !== false ? 'true' : 'false');
 
+            // ENHANCED: Court selection with client context
+            if (data.courtList && data.courtList.length > 0) {
+                populateCourtDropdown(data.courtList, data.courtId);
+            }
+
             // Address handling - this is the key fix
             populateAddressDataComplete(data);
+
+            // Store complete data for later use
+            window.runManagementState.currentRunData = {
+                ...data,
+                effectiveName: effectiveName,
+                clientId: clientId
+            };
 
             console.log('✅ Run data population complete');
 
@@ -320,10 +351,41 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+
+    // Enhanced court dropdown population
+    function populateCourtDropdown(courts, selectedCourtId) {
+        console.log('🏀 Populating court dropdown:', courts, 'selected:', selectedCourtId);
+
+        const courtSelect = document.getElementById('editCourtList');
+        if (!courtSelect) {
+            console.warn('⚠️ Court select element not found');
+            return;
+        }
+
+        // Clear existing options
+        courtSelect.innerHTML = '<option value="">Select a court...</option>';
+
+        // Add courts from the list
+        courts.forEach(court => {
+            const option = document.createElement('option');
+            option.value = court.courtId || '';
+            option.textContent = court.name || 'Unknown Court';
+
+            // Select if this matches the run's court
+            if (selectedCourtId && court.courtId === selectedCourtId) {
+                option.selected = true;
+            }
+
+            courtSelect.appendChild(option);
+        });
+
+        console.log(`✅ Populated court dropdown with ${courts.length} courts`);
+    }
+
     function populateAddressDataComplete(data) {
         console.log('🏠 Populating address data:', data);
 
-        // Store original client address
+        // Store original client address with enhanced mapping
         window.runManagementState.originalClientAddress = {
             address: data.clientAddress || data.address || '',
             city: data.clientCity || data.city || '',
@@ -344,10 +406,15 @@ document.addEventListener('DOMContentLoaded', function () {
             data.useCustomAddress === 'true' ||
             (data.customAddress && data.customAddress.trim() !== '');
 
-        console.log('🏠 Address data:', {
+        console.log('🏠 Address data analysis:', {
             useCustomAddress,
             originalClient: window.runManagementState.originalClientAddress,
-            custom: window.runManagementState.customRunAddress
+            custom: window.runManagementState.customRunAddress,
+            rawData: {
+                clientAddress: data.clientAddress,
+                address: data.address,
+                customAddress: data.customAddress
+            }
         });
 
         // Set checkbox state

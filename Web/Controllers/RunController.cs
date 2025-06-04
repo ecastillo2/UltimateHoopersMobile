@@ -90,7 +90,10 @@ namespace Web.Controllers
                 var calendarRuns = runs.Select(run => new
                 {
                     runId = run.RunId ?? "",
-                    name = run.Client?.Name ?? run.Name ?? "Basketball Run", // ENHANCED: Use Client.Name as primary
+                    // FIXED: Prioritize Client Name, then fall back to Run Name, then default
+                    name = !string.IsNullOrEmpty(run.Client?.Name)
+                        ? run.Client.Name
+                        : (!string.IsNullOrEmpty(run.Name) ? run.Name : "Basketball Run"),
                     type = run.Type?.ToLower() ?? "pickup",
                     runDate = run.RunDate?.ToString("yyyy-MM-dd") ?? "",
                     startTime = DateTimeUtilities.FormatTimeSpanTo12Hour(run.StartTime ?? TimeSpan.Zero),
@@ -105,7 +108,11 @@ namespace Web.Controllers
                     address = run.Client?.Address ?? "",
                     city = run.Client?.City ?? "",
                     state = run.Client?.State ?? "",
-                    profileId = run.ProfileId ?? ""
+                    zip = run.Client?.Zip ?? "",
+                    profileId = run.ProfileId ?? "",
+                    // FIXED: Ensure ClientId is always included
+                    clientId = run.ClientId ?? "",
+                    clientName = run.Client?.Name ?? ""
                 }).ToList();
 
                 _logger.LogInformation("Retrieved {Count} runs for calendar", calendarRuns.Count);
@@ -133,6 +140,7 @@ namespace Web.Controllers
                 });
             }
         }
+
 
         private string BuildLocationStringFixed(Run run)
         {
@@ -202,7 +210,6 @@ namespace Web.Controllers
             return allRuns.OrderBy(r => r.RunDate).ThenBy(r => r.StartTime).ToList();
         }
 
-        // FIXED: GetRunData method with comprehensive null safety
         [HttpGet]
         public async Task<IActionResult> GetRunData(string id, CancellationToken cancellationToken = default)
         {
@@ -285,12 +292,16 @@ namespace Web.Controllers
                     }
                 }
 
-                // ENHANCED: Run data response with comprehensive null safety and error handling
+                // ENHANCED: Run data response with comprehensive null safety and proper name/client handling
                 var runData = new
                 {
                     runId = run.RunId ?? "",
                     clientId = run.ClientId ?? "",
-                    name = run.Name ?? "",
+                    // FIXED: Use Client Name as primary run name, with fallbacks
+                    name = !string.IsNullOrEmpty(run.Client?.Name)
+                        ? run.Client.Name
+                        : (!string.IsNullOrEmpty(run.Name) ? run.Name : "Basketball Run"),
+                    runName = run.Name ?? "", // Keep original run name separate
 
                     // FIXED: Client information with proper null checking
                     clientName = run.Client?.Name ?? "",
@@ -346,7 +357,11 @@ namespace Web.Controllers
                         courtCount = courtListData.Count,
                         runCourtId = GetCourtIdFromRunSafe(run),
                         hasClientInfo = run.Client != null,
-                        clientName = run.Client?.Name ?? "No client data"
+                        clientName = run.Client?.Name ?? "No client data",
+                        originalRunName = run.Name ?? "",
+                        effectiveRunName = !string.IsNullOrEmpty(run.Client?.Name)
+                            ? run.Client.Name
+                            : (!string.IsNullOrEmpty(run.Name) ? run.Name : "Basketball Run")
                     }
                 };
 
