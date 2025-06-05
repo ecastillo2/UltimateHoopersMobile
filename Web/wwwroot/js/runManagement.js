@@ -1084,6 +1084,22 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('✅ Form event handlers setup complete with conflict validation');
     }
 
+    function handleCourtSelectionChange(event) {
+        const selectedCourtId = event.target.value;
+        const selectedOption = event.target.options[event.target.selectedIndex];
+        const courtName = selectedOption.textContent;
+
+        if (selectedCourtId) {
+            console.log('🏀 Court selected:', courtName, '(ID:', selectedCourtId, ')');
+            showToast(`Court selected: ${courtName}`, 'info');
+        } else {
+            console.log('🏀 No court selected');
+        }
+
+        // Clear any existing conflict warnings when court changes
+        clearConflictWarnings();
+    }
+
     function handleScheduleFieldChange() {
         // Debounce the validation to avoid too many API calls
         if (window.runManagementState.scheduleValidationTimeout) {
@@ -1893,6 +1909,7 @@ document.addEventListener('DOMContentLoaded', function () {
             existingToken.value = globalToken.value;
         }
     }
+
     async function validateScheduleConflicts(blockingValidation = true) {
         console.log('⏰ Validating schedule conflicts...');
 
@@ -2868,9 +2885,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log('🏀 No court list in test data');
                 return false;
             }
-        }
-        
-        verifyAutoPopulation: () => {
+        },
+
+        verifyAutoPopulation: function () {
             const courtInfo = window.runDebugFixed.getCourtInfo();
             const isAutoPopulated = courtInfo.autoPopulated && courtInfo.selectedCourtId;
 
@@ -2892,7 +2909,7 @@ document.addEventListener('DOMContentLoaded', function () {
         },
 
         // ========== CONFLICT VALIDATION DEBUG FUNCTIONS ==========
-        testConflictValidation: async (testData) => {
+        testConflictValidation: async function (testData) {
             console.log('🧪 Testing conflict validation...');
 
             const defaultTestData = {
@@ -2915,21 +2932,21 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         },
 
-        checkTimeOverlap: (time1, time2) => {
+        checkTimeOverlap: function (time1, time2) {
             console.log('🧪 Testing time overlap:', time1, 'vs', time2);
             const result = checkTimeOverlap(time1, time2);
             console.log('🧪 Overlap result:', result);
             return result;
         },
 
-        parseTimeToMinutes: (timeString) => {
+        parseTimeToMinutes: function (timeString) {
             console.log('🧪 Parsing time:', timeString);
             const minutes = parseTimeToMinutes(timeString);
             console.log('🧪 Parsed to minutes:', minutes);
             return minutes;
         },
 
-        simulateConflict: () => {
+        simulateConflict: function () {
             console.log('🧪 Simulating conflict warning...');
             const mockConflicts = [
                 {
@@ -2943,12 +2960,12 @@ document.addEventListener('DOMContentLoaded', function () {
             return mockConflicts;
         },
 
-        clearConflicts: () => {
+        clearConflicts: function () {
             console.log('🧪 Clearing conflict warnings...');
             clearConflictWarnings();
         },
 
-        getCurrentScheduleData: () => {
+        getCurrentScheduleData: function () {
             const scheduleData = {
                 runDate: safeGetValue('editRunDate'),
                 startTime: safeGetValue('editRunTime'),
@@ -2960,48 +2977,41 @@ document.addEventListener('DOMContentLoaded', function () {
             return scheduleData;
         },
 
-        function handleCourtSelectionChange(event) {
-        const selectedCourtId = event.target.value;
-        const selectedOption = event.target.options[event.target.selectedIndex];
-        const courtName = selectedOption.textContent;
+        // FIXED: Court selection change handler as a method (not a function declaration)
+        handleCourtSelectionChange: function (event) {
+            const selectedCourtId = event.target.value;
+            const selectedOption = event.target.options[event.target.selectedIndex];
+            const courtName = selectedOption.textContent;
 
-        if (selectedCourtId) {
-            console.log('🏀 Court selected:', courtName, '(ID:', selectedCourtId, ')');
-            showToast(`Court selected: ${courtName}`, 'info');
-        } else {
-            console.log('🏀 No court selected');
+            if (selectedCourtId) {
+                console.log('🏀 Court selected:', courtName, '(ID:', selectedCourtId, ')');
+                showToast(`Court selected: ${courtName}`, 'info');
+            } else {
+                console.log('🏀 No court selected');
+            }
+
+            // Clear any existing conflict warnings when court changes
+            clearConflictWarnings();
         }
+    };
 
-        // Clear any existing conflict warnings when court changes
-        clearConflictWarnings();
-    }
-};
-
-console.log('🐛 Debug functions available: window.runDebugFixed');
-console.log('🐛 EDIT RUN FUNCTIONS:');
-console.log('🐛 Try: window.runDebugFixed.forceHideLoading() to force hide loading');
-console.log('🐛 Try: window.runDebugFixed.checkConflicts() to check for conflicts');
-console.log('🐛 Try: window.runDebugFixed.testToast() to test utilities.js toast system');
-console.log('🐛 Try: window.runDebugFixed.getFormData() to see current form data');
-console.log('🐛 Try: window.runDebugFixed.getCourtInfo() to check court selection');
-console.log('🐛 Try: window.runDebugFixed.testCourtSelection("courtId") to test court selection');
-console.log('🐛 Try: window.runDebugFixed.simulateCourtAutoPopulation() to test auto-population');
-console.log('🐛 Try: window.runDebugFixed.verifyAutoPopulation() to verify court auto-selection');
-console.log('🐛 CONFLICT VALIDATION:');
-console.log('🐛 Try: window.runDebugFixed.testConflictValidation() to test conflict checking');
-console.log('🐛 Try: window.runDebugFixed.validateCurrentSchedule() to check current form');
-console.log('🐛 Try: window.runDebugFixed.simulateConflict() to show conflict warning');
-console.log('🐛 Try: window.runDebugFixed.clearConflicts() to clear conflict warnings');
-console.log('🐛 Try: window.runDebugFixed.getCurrentScheduleData() to see schedule data');
-console.log('🐛 CREATE RUN FUNCTIONS:');
-console.log('🐛 Try: window.runDebugFixed.testCreateRunForm() to open create run modal');
-console.log('🐛 Try: window.runDebugFixed.getCreateFormData() to see create form data');
-console.log('🐛 Try: window.runDebugFixed.loadTestClients() to load clients');
-console.log('🐛 Try: window.runDebugFixed.testCreateConflictValidation() to test create conflicts');
-console.log('🐛 Try: window.runDebugFixed.simulateCreateConflict() to show create conflict warning');
-console.log('🐛 Try: window.runDebugFixed.clearCreateConflicts() to clear create warnings');
-console.log('🐛 Try: window.runDebugFixed.testCreateClientSelection("clientId") to test client selection');
-console.log('🐛 Try: window.runDebugFixed.validateCreateForm() to validate create form');
-console.log('🐛 Try: window.runDebugFixed.resetCreateForm() to reset create form');
-console.log('🐛 Try: window.runDebugFixed.getCreateRunState() to see create run state');
+    console.log('🐛 Debug functions available: window.runDebugFixed');
+    console.log('🐛 EDIT RUN FUNCTIONS:');
+    console.log('🐛 Try: window.runDebugFixed.forceHideLoading() to force hide loading');
+    console.log('🐛 Try: window.runDebugFixed.checkConflicts() to check for conflicts');
+    console.log('🐛 Try: window.runDebugFixed.testToast() to test utilities.js toast system');
+    console.log('🐛 Try: window.runDebugFixed.getFormData() to see current form data');
+    console.log('🐛 Try: window.runDebugFixed.getCourtInfo() to check court selection');
+    console.log('🐛 Try: window.runDebugFixed.testCourtSelection("courtId") to test court selection');
+    console.log('🐛 Try: window.runDebugFixed.simulateCourtAutoPopulation() to test auto-population');
+    console.log('🐛 Try: window.runDebugFixed.verifyAutoPopulation() to verify court auto-selection');
+    console.log('🐛 CONFLICT VALIDATION:');
+    console.log('🐛 Try: window.runDebugFixed.testConflictValidation() to test conflict checking');
+    console.log('🐛 Try: window.runDebugFixed.simulateConflict() to show conflict warning');
+    console.log('🐛 Try: window.runDebugFixed.clearConflicts() to clear conflict warnings');
+    console.log('🐛 Try: window.runDebugFixed.getCurrentScheduleData() to see schedule data');
+    console.log('🐛 CREATE RUN FUNCTIONS:');
+    console.log('🐛 Try: window.runDebugFixed.loadClientsForCreateRun() to load clients');
+    console.log('🐛 Try: window.runDebugFixed.validateCreateRunForm() to validate create form');
+    console.log('🐛 Try: window.runDebugFixed.resetCreateRunForm() to reset create form');
 });
