@@ -8,6 +8,7 @@ namespace Domain
     {
         [Key]
         public string? ProfileId { get; set; }
+        public string? SubscriptionId { get; set; }
         public string? UserId { get; set; }
         public string? UserName { get; set; }
         public string? Height { get; set; }
@@ -27,7 +28,8 @@ namespace Domain
         public DateTime? LastRunDate { get; set; }
         public bool? TopRecord { get; set; }
         public bool? OnSquad { get; set; }
-       
+        public bool? PaymentRequired { get; set; }
+
 
         [NotMapped]
         public Squad? Squad { get; set; }
@@ -107,6 +109,8 @@ namespace Domain
 
         [NotMapped]
         public List<Profile>? FollowingList { get; set; }
+        [NotMapped]
+        public Subscription? Subscription { get; set; }
 
 
 

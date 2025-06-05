@@ -17,6 +17,7 @@ namespace Domain.DtoModel
         public ProfileViewModelDto(Profile profile)
         {
             ProfileId = profile.ProfileId;
+            SubscriptionId = profile.SubscriptionId;
             UserId = profile.UserId;
             UserName = profile.UserName;
             Height = profile.Height;
@@ -36,12 +37,14 @@ namespace Domain.DtoModel
             TopRecord = profile.TopRecord;
             OnSquad = profile.OnSquad;
             GameStatistics = profile.GameStatistics;
-            
+            PaymentRequired = profile.PaymentRequired;
           
 
         }
 
         public string? ProfileId { get; set; }
+        public string? SubscriptionId { get; set; }
+        public bool? PaymentRequired { get; set; }
         public string? UserId { get; set; }
         public string? UserName { get; set; }
         public string? Height { get; set; }

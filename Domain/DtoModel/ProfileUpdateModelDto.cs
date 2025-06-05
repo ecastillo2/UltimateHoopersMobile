@@ -18,9 +18,13 @@ namespace Domain.DtoModel
         public string? City { get; set; }
         public string? Zip { get; set; }
         public string? PlayerNumber { get; set; }
+        public string? SubscriptionId { get; set; }
+        public bool? PaymentRequired { get; set; }
 
         public void UpdateProfile(Profile profile)
         {
+            profile.PaymentRequired = PaymentRequired;
+            profile.SubscriptionId = SubscriptionId;
             profile.Height = Height;
             profile.Weight = Weight;
             profile.Position = Position;

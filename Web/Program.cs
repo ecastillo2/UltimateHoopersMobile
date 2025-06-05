@@ -77,6 +77,7 @@ builder.Services.AddHttpClient<IGameApi, GameApi>(client =>
 });
 
 
+
 //builder.Services.AddHttpClient<IUserApi, UserApi>(user =>
 //{
 

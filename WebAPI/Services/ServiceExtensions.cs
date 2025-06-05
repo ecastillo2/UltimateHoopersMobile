@@ -58,6 +58,7 @@ namespace WebAPI.Extensions
             services.AddScoped<IJoinedRunRepository, JoinedRunRepository>();
             services.AddScoped<IReportRepository, ReportRepository>();
             services.AddScoped<IVideoRepository, VideoRepository>();
+            services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
 
             return services;
         }

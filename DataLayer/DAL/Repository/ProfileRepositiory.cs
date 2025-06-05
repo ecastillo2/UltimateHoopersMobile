@@ -384,7 +384,11 @@ namespace DataLayer.DAL.Repository
                     .AsNoTracking()
                     .Include(p => p.Setting)
                     .FirstOrDefaultAsync(p => p.ProfileId == profileId, cancellationToken);
-                 
+
+
+                result.Subscription = await _context.Subscription
+                   .AsNoTracking()
+                   .FirstOrDefaultAsync(p => p.ProfileId == result.ProfileId, cancellationToken);
 
                 result.TotalWins = await _context.GameWinningPlayer
                     .AsNoTracking()
