@@ -1,34 +1,219 @@
 html {
-  font-size: 14px;
+    font-size: 14px;
 }
 
 @media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+    html {
+        font-size: 16px;
+    }
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
 
 html {
-  position: relative;
-  min-height: 100%;
+    position: relative;
+    min-height: 100%;
 }
 
 body {
-  margin-bottom: 60px;
+    margin-bottom: 60px;
 }
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
-  text-align: end;
+    color: var(--bs-secondary-color);
+    text-align: end;
 }
 
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
+    text-align: start;
 }
+
+/* =====================================================
+   PURPLE SPINNER SYSTEM - HIGHEST PRIORITY
+   ===================================================== */
+
+:root {
+    --primary-color: #ff6238;
+    --secondary-color: #342580;
+    --accent-color: #3BACB6;
+    --light-color: #F8F9FA;
+    --dark-color: #212529;
+}
+
+/* MODERN SPINNER STYLES - GLASSMORPHISM DESIGN */
+#loginSpinner {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.7), rgba(52, 37, 128, 0.3)) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    z-index: 999999 !important;
+    display: none !important;
+    align-items: center !important;
+    justify-content: center !important;
+    animation: fadeIn 0.3s ease-out !important;
+}
+
+    /* When spinner is active, it will have this class */
+    #loginSpinner.active {
+        display: flex !important;
+    }
+
+.spinner-content {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    padding: 3rem 2.5rem !important;
+    border-radius: 24px !important;
+    text-align: center !important;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+    min-width: 350px !important;
+    position: relative !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    animation: slideUp 0.4s ease-out !important;
+}
+
+.custom-spinner {
+    width: 3.5rem !important;
+    height: 3.5rem !important;
+    margin: 0 auto 2rem auto !important;
+    color: #342580 !important;
+    border-width: 4px !important;
+    filter: drop-shadow(0 4px 8px rgba(52, 37, 128, 0.3)) !important;
+}
+
+#spinnerMessage {
+    color: #2c3e50 !important;
+    font-weight: 600 !important;
+    font-size: 1.25rem !important;
+    margin: 0 !important;
+    letter-spacing: -0.02em !important;
+    line-height: 1.4 !important;
+}
+
+/* FORCE PURPLE SPINNER - OVERRIDE EVERYTHING */
+.spinner-border.custom-spinner,
+#loginSpinner .spinner-border,
+#loginSpinner .custom-spinner,
+.custom-spinner.spinner-border {
+    border: 4px solid #342580 !important;
+    border-right-color: transparent !important;
+    border-top-color: transparent !important;
+    color: #342580 !important;
+    animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
+}
+
+/* Override Bootstrap and any other spinner styles */
+.spinner-border {
+    border-color: #342580 !important;
+}
+
+    .text-primary .spinner-border,
+    .spinner-border.text-primary {
+        border-color: #342580 !important;
+        border-right-color: transparent !important;
+        border-top-color: transparent !important;
+    }
+
+/* Emergency backup spinner - PURPLE */
+.emergency-spinner {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 140px !important;
+    height: 140px !important;
+    background: linear-gradient(135deg, #342580, #2a1f6b) !important;
+    color: white !important;
+    border-radius: 50% !important;
+    display: none !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 9999999 !important;
+    box-shadow: 0 20px 40px rgba(52, 37, 128, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(10px) !important;
+    animation: pulseGlow 2s ease-in-out infinite !important;
+}
+
+    .emergency-spinner.active {
+        display: flex !important;
+    }
+
+/* Modern animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes pulseGlow {
+    0%, 100% {
+        transform: translate(-50%, -50%) scale(1);
+        box-shadow: 0 20px 40px rgba(52, 37, 128, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    }
+
+    50% {
+        transform: translate(-50%, -50%) scale(1.05);
+        box-shadow: 0 25px 50px rgba(52, 37, 128, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.2);
+    }
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Button loading states - Modern approach */
+.btn-loading {
+    position: relative !important;
+    pointer-events: none !important;
+    opacity: 0.9 !important;
+    transition: opacity 0.2s ease !important;
+}
+
+    .btn-loading .btn-text {
+        opacity: 0.7 !important;
+    }
+
+    .btn-loading::before {
+        content: '' !important;
+        position: absolute !important;
+        top: 50% !important;
+        left: 1rem !important;
+        width: 1rem !important;
+        height: 1rem !important;
+        margin-top: -0.5rem !important;
+        border: 2px solid transparent !important;
+        border-top-color: currentColor !important;
+        border-radius: 50% !important;
+        animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
+    }
 
 /* Transition utilities */
 .transition-all {
