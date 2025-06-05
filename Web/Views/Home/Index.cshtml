@@ -218,16 +218,12 @@
         }
 
         @@keyframes bounce {
-            from
-
-        {
-            transform: translateY(0px);
-        }
-
-        to {
-            transform: translateY(-15px);
-        }
-
+            from {
+                transform: translateY(0px);
+            }
+            to {
+                transform: translateY(-15px);
+            }
         }
 
         #login-modal .modal-content {
@@ -287,6 +283,104 @@
 
         .transition-all {
             transition: all 0.3s ease;
+        }
+
+        /* Rules Section Styles */
+        .rule-card {
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            border: none;
+            height: 100%;
+            background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+        }
+
+            .rule-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+            }
+
+        .rule-icon {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 15px;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--primary-color) 0%, #ff8c69 100%);
+            color: white;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 15px rgba(255, 98, 56, 0.3);
+        }
+
+        .rule-highlight {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border-left: 4px solid var(--primary-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .clock-display {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #4a3b8a 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(52, 37, 128, 0.3);
+        }
+
+        .clock-number {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .rule-step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: rgba(255, 98, 56, 0.05);
+            border-radius: 10px;
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .step-number {
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+
+        .timing-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin: 0.25rem;
+        }
+
+        .warning-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin: 0.25rem;
         }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -411,8 +505,220 @@
         </div>
     </section>
 
+    <!-- Game Rules Section -->
+    <section id="rules" class="py-8">
+        <div class="container">
+            <div class="text-center mb-7">
+                <h2 class="fs-9 fw-bold mb-3 text-navy">Game Rules & Format</h2>
+                <p class="fs-4 text-muted mx-auto" style="max-width: 700px;">Understanding our standardized game format ensures fair play and maximum enjoyment for all participants</p>
+            </div>
+
+            <!-- Game Timing Overview -->
+            <div class="row mb-6">
+                <div class="col-lg-8 mx-auto">
+                    <div class="clock-display">
+                        <h3 class="fs-4 fw-bold mb-3">Standard Game Format</h3>
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <div class="clock-number">8</div>
+                                <div class="fs-5">Minutes Per Game</div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="clock-number">2</div>
+                                <div class="fs-5">Minutes Between Games</div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="clock-number">10</div>
+                                <div class="fs-5">Total Time Clock</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Rules -->
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="card rule-card shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="rule-icon">
+                                <i class="ti ti-clock"></i>
+                            </div>
+                            <h3 class="fs-5 fw-bold mb-3">Game Clock Rules</h3>
+                            
+                            <div class="rule-step">
+                                <div class="step-number">1</div>
+                                <div>
+                                    <h5 class="mb-2">Running Clock</h5>
+                                    <p class="mb-1">Clock runs continuously for the first 7 minutes of each 8-minute game</p>
+                                    <span class="timing-badge">0:00 - 7:00</span>
+                                </div>
+                            </div>
+
+                            <div class="rule-step">
+                                <div class="step-number">2</div>
+                                <div>
+                                    <h5 class="mb-2">Final Minute</h5>
+                                    <p class="mb-1">Clock stops on dead balls, fouls, and timeouts during the final minute</p>
+                                    <span class="warning-badge">7:00 - 8:00</span>
+                                </div>
+                            </div>
+
+                            <div class="rule-highlight">
+                                <strong>Exception:</strong> Clock may be stopped for injuries at any time during the game at the referee's discretion.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card rule-card shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="rule-icon">
+                                <i class="ti ti-hourglass-high"></i>
+                            </div>
+                            <h3 class="fs-5 fw-bold mb-3">Shot Clock Rules</h3>
+                            
+                            <div class="rule-step">
+                                <div class="step-number">1</div>
+                                <div>
+                                    <h5 class="mb-2">Regular Time</h5>
+                                    <p class="mb-1">Standard shot clock applies for the first 7 minutes</p>
+                                    <span class="timing-badge">Standard Shot Clock</span>
+                                </div>
+                            </div>
+
+                            <div class="rule-step">
+                                <div class="step-number">2</div>
+                                <div>
+                                    <h5 class="mb-2">Final Minute (Above 10 Seconds)</h5>
+                                    <p class="mb-1">Shot clock is half the game clock when game clock is above 10 seconds</p>
+                                    <span class="warning-badge">Shot Clock = Game Clock ÷ 2</span>
+                                </div>
+                            </div>
+
+                            <div class="rule-step">
+                                <div class="step-number">3</div>
+                                <div>
+                                    <h5 class="mb-2">Final 10 Seconds</h5>
+                                    <p class="mb-1">Shot clock equals the entire game clock when under 10 seconds</p>
+                                    <span class="warning-badge">Shot Clock = Game Clock</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card rule-card shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="rule-icon">
+                                <i class="ti ti-users-group"></i>
+                            </div>
+                            <h3 class="fs-5 fw-bold mb-3">Player Rotation</h3>
+                            
+                            <div class="rule-step">
+                                <div class="step-number">1</div>
+                                <div>
+                                    <h5 class="mb-2">Fair Play Priority</h5>
+                                    <p class="mb-1">Players who haven't played yet get priority for the next game</p>
+                                    <span class="timing-badge">Equal Opportunity</span>
+                                </div>
+                            </div>
+
+                            <div class="rule-step">
+                                <div class="step-number">2</div>
+                                <div>
+                                    <h5 class="mb-2">Selection Process</h5>
+                                    <p class="mb-1">If all players have played equally, selection is made by random draw/die roll</p>
+                                    <span class="timing-badge">Random Selection</span>
+                                </div>
+                            </div>
+
+                            <div class="rule-highlight">
+                                <strong>Goal:</strong> Ensure every player gets equal playing time throughout the session.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card rule-card shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="rule-icon">
+                                <i class="ti ti-refresh"></i>
+                            </div>
+                            <h3 class="fs-5 fw-bold mb-3">Game Transitions</h3>
+                            
+                            <div class="rule-step">
+                                <div class="step-number">1</div>
+                                <div>
+                                    <h5 class="mb-2">Rest Period</h5>
+                                    <p class="mb-1">Exactly 2 minutes between each 8-minute game for rest and rotation</p>
+                                    <span class="timing-badge">2 Minutes Break</span>
+                                </div>
+                            </div>
+
+                            <div class="rule-step">
+                                <div class="step-number">2</div>
+                                <div>
+                                    <h5 class="mb-2">Total Session Time</h5>
+                                    <p class="mb-1">Each complete game cycle takes exactly 10 minutes (8 play + 2 rest)</p>
+                                    <span class="timing-badge">10 Minute Blocks</span>
+                                </div>
+                            </div>
+
+                            <div class="rule-step">
+                                <div class="step-number">3</div>
+                                <div>
+                                    <h5 class="mb-2">Next Game Setup</h5>
+                                    <p class="mb-1">Use break time for player selection and court preparation</p>
+                                    <span class="timing-badge">Preparation Time</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Reference -->
+            <div class="row mt-5">
+                <div class="col-lg-10 mx-auto">
+                    <div class="card rule-card shadow-lg" style="background: linear-gradient(135deg, #342580 0%, #4a3b8a 100%);">
+                        <div class="card-body p-4 text-white">
+                            <h3 class="fs-4 fw-bold mb-4 text-center">
+                                <i class="ti ti-list-check me-2 text-orange"></i>
+                                Quick Reference Guide
+                            </h3>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h5 class="text-orange mb-3">Timing</h5>
+                                    <ul class="list-unstyled">
+                                        <li class="mb-2"><i class="ti ti-check text-orange me-2"></i>8-minute games</li>
+                                        <li class="mb-2"><i class="ti ti-check text-orange me-2"></i>2-minute breaks</li>
+                                        <li class="mb-2"><i class="ti ti-check text-orange me-2"></i>Running clock until final minute</li>
+                                        <li class="mb-2"><i class="ti ti-check text-orange me-2"></i>Stop clock in final minute</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5 class="text-orange mb-3">Shot Clock</h5>
+                                    <ul class="list-unstyled">
+                                        <li class="mb-2"><i class="ti ti-check text-orange me-2"></i>Standard for first 7 minutes</li>
+                                        <li class="mb-2"><i class="ti ti-check text-orange me-2"></i>Half game clock (>10 sec remaining)</li>
+                                        <li class="mb-2"><i class="ti ti-check text-orange me-2"></i>Full game clock (≤10 sec remaining)</li>
+                                        <li class="mb-2"><i class="ti ti-check text-orange me-2"></i>Fair player rotation system</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- App Screenshots Section -->
-    <section class="py-8">
+    <section class="py-8 bg-light">
         <div class="container">
             <div class="text-center mb-7">
                 <h2 class="fs-9 fw-bold mb-3 text-navy">App Screenshots</h2>
@@ -428,7 +734,7 @@
                 <div class="col-md-3">
                     <img src="https://placehold.co/300x600/342580/FFFFFF?text=Stats" alt="App Screenshot" class="img-fluid rounded-4 shadow-sm">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <img src="https://placehold.co/300x600/ff6238/FFFFFF?text=Profile" alt="App Screenshot" class="img-fluid rounded-4 shadow-sm">
                 </div>
             </div>
@@ -436,7 +742,7 @@
     </section>
 
     <!-- Meet Our Coaches Section -->
-    <section class="py-8 bg-light">
+    <section class="py-8">
         <div class="container">
             <div class="text-center mb-7">
                 <h2 class="fs-9 fw-bold mb-3 text-navy">Meet Our Coaches</h2>
@@ -508,7 +814,7 @@
     </section>
 
     <!-- Testimonials Section -->
-    <section class="py-8">
+    <section class="py-8 bg-light">
         <div class="container">
             <div class="text-center mb-7">
                 <h2 class="fs-9 fw-bold mb-3 text-navy">What Our Users Say</h2>
@@ -667,8 +973,6 @@
                                     <i class="ti ti-check text-success me-2"></i>
                                     <span>Access to open runs</span>
                                 </li>
-                                
-                            
                             </ul>
                             <a href="#" class="btn btn-outline-orange w-100 py-2">Download</a>
                         </div>
@@ -684,7 +988,7 @@
                                 <div class="d-inline-flex align-items-center justify-content-center bg-light rounded-circle mb-3" style="width: 80px; height: 80px;">
                                     <i class="ti ti-trophy fs-1 text-orange"></i>
                                 </div>
-                                <h3 class="fs-4 fw-bold">Player Advanced</h3>
+                                <h3 class="fs-4 fw-bold">Hooper</h3>
                                 <div class="d-flex align-items-center justify-content-center gap-2 my-3">
                                     <span class="fs-1 fw-bold">$5</span>
                                     <span class="text-muted">/month</span>
@@ -741,7 +1045,7 @@
                                     <span class="fs-1 fw-bold">$200</span>
                                     <span class="text-muted">/month</span>
                                 </div>
-                                <p class="text-muted">For organizations and coaches who host basketball events</p>
+                                <p class="text-muted">For organizations facilities and coaches who host basketball events</p>
                             </div>
                             <ul class="list-unstyled mb-4">
                                 <li class="d-flex align-items-center mb-3">
@@ -750,7 +1054,9 @@
                                 </li>
                                 <li class="d-flex align-items-center mb-3">
                                     <i class="ti ti-check text-success me-2"></i>
-                                    <span>Hudl Focus camera ($2,000 value)</span>
+                                    <a href="https://www.hudl.com/focus" target="_blank" rel="noopener noreferrer">
+                                    <span>Free Hudl Focus camera ($2,000 value) rental</span>
+                                    </a>
                                 </li>
                                 <li class="d-flex align-items-center mb-3">
                                     <i class="ti ti-check text-success me-2"></i>
@@ -803,6 +1109,7 @@
                     <ul class="list-unstyled">
                         <li class="mb-2"><a href="#" class="footer-link">Home</a></li>
                         <li class="mb-2"><a href="#features" class="footer-link">Features</a></li>
+                        <li class="mb-2"><a href="#rules" class="footer-link">Game Rules</a></li>
                         <li class="mb-2"><a href="#download" class="footer-link">Download</a></li>
                         <li class="mb-2"><a href="#login" class="footer-link">Login</a></li>
                         <li class="mb-2"><a href="#" class="footer-link">FAQ</a></li>
