@@ -24,7 +24,8 @@ namespace Domain
         public string? PaymentMethod { get; set; }
         public string? TeamType { get; set; }
         public bool? IsPublic { get; set; }
-        
+        public string? Occurrence { get; set; }
+
         public int? PlayerLimit { get; set; }
         [NotMapped]
         public string? RelativeDate { get; set; }

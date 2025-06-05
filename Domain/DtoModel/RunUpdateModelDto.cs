@@ -31,6 +31,7 @@ namespace Domain.DtoModel
         public string? TeamType { get; set; }
         public int? PlayerLimit { get; set; }
         public bool? IsPublic { get; set; }
+        public string? Occurrence { get; set; }
 
         public void UpdateRun(Run run)
         {
@@ -45,6 +46,7 @@ namespace Domain.DtoModel
             run.SkillLevel = SkillLevel;
             run.PaymentMethod = PaymentMethod;
             run.PlayerLimit = PlayerLimit;
+            run.Occurrence = Occurrence;
         }
     }
 }

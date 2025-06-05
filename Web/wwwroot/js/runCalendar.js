@@ -1,6 +1,6 @@
 ﻿/**
  * FIXED Run Calendar Implementation
- * Addresses API fetch issues and ensures consistent data with datatable
+ * Clean version with no syntax errors
  */
 
 class FixedRunCalendar {
@@ -15,12 +15,11 @@ class FixedRunCalendar {
         this.isLoading = false;
         this.cache = new Map();
 
-        // Enhanced calendar configuration
         this.config = {
             maxRunsPerDay: 3,
             dateRangeMonths: 3,
             animationDuration: 300,
-            fetchTimeout: 15000, // Reduced timeout for faster feedback
+            fetchTimeout: 15000,
             refreshInterval: 5 * 60 * 1000,
             cacheTimeout: 2 * 60 * 1000,
             enableKeyboardNavigation: true,
@@ -38,7 +37,6 @@ class FixedRunCalendar {
     }
 
     bindEvents() {
-        // Navigation buttons
         const prevBtn = document.getElementById('prevMonth');
         const nextBtn = document.getElementById('nextMonth');
         const todayBtn = document.getElementById('todayBtn');
@@ -49,7 +47,6 @@ class FixedRunCalendar {
         if (todayBtn) todayBtn.addEventListener('click', () => this.goToToday());
         if (refreshBtn) refreshBtn.addEventListener('click', () => this.loadCalendar(true));
 
-        // Modal events
         const modal = document.getElementById('runCalendarModal');
         if (modal) {
             modal.addEventListener('shown.bs.modal', () => {
@@ -66,7 +63,7 @@ class FixedRunCalendar {
     setupAutoRefresh() {
         this.autoRefreshInterval = setInterval(() => {
             if (this.isCalendarVisible() && !this.isLoading && !document.hidden) {
-                this.loadCalendar(false, false); // Silent refresh
+                this.loadCalendar(false, false);
             }
         }, this.config.refreshInterval);
     }
@@ -89,7 +86,6 @@ class FixedRunCalendar {
                 this.showLoading();
             }
 
-            // Check cache first
             const cacheKey = `${this.currentYear}-${this.currentMonth}`;
             if (!forceRefresh && this.cache.has(cacheKey)) {
                 const cachedData = this.cache.get(cacheKey);
@@ -107,7 +103,6 @@ class FixedRunCalendar {
             this.renderCalendar();
             this.updateStats();
 
-            // Cache the data
             this.cache.set(cacheKey, {
                 runs: [...this.runs],
                 timestamp: Date.now()
@@ -123,7 +118,6 @@ class FixedRunCalendar {
             this.showError(`Failed to load calendar data: ${error.message}`);
         } finally {
             this.isLoading = false;
-            // Note: Loading state is cleared by renderCalendar() or showError()
         }
     }
 
@@ -134,11 +128,9 @@ class FixedRunCalendar {
         try {
             console.log(`📡 Fetching runs from ${startDate.toISOString()} to ${endDate.toISOString()}`);
 
-            // Try multiple API endpoints in order of preference
             const response = await this.fetchRunsFromMultipleSources(startDate, endDate);
             this.runs = response;
 
-            // Show success message for real data
             if (this.runs.length > 0 && this.runs[0].id && !this.runs[0].id.includes('mock')) {
                 console.log(`📋 ✅ Loaded ${this.runs.length} REAL runs from API successfully!`);
                 this.showSuccessToast(`Loaded ${this.runs.length} runs from server`);
@@ -149,14 +141,12 @@ class FixedRunCalendar {
         } catch (error) {
             console.warn('⚠️ All data fetch attempts failed:', error.message);
 
-            // Better error handling based on error type
             const isAuthError = error.message.includes('Authentication') || error.message.includes('log in');
             const isNotFound = error.message.includes('not found') || error.message.includes('404');
             const isServerError = error.message.includes('Server error') || error.message.includes('500');
 
             if (this.isOnDashboard()) {
                 console.log('📊 On dashboard page - API not available, using fallback mock data');
-                // Don't show error to user on dashboard for missing API, just use mock data silently
                 if (isAuthError) {
                     this.showWarningToast('Please log in to view real run data');
                 }
@@ -181,115 +171,6 @@ class FixedRunCalendar {
         }
     }
 
-    // Success toast for real data loading
-    showSuccessToast(message) {
-        if (window.UIUtils && window.UIUtils.showToast) {
-            window.UIUtils.showToast(message, 'success', 3000);
-        } else {
-            console.log(`✅ SUCCESS: ${message}`);
-        }
-    }
-
-    // Warning toast for authentication issues
-    showWarningToast(message) {
-        if (window.UIUtils && window.UIUtils.showToast) {
-            window.UIUtils.showToast(message, 'warning', 4000);
-        } else {
-            console.log(`⚠️ WARNING: ${message}`);
-        }
-    }
-
-    // Check if we're on the dashboard page
-    isOnDashboard() {
-        return window.location.pathname.includes('/Dashboard') ||
-            window.location.pathname === '/' ||
-            document.querySelector('.dashboard-header') !== null;
-    }
-
-    // Generate mock data based on dashboard stats if available
-    async generateMockFromDashboardStats() {
-        console.log('📊 Generating mock data from dashboard stats');
-
-        // Add a small delay to simulate processing
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-        // Try to get run count from dashboard stats
-        let runCount = 25; // default
-
-        try {
-            // Look for run count in dashboard stats cards
-            const statCards = document.querySelectorAll('.stats-card .fs-5, .stat-number');
-            if (statCards.length > 0) {
-                const firstStat = statCards[0].textContent.trim();
-                const parsedCount = parseInt(firstStat);
-                if (!isNaN(parsedCount) && parsedCount > 0) {
-                    runCount = Math.min(Math.max(parsedCount, 10), 50); // Between 10-50 runs
-                    console.log(`📊 Using dashboard run count: ${parsedCount}, generating ${runCount} mock runs`);
-                }
-            }
-        } catch (error) {
-            console.warn('⚠️ Could not extract stats from dashboard, using default count');
-        }
-
-        // Generate mock data with the determined count
-        return this.generateMockRunsWithCount(runCount);
-    }
-
-    generateMockRunsWithCount(count) {
-        const runs = [];
-        const startDate = new Date(this.currentYear, this.currentMonth - this.config.dateRangeMonths, 1);
-        const endDate = new Date(this.currentYear, this.currentMonth + this.config.dateRangeMonths + 1, 0);
-
-        const runTypes = ['pickup', 'training', 'tournament', 'youth', 'women'];
-        const skillLevels = ['Beginner', 'Intermediate', 'Advanced', 'All Levels'];
-        const locations = [
-            'Main Basketball Court',
-            'Practice Gym',
-            'Community Recreation Center',
-            'Youth Sports Complex',
-            'Westside Basketball Courts',
-            'Downtown Sports Center'
-        ];
-
-        for (let i = 0; i < count; i++) {
-            // Create random date within range
-            const randomDate = new Date(startDate.getTime() + Math.random() * (endDate.getTime() - startDate.getTime()));
-
-            // Set random time (6 AM to 10 PM)
-            const randomHour = Math.floor(Math.random() * 16) + 6;
-            const randomMinute = Math.floor(Math.random() * 4) * 15; // 0, 15, 30, 45
-            randomDate.setHours(randomHour, randomMinute, 0, 0);
-
-            const type = runTypes[Math.floor(Math.random() * runTypes.length)];
-            const capacity = Math.floor(Math.random() * 20) + 5;
-            const participants = Math.floor(Math.random() * (capacity + 1));
-
-            const startTime = this.formatTime(randomDate);
-            const runEndDate = new Date(randomDate.getTime() + (1 + Math.random() * 2) * 60 * 60 * 1000); // 1-3 hours
-            const endTime = this.formatTime(runEndDate);
-
-            runs.push({
-                id: `dashboard-mock-run-${i + 1}`,
-                name: `${this.capitalize(type)} ${this.getRandomGameName()}`,
-                type: type,
-                date: randomDate,
-                startTime: startTime,
-                endTime: endTime,
-                location: locations[Math.floor(Math.random() * locations.length)],
-                skillLevel: skillLevels[Math.floor(Math.random() * skillLevels.length)],
-                participants: participants,
-                capacity: capacity,
-                description: this.generateRunDescription(type, skillLevels[Math.floor(Math.random() * skillLevels.length)]),
-                status: Math.random() > 0.05 ? 'Active' : 'Cancelled', // 5% chance of cancelled
-                isPublic: Math.random() > 0.15, // 85% public
-                profileId: `user-${Math.floor(Math.random() * 50) + 1}`
-            });
-        }
-
-        return runs.sort((a, b) => a.date - b.date);
-    }
-
-    // FIXED: Try multiple API sources based on current page
     async fetchRunsFromMultipleSources(startDate, endDate) {
         const sources = [];
         const onDashboard = this.isOnDashboard();
@@ -297,13 +178,11 @@ class FixedRunCalendar {
 
         console.log(`📍 Page detection: Dashboard=${onDashboard}, RunsPage=${onRunsPage}, Path=${window.location.pathname}`);
 
-        // Always try the primary API endpoint first
         sources.push({
             name: 'Primary API (/Run/GetRunsForCalendar)',
             fn: () => this.fetchRunsFromAPI(startDate, endDate)
         });
 
-        // If on dashboard, generate mock data directly (don't try other APIs)
         if (onDashboard) {
             sources.push({
                 name: 'Dashboard Mock Data Generator',
@@ -311,14 +190,12 @@ class FixedRunCalendar {
             });
         }
 
-        // Only try table extraction if we're on the runs management page
         if (onRunsPage && !onDashboard) {
             sources.push({
                 name: 'Table Data Extraction',
                 fn: () => this.extractRunsFromTable()
             });
 
-            // Try alternative API endpoints only on runs page
             sources.push({
                 name: 'Alternative API (/Run/GetAllRunsForCalendar)',
                 fn: () => this.fetchAllRunsAndFilter(startDate, endDate)
@@ -344,14 +221,6 @@ class FixedRunCalendar {
         throw lastError || new Error('All data sources failed');
     }
 
-    // Check if we're on the runs management page
-    isOnRunsPage() {
-        return document.getElementById('runsTable') !== null ||
-            window.location.pathname.includes('/Run/Run') ||
-            window.location.pathname.includes('/Run');
-    }
-
-    // FIXED: Improved API fetch with better error handling
     async fetchRunsFromAPI(startDate, endDate) {
         const url = new URL('/Run/GetRunsForCalendar', window.location.origin);
         url.searchParams.append('startDate', startDate.toISOString());
@@ -368,9 +237,7 @@ class FixedRunCalendar {
                 headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest', // Help with CSRF
-                    // Include CSRF token if available
-                    ...(this.getAntiForgeryToken() && { 'RequestVerificationToken': this.getAntiForgeryToken() })
+                    'X-Requested-With': 'XMLHttpRequest'
                 },
                 signal: controller.signal,
                 credentials: 'same-origin'
@@ -379,10 +246,8 @@ class FixedRunCalendar {
             clearTimeout(timeoutId);
 
             console.log('📡 Response status:', response.status);
-            console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
 
             if (!response.ok) {
-                // Handle specific HTTP status codes
                 if (response.status === 401) {
                     throw new Error('Authentication required - please log in');
                 } else if (response.status === 403) {
@@ -400,16 +265,19 @@ class FixedRunCalendar {
             console.log('📦 Raw API response:', data);
 
             if (data.success === false) {
+                console.error('❌ API Error Details:', {
+                    message: data.message,
+                    error: data.error,
+                    fullResponse: data
+                });
                 throw new Error(data.message || 'API returned error status');
             }
 
-            // Validate response structure
             if (!data.runs || !Array.isArray(data.runs)) {
                 console.warn('⚠️ API response missing runs array:', data);
                 throw new Error('Invalid API response format');
             }
 
-            // Transform API data to calendar format
             const transformedRuns = this.transformAPIData(data.runs);
 
             console.log(`✅ Successfully fetched and transformed ${transformedRuns.length} runs from API`);
@@ -422,171 +290,11 @@ class FixedRunCalendar {
                 throw new Error('Request timed out - server may be slow');
             }
 
-            // Re-throw with better context
             console.error('📡 API Fetch Error:', error);
             throw error;
         }
     }
 
-    // FIXED: Fallback method to get all runs - make this optional
-    async fetchAllRunsAndFilter(startDate, endDate) {
-        console.log('📡 Trying fallback: fetch all runs');
-
-        // Check if alternative endpoint exists by trying a HEAD request first
-        try {
-            const headResponse = await fetch('/Run/GetAllRunsForCalendar', {
-                method: 'HEAD',
-                credentials: 'same-origin'
-            });
-
-            if (!headResponse.ok) {
-                throw new Error('Alternative endpoint not available');
-            }
-        } catch (error) {
-            console.log('📡 Alternative endpoint not available, skipping');
-            throw new Error('Alternative API endpoint not found');
-        }
-
-        const url = new URL('/Run/GetAllRunsForCalendar', window.location.origin);
-
-        const response = await fetch(url.toString(), {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            credentials: 'same-origin'
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-
-        if (data.success === false) {
-            throw new Error(data.message || 'API returned error status');
-        }
-
-        // Transform and filter runs
-        const allRuns = this.transformAPIData(data.runs || []);
-
-        // Filter by date range
-        return allRuns.filter(run => {
-            if (!run.date) return false;
-            return run.date >= startDate && run.date <= endDate;
-        });
-    }
-
-    // FIXED: Extract runs from existing table data
-    extractRunsFromTable() {
-        console.log('📋 Extracting runs from table data');
-
-        const runsTable = document.getElementById('runsTable');
-        if (!runsTable) {
-            throw new Error('No table data available');
-        }
-
-        const runs = [];
-        const rows = runsTable.querySelectorAll('tbody tr');
-
-        rows.forEach(row => {
-            try {
-                const run = this.extractRunFromTableRow(row);
-                if (run) {
-                    runs.push(run);
-                }
-            } catch (error) {
-                console.warn('⚠️ Error extracting run from row:', error);
-            }
-        });
-
-        console.log(`📋 Extracted ${runs.length} runs from table`);
-        return runs;
-    }
-
-    extractRunFromTableRow(row) {
-        // Extract data from table row attributes and cells
-        const cells = row.querySelectorAll('td');
-        if (cells.length < 4) return null;
-
-        // Get run name from first cell
-        const nameCell = cells[0];
-        const nameEl = nameCell.querySelector('.fw-semibold');
-        const name = nameEl ? nameEl.textContent.trim() : 'Basketball Run';
-
-        // Get type from first cell
-        const typeEl = nameCell.querySelector('.text-muted.small');
-        const typeText = typeEl ? typeEl.textContent.trim() : '';
-        const type = typeText.split('•')[0].trim().toLowerCase() || 'pickup';
-
-        // Get date and time from second cell
-        const dateTimeCell = cells[1];
-        const dateEl = dateTimeCell.querySelector('.fw-semibold');
-        const timeEl = dateTimeCell.querySelector('.text-muted.small');
-
-        let runDate = new Date();
-        if (dateEl) {
-            const dateText = dateEl.textContent.trim();
-            runDate = new Date(dateText);
-        }
-
-        let startTime = '12:00 PM';
-        let endTime = '2:00 PM';
-        if (timeEl) {
-            const timeText = timeEl.textContent.trim();
-            const times = timeText.split(' - ');
-            if (times.length >= 1) startTime = times[0];
-            if (times.length >= 2) endTime = times[1];
-        }
-
-        // Get location from third cell
-        const locationCell = cells[2];
-        const locationEl = locationCell.querySelector('.fw-semibold');
-        const location = locationEl ? locationEl.textContent.trim() : 'Location TBD';
-
-        // Get participants from fourth cell
-        const participantsCell = cells[3];
-        const capacityText = participantsCell.querySelector('.capacity-text');
-        let playerCount = 0;
-        let playerLimit = 10;
-
-        if (capacityText) {
-            const match = capacityText.textContent.match(/(\d+)\/(\d+)/);
-            if (match) {
-                playerCount = parseInt(match[1]) || 0;
-                playerLimit = parseInt(match[2]) || 10;
-            }
-        }
-
-        // Get status from fifth cell
-        const statusCell = cells[4];
-        const statusBadge = statusCell.querySelector('.badge');
-        const status = statusBadge ? statusBadge.textContent.trim() : 'Active';
-
-        // Get additional data from attributes
-        const runId = row.getAttribute('data-run-id') || `table-run-${Date.now()}-${Math.random()}`;
-        const skillLevel = row.getAttribute('data-skill-level') || 'All Levels';
-
-        return {
-            id: runId,
-            name: name,
-            type: type,
-            date: runDate,
-            startTime: startTime,
-            endTime: endTime,
-            location: location,
-            skillLevel: skillLevel,
-            participants: playerCount,
-            capacity: playerLimit,
-            description: `${name} - ${type} game`,
-            status: status,
-            isPublic: true,
-            profileId: row.getAttribute('data-profile-id') || ''
-        };
-    }
-
-    // FIXED: Improved data transformation with better validation
     transformAPIData(apiRuns) {
         if (!Array.isArray(apiRuns)) {
             console.warn('⚠️ API runs data is not an array:', apiRuns);
@@ -597,21 +305,18 @@ class FixedRunCalendar {
 
         const transformedRuns = apiRuns.map((run, index) => {
             try {
-                // Parse the date properly
                 let runDate;
                 if (run.runDate) {
                     runDate = new Date(run.runDate);
-                    // Validate date
                     if (isNaN(runDate.getTime())) {
                         console.warn(`⚠️ Invalid date for run ${index}:`, run.runDate);
-                        runDate = new Date(); // Fallback to today
+                        runDate = new Date();
                     }
                 } else {
                     console.warn(`⚠️ Missing runDate for run ${index}:`, run);
-                    runDate = new Date(); // Fallback to today
+                    runDate = new Date();
                 }
 
-                // Transform the run data
                 const transformedRun = {
                     id: run.runId || `api-run-${index}-${Date.now()}`,
                     name: run.name || run.clientName || 'Basketball Run',
@@ -635,7 +340,6 @@ class FixedRunCalendar {
                     clientName: run.clientName || ''
                 };
 
-                // Validate required fields
                 if (!transformedRun.name.trim()) {
                     transformedRun.name = 'Basketball Run';
                 }
@@ -643,7 +347,6 @@ class FixedRunCalendar {
                 return transformedRun;
             } catch (error) {
                 console.error(`❌ Error transforming run ${index}:`, error, run);
-                // Return a fallback run object
                 return {
                     id: `error-run-${index}-${Date.now()}`,
                     name: 'Basketball Run (Error)',
@@ -669,7 +372,6 @@ class FixedRunCalendar {
             }
         });
 
-        // Filter out any runs with invalid dates
         const validRuns = transformedRuns.filter(run => {
             const isValid = run.date && !isNaN(run.date.getTime());
             if (!isValid) {
@@ -691,36 +393,53 @@ class FixedRunCalendar {
         return parts.length > 0 ? parts.join(', ') : 'Location TBD';
     }
 
-    parseTime(timeString) {
-        // Parse times like "2:30 PM", "14:30", "2:30:00 PM"
-        const timeRegex = /(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?/i;
-        const match = timeString.match(timeRegex);
+    isOnDashboard() {
+        const path = window.location.pathname.toLowerCase();
+        const isDashboard = path.includes('/dashboard') ||
+            path === '/' ||
+            path === '' ||
+            document.querySelector('.dashboard-header') !== null ||
+            document.querySelector('[data-usertype]') !== null;
 
-        if (!match) return null;
+        console.log(`📍 Dashboard check: path="${path}", isDashboard=${isDashboard}`);
+        return isDashboard;
+    }
 
-        let hours = parseInt(match[1]);
-        const minutes = parseInt(match[2]);
-        const period = match[4];
+    isOnRunsPage() {
+        const path = window.location.pathname.toLowerCase();
+        const isRunsPage = (path.includes('/run/run') || path.includes('/run')) &&
+            !path.includes('/dashboard') &&
+            document.getElementById('runsTable') !== null;
 
-        if (period) {
-            // 12-hour format
-            if (period.toUpperCase() === 'PM' && hours !== 12) {
-                hours += 12;
-            } else if (period.toUpperCase() === 'AM' && hours === 12) {
-                hours = 0;
+        console.log(`📍 Runs page check: path="${path}", isRunsPage=${isRunsPage}`);
+        return isRunsPage;
+    }
+
+    async generateMockFromDashboardStats() {
+        console.log('📊 Generating mock data from dashboard stats');
+
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        let runCount = 25;
+
+        try {
+            const statCards = document.querySelectorAll('.stats-card .fs-5, .stat-number');
+            if (statCards.length > 0) {
+                const firstStat = statCards[0].textContent.trim();
+                const parsedCount = parseInt(firstStat);
+                if (!isNaN(parsedCount) && parsedCount > 0) {
+                    runCount = Math.min(Math.max(parsedCount, 10), 50);
+                    console.log(`📊 Using dashboard run count: ${parsedCount}, generating ${runCount} mock runs`);
+                }
             }
+        } catch (error) {
+            console.warn('⚠️ Could not extract stats from dashboard, using default count');
         }
 
-        return { hours, minutes };
+        return this.generateMockRunsWithCount(runCount);
     }
 
-    async generateMockDataWithDelay() {
-        // Add a small delay to simulate API call
-        await new Promise(resolve => setTimeout(resolve, 600));
-        this.runs = this.generateMockRuns();
-    }
-
-    generateMockRuns() {
+    generateMockRunsWithCount(count) {
         const runs = [];
         const startDate = new Date(this.currentYear, this.currentMonth - this.config.dateRangeMonths, 1);
         const endDate = new Date(this.currentYear, this.currentMonth + this.config.dateRangeMonths + 1, 0);
@@ -736,16 +455,11 @@ class FixedRunCalendar {
             'Downtown Sports Center'
         ];
 
-        // Generate 25-45 random runs for the period
-        const runCount = Math.floor(Math.random() * 21) + 25;
-
-        for (let i = 0; i < runCount; i++) {
-            // Create random date within range
+        for (let i = 0; i < count; i++) {
             const randomDate = new Date(startDate.getTime() + Math.random() * (endDate.getTime() - startDate.getTime()));
 
-            // Set random time (6 AM to 10 PM)
             const randomHour = Math.floor(Math.random() * 16) + 6;
-            const randomMinute = Math.floor(Math.random() * 4) * 15; // 0, 15, 30, 45
+            const randomMinute = Math.floor(Math.random() * 4) * 15;
             randomDate.setHours(randomHour, randomMinute, 0, 0);
 
             const type = runTypes[Math.floor(Math.random() * runTypes.length)];
@@ -753,11 +467,11 @@ class FixedRunCalendar {
             const participants = Math.floor(Math.random() * (capacity + 1));
 
             const startTime = this.formatTime(randomDate);
-            const runEndDate = new Date(randomDate.getTime() + (1 + Math.random() * 2) * 60 * 60 * 1000); // 1-3 hours
+            const runEndDate = new Date(randomDate.getTime() + (1 + Math.random() * 2) * 60 * 60 * 1000);
             const endTime = this.formatTime(runEndDate);
 
             runs.push({
-                id: `mock-run-${i + 1}`,
+                id: `dashboard-mock-run-${i + 1}`,
                 name: `${this.capitalize(type)} ${this.getRandomGameName()}`,
                 type: type,
                 date: randomDate,
@@ -768,8 +482,8 @@ class FixedRunCalendar {
                 participants: participants,
                 capacity: capacity,
                 description: this.generateRunDescription(type, skillLevels[Math.floor(Math.random() * skillLevels.length)]),
-                status: Math.random() > 0.05 ? 'Active' : 'Cancelled', // 5% chance of cancelled
-                isPublic: Math.random() > 0.15, // 85% public
+                status: Math.random() > 0.05 ? 'Active' : 'Cancelled',
+                isPublic: Math.random() > 0.15,
                 profileId: `user-${Math.floor(Math.random() * 50) + 1}`
             });
         }
@@ -813,6 +527,15 @@ class FixedRunCalendar {
         return typeTemplates[Math.floor(Math.random() * typeTemplates.length)];
     }
 
+    async generateMockDataWithDelay() {
+        await new Promise(resolve => setTimeout(resolve, 600));
+        this.runs = this.generateMockRuns();
+    }
+
+    generateMockRuns() {
+        return this.generateMockRunsWithCount(30);
+    }
+
     renderCalendar() {
         const grid = document.getElementById('calendarGrid');
         const title = document.getElementById('calendarTitle');
@@ -822,7 +545,6 @@ class FixedRunCalendar {
             return;
         }
 
-        // Update title
         const monthNames = [
             'January', 'February', 'March', 'April', 'May', 'June',
             'July', 'August', 'September', 'October', 'November', 'December'
@@ -832,23 +554,19 @@ class FixedRunCalendar {
         const monthTitle = `${monthNames[this.currentMonth]} ${this.currentYear}`;
         title.textContent = monthTitle;
 
-        // Clear existing calendar (keep headers)
         const headers = grid.querySelectorAll('.calendar-day-header');
         grid.innerHTML = '';
         headers.forEach(header => grid.appendChild(header));
 
-        // Calculate calendar dates
         const firstDay = new Date(this.currentYear, this.currentMonth, 1);
         const startDate = new Date(firstDay);
-        startDate.setDate(startDate.getDate() - firstDay.getDay()); // Start from Sunday
+        startDate.setDate(startDate.getDate() - firstDay.getDay());
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        // Create document fragment for better performance
         const fragment = document.createDocumentFragment();
 
-        // Render 42 days (6 weeks)
         for (let i = 0; i < 42; i++) {
             const currentDate = new Date(startDate);
             currentDate.setDate(startDate.getDate() + i);
@@ -867,7 +585,6 @@ class FixedRunCalendar {
         dayDiv.className = 'calendar-day';
         dayDiv.setAttribute('data-date', date.toISOString().split('T')[0]);
 
-        // Add classes for different states
         if (date.getMonth() !== this.currentMonth) {
             dayDiv.classList.add('other-month');
         }
@@ -876,20 +593,17 @@ class FixedRunCalendar {
             dayDiv.classList.add('today');
         }
 
-        // Day number
         const dayNumber = document.createElement('div');
         dayNumber.className = 'day-number';
         dayNumber.textContent = date.getDate();
         dayDiv.appendChild(dayNumber);
 
-        // Runs for this day
         const dayRuns = this.getRunsForDate(date);
         if (dayRuns.length > 0) {
             const runsContainer = this.createRunsContainer(dayRuns, date);
             dayDiv.appendChild(runsContainer);
         }
 
-        // Click handler for day selection
         dayDiv.addEventListener('click', (e) => {
             if (!e.target.closest('.run-item') && !e.target.closest('.more-runs')) {
                 this.selectDate(date, dayRuns);
@@ -903,7 +617,6 @@ class FixedRunCalendar {
         const runsContainer = document.createElement('div');
         runsContainer.className = 'day-runs';
 
-        // Sort runs by start time
         const sortedRuns = dayRuns.sort((a, b) => {
             const timeA = this.parseTime(a.startTime);
             const timeB = this.parseTime(b.startTime);
@@ -911,7 +624,6 @@ class FixedRunCalendar {
             return (timeA.hours * 60 + timeA.minutes) - (timeB.hours * 60 + timeB.minutes);
         });
 
-        // Show up to configured max runs, then "X more"
         const visibleRuns = sortedRuns.slice(0, this.config.maxRunsPerDay);
 
         visibleRuns.forEach(run => {
@@ -932,7 +644,6 @@ class FixedRunCalendar {
         runDiv.className = `run-item ${run.type}`;
         runDiv.setAttribute('data-run-id', run.id);
 
-        // Status indicators
         if (run.status === 'Cancelled') {
             runDiv.classList.add('cancelled');
         }
@@ -941,7 +652,6 @@ class FixedRunCalendar {
             runDiv.classList.add('private');
         }
 
-        // Capacity indicators
         if (run.capacity > 0) {
             const fillPercentage = (run.participants / run.capacity) * 100;
             if (fillPercentage >= 85) {
@@ -951,7 +661,6 @@ class FixedRunCalendar {
             }
         }
 
-        // Create run content
         const timeSpan = document.createElement('span');
         timeSpan.className = 'run-time';
         timeSpan.textContent = this.formatTimeShort(run.startTime);
@@ -963,14 +672,12 @@ class FixedRunCalendar {
         runDiv.appendChild(timeSpan);
         runDiv.appendChild(nameSpan);
 
-        // Event handlers
         this.attachRunElementEvents(runDiv, run);
 
         return runDiv;
     }
 
     attachRunElementEvents(runDiv, run) {
-        // Tooltip events
         if (this.config.enableTooltips) {
             runDiv.addEventListener('mouseenter', (e) => {
                 this.showTooltip(e, run);
@@ -985,7 +692,6 @@ class FixedRunCalendar {
             });
         }
 
-        // Click handler
         runDiv.addEventListener('click', (e) => {
             e.stopPropagation();
             runDiv.classList.add('loading');
@@ -1023,111 +729,57 @@ class FixedRunCalendar {
         );
     }
 
-    selectDate(date, runs) {
-        // Remove previous selection
-        document.querySelectorAll('.calendar-day.selected').forEach(day => {
-            day.classList.remove('selected');
-        });
+    async openRunDetails(run) {
+        console.log('🔍 Opening run details for:', run.name, 'ID:', run.id);
 
-        // Add selection to current day
-        const dayElement = document.querySelector(`[data-date="${date.toISOString().split('T')[0]}"]`);
-        if (dayElement) {
-            dayElement.classList.add('selected');
-            dayElement.focus();
+        if (typeof window.openRunById === 'function') {
+            try {
+                console.log('📝 Using direct run opening function');
+
+                const calendarModal = bootstrap.Modal.getInstance(document.getElementById('runCalendarModal'));
+                if (calendarModal) {
+                    calendarModal.hide();
+                }
+
+                await new Promise(resolve => setTimeout(resolve, 300));
+
+                const success = window.openRunById(run.id, 'calendar');
+
+                if (success) {
+                    console.log('✅ Successfully opened run modal from calendar');
+                    return;
+                } else {
+                    console.warn('⚠️ Direct run opening failed, trying fallback');
+                }
+            } catch (error) {
+                console.warn('⚠️ Error using direct run opening:', error);
+            }
         }
 
-        this.selectedDate = date;
-        console.log(`📅 Selected ${date.toLocaleDateString()} with ${runs.length} runs`);
+        console.log('📝 Using custom run details modal');
+        this.showRunDetailsModal(run);
     }
 
-    showAllRunsForDate(date, runs) {
-        const modal = this.createRunListModal(date, runs);
-        document.body.appendChild(modal);
+    showRunDetailsModal(run) {
+        const capacityPercent = run.capacity > 0 ? Math.round((run.participants / run.capacity) * 100) : 0;
+        const statusEmoji = this.getStatusIcon(run.status);
 
-        const bootstrapModal = new bootstrap.Modal(modal);
-        bootstrapModal.show();
+        const details = `
+🏀 ${run.name}
 
-        // Clean up modal after hiding
-        modal.addEventListener('hidden.bs.modal', () => {
-            document.body.removeChild(modal);
-        });
-    }
+📅 Date: ${run.date.toLocaleDateString()}
+🕐 Time: ${run.startTime} - ${run.endTime}
+📍 Location: ${run.location}
+🎯 Skill Level: ${run.skillLevel}
+👥 Participants: ${run.participants}/${run.capacity} (${capacityPercent}%)
+${statusEmoji} Status: ${run.status}
+🏷️ Type: ${this.capitalize(run.type)}
+${!run.isPublic ? '🔒 Private Run' : '🌐 Public Run'}
 
-    createRunListModal(date, runs) {
-        const modal = document.createElement('div');
-        modal.className = 'modal fade';
-        modal.tabIndex = -1;
+${run.description ? `📝 Description:\n${run.description}` : ''}
+        `.trim();
 
-        const sortedRuns = runs.sort((a, b) => {
-            const timeA = this.parseTime(a.startTime);
-            const timeB = this.parseTime(b.startTime);
-            if (!timeA || !timeB) return 0;
-            return (timeA.hours * 60 + timeA.minutes) - (timeB.hours * 60 + timeB.minutes);
-        });
-
-        const runsList = sortedRuns.map(run => {
-            const capacity = run.capacity > 0 ? ` (${run.participants}/${run.capacity})` : '';
-            const status = run.status !== 'Active' ? ` [${run.status}]` : '';
-            const privateIndicator = !run.isPublic ? ' 🔒' : '';
-
-            return `
-                <div class="list-group-item list-group-item-action run-list-item" data-run-id="${run.id}">
-                    <div class="d-flex w-100 justify-content-between">
-                        <h6 class="mb-1">${privateIndicator}${run.name}${status}</h6>
-                        <small class="text-muted">${run.startTime}</small>
-                    </div>
-                    <p class="mb-1">${run.location}</p>
-                    <small class="text-muted">
-                        ${run.skillLevel}${capacity}
-                        <span class="badge bg-${this.getTypeColor(run.type)} ms-2">${this.capitalize(run.type)}</span>
-                    </small>
-                </div>
-            `;
-        }).join('');
-
-        modal.innerHTML = `
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">
-                            Runs for ${date.toLocaleDateString()}
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="list-group">
-                            ${runsList}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        // Add click handlers to run items
-        modal.addEventListener('click', (e) => {
-            const runItem = e.target.closest('.run-list-item');
-            if (runItem) {
-                const runId = runItem.getAttribute('data-run-id');
-                const run = runs.find(r => r.id === runId);
-                if (run) {
-                    bootstrap.Modal.getInstance(modal).hide();
-                    this.openRunDetails(run);
-                }
-            }
-        });
-
-        return modal;
-    }
-
-    getTypeColor(type) {
-        const colors = {
-            pickup: 'success',
-            training: 'primary',
-            tournament: 'danger',
-            youth: 'warning',
-            women: 'purple'
-        };
-        return colors[type] || 'secondary';
+        alert(details);
     }
 
     showTooltip(event, run) {
@@ -1189,6 +841,17 @@ class FixedRunCalendar {
         return icons[status] || '⚠️';
     }
 
+    getTypeColor(type) {
+        const colors = {
+            pickup: 'success',
+            training: 'primary',
+            tournament: 'danger',
+            youth: 'warning',
+            women: 'purple'
+        };
+        return colors[type] || 'secondary';
+    }
+
     updateTooltipPosition(event) {
         if (!this.tooltip) return;
 
@@ -1200,14 +863,12 @@ class FixedRunCalendar {
         let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
         let top = rect.bottom + 8;
 
-        // Adjust horizontal position if tooltip would go off-screen
         if (left < 8) {
             left = 8;
         } else if (left + tooltipRect.width > viewportWidth - 8) {
             left = viewportWidth - tooltipRect.width - 8;
         }
 
-        // Adjust vertical position if tooltip would go off-screen
         if (top + tooltipRect.height > viewportHeight - 8) {
             top = rect.top - tooltipRect.height - 8;
         }
@@ -1220,71 +881,6 @@ class FixedRunCalendar {
         if (this.tooltip) {
             this.tooltip.classList.remove('show');
         }
-    }
-
-    async openRunDetails(run) {
-        console.log('🔍 Opening run details for:', run.name);
-
-        // Try to integrate with existing run management modal
-        if (await this.tryOpenExistingRunModal(run)) {
-            return;
-        }
-
-        // Fallback: Create a custom modal
-        this.showRunDetailsModal(run);
-    }
-
-    async tryOpenExistingRunModal(run) {
-        const editModal = document.getElementById('editRunModal');
-
-        if (editModal && typeof window.loadRunDataEnhanced === 'function') {
-            try {
-                // Close calendar modal first
-                const calendarModal = bootstrap.Modal.getInstance(document.getElementById('runCalendarModal'));
-                if (calendarModal) {
-                    calendarModal.hide();
-                }
-
-                // Wait for calendar modal to close
-                await new Promise(resolve => setTimeout(resolve, 300));
-
-                // Open edit modal
-                const runEditModal = new bootstrap.Modal(editModal);
-                runEditModal.show();
-
-                // Load the run data
-                window.loadRunDataEnhanced(run.id);
-
-                return true;
-            } catch (error) {
-                console.warn('⚠️ Could not open existing run modal:', error);
-                return false;
-            }
-        }
-
-        return false;
-    }
-
-    showRunDetailsModal(run) {
-        const capacityPercent = run.capacity > 0 ? Math.round((run.participants / run.capacity) * 100) : 0;
-        const statusEmoji = this.getStatusIcon(run.status);
-
-        const details = `
-🏀 ${run.name}
-
-📅 Date: ${run.date.toLocaleDateString()}
-🕐 Time: ${run.startTime} - ${run.endTime}
-📍 Location: ${run.location}
-🎯 Skill Level: ${run.skillLevel}
-👥 Participants: ${run.participants}/${run.capacity} (${capacityPercent}%)
-${statusEmoji} Status: ${run.status}
-🏷️ Type: ${this.capitalize(run.type)}
-${!run.isPublic ? '🔒 Private Run' : '🌐 Public Run'}
-
-${run.description ? `📝 Description:\n${run.description}` : ''}
-        `.trim();
-
-        alert(details);
     }
 
     updateStats() {
@@ -1407,7 +1003,7 @@ ${run.description ? `📝 Description:\n${run.description}` : ''}
         console.log('📅 Calendar cache cleared');
     }
 
-    // Enhanced utility methods
+    // Utility methods
     formatTime(date) {
         return date.toLocaleTimeString('en-US', {
             hour: 'numeric',
@@ -1429,9 +1025,56 @@ ${run.description ? `📝 Description:\n${run.description}` : ''}
         return text.substring(0, maxLength - 3) + '...';
     }
 
-    getAntiForgeryToken() {
-        const token = document.querySelector('input[name="__RequestVerificationToken"]');
-        return token ? token.value : '';
+    parseTime(timeString) {
+        const timeRegex = /(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?/i;
+        const match = timeString.match(timeRegex);
+
+        if (!match) return null;
+
+        let hours = parseInt(match[1]);
+        const minutes = parseInt(match[2]);
+        const period = match[4];
+
+        if (period) {
+            if (period.toUpperCase() === 'PM' && hours !== 12) {
+                hours += 12;
+            } else if (period.toUpperCase() === 'AM' && hours === 12) {
+                hours = 0;
+            }
+        }
+
+        return { hours, minutes };
+    }
+
+    selectDate(date, runs) {
+        document.querySelectorAll('.calendar-day.selected').forEach(day => {
+            day.classList.remove('selected');
+        });
+
+        const dayElement = document.querySelector(`[data-date="${date.toISOString().split('T')[0]}"]`);
+        if (dayElement) {
+            dayElement.classList.add('selected');
+            dayElement.focus();
+        }
+
+        this.selectedDate = date;
+        console.log(`📅 Selected ${date.toLocaleDateString()} with ${runs.length} runs`);
+    }
+
+    showSuccessToast(message) {
+        if (window.UIUtils && window.UIUtils.showToast) {
+            window.UIUtils.showToast(message, 'success', 3000);
+        } else {
+            console.log(`✅ SUCCESS: ${message}`);
+        }
+    }
+
+    showWarningToast(message) {
+        if (window.UIUtils && window.UIUtils.showToast) {
+            window.UIUtils.showToast(message, 'warning', 4000);
+        } else {
+            console.log(`⚠️ WARNING: ${message}`);
+        }
     }
 
     // Public API methods
@@ -1453,9 +1096,47 @@ ${run.description ? `📝 Description:\n${run.description}` : ''}
         return [...this.runs];
     }
 
-    // Test API connection
+    // Test methods
+    async testSimpleAPI() {
+        console.log('🧪 Testing simple API endpoint...');
+
+        try {
+            const response = await fetch('/Run/TestCalendarAPI', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin'
+            });
+
+            console.log('📡 Test API Response status:', response.status);
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            console.log('📦 Test API Response:', data);
+
+            if (data.success) {
+                console.log('✅ Simple API Test SUCCESS!');
+                console.log(`📋 Test API returned ${data.runs.length} test runs`);
+                return data;
+            } else {
+                console.error('❌ Simple API Test FAILED:', data);
+                return data;
+            }
+
+        } catch (error) {
+            console.error('❌ Simple API Test ERROR:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
     async testAPIConnection() {
-        console.log('🧪 Testing API connection...');
+        console.log('🧪 Testing full calendar API connection...');
 
         try {
             const testDate = new Date();
@@ -1464,19 +1145,19 @@ ${run.description ? `📝 Description:\n${run.description}` : ''}
 
             const runs = await this.fetchRunsFromAPI(startDate, endDate);
 
-            console.log('✅ API Connection Test SUCCESS!');
-            console.log(`📋 API returned ${runs.length} runs`);
+            console.log('✅ Full Calendar API Test SUCCESS!');
+            console.log(`📋 Calendar API returned ${runs.length} runs`);
             console.log('📊 Sample run:', runs[0]);
 
             return {
                 success: true,
-                message: `API working! Found ${runs.length} runs`,
+                message: `Calendar API working! Found ${runs.length} runs`,
                 runs: runs,
                 endpoint: '/Run/GetRunsForCalendar'
             };
 
         } catch (error) {
-            console.error('❌ API Connection Test FAILED:', error);
+            console.error('❌ Full Calendar API Test FAILED:', error);
 
             return {
                 success: false,
@@ -1487,13 +1168,12 @@ ${run.description ? `📝 Description:\n${run.description}` : ''}
         }
     }
 
-    // Check authentication status
     async checkAuthStatus() {
         console.log('🔐 Checking authentication status...');
 
         try {
             const response = await fetch('/Run/GetRunsForCalendar?startDate=2024-01-01&endDate=2024-01-02', {
-                method: 'HEAD', // Just check headers, don't need full response
+                method: 'HEAD',
                 credentials: 'same-origin'
             });
 
@@ -1511,20 +1191,6 @@ ${run.description ? `📝 Description:\n${run.description}` : ''}
             console.warn('Could not check auth status:', error);
             return { authenticated: false, message: 'Connection error' };
         }
-    }
-
-    goToDate(date) {
-        if (!(date instanceof Date)) {
-            date = new Date(date);
-        }
-
-        this.currentMonth = date.getMonth();
-        this.currentYear = date.getFullYear();
-        return this.loadCalendar();
-    }
-
-    getRuns() {
-        return [...this.runs];
     }
 
     // Cleanup method
@@ -1560,6 +1226,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     // API Testing
                     testAPI: () => window.fixedRunCalendar.testAPIConnection(),
+                    testSimple: () => window.fixedRunCalendar.testSimpleAPI(),
                     checkAuth: () => window.fixedRunCalendar.checkAuthStatus(),
                     fetchReal: () => {
                         const now = new Date();
@@ -1578,26 +1245,69 @@ document.addEventListener('DOMContentLoaded', function () {
                     // Mock Data
                     generateMockData: () => window.fixedRunCalendar.generateMockFromDashboardStats(),
 
+                    // Calendar Integration
+                    openRunById: (runId) => {
+                        if (typeof window.openRunById === 'function') {
+                            return window.openRunById(runId, 'debug');
+                        } else {
+                            console.error('❌ window.openRunById not available');
+                            return false;
+                        }
+                    },
+
+                    testIntegration: () => {
+                        const runs = window.fixedRunCalendar.getRuns();
+                        if (runs.length > 0) {
+                            const testRun = runs[0];
+                            console.log('🧪 Testing integration with first run:', testRun.name, 'ID:', testRun.id);
+                            return window.fixedRunCalendar.openRunDetails(testRun);
+                        } else {
+                            console.warn('⚠️ No runs available to test integration');
+                            return false;
+                        }
+                    },
+
+                    checkIntegration: () => {
+                        return {
+                            hasOpenRunById: typeof window.openRunById === 'function',
+                            hasLoadRunDataEnhanced: typeof window.loadRunDataEnhanced === 'function',
+                            hasEditRunModal: !!document.getElementById('editRunModal'),
+                            hasRunManagementState: !!window.runManagementState,
+                            availableRuns: window.fixedRunCalendar.getRuns().length
+                        };
+                    },
+
                     // Quick Tests
                     quickTest: async () => {
                         console.log('🚀 Running quick API test...');
+
+                        console.log('🧪 Step 1: Testing simple endpoint...');
+                        const simpleTest = await window.fixedRunCalendar.testSimpleAPI();
+
+                        console.log('🔐 Step 2: Checking auth status...');
                         const authResult = await window.fixedRunCalendar.checkAuthStatus();
                         console.log('🔐 Auth Status:', authResult);
 
-                        if (authResult.authenticated) {
+                        if (authResult.authenticated && simpleTest.success) {
+                            console.log('📡 Step 3: Testing full calendar API...');
                             const apiResult = await window.fixedRunCalendar.testAPIConnection();
-                            console.log('📡 API Test:', apiResult);
-                            return { auth: authResult, api: apiResult };
+                            console.log('📡 Full API Test:', apiResult);
+                            return { auth: authResult, simple: simpleTest, api: apiResult };
                         } else {
-                            console.log('❌ Cannot test API - not authenticated');
-                            return { auth: authResult, api: { success: false, message: 'Not authenticated' } };
+                            console.log('❌ Skipping full API test due to auth or simple test failure');
+                            return { auth: authResult, simple: simpleTest, api: { success: false, message: 'Skipped due to prerequisites' } };
                         }
                     }
                 };
+
                 console.log('🐛 Fixed Calendar debug tools available at window.calendarDebug');
-                console.log('🐛 Try: window.calendarDebug.quickTest() to test API connection');
-                console.log('🐛 Try: window.calendarDebug.checkPage() to check page detection');
-                console.log('🐛 Try: window.calendarDebug.testAPI() to test API directly');
+                console.log('🐛 Integration commands:');
+                console.log('  - window.calendarDebug.checkIntegration() - Check run management integration');
+                console.log('  - window.calendarDebug.testIntegration() - Test opening a run from calendar');
+                console.log('  - window.calendarDebug.openRunById("run-id") - Open specific run');
+                console.log('🐛 API commands:');
+                console.log('  - window.calendarDebug.quickTest() - Test all APIs');
+                console.log('  - window.calendarDebug.testSimple() - Test simple endpoint');
             }
         } catch (error) {
             console.error('❌ Failed to initialize Fixed Run Calendar:', error);

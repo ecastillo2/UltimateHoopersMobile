@@ -144,6 +144,7 @@ namespace Web.Controllers
                             zip = GetDtoZip(runDto),
                             profileId = runDto.ProfileId ?? "",
                             clientId = runDto.ClientId ?? "",
+                            cccurrence = runDto.Occurrence ?? "",
                             clientName = GetDtoClientName(runDto)
                         };
 
@@ -645,6 +646,8 @@ namespace Web.Controllers
                     clientCity = run.Client?.City ?? "",
                     clientState = run.Client?.State ?? "",
                     clientZip = run.Client?.Zip ?? "",
+
+                    cccurrence = run.Occurrence ?? "",
 
                     // Safe date formatting
                     runDate = run.RunDate?.ToString("yyyy-MM-dd") ?? "",
@@ -1288,7 +1291,8 @@ namespace Web.Controllers
                         address = refreshedRun.Client?.Address ?? "",
                         city = refreshedRun.Client?.City ?? "",
                         state = refreshedRun.Client?.State ?? "",
-                        zip = refreshedRun.Client?.Zip ?? ""
+                        zip = refreshedRun.Client?.Zip ?? "",
+                        Occurrence = refreshedRun.Occurrence ?? ""
                     } : new
                     {
                         runId = run.RunId,
@@ -1305,7 +1309,8 @@ namespace Web.Controllers
                         address = run.Client?.Address ?? "",
                         city = run.Client?.City ?? "",
                         state = run.Client?.State ?? "",
-                        zip = run.Client?.Zip ?? ""
+                        zip = run.Client?.Zip ?? "",
+                        Occurrence = run.Occurrence ?? ""
                     }
                 });
             }

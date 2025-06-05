@@ -17,27 +17,28 @@ namespace Domain.DtoModel
         public RunViewModelDto() { }
 
         // Existing constructor for mapping from Profile
-        public RunViewModelDto(Run privateRun)
+        public RunViewModelDto(Run run)
         {
-            RunId = privateRun.RunId;
-            CourtId = privateRun.CourtId;
-            ClientId = privateRun.ClientId;
-            Name = privateRun.Name;
-            ProfileId = privateRun.ProfileId;
-            Status = privateRun.Status;
-            RunDate = privateRun.RunDate;
-            Cost = privateRun.Cost;
-            Description = privateRun.Description;
-            StartTime = privateRun.StartTime;
-            EndTime = privateRun.EndTime;
-            Type = privateRun.Type;
-            CreatedDate = privateRun.CreatedDate;
-            RunNumber = privateRun.RunNumber;
-            SkillLevel = privateRun.SkillLevel;
-            PaymentMethod = privateRun.PaymentMethod;
-            TeamType = privateRun.TeamType;
-            PlayerLimit = privateRun.PlayerLimit;
-            Court = privateRun.Court;
+            RunId = run.RunId;
+            CourtId = run.CourtId;
+            ClientId = run.ClientId;
+            Name = run.Name;
+            ProfileId = run.ProfileId;
+            Status = run.Status;
+            RunDate = run.RunDate;
+            Cost = run.Cost;
+            Description = run.Description;
+            StartTime = run.StartTime;
+            EndTime = run.EndTime;
+            Type = run.Type;
+            CreatedDate = run.CreatedDate;
+            RunNumber = run.RunNumber;
+            SkillLevel = run.SkillLevel;
+            PaymentMethod = run.PaymentMethod;
+            TeamType = run.TeamType;
+            PlayerLimit = run.PlayerLimit;
+            Court = run.Court;
+            Occurrence = run.Occurrence;
 
         }
 
@@ -63,6 +64,7 @@ namespace Domain.DtoModel
         public string? PaymentMethod { get; set; }
         public string? TeamType { get; set; }
         public int? PlayerLimit { get; set; }
+        public string? Occurrence { get; set; }
         public bool? IsPublic { get; set; }
         public Court Court { get; set; }
         public Client Client { get; set; }

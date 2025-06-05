@@ -250,7 +250,9 @@ namespace DataLayer.DAL.Repository
                     existingItem.PaymentMethod = model.PaymentMethod;
                     existingItem.TeamType = model.TeamType;
                     existingItem.IsPublic = model.IsPublic;
-                
+                    existingItem.CourtId = model.CourtId;
+                    existingItem.Occurrence = model.Occurrence;
+
 
 
                     context.Run.Update(existingItem);
