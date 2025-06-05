@@ -5,14 +5,15 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 
-
 namespace WebAPI.ApiClients
 {
     /// <summary>
-    /// Implementation of Client API client
+    /// Implementation of Client API client with organized CRUD operations
     /// </summary>
     public class ClientApi : IClientApi
     {
+        #region Fields and Constructor
+
         private readonly HttpClient _httpClient;
         private readonly string _baseUrl;
         private readonly JsonSerializerOptions _jsonOptions;
@@ -29,196 +30,280 @@ namespace WebAPI.ApiClients
             };
         }
 
-        /// <summary>
-        /// Get Clients Async
-        /// </summary>
-        /// <param name="accessToken"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        public async Task<List<Client>> GetClientsAsync(string accessToken, CancellationToken cancellationToken = default)
-        {
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        #endregion
 
-            var response = await _httpClient.GetAsync($"{_baseUrl}/api/Client/GetClients", cancellationToken);
-            response.EnsureSuccessStatusCode();
-
-            var content = await response.Content.ReadAsStringAsync(cancellationToken);
-            return JsonSerializer.Deserialize<List<Client>>(content, _jsonOptions);
-        }
+        #region CREATE Operations
 
         /// <summary>
-        /// Get Client By Id Async
+        /// Create a new client
         /// </summary>
-        /// <param name="clientId"></param>
-        /// <param name="accessToken"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        public async Task<Client> GetClientByIdAsync(string clientId, string accessToken, CancellationToken cancellationToken = default)
-        {
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-            // Use the correct route format that matches the [HttpGet("{id}")] attribute
-            var response = await _httpClient.GetAsync($"{_baseUrl}/api/Client/{clientId}", cancellationToken);
-
-            response.EnsureSuccessStatusCode();
-            var content = await response.Content.ReadAsStringAsync(cancellationToken);
-            return JsonSerializer.Deserialize<Client>(content, _jsonOptions);
-        }
-
-        /// <summary>
-        /// Get Client Courts Async
-        /// </summary>
-        /// <param name="clientId"></param>
-        /// <param name="accessToken"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        public async Task<List<Court>> GetClientCourtsAsync(string clientId, string accessToken, CancellationToken cancellationToken = default)
-        {
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-            var response = await _httpClient.GetAsync($"{_baseUrl}/api/Client/{clientId}/courts", cancellationToken);
-            response.EnsureSuccessStatusCode();
-
-            var content = await response.Content.ReadAsStringAsync(cancellationToken);
-            return JsonSerializer.Deserialize<List<Court>>(content, _jsonOptions);
-        }
-
-        /// <summary>
-        /// Create Client Async
-        /// </summary>
-        /// <param name="model"></param>
-        /// <param name="accessToken"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
+        /// <param name="model">Client model to create</param>
+        /// <param name="accessToken">Bearer token for authentication</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>HTTP response message</returns>
         public async Task<HttpResponseMessage> CreateClientAsync(Client model, string accessToken, CancellationToken cancellationToken = default)
-        {
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-            var jsonContent = new StringContent(
-                JsonSerializer.Serialize(model, _jsonOptions),
-                Encoding.UTF8,
-                "application/json");
-
-            var response = await _httpClient.PostAsync($"{_baseUrl}/api/Client/CreateClient", jsonContent, cancellationToken);
-            response.EnsureSuccessStatusCode();
-
-            var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-
-            return response;
-        }
-
-       
-        /// <summary>
-        /// Delete Client Async
-        /// </summary>
-        /// <param name="clientId"></param>
-        /// <param name="accessToken"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        public async Task<bool> DeleteClientAsync(string clientId, string accessToken, CancellationToken cancellationToken = default)
-        {
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-            var response = await _httpClient.DeleteAsync($"{_baseUrl}/api/Client/DeleteClient?runId={clientId}", cancellationToken);
-            return response.IsSuccessStatusCode;
-        }
-
-        /// <summary>
-        /// Get Clients With Cursor Async
-        /// </summary>
-        /// <param name="cursor"></param>
-        /// <param name="limit"></param>
-        /// <param name="direction"></param>
-        /// <param name="sortBy"></param>
-        /// <param name="accessToken"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        public async Task<CursorPaginatedResultDto<ClientDetailViewModelDto>> GetClientsWithCursorAsync(string cursor = null, int limit = 20, string direction = "next", string sortBy = "Points", string accessToken = null, CancellationToken cancellationToken = default)
         {
             try
             {
-                // Set authentication header if token is provided
-                if (!string.IsNullOrEmpty(accessToken))
-                {
-                    _httpClient.DefaultRequestHeaders.Authorization =
-                        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
-                }
+                SetAuthorizationHeader(accessToken);
 
-                // Build query string
-                var queryParams = new List<string>();
-                if (!string.IsNullOrEmpty(cursor))
-                    queryParams.Add($"cursor={Uri.EscapeDataString(cursor)}");
+                var jsonContent = new StringContent(
+                    JsonSerializer.Serialize(model, _jsonOptions),
+                    Encoding.UTF8,
+                    "application/json");
 
-                queryParams.Add($"limit={limit}");
-                queryParams.Add($"direction={Uri.EscapeDataString(direction)}");
-                queryParams.Add($"sortBy={Uri.EscapeDataString(sortBy)}");
+                var response = await _httpClient.PostAsync($"{_baseUrl}/api/Client/CreateClient", jsonContent, cancellationToken);
+                response.EnsureSuccessStatusCode();
 
+                return response;
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"API request error during client creation: {ex.Message}");
+                throw;
+            }
+            catch (JsonException ex)
+            {
+                Console.WriteLine($"JSON serialization error during client creation: {ex.Message}");
+                throw;
+            }
+        }
+
+        #endregion
+
+        #region READ Operations
+
+        /// <summary>
+        /// Get all clients
+        /// </summary>
+        /// <param name="accessToken">Bearer token for authentication</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>List of clients</returns>
+        public async Task<List<Client>> GetClientsAsync(string accessToken, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                SetAuthorizationHeader(accessToken);
+
+                var response = await _httpClient.GetAsync($"{_baseUrl}/api/Client/GetClients", cancellationToken);
+                response.EnsureSuccessStatusCode();
+
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+                return JsonSerializer.Deserialize<List<Client>>(content, _jsonOptions);
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"API request error during clients retrieval: {ex.Message}");
+                throw;
+            }
+            catch (JsonException ex)
+            {
+                Console.WriteLine($"JSON parsing error during clients retrieval: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Get a specific client by ID
+        /// </summary>
+        /// <param name="clientId">Client identifier</param>
+        /// <param name="accessToken">Bearer token for authentication</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>Client object</returns>
+        public async Task<Client> GetClientByIdAsync(string clientId, string accessToken, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                SetAuthorizationHeader(accessToken);
+
+                var response = await _httpClient.GetAsync($"{_baseUrl}/api/Client/{clientId}", cancellationToken);
+                response.EnsureSuccessStatusCode();
+
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+                return JsonSerializer.Deserialize<Client>(content, _jsonOptions);
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"API request error during client retrieval: {ex.Message}");
+                throw;
+            }
+            catch (JsonException ex)
+            {
+                Console.WriteLine($"JSON parsing error during client retrieval: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Get clients with cursor-based pagination
+        /// </summary>
+        /// <param name="cursor">Pagination cursor</param>
+        /// <param name="limit">Number of items to retrieve</param>
+        /// <param name="direction">Pagination direction (next/previous)</param>
+        /// <param name="sortBy">Sort field</param>
+        /// <param name="accessToken">Bearer token for authentication</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>Paginated result with client details</returns>
+        public async Task<CursorPaginatedResultDto<ClientDetailViewModelDto>> GetClientsWithCursorAsync(string cursor = null,int limit = 20,string direction = "next",string sortBy = "Points",string accessToken = null,CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                SetAuthorizationHeader(accessToken);
+
+                var queryParams = BuildQueryParameters(cursor, limit, direction, sortBy);
                 var queryString = string.Join("&", queryParams);
                 var requestUrl = $"{_baseUrl}/api/Client/cursor{(queryParams.Any() ? "?" + queryString : "")}";
 
-                // Make the request
                 var response = await _httpClient.GetAsync(requestUrl, cancellationToken);
                 response.EnsureSuccessStatusCode();
 
-                // Deserialize the response
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
                 return JsonSerializer.Deserialize<CursorPaginatedResultDto<ClientDetailViewModelDto>>(content, _jsonOptions);
             }
             catch (HttpRequestException ex)
             {
-                Console.WriteLine($"API request error: {ex.Message}");
+                Console.WriteLine($"API request error during paginated clients retrieval: {ex.Message}");
                 throw;
             }
             catch (JsonException ex)
             {
-                Console.WriteLine($"JSON parsing error: {ex.Message}");
+                Console.WriteLine($"JSON parsing error during paginated clients retrieval: {ex.Message}");
                 throw;
             }
         }
 
         /// <summary>
-        /// Update Client Async
+        /// Get courts associated with a specific client
         /// </summary>
-        /// <param name="model"></param>
-        /// <param name="accessToken"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
+        /// <param name="clientId">Client identifier</param>
+        /// <param name="accessToken">Bearer token for authentication</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>List of courts</returns>
+        public async Task<List<Court>> GetClientCourtsAsync(string clientId, string accessToken, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                SetAuthorizationHeader(accessToken);
+
+                var response = await _httpClient.GetAsync($"{_baseUrl}/api/Client/{clientId}/courts", cancellationToken);
+                response.EnsureSuccessStatusCode();
+
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+                return JsonSerializer.Deserialize<List<Court>>(content, _jsonOptions);
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"API request error during client courts retrieval: {ex.Message}");
+                throw;
+            }
+            catch (JsonException ex)
+            {
+                Console.WriteLine($"JSON parsing error during client courts retrieval: {ex.Message}");
+                throw;
+            }
+        }
+
+        #endregion
+
+        #region UPDATE Operations
+
+        /// <summary>
+        /// Update an existing client
+        /// </summary>
+        /// <param name="model">Updated client model</param>
+        /// <param name="accessToken">Bearer token for authentication</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>True if successful, false otherwise</returns>
         public async Task<bool> UpdateClientAsync(Client model, string accessToken, CancellationToken cancellationToken = default)
         {
             try
             {
-                // Set authentication header
-                if (!string.IsNullOrEmpty(accessToken))
-                {
-                    _httpClient.DefaultRequestHeaders.Clear();
-                    _httpClient.DefaultRequestHeaders.Authorization =
-                        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
-                }
+                SetAuthorizationHeader(accessToken);
 
-                // Build request URL
-                var requestUrl = $"{_baseUrl}/api/Client/UpdateClient";
-
-                // Serialize the profile object
                 var content = JsonSerializer.Serialize(model, _jsonOptions);
-                var httpContent = new StringContent(content, System.Text.Encoding.UTF8, "application/json");
+                var httpContent = new StringContent(content, Encoding.UTF8, "application/json");
 
-                // Make the PUT request
-                var response = await _httpClient.PutAsync(requestUrl, httpContent, cancellationToken);
-
-                // Return true if successful, false otherwise
+                var response = await _httpClient.PutAsync($"{_baseUrl}/api/Client/UpdateClient", httpContent, cancellationToken);
                 return response.IsSuccessStatusCode;
             }
             catch (HttpRequestException ex)
             {
-                Console.WriteLine($"API request error: {ex.Message}");
+                Console.WriteLine($"API request error during client update: {ex.Message}");
                 throw;
             }
-            catch (Exception ex)
+            catch (JsonException ex)
             {
-                Console.WriteLine($"Error updating profile: {ex.Message}");
+                Console.WriteLine($"JSON serialization error during client update: {ex.Message}");
                 throw;
             }
         }
+
+        #endregion
+
+        #region DELETE Operations
+
+        /// <summary>
+        /// Delete a client by ID
+        /// </summary>
+        /// <param name="clientId">Client identifier</param>
+        /// <param name="accessToken">Bearer token for authentication</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>True if successful, false otherwise</returns>
+        public async Task<bool> DeleteClientAsync(string clientId, string accessToken, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                SetAuthorizationHeader(accessToken);
+
+                var response = await _httpClient.DeleteAsync($"{_baseUrl}/api/Client/DeleteClient?runId={clientId}", cancellationToken);
+                return response.IsSuccessStatusCode;
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"API request error during client deletion: {ex.Message}");
+                throw;
+            }
+        }
+
+        #endregion
+
+        #region Private Helper Methods
+
+        /// <summary>
+        /// Set authorization header for HTTP client
+        /// </summary>
+        /// <param name="accessToken">Bearer token</param>
+        private void SetAuthorizationHeader(string accessToken)
+        {
+            if (!string.IsNullOrEmpty(accessToken))
+            {
+                _httpClient.DefaultRequestHeaders.Clear();
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            }
+        }
+
+        /// <summary>
+        /// Build query parameters for cursor pagination
+        /// </summary>
+        /// <param name="cursor">Pagination cursor</param>
+        /// <param name="limit">Number of items</param>
+        /// <param name="direction">Pagination direction</param>
+        /// <param name="sortBy">Sort field</param>
+        /// <returns>List of query parameters</returns>
+        private static List<string> BuildQueryParameters(string cursor, int limit, string direction, string sortBy)
+        {
+            var queryParams = new List<string>();
+
+            if (!string.IsNullOrEmpty(cursor))
+                queryParams.Add($"cursor={Uri.EscapeDataString(cursor)}");
+
+            queryParams.Add($"limit={limit}");
+            queryParams.Add($"direction={Uri.EscapeDataString(direction)}");
+            queryParams.Add($"sortBy={Uri.EscapeDataString(sortBy)}");
+
+            return queryParams;
+        }
+
+        #endregion
     }
 }
