@@ -738,6 +738,7 @@
                             <th>Date & Time</th>
                             <th>Location</th>
                             <th>Participants</th>
+                            <th>Occurance</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -838,7 +839,9 @@
                     </div>
                 </div>
             </td>
+                            <td>@(!string.IsNullOrEmpty(run.Occurrence)? char.ToUpper(run.Occurrence[0]) + run.Occurrence.Substring(1): "")</td>
             <td><span class="badge @badgeClass badge-pill">@badgeText</span></td>
+                               
             <td>
                 <div class="table-actions">
                     <button type="button" class="btn btn-sm btn-outline-primary action-icon" data-bs-toggle="modal" data-bs-target="#editRunModal" data-run-id="@run.RunId" title="Edit">

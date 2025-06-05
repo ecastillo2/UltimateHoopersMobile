@@ -133,11 +133,24 @@ namespace WebAPI.Controllers
         .AsNoTracking()
         .FirstOrDefaultAsync(cancellationToken);
 
+                    var subscriptionId = await _context.Profile
+                   .AsNoTracking()
+                   .Where(p => p.ProfileId == profile.ProfileId)
+                   .Select(p => p.SubscriptionId)
+                   .FirstOrDefaultAsync(cancellationToken);
+
+                    var results = await _context.Subscription
+                   .AsNoTracking()
+                   .FirstOrDefaultAsync(s => s.SubscriptionId == subscriptionId, cancellationToken);
+
                     profile.FollowersList = thisFollowers ?? new List<Profile>();
                     profile.FollowingList = thisFollowings ?? new List<Profile>();
                     profile.FollowersCount = profile.FollowersList.Count;
                     profile.FollowingCount = profile.FollowingList.Count;
                     profile.ScoutingReport = scoutingReport;
+                    profile.Subscription = results;
+
+
 
                     detailedViewModels.Add(new UserDetailViewModelDto
                     {
