@@ -36,8 +36,8 @@ namespace WebAPI.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving PrivateRuns");
-                return StatusCode(500, "An error occurred while retrieving PrivateRuns");
+                _logger.LogError(ex, "Error retrieving Subscriptions");
+                return StatusCode(500, "An error occurred while retrieving Subscriptions");
             }
         }
 
