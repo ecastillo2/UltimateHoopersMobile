@@ -10,6 +10,7 @@ namespace Domain.DtoModel
     {
         public Profile? Profile { get; set; }
         public Setting? Setting { get; set; }
+        public Subscription? Subscription { get; set; }
         public ScoutingReport? ScoutingReport { get; set; }
         public GameStatistics? GameStatistics { get; set; }
        

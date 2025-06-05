@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Runtime.CompilerServices;
 using Domain;
 
 namespace DataLayer.DAL.Interface
@@ -51,168 +47,122 @@ namespace DataLayer.DAL.Interface
         /// <summary>
         /// Get profile by ID
         /// </summary>
-        Task<Profile> GetProfileByIdAsync(
-            string profileId,
-            CancellationToken cancellationToken = default);
+        Task<Profile> GetProfileByIdAsync(string profileId,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get profile by ID
         /// </summary>
-        Task<Client> GetClientByUserIdAsync(
-            string userId,
-            CancellationToken cancellationToken = default);
+        Task<Client> GetClientByUserIdAsync(string userId,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get profile by ID
         /// </summary>
-        Task<List<Court>> GetCourtsByClientIdAsync(
-            string clientId,
-            CancellationToken cancellationToken = default);
+        Task<List<Court>> GetCourtsByClientIdAsync(string clientId,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get profile by ID
         /// </summary>
-        Task<List<User>> GetUsersByClientIdAsync(
-            string clientId,
-            CancellationToken cancellationToken = default);
+        Task<List<User>> GetUsersByClientIdAsync(string clientId,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get profile by user ID
         /// </summary>
-        Task<Profile> GetProfileByUserIdAsync(
-            string userId,
-            CancellationToken cancellationToken = default);
+        Task<Profile> GetProfileByUserIdAsync(string userId,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get profile by username
         /// </summary>
-        Task<Profile> GetProfileByUsernameAsync(
-            string username,
-            CancellationToken cancellationToken = default);
+        Task<Profile> GetProfileByUsernameAsync(string username,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get profile with timeout
         /// </summary>
-        Task<Profile> GetProfileWithTimeoutAsync(
-            string profileId,
-            TimeSpan timeout,
-            CancellationToken cancellationToken = default);
+        Task<Profile> GetProfileWithTimeoutAsync(string profileId,TimeSpan timeout,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get game history for a profile
         /// </summary>
-        Task<List<Game>> GetProfileGameHistoryAsync(
-            string profileId,
-            CancellationToken cancellationToken = default);
+        Task<List<Game>> GetProfileGameHistoryAsync(string profileId,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get game statistics for a profile
         /// </summary>
-        Task<GameStatistics> GetProfileGameStatisticsAsync(
-            string profileId,
-            CancellationToken cancellationToken = default);
+        Task<GameStatistics> GetProfileGameStatisticsAsync(string profileId,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get scouting report for a profile
         /// </summary>
-        Task<ScoutingReport> GetScoutingReportAsync(
-            string profileId,
-            CancellationToken cancellationToken = default);
+        Task<ScoutingReport> GetScoutingReportAsync(string profileId, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get scouting report for a profile
         /// </summary>
-        Task<ScoutingReport> GetScoutingReportByIdAsync(
-            string profileId,
-            CancellationToken cancellationToken = default);
+        Task<ScoutingReport> GetScoutingReportByIdAsync(string profileId,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get squad for a profile
         /// </summary>
-        Task<Squad> GetProfileSquadAsync(
-            string profileId,
-            CancellationToken cancellationToken = default);
+        Task<Squad> GetProfileSquadAsync(string profileId,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get settings for a profile
         /// </summary>
-        Task<Setting> GetProfileSettingsAsync(
-            string profileId,
-            CancellationToken cancellationToken = default);
+        Task<Setting> GetProfileSettingsAsync(string profileId,CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Get Subscriptions for a profile
+        /// </summary>
+        Task<Subscription> GetProfileSubscriptionAsync(string profileId,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Update a profile
         /// </summary>
-        Task<bool> UpdateProfileAsync(
-            Profile profile,
-            CancellationToken cancellationToken = default);
+        Task<bool> UpdateProfileAsync(Profile profile,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Update a profile
         /// </summary>
-        Task<bool> UpdateScoutingReportAsync(
-            ScoutingReport scoutingReport,
-            CancellationToken cancellationToken = default);
+        Task<bool> UpdateScoutingReportAsync(ScoutingReport scoutingReport,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Batch update multiple profiles at once
         /// </summary>
-        Task<int> BatchUpdateProfilesAsync(
-            IEnumerable<Profile> profiles,
-            CancellationToken cancellationToken = default);
+        Task<int> BatchUpdateProfilesAsync(IEnumerable<Profile> profiles,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Update profile points
         /// </summary>
-        Task<bool> UpdateProfilePointsAsync(
-            string profileId,
-            int points,
-            CancellationToken cancellationToken = default);
+        Task<bool> UpdateProfilePointsAsync(string profileId,int points,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Set top record status for a profile
         /// </summary>
-        Task<bool> SetTopRecordStatusAsync(
-            string profileId,
-            bool hasTopRecord,
-            CancellationToken cancellationToken = default);
+        Task<bool> SetTopRecordStatusAsync(string profileId,bool hasTopRecord,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Update profile's last run date
         /// </summary>
-        Task<bool> UpdateLastRunDateAsync(
-            string profileId,
-            DateTime lastRunDate,
-            CancellationToken cancellationToken = default);
+        Task<bool> UpdateLastRunDateAsync(string profileId,DateTime lastRunDate,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Update profile username
         /// </summary>
-        Task<bool> UpdateProfileUserNameAsync(
-            string profileId,
-            string newUserName,
-            CancellationToken cancellationToken = default);
+        Task<bool> UpdateProfileUserNameAsync(string profileId,string newUserName,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Update profile settings
         /// </summary>
-        Task<bool> UpdateSettingAsync(
-            Setting setting,
-            CancellationToken cancellationToken = default);
+        Task<bool> UpdateSettingAsync(Setting setting,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Upsert a scouting report
         /// </summary>
-        Task<bool> UpsertScoutingReportAsync(
-            ScoutingReport scoutingReport,
-            CancellationToken cancellationToken = default);
+        Task<bool> UpsertScoutingReportAsync(ScoutingReport scoutingReport,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Check if a username is available
         /// </summary>
-        Task<bool> IsUserNameAvailableAsync(
-            string userName,
-            CancellationToken cancellationToken = default);
+        Task<bool> IsUserNameAvailableAsync(string userName,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Save changes to database

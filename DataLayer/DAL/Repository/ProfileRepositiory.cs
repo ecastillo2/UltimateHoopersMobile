@@ -859,6 +859,30 @@ namespace DataLayer.DAL.Repository
             }
         }
 
+        public async Task<Subscription> GetProfileSubscriptionAsync(string profileId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var subscriptionId = await _context.Profile
+                    .AsNoTracking()
+                    .Where(p => p.ProfileId == profileId)
+                    .Select(p => p.SubscriptionId)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                if (subscriptionId == null)
+                    return null;
+
+                return await _context.Subscription
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(s => s.SubscriptionId == subscriptionId, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting subscription for profile {ProfileId}", profileId);
+                throw;
+            }
+        }
+
         public async Task<bool> UpdateProfileAsync(Profile profile,CancellationToken cancellationToken = default)
         {
             try

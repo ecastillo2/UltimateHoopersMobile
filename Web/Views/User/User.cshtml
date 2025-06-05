@@ -101,6 +101,7 @@
                             <th>Username</th>
                             <th>Sign Up Date</th>
                             <th>Status</th>
+                            <th>Subscription</th>
                             <th>Role</th>
                             <th>Actions</th>
                         </tr>
@@ -129,7 +130,10 @@
                                 </td>
                                 <td>@(user.User.SignUpDate?.ToString("MM/dd/yyyy") ?? "N/A")</td>
                                 <td>
-                                    <span class="badge bg-success badge-pill">Active</span>
+                                    <span class="badge bg-success badge-pill">@(user.Profile.Status)</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success badge-pill">@(user.Subscription.Name)</span>
                                 </td>
                                 <td>@(user.User.AccessLevel ?? "User")</td>
                                 <td>
