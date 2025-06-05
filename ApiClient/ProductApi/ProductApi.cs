@@ -1,5 +1,4 @@
-﻿using Azure;
-using Domain;
+﻿using Domain;
 using Domain.DtoModel;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
