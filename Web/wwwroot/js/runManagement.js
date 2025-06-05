@@ -2663,7 +2663,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Debug functions with unique namespace
     window.runDebugFixed = {
-        state: () => window.runManagementState,
+        // Core debug functions
+        state: function () {
+            return window.runManagementState;
+        },
+
         setupToggle: setupCustomAddressToggle,
         toggleFields: toggleAddressFieldsState,
         loadData: loadRunDataWithTimeout,
@@ -2694,7 +2698,7 @@ document.addEventListener('DOMContentLoaded', function () {
         validateCreateScheduleConflicts: validateCreateScheduleConflicts,
         clearCreateConflictWarnings: clearCreateConflictWarnings,
 
-        forceHideLoading: () => {
+        forceHideLoading: function () {
             console.log('🚨 Force hiding all loading states');
             hideLoadingState();
             hideModalLoadingState();
@@ -2706,17 +2710,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 'globalLoadingOverlay'
             ];
 
-            overlays.forEach(id => {
+            overlays.forEach(function (id) {
                 const overlay = document.getElementById(id);
                 if (overlay) {
                     overlay.style.display = 'none';
-                    console.log(`🚨 Force hid: ${id}`);
+                    console.log('🚨 Force hid: ' + id);
                 }
             });
 
             // Force hide any modal loading overlays
             const modalLoadingOverlays = document.querySelectorAll('.modal-loading-overlay');
-            modalLoadingOverlays.forEach(overlay => {
+            modalLoadingOverlays.forEach(function (overlay) {
                 overlay.style.display = 'none';
                 console.log('🚨 Force hid modal loading overlay');
             });
@@ -2726,7 +2730,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
             console.log('🚨 All loading states forcefully hidden');
         },
-        checkConflicts: () => {
+
+        checkConflicts: function () {
             const conflicts = [];
 
             // Check for calendar presence
@@ -2740,9 +2745,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 'populateRunDetailsEnhanced'
             ];
 
-            conflictingFunctions.forEach(funcName => {
+            conflictingFunctions.forEach(function (funcName) {
                 if (window[funcName] && window[funcName].toString().includes('calendar')) {
-                    conflicts.push(`Function conflict: ${funcName} may be from calendar`);
+                    conflicts.push('Function conflict: ' + funcName + ' may be from calendar');
                 }
             });
 
@@ -2769,19 +2774,21 @@ document.addEventListener('DOMContentLoaded', function () {
             return conflicts;
         },
 
-        testToast: (message = 'Test toast from run management', type = 'info') => {
+        testToast: function (message, type) {
+            message = message || 'Test toast from run management';
+            type = type || 'info';
             console.log('🧪 Testing toast system...');
             showToast(message, type);
         },
 
-        getFormData: () => {
+        getFormData: function () {
             console.log('📋 Current form data:');
             const formData = getCompleteFormData();
             console.table(formData);
             return formData;
         },
 
-        getCourtInfo: () => {
+        getCourtInfo: function () {
             const courtSelect = document.getElementById('editCourtList');
             const selectedCourtId = safeGetValue('editCourtList');
             const currentRunData = window.runManagementState.currentRunData;
@@ -2790,14 +2797,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 selectedCourtId: selectedCourtId,
                 availableOptions: [],
                 selectElement: !!courtSelect,
-                selectValue: courtSelect?.value,
-                selectedOptionText: courtSelect?.options[courtSelect?.selectedIndex]?.textContent,
+                selectValue: courtSelect ? courtSelect.value : null,
+                selectedOptionText: courtSelect ? courtSelect.options[courtSelect.selectedIndex].textContent : null,
                 autoPopulated: false,
-                currentRunCourtId: currentRunData?.selectedCourtId || null,
+                currentRunCourtId: currentRunData ? currentRunData.selectedCourtId : null,
                 rawCourtData: {
-                    courtId: currentRunData?.courtId,
-                    CourtId: currentRunData?.CourtId,
-                    extractedCourtId: currentRunData?.selectedCourtId
+                    courtId: currentRunData ? currentRunData.courtId : null,
+                    CourtId: currentRunData ? currentRunData.CourtId : null,
+                    extractedCourtId: currentRunData ? currentRunData.selectedCourtId : null
                 }
             };
 
@@ -2819,7 +2826,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return courtInfo;
         },
 
-        testCourtSelection: (courtId) => {
+        testCourtSelection: function (courtId) {
             console.log('🧪 Testing court selection with ID:', courtId);
             const courtSelect = document.getElementById('editCourtList');
             if (courtSelect) {
@@ -2839,7 +2846,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         },
 
-        simulateCourtAutoPopulation: (mockRunData) => {
+        simulateCourtAutoPopulation: function (mockRunData) {
             console.log('🧪 Simulating court auto-population with mock data...');
             const testData = mockRunData || {
                 courtId: 'test-court-123',
@@ -2861,8 +2868,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log('🏀 No court list in test data');
                 return false;
             }
-        },
-
+        }
+        
         verifyAutoPopulation: () => {
             const courtInfo = window.runDebugFixed.getCourtInfo();
             const isAutoPopulated = courtInfo.autoPopulated && courtInfo.selectedCourtId;
