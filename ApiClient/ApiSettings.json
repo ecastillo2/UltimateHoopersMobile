@@ -16,13 +16,15 @@
     "TempVideoFileContainerName": "tempvideofile",
     "CourtContainerName": "courtimage",
     "VideoContainerName": "videofile",
+    "ClientContainerName": "clientimage",
 
     "ProductFileDefaultURL": "https://uhblobstorageaccount.blob.core.windows.net/productimage/",
     "PostFileDefaultURL": "https://uhblobstorageaccount.blob.core.windows.net/postfile",
     "ProfileImageDefaultURL": "https://uhblobstorageaccount.blob.core.windows.net/profileimage/",
     "PostThumbnailImageDefaultURL": "https://uhblobstorageaccount.blob.core.windows.net/postthumbnail/",
     "CourtImageDefaultURL": "https://uhblobstorageaccount.blob.core.windows.net/courtimage/",
-    "VideoFileDefaultURL": "https://uhblobstorageaccount.blob.core.windows.net/videofile/"
+    "VideoFileDefaultURL": "https://uhblobstorageaccount.blob.core.windows.net/videofile/",
+    "ClientImageBaseUrl": "https://uhblobstorageaccount.blob.core.windows.net/clientimage/"
   },
   "Logging": {
     "LogLevel": {

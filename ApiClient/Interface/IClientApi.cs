@@ -55,7 +55,7 @@ namespace WebAPI.ApiClients
         /// <param name="accessToken"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<Client> CreateClientAsync(Client run, string accessToken, CancellationToken cancellationToken = default);
+        Task<HttpResponseMessage> CreateClientAsync(Client client, string accessToken, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Update Client Async
@@ -64,7 +64,7 @@ namespace WebAPI.ApiClients
         /// <param name="accessToken"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<bool> UpdateClientAsync(Client run, string accessToken, CancellationToken cancellationToken = default);
+        Task<bool> UpdateClientAsync(Client client, string accessToken, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Delete Client Async

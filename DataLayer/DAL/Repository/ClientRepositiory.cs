@@ -16,12 +16,14 @@ namespace DataLayer.DAL.Repository
         private readonly ApplicationContext _context;
         private readonly ILogger<ClientRepository> _logger;
         private readonly IConfiguration _configuration;
+        private readonly string _blobBaseUrl;
         private bool _disposed = false;
 
         public ClientRepository(ApplicationContext context, IConfiguration configuration, ILogger<ClientRepository> logger = null)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _blobBaseUrl = configuration["BlobStorage:ClientImageBaseUrl"] ?? "https://ultimatehoopersapi.azurewebsites.net";
             _logger = logger;
         }
 
@@ -257,6 +259,32 @@ namespace DataLayer.DAL.Repository
             {
                 _logger?.LogError(ex, "Error getting courts for Client {ClientId}", clientId);
                 throw;
+            }
+        }
+
+        /// <summary>
+        /// Insert Product
+        /// </summary>
+        /// <param name="model"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task InsertClient(Client model, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+
+                model.ImageUrl = $"{_blobBaseUrl}{model.ClientId}.webp";
+
+
+                // Add to context and save
+                await _context.Client.AddAsync(model);
+                await SaveChangesAsync();
+
+                _logger?.LogInformation("Successfully inserted Product with ID: {model.ClientId}", model.ClientId);
+            }
+            catch (Exception ex)
+            {
+
             }
         }
 

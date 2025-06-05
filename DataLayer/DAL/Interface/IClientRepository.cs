@@ -40,13 +40,24 @@ namespace DataLayer.DAL.Interface
         Task<Client> GetClientByIdAsync(string privateRunId,CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Insert Client
+        /// </summary>
+        /// <param name="product"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        Task InsertClient(Client client, CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Get PrivateRun by ID
         /// </summary>
         Task<List<Court>> GetCourtByClientIdAsync(string clientId,CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Get PrivateRun by ID
+        /// Get Client Courts Async
         /// </summary>
+        /// <param name="clientId"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         Task<List<Court>> GetClientCourtsAsync(string clientId,CancellationToken cancellationToken = default);
 
         /// <summary>

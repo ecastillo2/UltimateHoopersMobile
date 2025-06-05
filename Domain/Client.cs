@@ -26,6 +26,7 @@ namespace Domain
             City = client.City;
             Zip = client.Zip;
             PhoneNumber = client.PhoneNumber;
+            ImageUrl = client.ImageUrl;
             CreatedDate = client.CreatedDate;
             
         }
@@ -39,6 +40,7 @@ namespace Domain
         public string? City { get; set; }
         public string? Zip { get; set; }
         public string? PhoneNumber { get; set; }
+        public string? ImageUrl { get; set; }
         public DateTime? CreatedDate { get; set; }
         [NotMapped]
   

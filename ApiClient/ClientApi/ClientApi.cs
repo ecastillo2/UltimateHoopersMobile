@@ -1,16 +1,10 @@
 ﻿using Domain;
 using Domain.DtoModel;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Reflection;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
-using UltimateHoopers.Models;
+
 
 namespace WebAPI.ApiClients
 {
@@ -53,8 +47,12 @@ namespace WebAPI.ApiClients
         }
 
         /// <summary>
-        /// Get Run by ID
+        /// Get Client By Id Async
         /// </summary>
+        /// <param name="clientId"></param>
+        /// <param name="accessToken"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task<Client> GetClientByIdAsync(string clientId, string accessToken, CancellationToken cancellationToken = default)
         {
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
@@ -68,8 +66,12 @@ namespace WebAPI.ApiClients
         }
 
         /// <summary>
-        /// Get Run by ID
+        /// Get Client Courts Async
         /// </summary>
+        /// <param name="clientId"></param>
+        /// <param name="accessToken"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task<List<Court>> GetClientCourtsAsync(string clientId, string accessToken, CancellationToken cancellationToken = default)
         {
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
@@ -82,14 +84,18 @@ namespace WebAPI.ApiClients
         }
 
         /// <summary>
-        /// Create a new Run
+        /// Create Client Async
         /// </summary>
-        public async Task<Client> CreateClientAsync(Client client, string accessToken, CancellationToken cancellationToken = default)
+        /// <param name="model"></param>
+        /// <param name="accessToken"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<HttpResponseMessage> CreateClientAsync(Client model, string accessToken, CancellationToken cancellationToken = default)
         {
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
             var jsonContent = new StringContent(
-                JsonSerializer.Serialize(client, _jsonOptions),
+                JsonSerializer.Serialize(model, _jsonOptions),
                 Encoding.UTF8,
                 "application/json");
 
@@ -97,28 +103,19 @@ namespace WebAPI.ApiClients
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
-            return JsonSerializer.Deserialize<Client>(content, _jsonOptions);
+
+
+            return response;
         }
 
+       
         /// <summary>
-        /// Update an existing Run
+        /// Delete Client Async
         /// </summary>
-        public async Task<bool> UpdateRunAsync(Run run, string accessToken, CancellationToken cancellationToken = default)
-        {
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-            var jsonContent = new StringContent(
-                JsonSerializer.Serialize(run, _jsonOptions),
-                Encoding.UTF8,
-                "application/json");
-
-            var response = await _httpClient.PostAsync($"{_baseUrl}/api/Client/UpdateClient", jsonContent, cancellationToken);
-            return response.IsSuccessStatusCode;
-        }
-
-        /// <summary>
-        /// Delete a Run
-        /// </summary>
+        /// <param name="clientId"></param>
+        /// <param name="accessToken"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task<bool> DeleteClientAsync(string clientId, string accessToken, CancellationToken cancellationToken = default)
         {
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
@@ -127,7 +124,16 @@ namespace WebAPI.ApiClients
             return response.IsSuccessStatusCode;
         }
 
-
+        /// <summary>
+        /// Get Clients With Cursor Async
+        /// </summary>
+        /// <param name="cursor"></param>
+        /// <param name="limit"></param>
+        /// <param name="direction"></param>
+        /// <param name="sortBy"></param>
+        /// <param name="accessToken"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task<CursorPaginatedResultDto<ClientDetailViewModelDto>> GetClientsWithCursorAsync(string cursor = null, int limit = 20, string direction = "next", string sortBy = "Points", string accessToken = null, CancellationToken cancellationToken = default)
         {
             try
@@ -171,6 +177,13 @@ namespace WebAPI.ApiClients
             }
         }
 
+        /// <summary>
+        /// Update Client Async
+        /// </summary>
+        /// <param name="model"></param>
+        /// <param name="accessToken"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public async Task<bool> UpdateClientAsync(Client model, string accessToken, CancellationToken cancellationToken = default)
         {
             try

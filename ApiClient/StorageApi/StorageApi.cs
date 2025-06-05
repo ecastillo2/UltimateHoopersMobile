@@ -19,6 +19,7 @@ namespace WebAPI.ApiClients
         private readonly ILogger<StorageApi> _logger;
         private readonly string _connectionString;
         private readonly string _productImageContainerName;
+        private readonly string _clientImageContainerName;
         private readonly string _videoFileContainerName;
         private readonly BlobServiceClient _blobServiceClient;
         private readonly HttpClient _httpClient;
@@ -39,15 +40,10 @@ namespace WebAPI.ApiClients
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-            _connectionString = configuration["BlobStorage:ConnectionString"] ?? ""
-                ?? throw new InvalidOperationException("Blob storage connection string is not configured");
-
-            _productImageContainerName = configuration["BlobStorage:ProductContainerName"] ?? ""
-                ?? throw new InvalidOperationException("Product container name is not configured");
-
-            _videoFileContainerName = configuration["BlobStorage:VideoContainerName"] ?? ""
-                ?? throw new InvalidOperationException("Video container name is not configured");
-
+            _connectionString = configuration["BlobStorage:ConnectionString"] ?? ""?? throw new InvalidOperationException("Blob storage connection string is not configured");
+            _productImageContainerName = configuration["BlobStorage:ProductContainerName"] ?? ""?? throw new InvalidOperationException("Product container name is not configured");
+            _videoFileContainerName = configuration["BlobStorage:VideoContainerName"] ?? ""?? throw new InvalidOperationException("Video container name is not configured");
+            _clientImageContainerName = configuration["BlobStorage:VideoContainerName"] ?? ""?? throw new InvalidOperationException("Video container name is not configured");
             _blobServiceClient = new BlobServiceClient(_connectionString);
         }
 
@@ -231,6 +227,97 @@ namespace WebAPI.ApiClients
         }
 
         /// <summary>
+        /// Upload Client image file to blob storage
+        /// </summary>
+        /// <param name="productId">Product identifier</param>
+        /// <param name="type">File type (image, video, etc.)</param>
+        /// <param name="formFile">Uploaded file</param>
+        /// <param name="timeStamp">Optional timestamp</param>
+        /// <returns>Success status</returns>
+        public async Task<bool> UpdateClientImageFileAsync(string clientId, IFormFile formFile, TimeSpan? timeStamp = null)
+        {
+            try
+            {
+                // Validate inputs
+                if (string.IsNullOrEmpty(clientId))
+                {
+                    _logger?.LogError("clientId is null or empty");
+                    return false;
+                }
+
+                if (formFile == null || formFile.Length == 0)
+                {
+                    _logger?.LogError("FormFile is null or empty");
+                    return false;
+                }
+
+                // Validate file type
+                var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp", "image/bmp" };
+                if (!allowedTypes.Contains(formFile.ContentType.ToLower()))
+                {
+                    _logger?.LogError($"Unsupported file type: {formFile.ContentType}");
+                    return false;
+                }
+
+                // Validate file size (e.g., max 10MB)
+                if (formFile.Length > 10 * 1024 * 1024)
+                {
+                    _logger?.LogError($"File size too large: {formFile.Length} bytes");
+                    return false;
+                }
+
+                var containerClient = _blobServiceClient.GetBlobContainerClient(_clientImageContainerName);
+                await containerClient.CreateIfNotExistsAsync(PublicAccessType.Blob);
+
+                var fileName = $"{clientId}.webp";
+                var blobClient = containerClient.GetBlobClient(fileName);
+
+                // Process image and upload
+                using var processedImageStream = await ProcessImageForWebP(formFile);
+
+                if (processedImageStream == null || processedImageStream.Length == 0)
+                {
+                    _logger?.LogError("Processed image stream is null or empty");
+                    return false;
+                }
+
+                // Reset stream position to beginning
+                processedImageStream.Position = 0;
+
+                var uploadOptions = new BlobUploadOptions
+                {
+                    HttpHeaders = new BlobHttpHeaders
+                    {
+                        ContentType = "image/webp",
+                        CacheControl = "public, max-age=31536000" // 1 year cache
+                    },
+                    Conditions = null, // Allow overwrite
+                    ProgressHandler = null
+                };
+
+                await blobClient.UploadAsync(processedImageStream, uploadOptions);
+
+                _logger?.LogInformation($"Successfully uploaded image for product {clientId}");
+                return true;
+            }
+            catch (ArgumentException ex)
+            {
+                _logger?.LogError(ex, $"Invalid parameter while processing image for product {clientId}: {ex.Message}");
+                return false;
+            }
+            catch (NotSupportedException ex)
+            {
+                _logger?.LogError(ex, $"Image format not supported for product {clientId}: {ex.Message}");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, $"Error uploading image for product {clientId}: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Upload product image file to blob storage
         /// </summary>
         /// <param name="productId">Product identifier</param>
@@ -320,8 +407,12 @@ namespace WebAPI.ApiClients
             }
         }
 
-
-
+        /// <summary>
+        /// Process ImageForWebP
+        /// </summary>
+        /// <param name="formFile"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
         private async Task<MemoryStream> ProcessImageForWebP(IFormFile formFile)
         {
             try
@@ -349,6 +440,12 @@ namespace WebAPI.ApiClients
             }
         }
 
+        /// <summary>
+        /// Process Image With ImageSharp
+        /// </summary>
+        /// <param name="imageBytes"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
         private async Task<MemoryStream> ProcessImageWithImageSharp(byte[] imageBytes)
         {
             try

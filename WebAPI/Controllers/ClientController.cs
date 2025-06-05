@@ -123,6 +123,29 @@ namespace WebAPI.Controllers
         }
 
         /// <summary>
+        /// Create Client
+        /// </summary>
+        /// <param name="product"></param>
+        /// <returns></returns>
+        [HttpPost("CreateClient")]
+        //[Authorize]
+        public async Task<IActionResult> CreateClient([FromBody] Client client)
+        {
+            try
+            {
+                await _repository.InsertClient(client);
+
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error Adding Client ");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred " });
+            }
+        }
+
+        /// <summary>
         /// Get Client By Id
         /// </summary>
         /// <param name="id"></param>

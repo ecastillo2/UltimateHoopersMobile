@@ -84,7 +84,7 @@ namespace WebAPI.ApiClients
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
-            //var result = JsonSerializer.Deserialize<Response>(content, _jsonOptions);
+      
 
             return response;
         }
