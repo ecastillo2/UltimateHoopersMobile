@@ -1,130 +1,8 @@
 ﻿/**
- * COMPLETE CLIENT MANAGEMENT JAVASCRIPT WITH COURTS TAB FIX
+ * COMPLETE CLIENT MANAGEMENT JAVASCRIPT WITH COURTS TAB - CLEANED VERSION
  * Enhanced with robust DataTable refresh, improved image handling, and working courts tab
+ * Toast and spinner functionality removed
  */
-
-// ========== TOAST NOTIFICATION SYSTEM ==========
-function createToastNotification(message, type = 'info', title = '', duration = 5000) {
-    console.log(`${type.toUpperCase()}: ${title} - ${message}`);
-
-    const alertClass = {
-        'success': 'success',
-        'error': 'danger',
-        'warning': 'warning',
-        'info': 'info'
-    }[type] || 'info';
-
-    const icon = {
-        'success': 'check-circle',
-        'error': 'x-circle',
-        'warning': 'exclamation-triangle',
-        'info': 'info-circle'
-    }[type] || 'info-circle';
-
-    const toast = document.createElement('div');
-    toast.className = `alert alert-${alertClass} alert-dismissible fade show position-fixed`;
-    toast.style.cssText = `
-        top: 20px;
-        right: 20px;
-        z-index: 9999;
-        min-width: 300px;
-        max-width: 500px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    `;
-
-    toast.innerHTML = `
-        <div class="d-flex align-items-center">
-            <i class="bi bi-${icon} me-2"></i>
-            <div class="flex-grow-1">
-                ${title ? `<strong>${title}:</strong> ` : ''}${message}
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    `;
-
-    document.body.appendChild(toast);
-    setTimeout(() => {
-        if (toast.parentElement) {
-            toast.remove();
-        }
-    }, duration);
-
-    return toast;
-}
-
-// ========== UIUTILS SYSTEM ==========
-if (typeof UIUtils === 'undefined') {
-    window.UIUtils = {};
-}
-
-UIUtils.showSuccess = function (message, title = 'Success') {
-    console.log(`✅ ${title}: ${message}`);
-    createToastNotification(message, 'success', title);
-};
-
-UIUtils.showError = function (message, title = 'Error') {
-    console.error(`❌ ${title}: ${message}`);
-    createToastNotification(message, 'error', title);
-};
-
-UIUtils.showWarning = function (message, title = 'Warning') {
-    console.warn(`⚠️ ${title}: ${message}`);
-    createToastNotification(message, 'warning', title);
-};
-
-UIUtils.showInfo = function (message, title = 'Info') {
-    console.info(`ℹ️ ${title}: ${message}`);
-    createToastNotification(message, 'info', title);
-};
-
-UIUtils.setButtonLoading = function (button, isLoading, loadingText = 'Loading...') {
-    if (!button) return;
-
-    if (isLoading) {
-        button.disabled = true;
-        if (!button.dataset.originalText) {
-            button.dataset.originalText = button.innerHTML;
-        }
-        button.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status"></span>${loadingText}`;
-    } else {
-        button.disabled = false;
-        if (button.dataset.originalText) {
-            button.innerHTML = button.dataset.originalText;
-            delete button.dataset.originalText;
-        }
-    }
-};
-
-UIUtils.showLoading = function (message = 'Loading...') {
-    let loader = document.getElementById('globalLoader');
-    if (!loader) {
-        loader = document.createElement('div');
-        loader.id = 'globalLoader';
-        loader.className = 'position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center';
-        loader.style.cssText = `
-            background: rgba(255, 255, 255, 0.9);
-            z-index: 9999;
-            backdrop-filter: blur(2px);
-        `;
-        loader.innerHTML = `
-            <div class="text-center">
-                <div class="spinner-border text-primary mb-3" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <div class="text-muted">${message}</div>
-            </div>
-        `;
-        document.body.appendChild(loader);
-    }
-    loader.style.display = 'flex';
-};
-
-UIUtils.hideLoading = function () {
-    const loader = document.getElementById('globalLoader');
-    if (loader) {
-        loader.style.display = 'none';
-    }
-};
 
 // ========== ENHANCED DATATABLE REFRESH SYSTEM ==========
 window.ClientTableManager = {
@@ -205,7 +83,7 @@ window.ClientTableManager = {
 
     handleCreate: function (clientData) {
         console.log('➕ Handling client creation');
-        UIUtils.showSuccess('Client created successfully!', 'Success');
+        console.log('Client created successfully!');
         setTimeout(() => {
             window.location.reload();
         }, 1500);
@@ -363,7 +241,7 @@ window.ClientTableManager = {
 
     fallbackRefresh: function () {
         console.log('⚠️ Using fallback refresh strategy');
-        UIUtils.showInfo('Refreshing client data...', 'Info');
+        console.log('Refreshing client data...');
         setTimeout(() => {
             window.location.reload();
         }, 2000);
@@ -430,7 +308,7 @@ function handleEditModalShow(event) {
 
     if (!clientId) {
         console.error('🚨 No client ID found on button');
-        UIUtils.showError('Client ID is missing', 'Error');
+        alert('Client ID is missing');
         return;
     }
 
@@ -862,19 +740,20 @@ function addClientCourt(clientId) {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    UIUtils.showSuccess('Court added successfully', 'Success');
+                    console.log('Court added successfully');
                     loadClientCourts(clientId);
                 } else {
-                    UIUtils.showError(`Error adding court: ${data.message || 'Unknown error'}`, 'Error');
+                    console.error(`Error adding court: ${data.message || 'Unknown error'}`);
+                    alert(`Error adding court: ${data.message || 'Unknown error'}`);
                 }
             })
             .catch(error => {
                 console.error('🚨 Error adding court:', error);
-                UIUtils.showError('Error adding court. Please try again.', 'Error');
+                alert('Error adding court. Please try again.');
             });
     } else {
         console.log('🎭 Simulating court addition:', courtData);
-        UIUtils.showSuccess(`Court "${courtName}" added successfully`, 'Success');
+        console.log(`Court "${courtName}" added successfully`);
 
         setTimeout(() => {
             loadClientCourts(clientId);
@@ -910,19 +789,20 @@ function editClientCourt(clientId, courtId, currentName) {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    UIUtils.showSuccess('Court updated successfully', 'Success');
+                    console.log('Court updated successfully');
                     loadClientCourts(clientId);
                 } else {
-                    UIUtils.showError(`Error updating court: ${data.message || 'Unknown error'}`, 'Error');
+                    console.error(`Error updating court: ${data.message || 'Unknown error'}`);
+                    alert(`Error updating court: ${data.message || 'Unknown error'}`);
                 }
             })
             .catch(error => {
                 console.error('🚨 Error updating court:', error);
-                UIUtils.showError('Error updating court. Please try again.', 'Error');
+                alert('Error updating court. Please try again.');
             });
     } else {
         console.log('🎭 Simulating court update:', courtData);
-        UIUtils.showSuccess(`Court updated to "${newName}"`, 'Success');
+        console.log(`Court updated to "${newName}"`);
 
         setTimeout(() => {
             loadClientCourts(clientId);
@@ -956,19 +836,20 @@ function removeClientCourt(clientId, courtId, courtName) {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    UIUtils.showSuccess('Court removed successfully', 'Success');
+                    console.log('Court removed successfully');
                     loadClientCourts(clientId);
                 } else {
-                    UIUtils.showError(`Error removing court: ${data.message || 'Unknown error'}`, 'Error');
+                    console.error(`Error removing court: ${data.message || 'Unknown error'}`);
+                    alert(`Error removing court: ${data.message || 'Unknown error'}`);
                 }
             })
             .catch(error => {
                 console.error('🚨 Error removing court:', error);
-                UIUtils.showError('Error removing court. Please try again.', 'Error');
+                alert('Error removing court. Please try again.');
             });
     } else {
         console.log('🎭 Simulating court removal:', requestData);
-        UIUtils.showSuccess(`Court "${courtName}" removed successfully`, 'Success');
+        console.log(`Court "${courtName}" removed successfully`);
 
         setTimeout(() => {
             loadClientCourts(clientId);
@@ -1112,12 +993,12 @@ function attachUserButtonListeners() {
 
 function addClientUser(clientId) {
     console.log('➕ Adding user for client:', clientId);
-    UIUtils.showInfo('User management functionality coming soon', 'Info');
+    console.log('User management functionality coming soon');
 }
 
 function editClientUser(clientId, userId) {
     console.log('✏️ Editing user:', userId, 'for client:', clientId);
-    UIUtils.showInfo('User management functionality coming soon', 'Info');
+    console.log('User management functionality coming soon');
 }
 
 function removeClientUser(clientId, userId) {
@@ -1125,14 +1006,14 @@ function removeClientUser(clientId, userId) {
 
     if (!confirm('Are you sure you want to remove this user from the client?')) return;
 
-    UIUtils.showInfo('User management functionality coming soon', 'Info');
+    console.log('User management functionality coming soon');
 }
 
 function loadClientBusinessData(clientId) {
     console.log('📊 Loading business data for client:', clientId);
 
     if (!window.clientUrls?.getClientBusinessData) {
-        UIUtils.showWarning('Business data API not available', 'Warning');
+        console.warn('Business data API not available');
         return;
     }
 
@@ -1142,18 +1023,18 @@ function loadClientBusinessData(clientId) {
             if (data.success) {
                 updateClientBusinessDisplay(data.business);
             } else {
-                UIUtils.showWarning('Failed to load business data', 'Warning');
+                console.warn('Failed to load business data');
             }
         })
         .catch(error => {
             console.error('🚨 Error loading business data:', error);
-            UIUtils.showError('Error loading business data', 'Error');
+            console.error('Error loading business data');
         });
 }
 
 function updateClientBusinessDisplay(business) {
     console.log('📊 Updating business display:', business);
-    UIUtils.showInfo('Business data loaded successfully', 'Info');
+    console.log('Business data loaded successfully');
 }
 
 // ========== FORM HANDLERS ==========
@@ -1166,12 +1047,13 @@ function handleAddClientFormSubmit(e) {
 
     const validationErrors = validateClientForm(form);
     if (validationErrors.length > 0) {
-        UIUtils.showError(`Please fix: ${validationErrors.join(', ')}`, 'Validation Error');
+        alert(`Please fix: ${validationErrors.join(', ')}`);
         return;
     }
 
     if (submitBtn) {
-        UIUtils.setButtonLoading(submitBtn, true, 'Adding Client...');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Adding Client...';
     }
 
     const formData = new FormData(form);
@@ -1182,7 +1064,7 @@ function handleAddClientFormSubmit(e) {
     })
         .then(response => {
             if (response.redirected) {
-                UIUtils.showSuccess('Client created successfully!', 'Success');
+                console.log('Client created successfully!');
                 setTimeout(() => window.location.reload(), 1500);
                 return;
             }
@@ -1195,7 +1077,7 @@ function handleAddClientFormSubmit(e) {
             if (contentType && contentType.includes('application/json')) {
                 return response.json();
             } else {
-                UIUtils.showSuccess('Client created successfully!', 'Success');
+                console.log('Client created successfully!');
                 setTimeout(() => window.location.reload(), 1000);
                 return;
             }
@@ -1203,22 +1085,23 @@ function handleAddClientFormSubmit(e) {
         .then(result => {
             if (result && result.success !== undefined) {
                 if (result.success) {
-                    UIUtils.showSuccess('Client created successfully!', 'Success');
+                    console.log('Client created successfully!');
                     const modal = bootstrap.Modal.getInstance(document.getElementById('addClientModal'));
                     if (modal) modal.hide();
                     setTimeout(() => window.location.reload(), 1000);
                 } else {
-                    UIUtils.showError(`Error: ${result.message}`, 'Error');
+                    alert(`Error: ${result.message}`);
                 }
             }
         })
         .catch(error => {
             console.error('🚨 Error creating client:', error);
-            UIUtils.showError(`Error creating client: ${error.message}`, 'Error');
+            alert(`Error creating client: ${error.message}`);
         })
         .finally(() => {
             if (submitBtn) {
-                UIUtils.setButtonLoading(submitBtn, false);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Add Client';
             }
         });
 }
@@ -1232,18 +1115,19 @@ function handleEditClientFormSubmit(e) {
 
     const clientIdValue = form.querySelector('#editClientId')?.value;
     if (!clientIdValue || clientIdValue.trim() === '') {
-        UIUtils.showError('Client ID is missing. Please close and reopen the edit dialog.', 'Error');
+        alert('Client ID is missing. Please close and reopen the edit dialog.');
         return;
     }
 
     const validationErrors = validateClientForm(form);
     if (validationErrors.length > 0) {
-        UIUtils.showError(`Please fix: ${validationErrors.join(', ')}`, 'Validation Error');
+        alert(`Please fix: ${validationErrors.join(', ')}`);
         return;
     }
 
     if (submitBtn) {
-        UIUtils.setButtonLoading(submitBtn, true, 'Saving...');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
     }
 
     const formData = new FormData(form);
@@ -1263,7 +1147,7 @@ function handleEditClientFormSubmit(e) {
         })
         .then(result => {
             if (result.success) {
-                UIUtils.showSuccess('Client updated successfully!', 'Success');
+                console.log('Client updated successfully!');
 
                 const clientData = result.client || {
                     ClientId: clientIdValue,
@@ -1284,16 +1168,17 @@ function handleEditClientFormSubmit(e) {
                     if (modal) modal.hide();
                 }, 1500);
             } else {
-                UIUtils.showError(`Error: ${result.message}`, 'Error');
+                alert(`Error: ${result.message}`);
             }
         })
         .catch(error => {
             console.error('❌ Error updating client:', error);
-            UIUtils.showError(`Error updating client: ${error.message}`, 'Error');
+            alert(`Error updating client: ${error.message}`);
         })
         .finally(() => {
             if (submitBtn) {
-                UIUtils.setButtonLoading(submitBtn, false);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Save Changes';
             }
         });
 }
@@ -1327,7 +1212,7 @@ function handleImagePreview(file, input) {
 
     const validation = validateImageFile(file);
     if (!validation.isValid) {
-        UIUtils.showError(validation.errorMessage, 'Invalid Image');
+        alert(validation.errorMessage);
         input.value = '';
         return;
     }
@@ -1336,10 +1221,10 @@ function handleImagePreview(file, input) {
     reader.onload = function (e) {
         const imageUrl = e.target.result;
         updateImagePreview(imageUrl, input);
-        UIUtils.showSuccess('Image loaded successfully', 'Success');
+        console.log('Image loaded successfully');
     };
     reader.onerror = function () {
-        UIUtils.showError('Error reading image file', 'Error');
+        alert('Error reading image file');
         input.value = '';
     };
     reader.readAsDataURL(file);
@@ -1355,7 +1240,7 @@ function handleImageUrlChange(input) {
     }
 
     if (!input.value.match(/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp|bmp)(\?.*)?$/i)) {
-        UIUtils.showWarning('Please enter a valid image URL ending with .jpg, .png, .gif, etc.', 'Invalid URL');
+        console.warn('Please enter a valid image URL ending with .jpg, .png, .gif, etc.');
         input.classList.add('is-invalid');
         return;
     }
@@ -1365,12 +1250,12 @@ function handleImageUrlChange(input) {
         updateImagePreview(input.value, input);
         input.classList.remove('is-invalid');
         input.classList.add('is-valid');
-        UIUtils.showSuccess('Valid image URL', 'Success');
+        console.log('Valid image URL');
     };
     testImg.onerror = function () {
         updateImagePreview(input.value, input);
         input.classList.add('is-invalid');
-        UIUtils.showWarning('Image URL could not be loaded. Please verify the URL.', 'Warning');
+        console.warn('Image URL could not be loaded. Please verify the URL.');
     };
     testImg.src = input.value;
 }
@@ -1423,7 +1308,7 @@ function clearAddImagePreview() {
     }
 
     updateImagePreview('', fileInput || urlInput);
-    UIUtils.showInfo('Image cleared', 'Info');
+    console.log('Image cleared');
 }
 
 function clearEditImagePreview() {
@@ -1438,7 +1323,7 @@ function clearEditImagePreview() {
     }
 
     updateImagePreview('', fileInput || urlInput);
-    UIUtils.showInfo('Image cleared', 'Info');
+    console.log('Image cleared');
 }
 
 function removeClientImage() {
@@ -1462,7 +1347,7 @@ function removeClientImage() {
         removeField.value = 'true';
     }
 
-    UIUtils.showInfo('Image will be removed when you save the client', 'Info');
+    console.log('Image will be removed when you save the client');
 }
 
 function validateImageFile(file) {
@@ -1824,7 +1709,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (clientId) {
                 addClientCourt(clientId);
             } else {
-                UIUtils.showError('No client selected', 'Error');
+                alert('No client selected');
             }
         });
     }
@@ -1836,7 +1721,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (clientId) {
                 addClientUser(clientId);
             } else {
-                UIUtils.showError('No client selected', 'Error');
+                alert('No client selected');
             }
         });
     }

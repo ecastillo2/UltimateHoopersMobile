@@ -302,13 +302,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (data.success) {
                     populateUserForm(data.user);
                 } else {
-                    showError('Failed to load user data: ' + (data.message || 'Unknown error'));
+                    console.error('Failed to load user data: ' + (data.message || 'Unknown error'));
                     fallbackToRowData(userId);
                 }
             })
             .catch(error => {
                 console.error('Error fetching user data:', error);
-                showError('Failed to load user data');
+                console.error('Failed to load user data');
                 fallbackToRowData(userId);
             });
     }
@@ -555,7 +555,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function submitScoutingReport(data) {
         if (!window.appUrls?.saveScoutingReport) {
-            showError('Unable to save scouting report - API not configured');
+            console.error('Unable to save scouting report - API not configured');
             return;
         }
 
@@ -564,7 +564,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (submitBtn) {
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+            submitBtn.innerHTML = 'Saving...';
         }
 
         const token = document.querySelector('input[name="__RequestVerificationToken"]');
@@ -585,7 +585,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 if (result.success) {
-                    showSuccess('Scouting report saved successfully!');
+                    console.log('Scouting report saved successfully!');
 
                     if (result.scoutingReport) {
                         const metadataEl = document.getElementById('evaluationMetadata');
@@ -597,7 +597,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
                     }
                 } else {
-                    showError('Error saving scouting report: ' + (result.message || 'Unknown error'));
+                    console.error('Error saving scouting report: ' + (result.message || 'Unknown error'));
                 }
             })
             .catch(error => {
@@ -606,7 +606,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = originalText;
                 }
-                showError('Error saving scouting report. Please try again.');
+                console.error('Error saving scouting report. Please try again.');
             });
     }
 
@@ -701,23 +701,6 @@ document.addEventListener('DOMContentLoaded', function () {
             return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
         } catch (e) {
             return dateString;
-        }
-    }
-
-    function showError(message, title) {
-        if (window.UIUtils) {
-            window.UIUtils.showError(message, title);
-        } else {
-            console.error((title || 'Error') + ': ' + message);
-            alert((title || 'Error') + ': ' + message);
-        }
-    }
-
-    function showSuccess(message, title) {
-        if (window.UIUtils) {
-            window.UIUtils.showSuccess(message, title);
-        } else {
-            console.log((title || 'Success') + ': ' + message);
         }
     }
 });

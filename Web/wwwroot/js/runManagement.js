@@ -34,7 +34,6 @@ document.addEventListener('DOMContentLoaded', function () {
         customRunAddress: null,
         isInitialized: false,
         currentRunId: null,
-        isLoading: false,
         calendarCompatible: true
     };
 
@@ -59,7 +58,6 @@ document.addEventListener('DOMContentLoaded', function () {
         setupModalEventHandlers();
         setupFormEventHandlers();
         setupCustomAddressToggle();
-        setupLoadingManagement();
 
         // NEW: Initialize Create Run functionality
         setupCreateRunHandlers();
@@ -80,11 +78,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (window.fixedRunCalendar) {
             detectedItems.push('✅ Calendar detected: window.fixedRunCalendar');
             window.runManagementState.calendarPresent = true;
-        }
-
-        // Check for existing UIUtils
-        if (window.UIUtils) {
-            detectedItems.push('✅ UIUtils detected (likely from calendar)');
         }
 
         // Check for function conflicts
@@ -116,273 +109,11 @@ document.addEventListener('DOMContentLoaded', function () {
         if (detectedItems.length > 0) {
             console.log('🔍 Environment Detection Results:');
             detectedItems.forEach(item => console.log(`  ${item}`));
-
-            // Check for utilities.js toast system
-            if (window.UIUtils && window.UIUtils.showToast) {
-                const toastStr = window.UIUtils.showToast.toString();
-                if (toastStr.includes('RunMgmt Fallback')) {
-                    console.log('  ⚠️ Using fallback toast system - utilities.js may not be loaded');
-                } else {
-                    console.log('  ✅ utilities.js toast system detected and will be used');
-                }
-            } else {
-                console.log('  ❌ No toast system detected - will use fallback alerts');
-            }
         }
 
         // Set compatibility mode
         if (window.runManagementState.calendarPresent) {
             console.log('📅 Calendar compatibility mode enabled');
-        }
-    }
-
-    // ========== ENHANCED LOADING MANAGEMENT (CALENDAR COMPATIBLE) ==========
-    function setupLoadingManagement() {
-        // Don't override existing UIUtils if calendar already created it
-        if (!window.UIUtils) {
-            createRunManagementUIUtils();
-        } else {
-            console.log('📊 Using existing UIUtils (likely from calendar)');
-            // Enhance existing UIUtils if needed
-            enhanceExistingUIUtils();
-        }
-    }
-
-    function createRunManagementUIUtils() {
-        console.log('📊 Creating Run Management UIUtils');
-
-        // Create loading overlay element with unique ID
-        let loadingOverlay = document.getElementById('runManagementLoading');
-        if (!loadingOverlay) {
-            loadingOverlay = document.createElement('div');
-            loadingOverlay.id = 'runManagementLoading';
-            loadingOverlay.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.5);
-                display: none;
-                align-items: center;
-                justify-content: center;
-                z-index: 9999;
-                backdrop-filter: blur(2px);
-            `;
-            loadingOverlay.innerHTML = `
-                <div style="background: white; padding: 2rem; border-radius: 8px; text-align: center;">
-                    <div class="spinner-border text-primary mb-3" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <div>Loading run details...</div>
-                </div>
-            `;
-            document.body.appendChild(loadingOverlay);
-        }
-
-        // Create UIUtils with run management namespace
-        window.UIUtils = {
-            showLoading: function () {
-                console.log('📊 [RunMgmt] Showing loading overlay');
-                window.runManagementState.isLoading = true;
-                const overlay = document.getElementById('runManagementLoading');
-                if (overlay) {
-                    overlay.style.display = 'flex';
-                }
-            },
-
-            hideLoading: function () {
-                console.log('📊 [RunMgmt] Hiding loading overlay');
-                window.runManagementState.isLoading = false;
-                const overlay = document.getElementById('runManagementLoading');
-                if (overlay) {
-                    overlay.style.display = 'none';
-                }
-            },
-
-            // Toast functionality will be provided by utilities.js
-            // This is just a fallback if utilities.js isn't loaded yet
-            showToast: function (message, type = 'info') {
-                console.log(`Toast [RunMgmt Fallback][${type}]: ${message}`);
-                // Simple fallback - utilities.js should override this
-                if (type === 'error') {
-                    console.error(`Run Management Error: ${message}`);
-                } else {
-                    console.log(`Run Management ${type}: ${message}`);
-                }
-            }
-        };
-    }
-
-    function enhanceExistingUIUtils() {
-        console.log('📊 Enhancing existing UIUtils for run management');
-
-        // Create run management specific loading overlay
-        let rmLoadingOverlay = document.getElementById('runManagementLoading');
-        if (!rmLoadingOverlay) {
-            rmLoadingOverlay = document.createElement('div');
-            rmLoadingOverlay.id = 'runManagementLoading';
-            rmLoadingOverlay.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.5);
-                display: none;
-                align-items: center;
-                justify-content: center;
-                z-index: 9999;
-                backdrop-filter: blur(2px);
-            `;
-            rmLoadingOverlay.innerHTML = `
-                <div style="background: white; padding: 2rem; border-radius: 8px; text-align: center;">
-                    <div class="spinner-border text-primary mb-3" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <div>Loading run details...</div>
-                </div>
-            `;
-            document.body.appendChild(rmLoadingOverlay);
-        }
-
-        // Enhance UIUtils with run management specific loading methods
-        window.UIUtils.showRunManagementLoading = function () {
-            console.log('📊 [RunMgmt] Showing run management loading');
-            window.runManagementState.isLoading = true;
-            const overlay = document.getElementById('runManagementLoading');
-            if (overlay) {
-                overlay.style.display = 'flex';
-            }
-        };
-
-        window.UIUtils.hideRunManagementLoading = function () {
-            console.log('📊 [RunMgmt] Hiding run management loading');
-            window.runManagementState.isLoading = false;
-            const overlay = document.getElementById('runManagementLoading');
-            if (overlay) {
-                overlay.style.display = 'none';
-            }
-        };
-
-        // Note: Toast functionality will use existing utilities.js implementation
-    }
-
-    function showRunManagementToast(message, type = 'info') {
-        // Create a toast specific to run management
-        const toast = document.createElement('div');
-        toast.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 1rem;
-            border-radius: 4px;
-            color: white;
-            z-index: 10001;
-            max-width: 300px;
-            background: ${type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#17a2b8'};
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        `;
-        toast.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <span style="font-weight: bold;">[Run Management]</span>
-                <span>${message}</span>
-            </div>
-        `;
-        document.body.appendChild(toast);
-
-        setTimeout(() => {
-            if (toast.parentNode) {
-                toast.remove();
-            }
-        }, 5000);
-    }
-
-    function showLoadingState() {
-        console.log('📊 [RunMgmt] Showing loading state');
-        try {
-            window.runManagementState.isLoading = true;
-
-            // Use run management specific loading if available
-            if (window.UIUtils && window.UIUtils.showRunManagementLoading) {
-                window.UIUtils.showRunManagementLoading();
-            } else if (window.UIUtils && window.UIUtils.showLoading) {
-                window.UIUtils.showLoading();
-            } else {
-                // Fallback to modal loading state
-                showModalLoadingState();
-            }
-        } catch (error) {
-            console.error('❌ Error showing loading state:', error);
-            showModalLoadingState();
-        }
-    }
-
-    function hideLoadingState() {
-        console.log('📊 [RunMgmt] Hiding loading state');
-        try {
-            window.runManagementState.isLoading = false;
-
-            // Use run management specific loading if available
-            if (window.UIUtils && window.UIUtils.hideRunManagementLoading) {
-                window.UIUtils.hideRunManagementLoading();
-            } else if (window.UIUtils && window.UIUtils.hideLoading) {
-                window.UIUtils.hideLoading();
-            }
-
-            // Always hide modal loading state as well
-            hideModalLoadingState();
-        } catch (error) {
-            console.error('❌ Error hiding loading state:', error);
-            hideModalLoadingState();
-        }
-    }
-
-    function showModalLoadingState() {
-        const modal = document.getElementById('editRunModal');
-        if (!modal) return;
-
-        const modalBody = modal.querySelector('.modal-body');
-        if (!modalBody) return;
-
-        // Add loading overlay to modal
-        let loadingDiv = modal.querySelector('.modal-loading-overlay');
-        if (!loadingDiv) {
-            loadingDiv = document.createElement('div');
-            loadingDiv.className = 'modal-loading-overlay';
-            loadingDiv.style.cssText = `
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(255, 255, 255, 0.8);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 1000;
-            `;
-            loadingDiv.innerHTML = `
-                <div class="text-center">
-                    <div class="spinner-border text-primary mb-2" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <div class="text-muted">Loading run details...</div>
-                </div>
-            `;
-            modalBody.style.position = 'relative';
-            modalBody.appendChild(loadingDiv);
-        }
-        loadingDiv.style.display = 'flex';
-    }
-
-    function hideModalLoadingState() {
-        const modal = document.getElementById('editRunModal');
-        if (!modal) return;
-
-        const loadingDiv = modal.querySelector('.modal-loading-overlay');
-        if (loadingDiv) {
-            loadingDiv.style.display = 'none';
         }
     }
 
@@ -424,9 +155,6 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('📅 Modal opened from calendar, using calendar-compatible mode');
         }
 
-        // Always hide any existing loading state first
-        hideLoadingState();
-
         const button = event.relatedTarget;
         let runId = button?.getAttribute('data-run-id');
 
@@ -447,7 +175,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (!runId) {
             console.error('❌ No run ID found');
-            showToast('Run ID is missing. Please refresh the page.', 'error');
             return;
         }
 
@@ -470,9 +197,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function handleModalHide() {
         console.log('🚪 Modal closing...');
-
-        // Ensure loading state is hidden
-        hideLoadingState();
 
         resetModalState();
         window.runManagementState.currentRunId = null;
@@ -497,14 +221,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (!runId) {
             console.error('❌ No run ID provided');
-            showToast('No run ID provided', 'error');
             return Promise.reject(new Error('No run ID provided'));
-        }
-
-        // Check if we're already loading to prevent conflicts
-        if (window.runManagementState.isLoading) {
-            console.warn('⚠️ Already loading run data, preventing duplicate request');
-            return Promise.reject(new Error('Already loading'));
         }
 
         // Return a promise for calendar compatibility
@@ -512,14 +229,10 @@ document.addEventListener('DOMContentLoaded', function () {
             // Set a timeout to ensure loading state is always hidden
             const timeoutId = setTimeout(() => {
                 console.warn('⏰ Loading timeout reached, forcing hide loading state');
-                hideLoadingState();
                 const error = new Error('Loading took too long. Please try again.');
-                showToast(error.message, 'error');
+                console.error(error.message);
                 reject(error);
             }, 10000); // 10 second timeout
-
-            // Show loading state
-            showLoadingState();
 
             const url = `/Run/GetRunData?id=${encodeURIComponent(runId)}`;
 
@@ -541,9 +254,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     return response.json();
                 })
                 .then(data => {
-                    // Clear timeout and hide loading
+                    // Clear timeout
                     clearTimeout(timeoutId);
-                    hideLoadingState();
 
                     console.log('📦 Received run data:', data);
 
@@ -555,17 +267,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     populateRunDataComplete(data);
 
                     console.log('✅ Run data loaded and populated successfully');
-                    showToast('Run data loaded successfully', 'success');
+                    console.log('Run data loaded successfully');
 
                     resolve(data);
                 })
                 .catch(error => {
-                    // Clear timeout and hide loading
+                    // Clear timeout
                     clearTimeout(timeoutId);
-                    hideLoadingState();
 
                     console.error('❌ Error loading run data:', error);
-                    showToast(`Error loading run data: ${error.message}`, 'error');
+                    console.error(`Error loading run data: ${error.message}`);
 
                     // Try to extract data from table as fallback
                     setTimeout(() => {
@@ -624,7 +335,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const message = isCustom ?
             'Custom address enabled - you can now edit the address fields' :
             'Using client address - address fields are now read-only';
-        showToast(message, 'info');
+        console.log(message);
     }
 
     function toggleAddressFieldsState(useCustom) {
@@ -763,7 +474,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         } catch (error) {
             console.error('❌ Error populating run data:', error);
-            showToast('Error populating run data', 'error');
+            console.error('Error populating run data');
         }
     }
 
@@ -890,7 +601,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 // Show user feedback
                 setTimeout(() => {
-                    showToast(`Court auto-selected: ${courtName}`, 'info');
+                    console.log(`Court auto-selected: ${courtName}`);
                 }, 500);
             }
 
@@ -909,7 +620,7 @@ document.addEventListener('DOMContentLoaded', function () {
             courtSelect.appendChild(missingOption);
 
             console.log('🏀 ⚠️ Added missing court option for ID:', normalizedSelectedId);
-            showToast(`Court selection preserved (ID: ${normalizedSelectedId})`, 'warning');
+            console.log(`Court selection preserved (ID: ${normalizedSelectedId})`);
         } else if (!normalizedSelectedId) {
             console.log('🏀 No court pre-selected - user can choose from available courts');
         }
@@ -993,15 +704,12 @@ document.addEventListener('DOMContentLoaded', function () {
     function tryExtractFromTable(runId) {
         console.log('📋 Trying to extract data from table for run:', runId);
 
-        // Hide loading state when using fallback
-        hideLoadingState();
-
         const row = document.querySelector(`tr[data-run-id="${runId}"]`) ||
             document.querySelector(`button[data-run-id="${runId}"]`)?.closest('tr');
 
         if (!row) {
             console.warn('⚠️ Could not find table row for run');
-            showToast('Could not load run data from any source', 'error');
+            console.error('Could not load run data from any source');
             return;
         }
 
@@ -1043,7 +751,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        showToast('Basic run data extracted from table', 'info');
+        console.log('Basic run data extracted from table');
         console.log('📋 Extracted what data we could from table');
     }
 
@@ -1092,7 +800,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (selectedCourtId) {
             console.log('🏀 Court selected:', courtName, '(ID:', selectedCourtId, ')');
-            showToast(`Court selected: ${courtName}`, 'info');
+            console.log(`Court selected: ${courtName}`);
         } else {
             console.log('🏀 No court selected');
         }
@@ -1208,7 +916,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const submitBtn = e.target.querySelector('button[type="submit"]');
         if (submitBtn) {
-            setButtonLoading(submitBtn, true);
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating...';
         }
 
         try {
@@ -1224,11 +933,12 @@ document.addEventListener('DOMContentLoaded', function () {
             const result = await response.json();
 
             if (submitBtn) {
-                setButtonLoading(submitBtn, false);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Create Run';
             }
 
             if (result.success || response.ok) {
-                showToast('Run created successfully!', 'success');
+                console.log('Run created successfully!');
                 clearCreateConflictWarnings();
 
                 setTimeout(() => {
@@ -1237,14 +947,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     location.reload();
                 }, 1000);
             } else {
-                showToast(`Error: ${result.message || 'Failed to create run'}`, 'error');
+                console.error(`Error: ${result.message || 'Failed to create run'}`);
             }
         } catch (error) {
             console.error('❌ Create run submission error:', error);
             if (submitBtn) {
-                setButtonLoading(submitBtn, false);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Create Run';
             }
-            showToast(`Error: ${error.message}`, 'error');
+            console.error(`Error: ${error.message}`);
         }
     }
 
@@ -1286,7 +997,7 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (error) {
             console.error('❌ Error loading clients:', error);
             clientSelect.innerHTML = '<option value="">Error loading clients</option>';
-            showToast('Unable to load clients. Please refresh and try again.', 'error');
+            console.error('Unable to load clients. Please refresh and try again.');
         }
     }
 
@@ -1303,7 +1014,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Load client address information
             await loadClientAddressForCreateRun(clientId);
 
-            showToast(`Client selected: ${clientName}`, 'info');
+            console.log(`Client selected: ${clientName}`);
         } else {
             // Clear courts if no client selected
             const courtSelect = document.getElementById('addCourtList');
@@ -1421,7 +1132,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const message = isCustom ?
             'Custom address enabled - you can now edit the address fields' :
             'Using client address - address fields are now read-only';
-        showToast(message, 'info');
+        console.log(message);
     }
 
     function toggleCreateAddressFields(useCustom) {
@@ -1582,8 +1293,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         try {
-            showCreateConflictValidationLoading(true);
-
             const conflicts = await checkForConflictingRuns({
                 runDate,
                 startTime,
@@ -1592,19 +1301,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 // No excludeRunId for create run
             });
 
-            showCreateConflictValidationLoading(false);
-
             if (conflicts.length > 0) {
                 const conflictMessage = formatConflictMessage(conflicts);
                 console.warn('⚠️ Create run schedule conflicts found:', conflicts);
 
                 if (blockingValidation) {
-                    showToast(`Schedule Conflict: ${conflictMessage}`, 'error');
+                    console.error(`Schedule Conflict: ${conflictMessage}`);
                     showCreateConflictWarnings(conflicts);
                     return { valid: false, message: conflictMessage, conflicts: conflicts };
                 } else {
                     showCreateConflictWarnings(conflicts, false);
-                    showToast(`Warning: ${conflictMessage}`, 'warning');
+                    console.warn(`Warning: ${conflictMessage}`);
                     return { valid: true, message: conflictMessage, conflicts: conflicts, warning: true };
                 }
             } else {
@@ -1612,7 +1319,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 clearCreateConflictWarnings();
 
                 if (!blockingValidation) {
-                    showToast('Schedule looks good - no conflicts found', 'success');
+                    console.log('Schedule looks good - no conflicts found');
                 }
 
                 return { valid: true, message: 'No conflicts found' };
@@ -1620,10 +1327,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         } catch (error) {
             console.error('❌ Error validating create run schedule conflicts:', error);
-            showCreateConflictValidationLoading(false);
 
             if (blockingValidation) {
-                showToast('Unable to validate schedule conflicts. Please try again.', 'error');
+                console.error('Unable to validate schedule conflicts. Please try again.');
                 return { valid: false, message: 'Validation error: ' + error.message };
             } else {
                 console.warn('⚠️ Non-blocking create run conflict validation failed, allowing form to proceed');
@@ -1699,34 +1405,6 @@ document.addEventListener('DOMContentLoaded', function () {
         return container;
     }
 
-    function showCreateConflictValidationLoading(show) {
-        let loadingElement = document.getElementById('createConflictValidationLoading');
-
-        if (show) {
-            if (!loadingElement) {
-                loadingElement = document.createElement('div');
-                loadingElement.id = 'createConflictValidationLoading';
-                loadingElement.className = 'text-center text-muted small mt-2';
-                loadingElement.innerHTML = `
-                    <div class="spinner-border spinner-border-sm me-2" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    Checking for schedule conflicts...
-                `;
-
-                const courtSelect = document.getElementById('addCourtList');
-                if (courtSelect && courtSelect.parentNode) {
-                    courtSelect.parentNode.appendChild(loadingElement);
-                }
-            }
-            loadingElement.style.display = 'block';
-        } else {
-            if (loadingElement) {
-                loadingElement.style.display = 'none';
-            }
-        }
-    }
-
     async function validateCreateRunForm() {
         console.log('📝 Validating create run form...');
 
@@ -1773,7 +1451,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Show basic validation errors first
         if (errors.length > 0) {
-            showToast(`Please fix the following errors:\n• ${errors.join('\n• ')}`, 'error');
+            console.error(`Please fix the following errors:\n• ${errors.join('\n• ')}`);
             return false;
         }
 
@@ -1792,7 +1470,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log('✅ No conflicts found, create run validation passed');
             } catch (error) {
                 console.error('❌ Error during create run conflict validation:', error);
-                showToast('Unable to validate schedule. Please try again.', 'error');
+                console.error('Unable to validate schedule. Please try again.');
                 return false;
             }
         }
@@ -1928,9 +1606,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         try {
-            // Show loading indicator for validation
-            showConflictValidationLoading(true);
-
             const conflicts = await checkForConflictingRuns({
                 runDate,
                 startTime,
@@ -1939,20 +1614,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 excludeRunId: currentRunId // Exclude current run when editing
             });
 
-            showConflictValidationLoading(false);
-
             if (conflicts.length > 0) {
                 const conflictMessage = formatConflictMessage(conflicts);
                 console.warn('⚠️ Schedule conflicts found:', conflicts);
 
                 if (blockingValidation) {
-                    showToast(`Schedule Conflict: ${conflictMessage}`, 'error');
+                    console.error(`Schedule Conflict: ${conflictMessage}`);
                     showConflictWarnings(conflicts);
                     return { valid: false, message: conflictMessage, conflicts: conflicts };
                 } else {
                     // Non-blocking validation - just show warning
                     showConflictWarnings(conflicts, false);
-                    showToast(`Warning: ${conflictMessage}`, 'warning');
+                    console.warn(`Warning: ${conflictMessage}`);
                     return { valid: true, message: conflictMessage, conflicts: conflicts, warning: true };
                 }
             } else {
@@ -1960,7 +1633,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 clearConflictWarnings();
 
                 if (!blockingValidation) {
-                    showToast('Schedule looks good - no conflicts found', 'success');
+                    console.log('Schedule looks good - no conflicts found');
                 }
 
                 return { valid: true, message: 'No conflicts found' };
@@ -1968,10 +1641,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         } catch (error) {
             console.error('❌ Error validating schedule conflicts:', error);
-            showConflictValidationLoading(false);
 
             if (blockingValidation) {
-                showToast('Unable to validate schedule conflicts. Please try again.', 'error');
+                console.error('Unable to validate schedule conflicts. Please try again.');
                 return { valid: false, message: 'Validation error: ' + error.message };
             } else {
                 // For non-blocking validation, don't show errors to user
@@ -2229,35 +1901,6 @@ document.addEventListener('DOMContentLoaded', function () {
         return container;
     }
 
-    function showConflictValidationLoading(show) {
-        let loadingElement = document.getElementById('conflictValidationLoading');
-
-        if (show) {
-            if (!loadingElement) {
-                loadingElement = document.createElement('div');
-                loadingElement.id = 'conflictValidationLoading';
-                loadingElement.className = 'text-center text-muted small mt-2';
-                loadingElement.innerHTML = `
-                    <div class="spinner-border spinner-border-sm me-2" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    Checking for schedule conflicts...
-                `;
-
-                // Add after the court selection
-                const courtSelect = document.getElementById('editCourtList');
-                if (courtSelect && courtSelect.parentNode) {
-                    courtSelect.parentNode.appendChild(loadingElement);
-                }
-            }
-            loadingElement.style.display = 'block';
-        } else {
-            if (loadingElement) {
-                loadingElement.style.display = 'none';
-            }
-        }
-    }
-
     async function handleFormSubmit(e) {
         e.preventDefault();
         console.log('📤 Form submission started');
@@ -2284,7 +1927,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const submitBtn = e.target.querySelector('button[type="submit"]');
         if (submitBtn) {
-            setButtonLoading(submitBtn, true);
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
         }
 
         // Submit
@@ -2304,11 +1948,12 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .then(result => {
                 if (submitBtn) {
-                    setButtonLoading(submitBtn, false);
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Save Changes';
                 }
 
                 if (result.success) {
-                    showToast('Run updated successfully!', 'success');
+                    console.log('Run updated successfully!');
                     clearConflictWarnings(); // Clear any warnings
                     setTimeout(() => {
                         const modal = bootstrap.Modal.getInstance(document.getElementById('editRunModal'));
@@ -2316,15 +1961,16 @@ document.addEventListener('DOMContentLoaded', function () {
                         location.reload();
                     }, 1000);
                 } else {
-                    showToast(`Error: ${result.message || 'Unknown error'}`, 'error');
+                    console.error(`Error: ${result.message || 'Unknown error'}`);
                 }
             })
             .catch(error => {
                 console.error('❌ Form submission error:', error);
                 if (submitBtn) {
-                    setButtonLoading(submitBtn, false);
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Save Changes';
                 }
-                showToast(`Error: ${error.message}`, 'error');
+                console.error(`Error: ${error.message}`);
             });
     }
 
@@ -2440,7 +2086,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Show basic validation errors first
         if (errors.length > 0) {
-            showToast(`Please fix the following errors:\n• ${errors.join('\n• ')}`, 'error');
+            console.error(`Please fix the following errors:\n• ${errors.join('\n• ')}`);
             return false;
         }
 
@@ -2458,7 +2104,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log('✅ No conflicts found, form validation passed');
             } catch (error) {
                 console.error('❌ Error during conflict validation:', error);
-                showToast('Unable to validate schedule. Please try again.', 'error');
+                console.error('Unable to validate schedule. Please try again.');
                 return false;
             }
         } else {
@@ -2518,9 +2164,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // ========== UTILITY FUNCTIONS ==========
     function resetModalState() {
         console.log('🧹 Resetting modal state');
-
-        // Ensure loading is hidden
-        hideLoadingState();
 
         // Clear form fields
         const fields = [
@@ -2627,32 +2270,6 @@ document.addEventListener('DOMContentLoaded', function () {
         return token ? token.value : '';
     }
 
-    function showToast(message, type = 'info') {
-        // Use run management specific toast to avoid conflicts
-        if (window.UIUtils && window.UIUtils.showRunManagementToast) {
-            window.UIUtils.showRunManagementToast(message, type);
-        } else if (window.UIUtils && window.UIUtils.showToast) {
-            window.UIUtils.showToast(`[Run Mgmt] ${message}`, type);
-        } else {
-            console.log(`[RunMgmt] ${type}: ${message}`);
-            showRunManagementToast(message, type);
-        }
-    }
-
-    function setButtonLoading(button, loading) {
-        if (window.UIUtils && window.UIUtils.setButtonLoading) {
-            window.UIUtils.setButtonLoading(button, loading);
-        } else {
-            if (loading) {
-                button.disabled = true;
-                button.textContent = 'Loading...';
-            } else {
-                button.disabled = false;
-                button.textContent = 'Save Changes';
-            }
-        }
-    }
-
     // ========== GLOBAL API (CALENDAR COMPATIBLE) ==========
     // Use different function names to avoid conflicts with calendar
     window.loadRunDataFixed = loadRunDataWithTimeout;
@@ -2660,8 +2277,6 @@ document.addEventListener('DOMContentLoaded', function () {
     window.toggleCustomAddressFieldsFixed = toggleAddressFieldsState;
     window.setupCustomAddressToggleFixed = setupCustomAddressToggle;
     window.updateAddressDisplayFixed = updateAddressDisplay;
-    window.hideRunLoadingStateFixed = hideLoadingState;
-    window.showRunLoadingStateFixed = showLoadingState;
     window.extractCourtIdFixed = extractCourtId;
     window.validateScheduleConflictsFixed = validateScheduleConflicts;
 
@@ -2692,8 +2307,6 @@ document.addEventListener('DOMContentLoaded', function () {
         populateData: populateRunDataComplete,
         resetState: resetModalState,
         updateDisplay: updateAddressDisplay,
-        hideLoading: hideLoadingState,
-        showLoading: showLoadingState,
 
         // Court-related debug functions
         extractCourtId: extractCourtId,
@@ -2716,39 +2329,6 @@ document.addEventListener('DOMContentLoaded', function () {
         validateCreateScheduleConflicts: validateCreateScheduleConflicts,
         clearCreateConflictWarnings: clearCreateConflictWarnings,
 
-        forceHideLoading: function () {
-            console.log('🚨 Force hiding all loading states');
-            hideLoadingState();
-            hideModalLoadingState();
-
-            // Force hide all possible loading overlays
-            const overlays = [
-                'runManagementLoading',
-                'loadingSpinner',
-                'globalLoadingOverlay'
-            ];
-
-            overlays.forEach(function (id) {
-                const overlay = document.getElementById(id);
-                if (overlay) {
-                    overlay.style.display = 'none';
-                    console.log('🚨 Force hid: ' + id);
-                }
-            });
-
-            // Force hide any modal loading overlays
-            const modalLoadingOverlays = document.querySelectorAll('.modal-loading-overlay');
-            modalLoadingOverlays.forEach(function (overlay) {
-                overlay.style.display = 'none';
-                console.log('🚨 Force hid modal loading overlay');
-            });
-
-            // Reset loading state
-            window.runManagementState.isLoading = false;
-
-            console.log('🚨 All loading states forcefully hidden');
-        },
-
         checkConflicts: function () {
             const conflicts = [];
 
@@ -2769,34 +2349,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
 
-            // Check for UIUtils conflicts
-            if (window.UIUtils) {
-                if (window.UIUtils.showRunManagementLoading) {
-                    conflicts.push('UIUtils enhanced for run management');
-                } else {
-                    conflicts.push('UIUtils exists but not enhanced - may be from calendar');
-                }
-
-                // Check toast system
-                if (window.UIUtils.showToast) {
-                    const toastStr = window.UIUtils.showToast.toString();
-                    if (toastStr.includes('RunMgmt Fallback')) {
-                        conflicts.push('Using fallback toast - utilities.js not detected');
-                    } else {
-                        conflicts.push('utilities.js toast system detected and active');
-                    }
-                }
-            }
-
             console.log('🔍 Conflict Analysis:', conflicts.length === 0 ? 'No conflicts detected' : conflicts);
             return conflicts;
-        },
-
-        testToast: function (message, type) {
-            message = message || 'Test toast from run management';
-            type = type || 'info';
-            console.log('🧪 Testing toast system...');
-            showToast(message, type);
         },
 
         getFormData: function () {
@@ -2986,7 +2540,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (selectedCourtId) {
                 console.log('🏀 Court selected:', courtName, '(ID:', selectedCourtId, ')');
-                showToast(`Court selected: ${courtName}`, 'info');
+                console.log(`Court selected: ${courtName}`);
             } else {
                 console.log('🏀 No court selected');
             }
@@ -2998,9 +2552,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     console.log('🐛 Debug functions available: window.runDebugFixed');
     console.log('🐛 EDIT RUN FUNCTIONS:');
-    console.log('🐛 Try: window.runDebugFixed.forceHideLoading() to force hide loading');
     console.log('🐛 Try: window.runDebugFixed.checkConflicts() to check for conflicts');
-    console.log('🐛 Try: window.runDebugFixed.testToast() to test utilities.js toast system');
     console.log('🐛 Try: window.runDebugFixed.getFormData() to see current form data');
     console.log('🐛 Try: window.runDebugFixed.getCourtInfo() to check court selection');
     console.log('🐛 Try: window.runDebugFixed.testCourtSelection("courtId") to test court selection');

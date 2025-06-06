@@ -385,7 +385,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log('✅ Recovered and set ProductId:', recoveredId);
             } else {
                 console.error('❌ Could not recover ProductId from any source');
-                showToast('Product ID is missing. Please refresh the page.', 'error');
                 event.preventDefault();
                 return;
             }
@@ -483,34 +482,36 @@ document.addEventListener('DOMContentLoaded', function () {
         const formData = new FormData(e.target);
         const submitBtn = e.target.querySelector('button[type="submit"]');
 
-        if (submitBtn && window.UIUtils) {
-            window.UIUtils.setButtonLoading(submitBtn, true, 'Adding Product...');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Adding Product...';
         }
 
         const xhr = new XMLHttpRequest();
 
         xhr.onreadystatechange = function () {
             if (xhr.readyState === XMLHttpRequest.DONE) {
-                if (submitBtn && window.UIUtils) {
-                    window.UIUtils.setButtonLoading(submitBtn, false);
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Add Product';
                 }
 
                 if (xhr.status === 200) {
                     try {
                         const result = JSON.parse(xhr.responseText);
                         if (result.success) {
-                            showToast('Product created successfully!', 'success');
+                            console.log('Product created successfully!');
                             const modal = bootstrap.Modal.getInstance(document.getElementById('addProductModal'));
                             if (modal) modal.hide();
                             setTimeout(() => location.reload(), 1000);
                         } else {
-                            showToast(`Error creating product: ${result.message || 'Unknown error'}`, 'error');
+                            console.error(`Error creating product: ${result.message || 'Unknown error'}`);
                         }
                     } catch (e) {
-                        showToast('Error parsing server response', 'error');
+                        console.error('Error parsing server response');
                     }
                 } else {
-                    showToast(`Server error: ${xhr.status}`, 'error');
+                    console.error(`Server error: ${xhr.status}`);
                 }
             }
         };
@@ -542,7 +543,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log('🔧 RECOVERED ProductId:', recoveredId);
                 productIdField.value = recoveredId;
             } else {
-                showToast('Product ID is missing. Please close and reopen the edit dialog.', 'error');
+                console.error('Product ID is missing. Please close and reopen the edit dialog.');
                 return;
             }
         }
@@ -568,15 +569,16 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (validationErrors.length > 0) {
-            showToast(`Please fill in: ${validationErrors.join(', ')}`, 'error');
+            console.error(`Please fill in: ${validationErrors.join(', ')}`);
             return;
         }
 
         console.log('✅ Pre-submission validation passed');
 
         // Show loading state
-        if (submitBtn && window.UIUtils) {
-            window.UIUtils.setButtonLoading(submitBtn, true, 'Saving...');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
         }
 
         const formData = new FormData(form);
@@ -601,8 +603,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         fetch(form.action, {
             method: 'POST',
-            // DO NOT set Content-Type header - let browser handle it automatically
-            // DO NOT set any headers that might interfere
             body: formData
         })
             .then(response => {
@@ -620,8 +620,9 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(responseText => {
                 console.log('📦 Raw response:', responseText.substring(0, 500));
 
-                if (submitBtn && window.UIUtils) {
-                    window.UIUtils.setButtonLoading(submitBtn, false);
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Save Changes';
                 }
 
                 try {
@@ -629,7 +630,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     console.log('📦 Parsed result:', result);
 
                     if (result.success) {
-                        showToast('Product updated successfully!', 'success');
+                        console.log('Product updated successfully!');
 
                         window.currentProductData = { ...window.currentProductData, ...result.product };
 
@@ -640,7 +641,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         }, 1000);
                     } else {
                         console.error('❌ Server error:', result.message);
-                        showToast(`Error: ${result.message}`, 'error');
 
                         if (result.field) {
                             const errorField = form.querySelector(`#edit${result.field}`);
@@ -656,207 +656,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     // Check if it's an HTML error page
                     if (responseText.includes('<html') || responseText.includes('<!DOCTYPE')) {
-                        showToast('Server returned an error page. Check browser console for details.', 'error');
+                        console.error('Server returned an error page. Check browser console for details.');
                     } else {
-                        showToast('Error parsing server response', 'error');
+                        console.error('Error parsing server response');
                     }
                 }
             })
             .catch(error => {
                 console.error('❌ Fetch error:', error);
-                if (submitBtn && window.UIUtils) {
-                    window.UIUtils.setButtonLoading(submitBtn, false);
-                }
-                showToast(`Network error: ${error.message}`, 'error');
-            });
-    }
-
-    // METHOD 2: XMLHttpRequest approach (alternative)
-    function submitWithXHR(form, formData, submitBtn) {
-        console.log('🚀 Using XMLHttpRequest method...');
-
-        const xhr = new XMLHttpRequest();
-
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === XMLHttpRequest.DONE) {
-                console.log('📡 XHR Response received');
-                console.log('  Status:', xhr.status);
-                console.log('  Response headers:', xhr.getAllResponseHeaders());
-                console.log('  Response text (first 500 chars):', xhr.responseText.substring(0, 500));
-
-                if (submitBtn && window.UIUtils) {
-                    window.UIUtils.setButtonLoading(submitBtn, false);
-                }
-
-                if (xhr.status === 200) {
-                    try {
-                        const result = JSON.parse(xhr.responseText);
-                        console.log('📦 XHR Parsed result:', result);
-
-                        if (result.success) {
-                            showToast('Product updated successfully!', 'success');
-                            setTimeout(() => {
-                                const modal = bootstrap.Modal.getInstance(document.getElementById('editProductModal'));
-                                if (modal) modal.hide();
-                                location.reload();
-                            }, 1000);
-                        } else {
-                            showToast(`Error: ${result.message}`, 'error');
-                        }
-                    } catch (e) {
-                        console.error('❌ XHR JSON parse error:', e);
-                        showToast('Error parsing server response', 'error');
-                    }
-                } else {
-                    console.error('❌ XHR HTTP error:', xhr.status, xhr.statusText);
-                    showToast(`Server error: ${xhr.status}`, 'error');
-                }
-            }
-        };
-
-        // CRITICAL: Do NOT set Content-Type header manually!
-        // The browser will automatically set: Content-Type: multipart/form-data; boundary=...
-
-        console.log('🚀 Sending XHR request to:', form.action);
-        xhr.open('POST', form.action);
-
-        // Do NOT call xhr.setRequestHeader('Content-Type', anything);
-        // Let the browser handle Content-Type automatically
-
-        xhr.send(formData);
-    }
-
-    // METHOD 3: Let the browser handle form submission naturally
-    function submitNaturally(form, submitBtn) {
-        console.log('🚀 Using natural form submission...');
-
-        // Show loading state
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
-
-            // Re-enable button after timeout in case something goes wrong
-            setTimeout(() => {
-                if (submitBtn.disabled) {
+                if (submitBtn) {
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = 'Save Changes';
                 }
-            }, 30000); // 30 seconds timeout
-        }
-
-        // Let the form submit naturally
-        form.submit();
-    }
-
-    // METHOD 4: Manual form data construction (last resort)
-    function submitManualFormData(form, submitBtn) {
-        console.log('🚀 Using manual form data construction...');
-
-        if (submitBtn && window.UIUtils) {
-            window.UIUtils.setButtonLoading(submitBtn, true, 'Saving...');
-        }
-
-        // Manually create form data with explicit field mapping
-        const formData = new FormData();
-
-        // Add all fields manually to ensure they're included
-        const fieldMappings = [
-            { id: 'editProductId', name: 'ProductId' },
-            { id: 'editTitle', name: 'Title' },
-            { id: 'editDescription', name: 'Description' },
-            { id: 'editPrice', name: 'Price' },
-            { id: 'editPoints', name: 'Points' },
-            { id: 'editTag', name: 'Tag' },
-            { id: 'editProductNumber', name: 'ProductNumber' },
-            { id: 'editType', name: 'Type' },
-            { id: 'editCategory', name: 'Category' },
-            { id: 'editStatus', name: 'Status' },
-            { id: 'editImageURL', name: 'ImageURL' }
-        ];
-
-        fieldMappings.forEach(field => {
-            const element = document.getElementById(field.id);
-            if (element && element.value !== null && element.value !== undefined) {
-                formData.append(field.name, element.value);
-                console.log(`✅ Added ${field.name}: "${element.value}"`);
-            }
-        });
-
-        // Add image file if present
-        const imageFileInput = document.getElementById('editImageFile');
-        if (imageFileInput && imageFileInput.files.length > 0) {
-            formData.append('ImageFile', imageFileInput.files[0]);
-            console.log('✅ Added ImageFile:', imageFileInput.files[0].name);
-        }
-
-        // Add anti-forgery token
-        const tokenInput = form.querySelector('input[name="__RequestVerificationToken"]');
-        if (tokenInput && tokenInput.value) {
-            formData.append('__RequestVerificationToken', tokenInput.value);
-            console.log('✅ Added anti-forgery token');
-        }
-
-        // Add RemoveImage flag
-        formData.append('RemoveImage', 'false');
-
-        // Use fetch to submit
-        fetch(form.action, {
-            method: 'POST',
-            body: formData
-        })
-            .then(response => {
-                if (submitBtn && window.UIUtils) {
-                    window.UIUtils.setButtonLoading(submitBtn, false);
-                }
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                return response.json();
-            })
-            .then(result => {
-                if (result.success) {
-                    showToast('Product updated successfully!', 'success');
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    showToast(`Error: ${result.message}`, 'error');
-                }
-            })
-            .catch(error => {
-                if (submitBtn && window.UIUtils) {
-                    window.UIUtils.setButtonLoading(submitBtn, false);
-                }
-                showToast(`Error: ${error.message}`, 'error');
+                console.error(`Network error: ${error.message}`);
             });
     }
-
-    // Helper function to try different submission methods
-    function submitFormWithFallback(form, submitBtn) {
-        const formData = new FormData(form);
-
-        console.log('📤 Attempting form submission with fallback methods...');
-
-        // Try Method 1: Fetch (most reliable)
-        submitWithFetch(form, formData, submitBtn);
-
-        // If you still get Content-Type errors, uncomment one of these alternatives:
-         submitWithXHR(form, formData, submitBtn);
-        // submitNaturally(form, submitBtn);
-        // submitManualFormData(form, submitBtn);
-    }
-
-    // Export the functions for use in your main file
-    window.ProductFormSubmission = {
-        handleEditFormSubmitFixed,
-        submitWithFetch,
-        submitWithXHR,
-        submitNaturally,
-        submitManualFormData,
-        submitFormWithFallback
-    };
-
-    console.log('✅ Fixed form submission handlers loaded');
-    console.log('💡 Available methods: fetch, XHR, natural, manual, fallback');
 
     // ========== DATA LOADING ==========
     function loadProductDataEnhanced(productId) {
@@ -867,8 +681,6 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        showLoadingState();
-
         const row = findProductRowById(productId);
         if (row) {
             console.log('📋 Found table row, extracting data...');
@@ -878,8 +690,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (!window.appUrls?.getProductData) {
             console.error('🚨 GetProductData API URL not configured');
-            hideLoadingState();
-            showToast('API not configured. Only table data available.', 'warning');
+            console.warn('API not configured. Only table data available.');
             return;
         }
 
@@ -892,19 +703,17 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .then(data => {
                 console.log('📦 Received product data:', data);
-                hideLoadingState();
 
                 if (data.success !== false) {
                     populateFromAPIDataEnhanced(data);
-                    showToast('Product data loaded successfully', 'success');
+                    console.log('Product data loaded successfully');
                 } else {
-                    showToast(`Failed to load product data: ${data.message || 'Unknown error'}`, 'warning');
+                    console.warn(`Failed to load product data: ${data.message || 'Unknown error'}`);
                 }
             })
             .catch(error => {
                 console.error('🚨 Error loading product data:', error);
-                hideLoadingState();
-                showToast(`Error loading product data: ${error.message}`, 'error');
+                console.error(`Error loading product data: ${error.message}`);
             });
     }
 
@@ -1201,40 +1010,6 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('🧹 Inventory form cleared');
     }
 
-    function showLoadingState() {
-        const modal = document.getElementById('editProductModal');
-        if (!modal) return;
-
-        let overlay = modal.querySelector('.modal-loading-overlay');
-        if (!overlay) {
-            overlay = document.createElement('div');
-            overlay.className = 'modal-loading-overlay';
-            overlay.innerHTML = `
-            <div class="text-center">
-                <div class="spinner-border text-primary mb-3" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <div class="text-muted">Loading product data...</div>
-            </div>
-        `;
-            modal.querySelector('.modal-content').appendChild(overlay);
-        }
-
-        console.log('⏳ Loading state shown');
-    }
-
-    function hideLoadingState() {
-        const modal = document.getElementById('editProductModal');
-        if (!modal) return;
-
-        const overlay = modal.querySelector('.modal-loading-overlay');
-        if (overlay) {
-            overlay.remove();
-        }
-
-        console.log('✅ Loading state hidden');
-    }
-
     // ========== UTILITY FUNCTIONS ==========
     function safeSetValue(elementId, value) {
         const element = document.getElementById(elementId);
@@ -1338,15 +1113,6 @@ document.addEventListener('DOMContentLoaded', function () {
             case 'inactive': return 'bg-secondary';
             case 'discontinued': return 'bg-danger';
             default: return 'bg-success';
-        }
-    }
-
-    function showToast(message, type = 'success') {
-        if (window.UIUtils) {
-            window.UIUtils.showToast(message, type);
-        } else {
-            console.log(`${type}: ${message}`);
-            alert(`${type}: ${message}`);
         }
     }
 
