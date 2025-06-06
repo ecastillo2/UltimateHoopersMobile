@@ -385,7 +385,7 @@
                 console.log('✅ Recovered and set GameId:', recoveredId);
             } else {
                 console.error('❌ Could not recover GameId from any source');
-                showToast('Game ID is missing. Please refresh the page.', 'error');
+                window.UIUtils.showError('Game ID is missing. Please refresh the page.');
                 event.preventDefault();
                 return;
             }
@@ -537,7 +537,7 @@
         console.log('📋 Game data for creation:', gameData);
 
         const submitBtn = e.target.querySelector('button[type="submit"]');
-        if (submitBtn && window.UIUtils) {
+        if (submitBtn) {
             window.UIUtils.setButtonLoading(submitBtn, true, 'Creating Game...');
         }
 
@@ -558,25 +558,25 @@
                 return response.json();
             })
             .then(result => {
-                if (submitBtn && window.UIUtils) {
+                if (submitBtn) {
                     window.UIUtils.setButtonLoading(submitBtn, false);
                 }
 
                 if (result.success) {
-                    showToast('Game created successfully!', 'success');
+                    window.UIUtils.showSuccess('Game created successfully!');
                     const modal = bootstrap.Modal.getInstance(document.getElementById('addGameModal'));
                     if (modal) modal.hide();
                     setTimeout(() => location.reload(), 1000);
                 } else {
-                    showToast(`Error creating game: ${result.message || 'Unknown error'}`, 'error');
+                    window.UIUtils.showError(`Error creating game: ${result.message || 'Unknown error'}`);
                 }
             })
             .catch(error => {
                 console.error('🚨 Error creating game:', error);
-                if (submitBtn && window.UIUtils) {
+                if (submitBtn) {
                     window.UIUtils.setButtonLoading(submitBtn, false);
                 }
-                showToast(`Error creating game: ${error.message}`, 'error');
+                window.UIUtils.showError(`Error creating game: ${error.message}`);
             });
     }
 
@@ -599,7 +599,7 @@
         console.log('📋 Game data for edit:', gameData);
 
         const submitBtn = e.target.querySelector('button[type="submit"]');
-        if (submitBtn && window.UIUtils) {
+        if (submitBtn) {
             window.UIUtils.setButtonLoading(submitBtn, true, 'Saving...');
         }
 
@@ -620,12 +620,12 @@
                 return response.json();
             })
             .then(result => {
-                if (submitBtn && window.UIUtils) {
+                if (submitBtn) {
                     window.UIUtils.setButtonLoading(submitBtn, false);
                 }
 
                 if (result.success) {
-                    showToast('Game updated successfully!', 'success');
+                    window.UIUtils.showSuccess('Game updated successfully!');
 
                     window.currentGameData = { ...window.currentGameData, ...gameData };
 
@@ -635,15 +635,15 @@
                         location.reload();
                     }, 1000);
                 } else {
-                    showToast(`Error updating game: ${result.message || 'Unknown error'}`, 'error');
+                    window.UIUtils.showError(`Error updating game: ${result.message || 'Unknown error'}`);
                 }
             })
             .catch(error => {
                 console.error('🚨 Error updating game:', error);
-                if (submitBtn && window.UIUtils) {
+                if (submitBtn) {
                     window.UIUtils.setButtonLoading(submitBtn, false);
                 }
-                showToast(`Error updating game: ${error.message}`, 'error');
+                window.UIUtils.showError(`Error updating game: ${error.message}`);
             });
     }
 
@@ -668,7 +668,7 @@
         if (!window.appUrls?.getGameData) {
             console.error('🚨 GetGameData API URL not configured');
             hideLoadingState();
-            showToast('API not configured. Only table data available.', 'warning');
+            window.UIUtils.showWarning('API not configured. Only table data available.');
             return;
         }
 
@@ -685,15 +685,15 @@
 
                 if (data.success !== false) {
                     populateFromAPIDataEnhanced(data);
-                    showToast('Game data loaded successfully', 'success');
+                    window.UIUtils.showSuccess('Game data loaded successfully');
                 } else {
-                    showToast(`Failed to load complete game data: ${data.message || 'Unknown error'}`, 'warning');
+                    window.UIUtils.showWarning(`Failed to load complete game data: ${data.message || 'Unknown error'}`);
                 }
             })
             .catch(error => {
                 console.error('🚨 Error loading game data:', error);
                 hideLoadingState();
-                showToast(`Error loading game data: ${error.message}`, 'error');
+                window.UIUtils.showError(`Error loading game data: ${error.message}`);
             });
     }
 
@@ -848,8 +848,7 @@
 
         playersContainer.innerHTML = `
         <div class="text-center py-4 text-muted">
-            <div class="spinner-border spinner-border-sm text-secondary me-2" role="status"></div>
-            Loading players...
+            ${window.UIUtils.createSpinner('sm')} Loading players...
         </div>`;
 
         // Check if API URL is configured
@@ -953,15 +952,15 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showToast('Player removed successfully', 'success');
+                    window.UIUtils.showSuccess('Player removed successfully');
                     loadGamePlayers(gameId);
                 } else {
-                    showToast(`Error removing player: ${data.message || 'Unknown error'}`, 'error');
+                    window.UIUtils.showError(`Error removing player: ${data.message || 'Unknown error'}`);
                 }
             })
             .catch(error => {
                 console.error('🚨 Error removing player:', error);
-                showToast('Error removing player. Please try again.', 'error');
+                window.UIUtils.showError('Error removing player. Please try again.');
             });
     }
 
@@ -1027,7 +1026,7 @@
         }
 
         if (errors.length > 0) {
-            showToast(`Please fix the following errors:\n• ${errors.join('\n• ')}`, 'error');
+            window.UIUtils.showError(`Please fix the following errors:\n• ${errors.join('\n• ')}`);
             return false;
         }
 
@@ -1167,36 +1166,12 @@
     }
 
     function showLoadingState() {
-        const modal = document.getElementById('editGameModal');
-        if (!modal) return;
-
-        let overlay = modal.querySelector('.modal-loading-overlay');
-        if (!overlay) {
-            overlay = document.createElement('div');
-            overlay.className = 'modal-loading-overlay';
-            overlay.innerHTML = `
-        <div class="text-center">
-            <div class="spinner-border text-primary mb-3" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <div class="text-muted">Loading game data...</div>
-        </div>
-    `;
-            modal.querySelector('.modal-content').appendChild(overlay);
-        }
-
+        window.UIUtils.showModalLoading('editGameModal', 'Loading game data...');
         console.log('⏳ Loading state shown');
     }
 
     function hideLoadingState() {
-        const modal = document.getElementById('editGameModal');
-        if (!modal) return;
-
-        const overlay = modal.querySelector('.modal-loading-overlay');
-        if (overlay) {
-            overlay.remove();
-        }
-
+        window.UIUtils.hideModalLoading('editGameModal');
         console.log('✅ Loading state hidden');
     }
 
@@ -1309,15 +1284,6 @@
         return tokenInput.value;
     }
 
-    function showToast(message, type = 'success') {
-        if (window.UIUtils) {
-            window.UIUtils.showToast(message, type);
-        } else {
-            console.log(`${type}: ${message}`);
-            alert(`${type}: ${message}`);
-        }
-    }
-
     // ========== GLOBAL FUNCTIONS ==========
     window.startGame = function (gameId) {
         console.log('▶️ Starting game:', gameId);
@@ -1335,15 +1301,15 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showToast('Game started successfully!', 'success');
+                    window.UIUtils.showSuccess('Game started successfully!');
                     setTimeout(() => location.reload(), 1000);
                 } else {
-                    showToast(`Error starting game: ${data.message || 'Unknown error'}`, 'error');
+                    window.UIUtils.showError(`Error starting game: ${data.message || 'Unknown error'}`);
                 }
             })
             .catch(error => {
                 console.error('🚨 Error starting game:', error);
-                showToast('Error starting game. Please try again.', 'error');
+                window.UIUtils.showError('Error starting game. Please try again.');
             });
     };
 
@@ -1366,3 +1332,4 @@
 
     console.log('✅ Complete Fixed Game Management loaded successfully');
     console.log('🐛 Debug functions available: window.gameDebug');
+});

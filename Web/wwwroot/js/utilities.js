@@ -1,16 +1,18 @@
 ﻿/**
- * Basic Utility Functions for Run Management
- * Provides common functionality used across the application
+ * Enhanced Utility Functions - Centralized Toast and Spinner System
+ * Provides common functionality used across the entire application
  */
 
 window.UIUtils = {
-    // Toast notification system
-    showToast: function (message, type = 'info', duration = 5000) {
-        console.log(`${type.toUpperCase()}: ${message}`);
+    // ========== TOAST NOTIFICATION SYSTEM ==========
+    showToast: function (message, type = 'info', title = '', duration = 5000) {
+        console.log(`${type.toUpperCase()}: ${title ? title + ' - ' : ''}${message}`);
 
-        // Create toast element
+        const alertClass = this.getBootstrapAlertClass(type);
+        const icon = this.getToastIcon(type);
+
         const toast = document.createElement('div');
-        toast.className = `alert alert-${this.getBootstrapAlertClass(type)} alert-dismissible fade show position-fixed`;
+        toast.className = `alert alert-${alertClass} alert-dismissible fade show position-fixed`;
         toast.style.cssText = `
             top: 20px;
             right: 20px;
@@ -18,12 +20,15 @@ window.UIUtils = {
             min-width: 300px;
             max-width: 500px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideInRight 0.3s ease-out;
         `;
 
         toast.innerHTML = `
             <div class="d-flex align-items-center">
-                <i class="bi bi-${this.getToastIcon(type)} me-2"></i>
-                <div class="flex-grow-1">${message}</div>
+                <i class="bi bi-${icon} me-2"></i>
+                <div class="flex-grow-1">
+                    ${title ? `<strong>${title}:</strong> ` : ''}${message}
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         `;
@@ -33,11 +38,33 @@ window.UIUtils = {
         // Auto remove after duration
         setTimeout(() => {
             if (toast.parentElement) {
-                toast.remove();
+                toast.style.animation = 'slideOutRight 0.3s ease-in';
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.remove();
+                    }
+                }, 300);
             }
         }, duration);
 
         return toast;
+    },
+
+    // Convenience methods for different toast types
+    showSuccess: function (message, title = 'Success') {
+        return this.showToast(message, 'success', title);
+    },
+
+    showError: function (message, title = 'Error') {
+        return this.showToast(message, 'error', title);
+    },
+
+    showWarning: function (message, title = 'Warning') {
+        return this.showToast(message, 'warning', title);
+    },
+
+    showInfo: function (message, title = 'Info') {
+        return this.showToast(message, 'info', title);
     },
 
     getBootstrapAlertClass: function (type) {
@@ -60,7 +87,7 @@ window.UIUtils = {
         return iconMap[type] || 'info-circle';
     },
 
-    // Loading state management
+    // ========== LOADING STATE MANAGEMENT ==========
     showLoading: function (message = 'Loading...') {
         let loader = document.getElementById('globalLoader');
         if (!loader) {
@@ -81,6 +108,12 @@ window.UIUtils = {
                 </div>
             `;
             document.body.appendChild(loader);
+        } else {
+            // Update message if loader already exists
+            const messageEl = loader.querySelector('.text-muted');
+            if (messageEl) {
+                messageEl.textContent = message;
+            }
         }
         loader.style.display = 'flex';
     },
@@ -92,28 +125,82 @@ window.UIUtils = {
         }
     },
 
-    // Button loading state
-    setButtonLoading: function (button, loading, originalText = null) {
+    // ========== BUTTON LOADING STATE ==========
+    setButtonLoading: function (button, isLoading, loadingText = 'Loading...') {
         if (!button) return;
 
-        if (loading) {
-            if (!originalText) {
-                button.dataset.originalText = button.textContent;
-            } else {
-                button.dataset.originalText = originalText;
-            }
+        if (isLoading) {
             button.disabled = true;
-            button.innerHTML = `
-                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                Loading...
-            `;
+            if (!button.dataset.originalText) {
+                button.dataset.originalText = button.innerHTML;
+            }
+            button.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status"></span>${loadingText}`;
         } else {
             button.disabled = false;
-            button.textContent = button.dataset.originalText || 'Submit';
+            if (button.dataset.originalText) {
+                button.innerHTML = button.dataset.originalText;
+                delete button.dataset.originalText;
+            }
         }
     },
 
-    // Date/Time utilities
+    // ========== MODAL LOADING STATE ==========
+    showModalLoading: function (modalId, message = 'Loading...') {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+
+        const modalBody = modal.querySelector('.modal-body');
+        if (!modalBody) return;
+
+        let loadingDiv = modal.querySelector('.modal-loading-overlay');
+        if (!loadingDiv) {
+            loadingDiv = document.createElement('div');
+            loadingDiv.className = 'modal-loading-overlay';
+            loadingDiv.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(255, 255, 255, 0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+            `;
+            loadingDiv.innerHTML = `
+                <div class="text-center">
+                    <div class="spinner-border text-primary mb-2" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <div class="text-muted">${message}</div>
+                </div>
+            `;
+            modalBody.style.position = 'relative';
+            modalBody.appendChild(loadingDiv);
+        }
+        loadingDiv.style.display = 'flex';
+    },
+
+    hideModalLoading: function (modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+
+        const loadingDiv = modal.querySelector('.modal-loading-overlay');
+        if (loadingDiv) {
+            loadingDiv.style.display = 'none';
+        }
+    },
+
+    // ========== SPINNER UTILITIES ==========
+    createSpinner: function (size = 'md', color = 'primary') {
+        const sizeClass = size === 'sm' ? 'spinner-border-sm' : '';
+        return `<div class="spinner-border ${sizeClass} text-${color}" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>`;
+    },
+
+    // ========== DATE/TIME UTILITIES ==========
     formatDate: function (date, format = 'short') {
         if (!date) return '';
 
@@ -163,7 +250,7 @@ window.UIUtils = {
         return time.toString();
     },
 
-    // Form utilities
+    // ========== FORM UTILITIES ==========
     getFormData: function (form) {
         const formData = new FormData(form);
         const data = {};
@@ -184,7 +271,7 @@ window.UIUtils = {
         return data;
     },
 
-    // Validation utilities
+    // ========== VALIDATION UTILITIES ==========
     validateRequired: function (fields) {
         const errors = [];
 
@@ -204,13 +291,13 @@ window.UIUtils = {
         return errors;
     },
 
-    // API utilities
+    // ========== API UTILITIES ==========
     getAntiForgeryToken: function () {
         const token = document.querySelector('input[name="__RequestVerificationToken"]');
         return token ? token.value : '';
     },
 
-    // URL utilities
+    // ========== URL UTILITIES ==========
     buildUrl: function (path, params = {}) {
         const url = new URL(path, window.location.origin);
 
@@ -223,7 +310,7 @@ window.UIUtils = {
         return url.toString();
     },
 
-    // Local storage utilities (with error handling)
+    // ========== LOCAL STORAGE UTILITIES ==========
     saveToStorage: function (key, data) {
         try {
             localStorage.setItem(key, JSON.stringify(data));
@@ -244,7 +331,7 @@ window.UIUtils = {
         }
     },
 
-    // Debug utilities
+    // ========== DEBUG UTILITIES ==========
     log: function (message, data = null) {
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
             console.log(`🔧 ${message}`, data);
@@ -260,12 +347,39 @@ window.UIUtils = {
     }
 };
 
-// Make utilities available globally
+// Make utilities available globally with multiple aliases
 window.Utils = window.UIUtils;
+
+// Add CSS animations for toasts
+const toastStyles = document.createElement('style');
+toastStyles.textContent = `
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideOutRight {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(toastStyles);
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('🔧 Utilities loaded successfully');
+    console.log('🔧 Enhanced Utilities loaded successfully');
 
     // Auto-remove old alerts/toasts
     document.querySelectorAll('.alert').forEach(alert => {

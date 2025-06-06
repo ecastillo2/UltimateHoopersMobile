@@ -1,6 +1,7 @@
 ﻿/**
  * Complete Post Management JavaScript
  * All functionality consolidated from views into this single file
+ * Updated to use centralized utilities.js for toast and spinner functionality
  */
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -181,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (!postId) {
             console.error('🚨 No post ID found on button');
-            showToast('Post ID is missing', 'error');
+            window.UIUtils.showError('Post ID is missing');
             return;
         }
 
@@ -291,7 +292,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         const submitBtn = e.target.querySelector('button[type="submit"]');
-        if (submitBtn && window.UIUtils) {
+        if (submitBtn) {
             window.UIUtils.setButtonLoading(submitBtn, true, 'Creating Post...');
         }
 
@@ -306,25 +307,25 @@ document.addEventListener('DOMContentLoaded', function () {
                 return response.json();
             })
             .then(result => {
-                if (submitBtn && window.UIUtils) {
+                if (submitBtn) {
                     window.UIUtils.setButtonLoading(submitBtn, false);
                 }
 
                 if (result.success) {
-                    showToast('Post created successfully!', 'success');
+                    window.UIUtils.showSuccess('Post created successfully!');
                     const modal = bootstrap.Modal.getInstance(document.getElementById('addPostModal'));
                     if (modal) modal.hide();
                     setTimeout(() => location.reload(), 1000);
                 } else {
-                    showToast(`Error creating post: ${result.message || 'Unknown error'}`, 'error');
+                    window.UIUtils.showError(`Error creating post: ${result.message || 'Unknown error'}`);
                 }
             })
             .catch(error => {
                 console.error('🚨 Error creating post:', error);
-                if (submitBtn && window.UIUtils) {
+                if (submitBtn) {
                     window.UIUtils.setButtonLoading(submitBtn, false);
                 }
-                showToast(`Error creating post: ${error.message}`, 'error');
+                window.UIUtils.showError(`Error creating post: ${error.message}`);
             });
     }
 
@@ -345,7 +346,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         const submitBtn = e.target.querySelector('button[type="submit"]');
-        if (submitBtn && window.UIUtils) {
+        if (submitBtn) {
             window.UIUtils.setButtonLoading(submitBtn, true, 'Saving...');
         }
 
@@ -360,27 +361,27 @@ document.addEventListener('DOMContentLoaded', function () {
                 return response.json();
             })
             .then(result => {
-                if (submitBtn && window.UIUtils) {
+                if (submitBtn) {
                     window.UIUtils.setButtonLoading(submitBtn, false);
                 }
 
                 if (result.success) {
-                    showToast('Post updated successfully!', 'success');
+                    window.UIUtils.showSuccess('Post updated successfully!');
                     setTimeout(() => {
                         const modal = bootstrap.Modal.getInstance(document.getElementById('editPostModal'));
                         if (modal) modal.hide();
                         location.reload();
                     }, 1000);
                 } else {
-                    showToast(`Error updating post: ${result.message || 'Unknown error'}`, 'error');
+                    window.UIUtils.showError(`Error updating post: ${result.message || 'Unknown error'}`);
                 }
             })
             .catch(error => {
                 console.error('🚨 Error updating post:', error);
-                if (submitBtn && window.UIUtils) {
+                if (submitBtn) {
                     window.UIUtils.setButtonLoading(submitBtn, false);
                 }
-                showToast(`Error updating post: ${error.message}`, 'error');
+                window.UIUtils.showError(`Error updating post: ${error.message}`);
             });
     }
 
@@ -675,7 +676,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function handleImagePreview(file, input) {
         if (!file.type.startsWith('image/')) {
-            showToast('Please select an image file', 'error');
+            window.UIUtils.showError('Please select an image file');
             return;
         }
 
@@ -798,7 +799,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         if (likeBtn) {
                             likeBtn.classList.add('liked');
                         }
-                        showToast('Post liked!', 'success');
+                        window.UIUtils.showSuccess('Post liked!');
                     }
                 })
                 .catch(error => {
@@ -811,7 +812,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (likeBtn) {
                         likeBtn.classList.add('liked');
                     }
-                    showToast('Post liked!', 'success');
+                    window.UIUtils.showSuccess('Post liked!');
                 });
         };
 
@@ -829,16 +830,16 @@ document.addEventListener('DOMContentLoaded', function () {
             } else {
                 // Fallback: copy to clipboard
                 navigator.clipboard.writeText(window.location.href).then(() => {
-                    showToast('Post URL copied to clipboard!', 'success');
+                    window.UIUtils.showSuccess('Post URL copied to clipboard!');
                 }).catch(() => {
-                    showToast('Could not copy URL', 'error');
+                    window.UIUtils.showError('Could not copy URL');
                 });
             }
         };
 
         // Show comments functionality
         window.showComments = function () {
-            showToast('Comments feature coming soon!', 'info');
+            window.UIUtils.showInfo('Comments feature coming soon!');
         };
 
         // Delete post functionality
@@ -890,7 +891,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!window.appUrls?.getPostData) {
             console.error('🚨 GetPostData API URL not configured');
             hideLoadingState();
-            showToast('API not configured. Only table data available.', 'warning');
+            window.UIUtils.showWarning('API not configured. Only table data available.');
             return;
         }
 
@@ -907,15 +908,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if (data.success !== false) {
                     populateFromAPIDataEnhanced(data);
-                    showToast('Post data loaded successfully', 'success');
+                    window.UIUtils.showSuccess('Post data loaded successfully');
                 } else {
-                    showToast(`Failed to load complete post data: ${data.message || 'Unknown error'}`, 'warning');
+                    window.UIUtils.showWarning(`Failed to load complete post data: ${data.message || 'Unknown error'}`);
                 }
             })
             .catch(error => {
                 console.error('🚨 Error loading post data:', error);
                 hideLoadingState();
-                showToast(`Error loading post data: ${error.message}`, 'error');
+                window.UIUtils.showError(`Error loading post data: ${error.message}`);
             });
     }
 
@@ -1338,7 +1339,7 @@ document.addEventListener('DOMContentLoaded', function () {
         updateMediaInfo(file);
         hideMediaUploadArea();
 
-        showToast(`${file.name} uploaded successfully!`, 'success');
+        window.UIUtils.showSuccess(`${file.name} uploaded successfully!`);
     }
 
     function validateMediaFile(file) {
@@ -1349,12 +1350,12 @@ document.addEventListener('DOMContentLoaded', function () {
         ];
 
         if (file.size > maxSize) {
-            showToast('File size must be less than 10MB', 'error');
+            window.UIUtils.showError('File size must be less than 10MB');
             return false;
         }
 
         if (!allowedTypes.includes(file.type)) {
-            showToast('File type not supported. Please use JPG, PNG, GIF, MP4, WebM, or other supported formats.', 'error');
+            window.UIUtils.showError('File type not supported. Please use JPG, PNG, GIF, MP4, WebM, or other supported formats.');
             return false;
         }
 
@@ -1450,9 +1451,9 @@ document.addEventListener('DOMContentLoaded', function () {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            showToast('Download started', 'success');
+            window.UIUtils.showSuccess('Download started');
         } else {
-            showToast('No media to download', 'warning');
+            window.UIUtils.showWarning('No media to download');
         }
     }
 
@@ -1488,7 +1489,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 placeholder.style.display = 'flex';
             }
 
-            showToast('Media removed successfully', 'success');
+            window.UIUtils.showSuccess('Media removed successfully');
         }
     }
 
@@ -1589,7 +1590,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (errors.length > 0) {
-            showToast(`Please fix the following errors:\n• ${errors.join('\n• ')}`, 'error');
+            window.UIUtils.showError(`Please fix the following errors:\n• ${errors.join('\n• ')}`);
             return false;
         }
 
@@ -1676,36 +1677,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function showLoadingState() {
-        const modal = document.getElementById('editPostModal');
-        if (!modal) return;
-
-        let overlay = modal.querySelector('.modal-loading-overlay');
-        if (!overlay) {
-            overlay = document.createElement('div');
-            overlay.className = 'modal-loading-overlay';
-            overlay.innerHTML = `
-                <div class="text-center">
-                    <div class="spinner-border text-primary mb-3" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <div class="text-muted">Loading post data...</div>
-                </div>
-            `;
-            modal.querySelector('.modal-content').appendChild(overlay);
-        }
-
+        window.UIUtils.showModalLoading('editPostModal', 'Loading post data...');
         console.log('⏳ Loading state shown');
     }
 
     function hideLoadingState() {
-        const modal = document.getElementById('editPostModal');
-        if (!modal) return;
-
-        const overlay = modal.querySelector('.modal-loading-overlay');
-        if (overlay) {
-            overlay.remove();
-        }
-
+        window.UIUtils.hideModalLoading('editPostModal');
         console.log('✅ Loading state hidden');
     }
 
@@ -1853,14 +1830,6 @@ document.addEventListener('DOMContentLoaded', function () {
     function getAntiForgeryToken() {
         const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
         return tokenInput ? tokenInput.value : '';
-    }
-
-    function showToast(message, type = 'success') {
-        if (window.UIUtils) {
-            window.UIUtils.showToast(message, type);
-        } else {
-            console.log(`${type}: ${message}`);
-        }
     }
 
     // ========== GLOBAL API ==========
