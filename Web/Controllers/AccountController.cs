@@ -27,7 +27,7 @@ namespace Web.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ClientLogin(string email, string password, string returnUrl = null)
+        public async Task<IActionResult> ClientLogin(string email, string password, bool rememberMe = false, string returnUrl = null)
         {
             try
             {
@@ -42,10 +42,13 @@ namespace Web.Controllers
                 // Force the user role to be Client for client login
                 user.AccessLevel = "Client";
 
-                // Store user information in session using our service
-                _authenticationService.StoreUserSession(user);
+                // Store user information in session and optionally in persistent cookies
+                _authenticationService.StoreUserSession(user, rememberMe);
 
                 TempData["Success"] = "Successfully logged in as a client!";
+
+                _logger.LogInformation("Client login successful for email: {Email}, RememberMe: {RememberMe}",
+                    email, rememberMe);
 
                 // Redirect to returnUrl if provided, otherwise to dashboard
                 if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
@@ -62,7 +65,7 @@ namespace Web.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AdminLogin(string email, string password, string returnUrl = null)
+        public async Task<IActionResult> AdminLogin(string email, string password, bool rememberMe = false, string returnUrl = null)
         {
             try
             {
@@ -77,10 +80,13 @@ namespace Web.Controllers
                 // Force the user role to be Admin for admin login
                 user.AccessLevel = "Admin";
 
-                // Store user information in session using our service
-                _authenticationService.StoreUserSession(user);
+                // Store user information in session and optionally in persistent cookies
+                _authenticationService.StoreUserSession(user, rememberMe);
 
                 TempData["Success"] = "Successfully logged in as an administrator!";
+
+                _logger.LogInformation("Admin login successful for email: {Email}, RememberMe: {RememberMe}",
+                    email, rememberMe);
 
                 // Redirect to returnUrl if provided, otherwise to dashboard
                 if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
@@ -408,7 +414,7 @@ namespace Web.Controllers
         [HttpGet]
         public IActionResult Logout()
         {
-            // Clear session using our service
+            // Clear session and persistent cookies using our service
             _authenticationService.ClearUserSession();
 
             TempData["Success"] = "Successfully logged out.";

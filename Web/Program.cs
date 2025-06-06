@@ -1,6 +1,7 @@
 using ApiClient;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
@@ -22,79 +23,42 @@ builder.Services.AddSession(options =>
 
 // Add HttpClient factory
 builder.Services.AddHttpClient();
-// In Program.cs
-// In Program.cs where services are being registered
+
+// Register HttpContextAccessor and AuthenticationService
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<Website.Services.AuthenticationService>();
+
 // Register API client services
 builder.Services.AddApiClientServices(builder.Configuration);
 
-builder.Services.AddHttpClient<IRunApi, RunApi>(client =>
-{
- 
-});
-builder.Services.AddHttpClient<IClientApi, ClientApi>(client =>
-{
+// Register HttpClient services
+builder.Services.AddHttpClient<IRunApi, RunApi>(client => { });
+builder.Services.AddHttpClient<IClientApi, ClientApi>(client => { });
+builder.Services.AddHttpClient<IUserApi, UserApi>(client => { });
+builder.Services.AddHttpClient<IJoinedRunApi, JoinedRunApi>(client => { });
+builder.Services.AddHttpClient<IProductApi, ProductApi>(client => { });
+builder.Services.AddHttpClient<IProfileApi, ProfileApi>(client => { });
+builder.Services.AddHttpClient<IStorageApi, StorageApi>(client => { });
+builder.Services.AddHttpClient<IReportApi, ReportApi>(client => { });
+builder.Services.AddHttpClient<IPostApi, PostApi>(client => { });
+builder.Services.AddHttpClient<IVideoApi, VideoApi>(client => { });
+builder.Services.AddHttpClient<IGameApi, GameApi>(client => { });
 
-});
-builder.Services.AddHttpClient<IUserApi, UserApi>(client =>
-{
-
-});
-builder.Services.AddHttpClient<IJoinedRunApi, JoinedRunApi>(client =>
-{
-
-});
-
-builder.Services.AddHttpClient<IProductApi, ProductApi>(client =>
-{
-
-});
-builder.Services.AddHttpClient<IProfileApi, ProfileApi>(client =>
-{
-
-});
-
-builder.Services.AddHttpClient<IStorageApi, StorageApi>(client =>
-{
-
-});
-builder.Services.AddHttpClient<IReportApi, ReportApi>(client =>
-{
-
-});
-builder.Services.AddHttpClient<IPostApi, PostApi>(client =>
-{
-
-});
-builder.Services.AddHttpClient<IVideoApi, VideoApi>(client =>
-{
-
-});
-builder.Services.AddHttpClient<IGameApi, GameApi>(client =>
-{
-
-});
-
-
-
-//builder.Services.AddHttpClient<IUserApi, UserApi>(user =>
-//{
-
-//});
-// In Program.cs
-// Add session services
-builder.Services.AddDistributedMemoryCache();
+// Configure session options for remember me functionality
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromHours(2); // Set session timeout (e.g., 2 hours)
+    options.IdleTimeout = TimeSpan.FromHours(2); // Session timeout
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
     options.Cookie.SameSite = SameSiteMode.Lax;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Use Always in production
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // Use SameAsRequest for development
+    options.Cookie.Name = "UH_Session";
 });
 
-// Then after building the app, before mapping controllers:
+// Configure data protection for cookie encryption (optional but recommended)
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(@"./keys"))
+    .SetApplicationName("UltimateHoopers");
 
 var app = builder.Build();
 
@@ -110,7 +74,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
-// Enable session
+// Enable session middleware (must be before UseAuthorization)
 app.UseSession();
 
 app.UseAuthorization();
