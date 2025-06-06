@@ -191,22 +191,100 @@ namespace Web.Controllers
         {
             try
             {
+                // Log the incoming request for debugging
+                _logger.LogInformation("Edit request received for client ID: {ClientId}", client?.ClientId);
+
                 // Get the access token from session
                 var accessToken = HttpContext.Session.GetString("UserToken");
                 if (string.IsNullOrEmpty(accessToken))
                 {
-                    return Json(new { success = false, message = "You must be logged in to edit a client." });
+                    _logger.LogWarning("No access token found in session for client edit");
+
+                    // Check if this is an AJAX request
+                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    {
+                        return Json(new { success = false, message = "You must be logged in to edit a client." });
+                    }
+                    else
+                    {
+                        TempData["Error"] = "You must be logged in to edit a client.";
+                        return RedirectToAction("Index", "Home", new { scrollTo = "login" });
+                    }
                 }
+
+                // Validate the client object
+                if (client == null)
+                {
+                    _logger.LogWarning("Client object is null in edit request");
+                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    {
+                        return Json(new { success = false, message = "Invalid client data provided." });
+                    }
+                    else
+                    {
+                        TempData["Error"] = "Invalid client data provided.";
+                        return RedirectToAction("Client");
+                    }
+                }
+
+                if (string.IsNullOrEmpty(client.ClientId))
+                {
+                    _logger.LogWarning("Client ID is missing in edit request");
+                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    {
+                        return Json(new { success = false, message = "Client ID is required." });
+                    }
+                    else
+                    {
+                        TempData["Error"] = "Client ID is required.";
+                        return RedirectToAction("Client");
+                    }
+                }
+
+                // Log the client data being processed
+                _logger.LogInformation("Processing client update: {ClientId} - {ClientName}", client.ClientId, client.Name);
 
                 // Update client
                 await _clientApi.UpdateClientAsync(client, accessToken, cancellationToken);
 
-                return Json(new { success = true, message = "Client updated successfully", name = client.Name });
+                _logger.LogInformation("Client updated successfully: {ClientId}", client.ClientId);
+
+                // Return appropriate response based on request type
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new
+                    {
+                        success = true,
+                        message = "Client updated successfully",
+                        name = client.Name,
+                        clientId = client.ClientId
+                    });
+                }
+                else
+                {
+                    TempData["Success"] = "Client updated successfully.";
+                    return RedirectToAction("Client");
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating client: {ClientId}", client.ClientId);
-                return Json(new { success = false, message = "Error updating client: " + ex.Message });
+                _logger.LogError(ex, "Error updating client: {ClientId} - {ErrorMessage}", client?.ClientId, ex.Message);
+
+                // Return appropriate error response based on request type
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = "Error updating client: " + ex.Message,
+                        details = ex.InnerException?.Message // Optional: include inner exception for debugging
+                    });
+                }
+                else
+                {
+                    TempData["Error"] = "Error updating client: " + ex.Message;
+                    return View(client);
+                }
             }
         }
 

@@ -1,6 +1,6 @@
 ﻿/**
- * Client Management JavaScript - Fixed with proper loading states
- * Includes fallback implementations for missing UIUtils functions
+ * Client Management JavaScript - FIXED VERSION
+ * Corrected form submission and anti-forgery token handling
  */
 
 // Create UIUtils fallback if not available or missing functions
@@ -417,51 +417,80 @@ function initializeFormHandlers() {
     });
 }
 
+// ========== FIXED FORM SUBMISSION ==========
 function handleClientFormSubmit(e) {
     e.preventDefault();
 
-    const formData = new FormData(e.target);
-    const clientData = {};
+    console.log('📤 Form submission started');
 
-    // Convert FormData to object
-    for (const [key, value] of formData.entries()) {
-        clientData[key] = value;
-    }
+    const form = e.target;
+    const submitBtn = form.querySelector('button[type="submit"]');
 
-    console.log('📤 Submitting client data:', clientData);
-
-    const submitBtn = e.target.querySelector('button[type="submit"]');
-
+    // Show loading state
     if (submitBtn) {
         UIUtils.setButtonLoading(submitBtn, true, 'Saving...');
     }
 
-    const token = getAntiForgeryToken();
+    // Create FormData object (this preserves the form structure)
+    const formData = new FormData(form);
 
+    // Debug: Log form data
+    console.log('📋 Form data being sent:');
+    for (let [key, value] of formData.entries()) {
+        console.log(`  ${key}: ${value}`);
+    }
+
+    // Get anti-forgery token
+    const token = getAntiForgeryToken();
+    if (token) {
+        console.log('🔐 Anti-forgery token found');
+    } else {
+        console.warn('⚠️ No anti-forgery token found');
+    }
+
+    // Option 1: Use FormData with proper headers (RECOMMENDED)
     fetch('/Client/Edit', {
         method: 'POST',
+        body: formData, // Send as FormData, not JSON
         headers: {
-            'Content-Type': 'application/json',
-            'RequestVerificationToken': token
-        },
-        body: JSON.stringify(clientData)
+            'X-Requested-With': 'XMLHttpRequest', // Indicates AJAX request
+            'RequestVerificationToken': token // Add token as header
+        }
     })
         .then(response => {
+            console.log('📨 Response status:', response.status);
+
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
-            return response.json();
+
+            // Check if response is JSON
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return response.json();
+            } else {
+                // If not JSON, it might be a redirect or error page
+                return response.text().then(text => {
+                    throw new Error(`Expected JSON response but got: ${text.substring(0, 200)}...`);
+                });
+            }
         })
         .then(result => {
+            console.log('✅ Response received:', result);
+
             if (submitBtn) {
                 UIUtils.setButtonLoading(submitBtn, false);
             }
 
             if (result.success) {
-                UIUtils.showSuccess(result.message, 'Success');
+                UIUtils.showSuccess(result.message || 'Client updated successfully', 'Success');
 
                 // Update the table row if visible
-                updateTableRow(clientData);
+                const formDataObj = {};
+                for (let [key, value] of formData.entries()) {
+                    formDataObj[key] = value;
+                }
+                updateTableRow(formDataObj);
 
                 // Close modal after short delay
                 setTimeout(() => {
@@ -474,11 +503,28 @@ function handleClientFormSubmit(e) {
         })
         .catch(error => {
             console.error('🚨 Error saving client:', error);
+
             if (submitBtn) {
                 UIUtils.setButtonLoading(submitBtn, false);
             }
+
             UIUtils.showError(`Error saving client: ${error.message}`, 'Error');
         });
+}
+
+// Alternative method using traditional form submission (fallback)
+function handleClientFormSubmitTraditional(e) {
+    console.log('📤 Using traditional form submission as fallback');
+
+    const form = e.target;
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    if (submitBtn) {
+        UIUtils.setButtonLoading(submitBtn, true, 'Saving...');
+    }
+
+    // Let the form submit normally - don't prevent default
+    // The server will handle it and redirect back
 }
 
 // ========== DATA LOADING FUNCTIONS ==========
@@ -1200,7 +1246,20 @@ window.clientDebug = {
     populateFromAPIData,
     loadClientCourts,
     loadClientUsers,
-    loadClientBusinessData
+    loadClientBusinessData,
+    handleClientFormSubmit,
+    handleClientFormSubmitTraditional
 };
 
 console.log('🐛 Debug functions available: window.clientDebug');
+
+// Emergency fallback - if AJAX continues to fail, switch to traditional form submission
+window.switchToTraditionalSubmission = function () {
+    console.log('🔄 Switching to traditional form submission');
+    const editClientForm = document.getElementById('editClientForm');
+    if (editClientForm) {
+        editClientForm.removeEventListener('submit', handleClientFormSubmit);
+        editClientForm.addEventListener('submit', handleClientFormSubmitTraditional);
+        UIUtils.showInfo('Switched to traditional form submission mode', 'Info');
+    }
+};
