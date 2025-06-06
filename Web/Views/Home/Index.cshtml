@@ -975,10 +975,11 @@
                     <div class="tab-content" id="loginTabsContent">
                         <div class="tab-pane fade show active" id="client-login" role="tabpanel" aria-labelledby="client-tab">
                             <form asp-controller="Account" asp-action="ClientLogin" method="post">
+                                <input type="hidden" name="returnUrl" id="clientReturnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
                                 <div class="mb-3 mt-3">
                                     <label for="clientEmail" class="form-label">Email Address</label>
                                     <input type="email" class="form-control" id="clientEmail" name="email" required>
-                                    <div class="form-text">Demo: any mail, password: client123</div>
+                                    <div class="form-text">Demo: any  email, password: client123</div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="clientPassword" class="form-label">Password</label>
@@ -991,17 +992,18 @@
                                             Remember me
                                         </label>
                                     </div>
-                                    <a href="#" class="text-orange">Forgot password?</a>
+                                    <a href="/Account/ForgotPassword" class="text-orange">Forgot password?</a>
                                 </div>
                                 <button type="submit" class="btn btn-orange w-100">Login as Client</button>
                             </form>
                         </div>
                         <div class="tab-pane fade" id="admin-login" role="tabpanel" aria-labelledby="admin-tab">
                             <form asp-controller="Account" asp-action="AdminLogin" method="post">
+                                <input type="hidden" name="returnUrl" id="adminReturnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
                                 <div class="mb-3 mt-3">
                                     <label for="adminEmail" class="form-label">Email Address</label>
                                     <input type="email" class="form-control" id="adminEmail" name="email" required>
-                                    <div class="form-text">Demo: any email, password: admin123</div>
+                                    <div class="form-text">Demo: any  email, password: admin123</div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="adminPassword" class="form-label">Password</label>
@@ -1014,7 +1016,7 @@
                                             Remember me
                                         </label>
                                     </div>
-                                    <a href="#" class="text-navy">Forgot password?</a>
+                                    <a href="/Account/ForgotPassword" class="text-navy">Forgot password?</a>
                                 </div>
                                 <button type="submit" class="btn btn-navy w-100">Login as Admin</button>
                             </form>
