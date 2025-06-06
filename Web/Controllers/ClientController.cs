@@ -696,6 +696,7 @@ namespace Web.Controllers
                     {
                         courtId = c.CourtId,
                         name = c.Name,
+                        courtNumber = c.CourtNumber,
                         address = c.Address ?? "",
                         isIndoor = true,
                         isActive = true

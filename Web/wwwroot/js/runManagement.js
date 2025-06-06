@@ -871,6 +871,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Handle different court ID property names
             const courtId = court.courtId || court.CourtId || court.id || court.Id || '';
             const courtName = court.name || court.Name || court.courtName || `Court ${index + 1}`;
+            const courtNumber = court.courtNumber || court.CourtNumber || court.courtNumber || `Court ${index + 1}`;
 
             option.value = String(courtId);
             option.textContent = courtName;
