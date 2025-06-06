@@ -1,0 +1,454 @@
+﻿<style>
+    :root {
+        --primary-color: #ff6238;
+        --secondary-color: #342580;
+        --accent-color: #3BACB6;
+        --light-color: #F8F9FA;
+        --dark-color: #212529;
+    }
+
+    .text-orange {
+        color: var(--primary-color) !important;
+    }
+
+    .text-navy {
+        color: var(--secondary-color) !important;
+    }
+
+    .btn-orange {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        color: white;
+    }
+
+        .btn-orange:hover {
+            background-color: #e55530;
+            border-color: #e55530;
+            color: white;
+        }
+
+    .btn-outline-orange {
+        background-color: transparent;
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+
+        .btn-outline-orange:hover {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+    .btn-navy {
+        background-color: var(--secondary-color);
+        border-color: var(--secondary-color);
+        color: white;
+    }
+
+        .btn-navy:hover {
+            background-color: #2a1e65;
+            border-color: #2a1e65;
+            color: white;
+        }
+
+    .navbar-brand {
+        font-weight: bold;
+        color: var(--dark-color) !important;
+    }
+
+        .navbar-brand:hover {
+            color: var(--primary-color) !important;
+        }
+
+    .nav-link:hover {
+        color: var(--primary-color) !important;
+    }
+
+    .btn-outline-primary {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+    /* Blog specific styles */
+    .blog-hero {
+        background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
+        color: white;
+        padding: 80px 0;
+    }
+
+    .blog-meta {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .blog-content {
+        font-size: 1.1rem;
+        line-height: 1.7;
+    }
+
+        .blog-content h2 {
+            color: var(--secondary-color);
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .blog-content h3 {
+            color: var(--primary-color);
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+    .blog-sidebar .card {
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .blog-sidebar .card-header {
+        background-color: var(--light-color);
+        border-bottom: 2px solid var(--primary-color);
+        font-weight: 600;
+        color: var(--secondary-color);
+    }
+
+    .tag {
+        display: inline-block;
+        background-color: var(--primary-color);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.875rem;
+        text-decoration: none;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+        .tag:hover {
+            background-color: #e55530;
+            color: white;
+            text-decoration: none;
+        }
+
+    .related-post {
+        border-left: 3px solid var(--primary-color);
+        padding-left: 1rem;
+        margin-bottom: 1rem;
+    }
+
+        .related-post h6 {
+            color: var(--secondary-color);
+        }
+
+    .share-btn {
+        border: 1px solid #dee2e6;
+        color: #6c757d;
+        background: white;
+        transition: all 0.2s;
+    }
+
+        .share-btn:hover {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+    .author-card {
+        background: linear-gradient(135deg, var(--light-color) 0%, white 100%);
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        border: 1px solid #dee2e6;
+    }
+
+    .blog-image {
+        border-radius: 0.5rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    .table-of-contents {
+        background-color: var(--light-color);
+        border-left: 4px solid var(--primary-color);
+        padding: 1.5rem;
+        border-radius: 0.375rem;
+    }
+
+        .table-of-contents a {
+            color: var(--secondary-color);
+            text-decoration: none;
+        }
+
+            .table-of-contents a:hover {
+                color: var(--primary-color);
+            }
+</style>
+
+
+
+<!-- Blog Hero Section -->
+<section class="blog-hero">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <h1 class="display-4 fw-bold mb-3">The Ultimate Guide to Basketball Analytics</h1>
+                <p class="lead mb-4">Discover how modern basketball teams use data science and advanced analytics to gain competitive advantages on and off the court.</p>
+                <div class="blog-meta">
+                    <i class="bi bi-person-circle me-2"></i>By <strong>Sarah Johnson</strong>
+                    <span class="mx-3">•</span>
+                    <i class="bi bi-calendar3 me-2"></i>January 15, 2025
+                    <span class="mx-3">•</span>
+                    <i class="bi bi-clock me-2"></i>8 min read
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Main Content -->
+<div class="container my-5">
+    <div class="row">
+        <!-- Blog Content -->
+        <div class="col-lg-8">
+            <article class="blog-content">
+                <!-- Featured Image -->
+                <img src="https://images.unsplash.com/photo-1546519638-68e109498ffc?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"
+                     alt="Basketball analytics dashboard"
+                     class="img-fluid blog-image mb-4">
+
+                <!-- Article Content -->
+                <div class="mb-4">
+                    <a href="#" class="tag">Analytics</a>
+                    <a href="#" class="tag">Basketball</a>
+                    <a href="#" class="tag">Data Science</a>
+                    <a href="#" class="tag">Sports Tech</a>
+                </div>
+
+                <!-- Table of Contents -->
+                <div class="table-of-contents mb-5">
+                    <h5 class="text-navy mb-3"><i class="bi bi-list-ul me-2"></i>Table of Contents</h5>
+                    <ol class="mb-0">
+                        <li><a href="#introduction">Introduction to Basketball Analytics</a></li>
+                        <li><a href="#evolution">The Evolution of Basketball Stats</a></li>
+                        <li><a href="#key-metrics">Key Performance Metrics</a></li>
+                        <li><a href="#technology">Technology Behind the Data</a></li>
+                        <li><a href="#impact">Impact on Modern Basketball</a></li>
+                        <li><a href="#future">The Future of Basketball Analytics</a></li>
+                    </ol>
+                </div>
+
+                <section id="introduction">
+                    <p>Basketball has undergone a revolutionary transformation in recent years, driven by the integration of advanced analytics and data science. What once relied primarily on traditional statistics and intuition now leverages sophisticated algorithms, player tracking technology, and predictive modeling to optimize every aspect of the game.</p>
+
+                    <p>Modern basketball analytics goes far beyond simple box score statistics. Today's teams employ data scientists, statisticians, and technology specialists to extract meaningful insights from vast amounts of data collected during games and practices.</p>
+                </section>
+
+                <h2 id="evolution">The Evolution of Basketball Stats</h2>
+                <p>Traditional basketball statistics focused on basic counting stats: points, rebounds, assists, steals, and blocks. While these metrics provided valuable information, they only told part of the story. The analytics revolution began with the introduction of more sophisticated metrics that better captured player and team performance.</p>
+
+                <blockquote class="blockquote border-start border-4 ps-4 my-4" style="border-color: var(--primary-color) !important;">
+                    <p class="mb-0 fst-italic">"The goal is to turn data into information, and information into insight. In basketball, that insight can be the difference between winning and losing championships."</p>
+                    <footer class="blockquote-footer mt-2">Analytics Expert <cite title="Source Title">Mike Smith</cite></footer>
+                </blockquote>
+
+                <h3 id="key-metrics">Advanced Metrics Revolution</h3>
+                <p>The introduction of metrics like Player Efficiency Rating (PER), True Shooting Percentage (TS%), and Win Shares marked the beginning of a new era. These advanced statistics provided deeper insights into player contributions and efficiency.</p>
+
+                <div class="row my-4">
+                    <div class="col-md-4">
+                        <div class="text-center p-3 border rounded">
+                            <i class="bi bi-graph-up text-orange" style="font-size: 2rem;"></i>
+                            <h5 class="mt-2 text-navy">Efficiency Metrics</h5>
+                            <p class="small text-muted">Measuring player productivity per possession</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-3 border rounded">
+                            <i class="bi bi-target text-orange" style="font-size: 2rem;"></i>
+                            <h5 class="mt-2 text-navy">Shot Analytics</h5>
+                            <p class="small text-muted">Analyzing shot quality and selection</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-3 border rounded">
+                            <i class="bi bi-people text-orange" style="font-size: 2rem;"></i>
+                            <h5 class="mt-2 text-navy">Team Dynamics</h5>
+                            <p class="small text-muted">Understanding player interactions and chemistry</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h2 id="technology">Technology Behind the Data</h2>
+                <p>Modern basketball analytics relies on sophisticated technology to collect and process data. Camera systems, wearable sensors, and machine learning algorithms work together to capture every movement on the court.</p>
+
+                <h3>Player Tracking Systems</h3>
+                <p>NBA arenas are equipped with cameras that track player and ball movement 25 times per second. This technology captures data on speed, distance traveled, player separation, and countless other metrics that were previously impossible to measure accurately.</p>
+
+                <h2 id="impact">Impact on Modern Basketball</h2>
+                <p>The analytics revolution has fundamentally changed how basketball is played, coached, and consumed. Teams now make strategic decisions based on data-driven insights, from player acquisitions to in-game substitutions.</p>
+
+                <div class="alert alert-info border-start border-4 ps-4" style="border-color: var(--accent-color) !important; background-color: rgba(59, 172, 182, 0.1);">
+                    <h5 class="alert-heading"><i class="bi bi-lightbulb me-2"></i>Key Insight</h5>
+                    <p class="mb-0">Teams that effectively utilize analytics have shown measurable improvements in performance metrics, with some organizations crediting data analysis for their championship success.</p>
+                </div>
+
+                <h2 id="future">The Future of Basketball Analytics</h2>
+                <p>As technology continues to advance, the future of basketball analytics looks incredibly promising. Artificial intelligence, predictive modeling, and real-time analytics are opening new frontiers in sports science and performance optimization.</p>
+
+                <p>The integration of biometric data, advanced computer vision, and machine learning will continue to push the boundaries of what's possible in basketball analytics, creating new opportunities for teams to gain competitive advantages.</p>
+
+                <!-- Author Bio -->
+                <div class="author-card mt-5">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <img src="https://images.unsplash.com/photo-1494790108755-2616b39f1c91?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80"
+                                 alt="Sarah Johnson"
+                                 class="rounded-circle"
+                                 width="80" height="80">
+                        </div>
+                        <div class="col">
+                            <h5 class="mb-1 text-navy">Sarah Johnson</h5>
+                            <p class="text-muted mb-2">Sports Analytics Specialist & Basketball Enthusiast</p>
+                            <p class="small mb-0">Sarah is a data scientist specializing in sports analytics with over 8 years of experience working with professional basketball teams. She holds a PhD in Statistics and is passionate about using data to improve athletic performance.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Share Section -->
+                <div class="border-top pt-4 mt-5">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h6 class="text-navy mb-0">Share this article:</h6>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn share-btn me-2">
+                                <i class="bi bi-twitter"></i>
+                            </button>
+                            <button class="btn share-btn me-2">
+                                <i class="bi bi-facebook"></i>
+                            </button>
+                            <button class="btn share-btn me-2">
+                                <i class="bi bi-linkedin"></i>
+                            </button>
+                            <button class="btn share-btn">
+                                <i class="bi bi-link-45deg"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </article>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4 blog-sidebar">
+            <!-- Recent Posts -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Posts</h5>
+                </div>
+                <div class="card-body">
+                    <div class="related-post">
+                        <h6><a href="#" class="text-decoration-none">5 Basketball Training Drills That Actually Work</a></h6>
+                        <small class="text-muted">January 10, 2025</small>
+                    </div>
+                    <div class="related-post">
+                        <h6><a href="#" class="text-decoration-none">The Psychology of Clutch Performance</a></h6>
+                        <small class="text-muted">January 5, 2025</small>
+                    </div>
+                    <div class="related-post">
+                        <h6><a href="#" class="text-decoration-none">Building Team Chemistry: Lessons from Champions</a></h6>
+                        <small class="text-muted">December 28, 2024</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categories -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Categories</h5>
+                </div>
+                <div class="card-body">
+                    <a href="#" class="d-block text-decoration-none mb-2">Analytics <span class="badge bg-secondary ms-2">12</span></a>
+                    <a href="#" class="d-block text-decoration-none mb-2">Training <span class="badge bg-secondary ms-2">8</span></a>
+                    <a href="#" class="d-block text-decoration-none mb-2">Strategy <span class="badge bg-secondary ms-2">15</span></a>
+                    <a href="#" class="d-block text-decoration-none mb-2">Technology <span class="badge bg-secondary ms-2">6</span></a>
+                    <a href="#" class="d-block text-decoration-none">Psychology <span class="badge bg-secondary ms-2">4</span></a>
+                </div>
+            </div>
+
+            <!-- Newsletter -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Stay Updated</h5>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted">Get the latest basketball insights and analytics delivered to your inbox.</p>
+                    <form>
+                        <div class="mb-3">
+                            <input type="email" class="form-control" placeholder="Your email address" required>
+                        </div>
+                        <button type="submit" class="btn btn-orange w-100">
+                            <i class="bi bi-envelope me-2"></i>Subscribe
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer class="bg-dark text-light py-4 mt-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="bi bi-dribbble text-orange me-2" style="font-size: 1.5rem;"></i>
+                    <span class="fw-bold">Ultimate Hoopers</span>
+                </div>
+                <p class="text-muted">Elevating basketball performance through data-driven insights and analytics.</p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <div class="mb-3">
+                    <a href="#" class="text-light me-3"><i class="bi bi-twitter"></i></a>
+                    <a href="#" class="text-light me-3"><i class="bi bi-facebook"></i></a>
+                    <a href="#" class="text-light me-3"><i class="bi bi-instagram"></i></a>
+                    <a href="#" class="text-light"><i class="bi bi-linkedin"></i></a>
+                </div>
+                <p class="text-muted small mb-0">&copy; 2025 Ultimate Hoopers. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // Smooth scrolling for table of contents links
+    document.querySelectorAll('.table-of-contents a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+
+    // Copy link functionality
+    document.querySelector('.share-btn:last-child').addEventListener('click', function() {
+        navigator.clipboard.writeText(window.location.href).then(function() {
+            // Could add a toast notification here
+            const icon = this.querySelector('i');
+            icon.className = 'bi bi-check';
+            setTimeout(() => {
+                icon.className = 'bi bi-link-45deg';
+            }, 2000);
+        }.bind(this));
+    });
+</script>

@@ -27,6 +27,16 @@ namespace Web.Controllers
             return View();
         }
 
+        public IActionResult Blog()
+        {
+            return View();
+        }
+
+        public IActionResult SingleBlog()
+        {
+            return View();
+        }
+
         public IActionResult Privacy()
         {
             return View();

@@ -64,22 +64,67 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ========== SIMPLE SPINNER SYSTEM ==========
     function showSimpleSpinner(message = 'Loading...') {
-        console.log('🟣 Showing simple spinner:', message);
+        console.log('🟣 Showing simple spinner over login form:', message);
 
-        // Try global spinner first
-        if (window.showSpinner && typeof window.showSpinner === 'function') {
-            window.showSpinner(message);
+        // FORCE modal spinner - ignore global spinner completely for login
+        hideSimpleSpinner(); // Clear any existing spinners first
+        createModalSpinner(message);
+    }
+
+    function createModalSpinner(message) {
+        // Remove any existing spinner first
+        hideSimpleSpinner();
+
+        const loginModal = document.getElementById('loginModal');
+        const modalContent = loginModal?.querySelector('.modal-content');
+
+        console.log('🔍 Modal found:', !!loginModal);
+        console.log('🔍 Modal content found:', !!modalContent);
+
+        if (!modalContent) {
+            console.log('❌ Modal content not found, falling back to full screen');
+            createFullScreenSpinner(message);
             return;
         }
 
-        // Fallback to our own spinner
-        createSimpleSpinner(message);
+        const spinner = document.createElement('div');
+        spinner.id = 'simpleLoginSpinner';
+        // Target the entire modal content, not just body
+        spinner.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+            flex-direction: column;
+            border-radius: 0.375rem;
+            backdrop-filter: blur(2px);
+        `;
+
+        spinner.innerHTML = `
+            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div class="text-dark mt-3 fw-bold" style="font-size: 1.1rem;">
+                ${message}
+            </div>
+        `;
+
+        // Force the modal content to be relative positioned
+        modalContent.style.position = 'relative';
+        modalContent.appendChild(spinner);
+
+        console.log('✅ MODAL CONTENT SPINNER created - should cover entire modal');
+        console.log('📍 Spinner parent:', modalContent);
+        console.log('📍 Modal content position:', window.getComputedStyle(modalContent).position);
     }
 
-    function createSimpleSpinner(message) {
-        // Remove any existing spinner
-        hideSimpleSpinner();
-
+    function createFullScreenSpinner(message) {
         const spinner = document.createElement('div');
         spinner.id = 'simpleLoginSpinner';
         spinner.style.cssText = `
@@ -104,20 +149,48 @@ document.addEventListener('DOMContentLoaded', function () {
         `;
 
         document.body.appendChild(spinner);
-        console.log('✅ Simple spinner created');
+        console.log('✅ Fallback full screen spinner created');
     }
 
     function hideSimpleSpinner() {
-        // Hide global spinner
+        console.log('🟣 Hiding all spinners...');
+
+        // Hide ANY global spinner that might exist
         if (window.hideSpinner && typeof window.hideSpinner === 'function') {
-            window.hideSpinner();
+            try {
+                window.hideSpinner();
+                console.log('✅ Global spinner hidden');
+            } catch (e) {
+                console.log('⚠️ Error hiding global spinner:', e);
+            }
         }
 
-        // Hide our spinner
-        const spinner = document.getElementById('simpleLoginSpinner');
-        if (spinner) {
+        // Hide our modal spinner (check multiple locations)
+        const modalSpinners = document.querySelectorAll('#simpleLoginSpinner');
+        modalSpinners.forEach((spinner, index) => {
             spinner.remove();
-            console.log('✅ Simple spinner removed');
+            console.log(`✅ Modal spinner ${index + 1} removed`);
+        });
+
+        // Check modal content specifically
+        const loginModal = document.getElementById('loginModal');
+        const modalContent = loginModal?.querySelector('.modal-content');
+        if (modalContent) {
+            const spinnersInModal = modalContent.querySelectorAll('#simpleLoginSpinner');
+            spinnersInModal.forEach((spinner, index) => {
+                spinner.remove();
+                console.log(`✅ Modal content spinner ${index + 1} removed`);
+            });
+        }
+
+        // Also check modal body for any leftover spinners
+        const modalBody = loginModal?.querySelector('.modal-body');
+        if (modalBody) {
+            const spinnersInBody = modalBody.querySelectorAll('#simpleLoginSpinner');
+            spinnersInBody.forEach((spinner, index) => {
+                spinner.remove();
+                console.log(`✅ Modal body spinner ${index + 1} removed`);
+            });
         }
     }
 
@@ -201,12 +274,50 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ========== DEBUG FUNCTIONS ==========
     window.loginDebug = {
+        forceModalSpinner: function () {
+            console.log('🚨 FORCING MODAL CONTENT SPINNER TEST');
+
+            // Open modal if it's not open
+            const loginModal = document.getElementById('loginModal');
+            const modalInstance = bootstrap.Modal.getInstance(loginModal) || new bootstrap.Modal(loginModal);
+            modalInstance.show();
+
+            // Force modal spinner immediately
+            setTimeout(() => {
+                console.log('🔴 Creating spinner over ENTIRE MODAL CONTENT');
+                createModalSpinner('FORCED TEST - Modal Content Spinner');
+
+                setTimeout(() => {
+                    hideSimpleSpinner();
+                    console.log('✅ Forced test complete');
+                }, 4000);
+            }, 500);
+        },
+
         testSpinner: function () {
-            console.log('🧪 Testing spinner...');
-            showSimpleSpinner('Test spinner');
+            console.log('🧪 Testing modal spinner...');
+
+            // Open modal if it's not open
+            const loginModal = document.getElementById('loginModal');
+            const modalInstance = bootstrap.Modal.getInstance(loginModal) || new bootstrap.Modal(loginModal);
+            modalInstance.show();
+
+            // Show spinner after modal is visible
+            setTimeout(() => {
+                showSimpleSpinner('Test modal spinner');
+                setTimeout(() => {
+                    hideSimpleSpinner();
+                    console.log('✅ Modal spinner test complete');
+                }, 3000);
+            }, 500);
+        },
+
+        testFullScreenSpinner: function () {
+            console.log('🧪 Testing full-screen spinner...');
+            createFullScreenSpinner('Test full-screen spinner');
             setTimeout(() => {
                 hideSimpleSpinner();
-                console.log('✅ Spinner test complete');
+                console.log('✅ Full-screen spinner test complete');
             }, 3000);
         },
 
@@ -214,8 +325,11 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('🔍 Checking login system...');
             console.log('Client form:', document.querySelector('#client-login form'));
             console.log('Admin form:', document.querySelector('#admin-login form'));
+            console.log('Modal body:', document.querySelector('#loginModal .modal-body'));
+            console.log('Modal body position:', window.getComputedStyle(document.querySelector('#loginModal .modal-body')).position);
             console.log('Global showSpinner:', typeof window.showSpinner);
             console.log('Global hideSpinner:', typeof window.hideSpinner);
+            console.log('Any existing spinners:', document.querySelectorAll('[id*="pinner"]'));
         },
 
         reset: function () {
@@ -227,25 +341,39 @@ document.addEventListener('DOMContentLoaded', function () {
 
         testLogin: function (type = 'client') {
             console.log(`🧪 Testing ${type} login process...`);
-            const form = document.querySelector(`#${type}-login form`);
-            const button = form.querySelector('button[type="submit"]');
 
-            setButtonLoadingState(button, true, type);
-            showSimpleSpinner(`Testing ${type} login...`);
+            // Open modal if needed
+            const loginModal = document.getElementById('loginModal');
+            const modalInstance = bootstrap.Modal.getInstance(loginModal) || new bootstrap.Modal(loginModal);
+            modalInstance.show();
 
             setTimeout(() => {
-                setButtonLoadingState(button, false, type);
-                hideSimpleSpinner();
-                console.log('✅ Test complete');
-            }, 3000);
+                const form = document.querySelector(`#${type}-login form`);
+                const button = form.querySelector('button[type="submit"]');
+
+                setButtonLoadingState(button, true, type);
+                showSimpleSpinner(`Testing ${type} login...`);
+
+                setTimeout(() => {
+                    setButtonLoadingState(button, false, type);
+                    hideSimpleSpinner();
+                    console.log('✅ Test complete');
+                }, 3000);
+            }, 500);
         }
     };
 
-    console.log('🐛 Debug functions: window.loginDebug.testSpinner(), .checkSystem(), .reset(), .testLogin()');
-    console.log('✅ Simplified login system ready');
+    console.log('🐛 Debug functions:');
+    console.log('  🚨 window.loginDebug.forceModalSpinner() - FORCE OBVIOUS RED SPINNER TEST');
+    console.log('  window.loginDebug.testSpinner() - Test modal spinner');
+    console.log('  window.loginDebug.testFullScreenSpinner() - Test full-screen spinner');
+    console.log('  window.loginDebug.checkSystem() - Check system status');
+    console.log('  window.loginDebug.testLogin("client") - Test login flow');
+    console.log('  window.loginDebug.reset() - Reset everything');
+    console.log('✅ Modal-focused login system ready');
 });
 
-// Add basic styling for quick errors
+// Add basic styling for modal spinner and quick errors
 const basicCSS = `
 <style>
 .quick-error {
@@ -259,7 +387,42 @@ const basicCSS = `
 }
 
 #simpleLoginSpinner {
-    backdrop-filter: blur(2px);
+    backdrop-filter: blur(1px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Ensure modal content can contain positioned elements */
+#loginModal .modal-content {
+    position: relative !important;
+}
+
+/* Prevent interaction with modal elements when spinner is active */
+#loginModal .modal-content:has(#simpleLoginSpinner) .modal-header,
+#loginModal .modal-content:has(#simpleLoginSpinner) .modal-body,
+#loginModal .modal-content:has(#simpleLoginSpinner) .modal-footer {
+    pointer-events: none;
+    user-select: none;
+}
+
+/* Smooth spinner appearance */
+#simpleLoginSpinner {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Make sure spinner is always on top */
+#simpleLoginSpinner {
+    z-index: 99999 !important;
 }
 </style>
 `;
