@@ -1,7 +1,116 @@
 ﻿/**
- * Client Management JavaScript - Updated with Toast Utilities
- * Now uses utilities.js toast system instead of alert()
+ * Client Management JavaScript - Fixed with proper loading states
+ * Includes fallback implementations for missing UIUtils functions
  */
+
+// Create UIUtils fallback if not available or missing functions
+if (typeof UIUtils === 'undefined') {
+    window.UIUtils = {};
+}
+
+// Add missing loading functions if they don't exist
+if (!UIUtils.showElementLoading) {
+    UIUtils.showElementLoading = function (selector, message = 'Loading...') {
+        const element = document.querySelector(selector);
+        if (element) {
+            // Store original content
+            if (!element.dataset.originalContent) {
+                element.dataset.originalContent = element.innerHTML;
+            }
+
+            // Show loading state
+            element.innerHTML = `
+                <div class="d-flex justify-content-center align-items-center py-4">
+                    <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                    <span class="text-muted">${message}</span>
+                </div>`;
+        }
+    };
+}
+
+if (!UIUtils.hideElementLoading) {
+    UIUtils.hideElementLoading = function (selector) {
+        const element = document.querySelector(selector);
+        if (element && element.dataset.originalContent) {
+            element.innerHTML = element.dataset.originalContent;
+            delete element.dataset.originalContent;
+        }
+    };
+}
+
+// Add other missing UIUtils functions with fallbacks
+if (!UIUtils.setButtonLoading) {
+    UIUtils.setButtonLoading = function (button, isLoading, loadingText = 'Loading...') {
+        if (!button) return;
+
+        if (isLoading) {
+            button.disabled = true;
+            if (!button.dataset.originalText) {
+                button.dataset.originalText = button.innerHTML;
+            }
+            button.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status"></span>${loadingText}`;
+        } else {
+            button.disabled = false;
+            if (button.dataset.originalText) {
+                button.innerHTML = button.dataset.originalText;
+                delete button.dataset.originalText;
+            }
+        }
+    };
+}
+
+// Toast notification fallbacks
+if (!UIUtils.showSuccess) {
+    UIUtils.showSuccess = function (message, title = 'Success') {
+        console.log(`✅ ${title}: ${message}`);
+        showToast(message, 'success', title);
+    };
+}
+
+if (!UIUtils.showError) {
+    UIUtils.showError = function (message, title = 'Error') {
+        console.error(`❌ ${title}: ${message}`);
+        showToast(message, 'error', title);
+    };
+}
+
+if (!UIUtils.showWarning) {
+    UIUtils.showWarning = function (message, title = 'Warning') {
+        console.warn(`⚠️ ${title}: ${message}`);
+        showToast(message, 'warning', title);
+    };
+}
+
+if (!UIUtils.showInfo) {
+    UIUtils.showInfo = function (message, title = 'Info') {
+        console.info(`ℹ️ ${title}: ${message}`);
+        showToast(message, 'info', title);
+    };
+}
+
+// Simple toast function fallback
+function showToast(message, type = 'info', title = '') {
+    // Try to use existing toast system first
+    if (typeof window.showToast === 'function') {
+        window.showToast(message, type, title);
+        return;
+    }
+
+    // Fallback to console and alert for critical errors
+    const emoji = {
+        'success': '✅',
+        'error': '❌',
+        'warning': '⚠️',
+        'info': 'ℹ️'
+    };
+
+    console.log(`${emoji[type] || 'ℹ️'} ${title}: ${message}`);
+
+    // Only show alert for errors to avoid spam
+    if (type === 'error') {
+        alert(`${title}: ${message}`);
+    }
+}
 
 // Initialize DataTable if the table exists
 const clientsTable = $('#clientsTable');
@@ -221,7 +330,7 @@ function handleEditModalShow(event) {
 
     if (!clientId) {
         console.error('🚨 No client ID found on button');
-        showToast('Client ID is missing', 'error', 'Error');
+        UIUtils.showError('Client ID is missing', 'Error');
         return;
     }
 
@@ -232,7 +341,7 @@ function handleEditModalShow(event) {
     // Clear previous data
     clearAllForms();
 
-    // Load client data
+    // Load client data immediately
     loadClientData(clientId);
 }
 
@@ -251,8 +360,7 @@ function handleTabSwitch(event) {
 
     switch (targetTab) {
         case '#details-tab-pane':
-            // Auto-populate client details when switching to Details tab
-            loadClientDetailsTab(clientId);
+            // Details should already be loaded when modal opens
             break;
         case '#courts-tab-pane':
             loadClientCourts(clientId);
@@ -382,10 +490,7 @@ function loadClientData(clientId) {
         return;
     }
 
-    // Show loading on the modal
-    UIUtils.showElementLoading('#editClientModal .modal-content', 'Loading client data...');
-
-    // Try to populate from table data first
+    // Try to populate from table data first for immediate feedback
     const row = findClientRowById(clientId);
     if (row) {
         console.log('📋 Found table row, extracting data...');
@@ -403,132 +508,21 @@ function loadClientData(clientId) {
         })
         .then(data => {
             console.log('📦 Received client data:', data);
-            UIUtils.hideElementLoading('#editClientModal .modal-content');
 
             if (data.success !== false) {
                 populateFromAPIData(data);
-                UIUtils.showSuccess('Client data loaded successfully', 'Success');
+                console.log('✅ Client data loaded and populated successfully');
             } else {
-                UIUtils.showWarning(`Failed to load complete client data: ${data.message || 'Unknown error'}`, 'Warning');
+                console.warn('⚠️ API returned success=false:', data.message);
+                // Keep table data if API fails
+                UIUtils.showWarning(`Limited client data loaded: ${data.message || 'API error'}`, 'Warning');
             }
         })
         .catch(error => {
             console.error('🚨 Error loading client data:', error);
-            UIUtils.hideElementLoading('#editClientModal .modal-content');
-            UIUtils.showError(`Error loading client data: ${error.message}`, 'Error');
+            // Keep table data if API fails
+            UIUtils.showWarning(`Using table data only. Error: ${error.message}`, 'Warning');
         });
-}
-
-function loadClientDetailsTab(clientId) {
-    console.log('📝 Loading client details tab for ID:', clientId);
-
-    if (!clientId) {
-        console.error('🚨 No client ID provided for details tab');
-        return;
-    }
-
-    // Check if details are already loaded (avoid unnecessary API calls)
-    const nameField = document.getElementById('editName');
-    if (nameField && nameField.value && nameField.value.trim()) {
-        console.log('✅ Client details already loaded');
-        return;
-    }
-
-    // Show loading on the details tab specifically
-    const detailsTabPane = document.getElementById('details-tab-pane');
-    if (detailsTabPane) {
-        UIUtils.showElementLoading('#details-tab-pane', 'Loading client details...');
-    }
-
-    // Load client data from API
-    fetch(`/Client/GetClientData?id=${encodeURIComponent(clientId)}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('📦 Received client details data:', data);
-
-            if (detailsTabPane) {
-                UIUtils.hideElementLoading('#details-tab-pane');
-            }
-
-            if (data.success !== false) {
-                populateClientDetailsForm(data);
-                console.log('✅ Client details populated successfully');
-            } else {
-                UIUtils.showWarning(`Failed to load client details: ${data.message || 'Unknown error'}`, 'Warning');
-                // Try to populate from table data as fallback
-                const row = findClientRowById(clientId);
-                if (row) {
-                    const tableData = extractTableData(row);
-                    populateFromTableData(tableData);
-                }
-            }
-        })
-        .catch(error => {
-            console.error('🚨 Error loading client details:', error);
-
-            if (detailsTabPane) {
-                UIUtils.hideElementLoading('#details-tab-pane');
-            }
-
-            UIUtils.showError(`Error loading client details: ${error.message}`, 'Error');
-
-            // Try to populate from table data as fallback
-            const row = findClientRowById(clientId);
-            if (row) {
-                console.log('📋 Using table data as fallback');
-                const tableData = extractTableData(row);
-                populateFromTableData(tableData);
-            }
-        });
-}
-
-function populateClientDetailsForm(data) {
-    console.log('📝 Populating client details form:', data);
-
-    try {
-        const client = data.client || data;
-
-        // Populate all form fields in the details tab
-        safeSetValue('editClientId', client.clientId);
-        safeSetValue('editClientNumber', client.clientNumber);
-        safeSetValue('editName', client.name);
-        safeSetValue('editAddress', client.address);
-        safeSetValue('editCity', client.city);
-        safeSetValue('editState', client.state);
-        safeSetValue('editZip', client.zip);
-        safeSetValue('editPhoneNumber', client.phoneNumber);
-        safeSetValue('editNotes', client.notes);
-
-        // Handle date formatting
-        if (client.createdDate) {
-            // Format date for HTML date input if needed
-            let dateValue = client.createdDate;
-            if (dateValue.includes('T')) {
-                dateValue = dateValue.split('T')[0];
-            }
-            safeSetValue('editCreatedDate', dateValue);
-        }
-
-        // Set status dropdown if available
-        if (client.status) {
-            safeSetSelect('editStatus', client.status);
-        }
-
-        // Load additional data for other tabs
-        if (data.courtList) {
-            displayClientCourts(data.courtList);
-        }
-
-        console.log('✅ Client details form populated successfully');
-    } catch (error) {
-        console.error('🚨 Error populating client details form:', error);
-        UIUtils.showError('Error populating client details form', 'Error');
-    }
 }
 
 function extractTableData(row) {
@@ -536,20 +530,16 @@ function extractTableData(row) {
 
     console.log('📋 Extracting data from table row');
 
-    // Get data attributes
-    const dataFromAttributes = {
-        clientId: row.getAttribute('data-client-id'),
-        clientNumber: row.getAttribute('data-client-number'),
-        name: row.getAttribute('data-name'),
-        address: row.getAttribute('data-address'),
-        city: row.getAttribute('data-city'),
-        state: row.getAttribute('data-state'),
-        zip: row.getAttribute('data-zip'),
-        phoneNumber: row.getAttribute('data-phone-number'),
-        createdDate: row.getAttribute('data-created-date')
-    };
+    // Initialize data object
+    const dataFromAttributes = {};
 
-    // Extract from cell content as fallback
+    // Get data from button first (most reliable)
+    const editBtn = row.querySelector('button[data-client-id]');
+    if (editBtn) {
+        dataFromAttributes.clientId = editBtn.getAttribute('data-client-id');
+    }
+
+    // Extract from cell content
     const cells = row.querySelectorAll('td');
     if (cells.length >= 4) {
         // Client name and number from first column
@@ -557,21 +547,21 @@ function extractTableData(row) {
         const nameEl = clientCell.querySelector('.fw-semibold');
         const numberEl = clientCell.querySelector('.text-muted.small');
 
-        if (nameEl && !dataFromAttributes.name) {
+        if (nameEl) {
             dataFromAttributes.name = nameEl.textContent.trim();
         }
-        if (numberEl && !dataFromAttributes.clientNumber) {
+        if (numberEl) {
             const match = numberEl.textContent.match(/ID: #(\S+)/);
             if (match) dataFromAttributes.clientNumber = match[1];
         }
 
         // Date from second column
-        if (cells[1] && !dataFromAttributes.createdDate) {
+        if (cells[1]) {
             dataFromAttributes.createdDate = cells[1].textContent.trim();
         }
 
         // Address from third column
-        if (cells[2] && !dataFromAttributes.address) {
+        if (cells[2]) {
             const addressText = cells[2].textContent.trim();
             const addressParts = addressText.split(',').map(part => part.trim());
             if (addressParts.length >= 4) {
@@ -583,11 +573,12 @@ function extractTableData(row) {
         }
 
         // Phone from fourth column
-        if (cells[3] && !dataFromAttributes.phoneNumber) {
+        if (cells[3]) {
             dataFromAttributes.phoneNumber = cells[3].textContent.trim();
         }
     }
 
+    console.log('📋 Extracted table data:', dataFromAttributes);
     return dataFromAttributes;
 }
 
@@ -595,14 +586,15 @@ function populateFromTableData(data) {
     console.log('📝 Populating form from table data:', data);
 
     try {
-        safeSetValue('editClientNumber', data.clientNumber);
-        safeSetValue('editName', data.name);
-        safeSetValue('editAddress', data.address);
-        safeSetValue('editCity', data.city);
-        safeSetValue('editState', data.state);
-        safeSetValue('editZip', data.zip);
-        safeSetValue('editPhoneNumber', data.phoneNumber);
-        safeSetValue('editCreatedDate', data.createdDate);
+        if (data.clientId) safeSetValue('editClientId', data.clientId);
+        if (data.clientNumber) safeSetValue('editClientNumber', data.clientNumber);
+        if (data.name) safeSetValue('editName', data.name);
+        if (data.address) safeSetValue('editAddress', data.address);
+        if (data.city) safeSetValue('editCity', data.city);
+        if (data.state) safeSetValue('editState', data.state);
+        if (data.zip) safeSetValue('editZip', data.zip);
+        if (data.phoneNumber) safeSetValue('editPhoneNumber', data.phoneNumber);
+        if (data.createdDate) safeSetValue('editCreatedDate', data.createdDate);
 
         console.log('✅ Table data populated successfully');
     } catch (error) {
@@ -616,15 +608,16 @@ function populateFromAPIData(data) {
     try {
         const client = data.client || data;
 
-        safeSetValue('editClientNumber', client.clientNumber);
-        safeSetValue('editName', client.name);
-        safeSetValue('editAddress', client.address);
-        safeSetValue('editCity', client.city);
-        safeSetValue('editState', client.state);
-        safeSetValue('editZip', client.zip);
-        safeSetValue('editPhoneNumber', client.phoneNumber);
-        safeSetValue('editNotes', client.notes);
-        safeSetValue('editCreatedDate', client.createdDate);
+        if (client.clientId) safeSetValue('editClientId', client.clientId);
+        if (client.clientNumber) safeSetValue('editClientNumber', client.clientNumber);
+        if (client.name) safeSetValue('editName', client.name);
+        if (client.address) safeSetValue('editAddress', client.address);
+        if (client.city) safeSetValue('editCity', client.city);
+        if (client.state) safeSetValue('editState', client.state);
+        if (client.zip) safeSetValue('editZip', client.zip);
+        if (client.phoneNumber) safeSetValue('editPhoneNumber', client.phoneNumber);
+        if (client.notes) safeSetValue('editNotes', client.notes);
+        if (client.createdDate) safeSetValue('editCreatedDate', client.createdDate);
 
         // Set status if available
         if (client.status) {
