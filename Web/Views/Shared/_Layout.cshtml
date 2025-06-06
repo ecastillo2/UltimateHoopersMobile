@@ -30,9 +30,7 @@
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
+                       
 
                         @if (AuthService.IsAuthenticated)
                         {
@@ -43,31 +41,35 @@
                             @if (AuthService.IsAdmin)
                             {
                                 <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-controller="Dashboard" asp-action="Client">Clients</a>
+                                    <a class="nav-link text-dark" asp-controller="Client" asp-action="Client">Clients</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-controller="Dashboard" asp-action="User">Users</a>
+                                    <a class="nav-link text-dark" asp-controller="User" asp-action="User">Users</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-controller="Dashboard" asp-action="Run">Runs</a>
+                                    <a class="nav-link text-dark" asp-controller="Run" asp-action="Run">Runs</a>
                                 </li>
                             }
                         }
                         else
                         {
                             <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link text-dark" href="/#features">Features</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link text-dark" href="/#download">Download</a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Blog">Blog</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                            </li>
                         }
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Blog">Blog</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
+                       
                     </ul>
                     <div class="d-flex">
                         @if (AuthService.IsAuthenticated)

@@ -1,707 +1,466 @@
-﻿
-    <style>
-       
+﻿@{
+    ViewData["Title"] = "Ultimate Hoopers Blog";
+}
 
-        .text-orange {
-            color: var(--primary-color) !important;
-        }
+@section Styles {
+    <link rel="stylesheet" href="~/css/publicpages.css" asp-append-version="true" />
+}
 
-        .text-navy {
-            color: var(--secondary-color) !important;
-        }
-
-        .btn-orange {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-            color: white;
-        }
-
-            .btn-orange:hover {
-                background-color: #e55530;
-                border-color: #e55530;
-                color: white;
-            }
-
-        .btn-outline-orange {
-            background-color: transparent;
-            border-color: var(--primary-color);
-            color: var(--primary-color);
-        }
-
-            .btn-outline-orange:hover {
-                background-color: var(--primary-color);
-                border-color: var(--primary-color);
-                color: white;
-            }
-
-        .btn-navy {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
-            color: white;
-        }
-
-            .btn-navy:hover {
-                background-color: #2a1e65;
-                border-color: #2a1e65;
-                color: white;
-            }
-
-       
-        .btn-outline-primary {
-            border-color: var(--primary-color);
-            color: var(--primary-color);
-        }
-
-            .btn-outline-primary:hover {
-                background-color: var(--primary-color);
-                border-color: var(--primary-color);
-                color: white;
-            }
-
-        /* Blog specific styles */
-        .blog-hero {
-            background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
-            color: white;
-            padding: 100px 0 80px;
-        }
-
-        .featured-post {
-            position: relative;
-            overflow: hidden;
-            border-radius: 1rem;
-            box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-            .featured-post:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.2);
-            }
-
-            .featured-post .card-img-overlay {
-                background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.2) 100%);
-            }
-
-        .post-card {
-            border: none;
-            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-            transition: all 0.3s ease;
-            height: 100%;
-        }
-
-            .post-card:hover {
-                box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-                transform: translateY(-2px);
-            }
-
-            .post-card .card-img-top {
-                height: 200px;
-                object-fit: cover;
-            }
-
-        .post-meta {
-            color: #6c757d;
-            font-size: 0.875rem;
-        }
-
-        .tag {
-            display: inline-block;
-            background-color: var(--primary-color);
-            color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 1rem;
-            font-size: 0.75rem;
-            text-decoration: none;
-            margin-right: 0.5rem;
-            margin-bottom: 0.5rem;
-        }
-
-            .tag:hover {
-                background-color: #e55530;
-                color: white;
-                text-decoration: none;
-            }
-
-        .sidebar .card {
-            border: none;
-            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-            margin-bottom: 1.5rem;
-        }
-
-        .sidebar .card-header {
-            background-color: var(--light-color);
-            border-bottom: 2px solid var(--primary-color);
-            font-weight: 600;
-            color: var(--secondary-color);
-        }
-
-        .category-item {
-            color: var(--dark-color);
-            text-decoration: none;
-            padding: 0.5rem 0;
-            border-bottom: 1px solid #dee2e6;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-            .category-item:hover {
-                color: var(--primary-color);
-                background-color: rgba(255, 98, 56, 0.05);
-                padding-left: 0.5rem;
-                margin-left: -0.5rem;
-                margin-right: -0.5rem;
-            }
-
-            .category-item:last-child {
-                border-bottom: none;
-            }
-
-        .search-box {
-            border: 2px solid #dee2e6;
-            border-radius: 0.5rem;
-            transition: border-color 0.3s ease;
-        }
-
-            .search-box:focus {
-                border-color: var(--primary-color);
-                box-shadow: 0 0 0 0.2rem rgba(255, 98, 56, 0.25);
-            }
-
-        .pagination .page-link {
-            color: var(--primary-color);
-            border-color: #dee2e6;
-        }
-
-        .pagination .page-item.active .page-link {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-
-        .pagination .page-link:hover {
-            color: white;
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-
-        .newsletter-section {
-            background: linear-gradient(135deg, var(--light-color) 0%, white 100%);
-            border-radius: 1rem;
-            border: 1px solid #dee2e6;
-        }
-
-        .trending-badge {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background-color: var(--primary-color);
-            color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 1rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .read-time {
-            color: #6c757d;
-            font-size: 0.875rem;
-        }
-
-        .author-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-    </style>
-
-   
-    <!-- Blog Hero Section -->
-    <section class="blog-hero">
-        <div class="container">
-            <div class="row justify-content-center text-center">
-                <div class="col-lg-8">
-                    <h1 class="display-4 fw-bold mb-3">Ultimate Hoopers Blog</h1>
-                    <p class="lead mb-4">Discover the latest insights in basketball analytics, training techniques, and sports technology. Level up your game with data-driven strategies.</p>
-                    <div class="d-flex justify-content-center">
-                        <div class="input-group" style="max-width: 400px;">
-                            <input type="text" class="form-control search-box" placeholder="Search articles..." aria-label="Search">
-                            <button class="btn btn-orange" type="button">
-                                <i class="bi bi-search"></i>
-                            </button>
-                        </div>
+<!-- Blog Hero Section -->
+<section class="blog-hero">
+    <div class="container">
+        <div class="row justify-content-center text-center">
+            <div class="col-lg-8">
+                <h1 class="display-4 fw-bold mb-3">Ultimate Hoopers Blog</h1>
+                <p class="lead mb-4">Discover the latest insights in basketball analytics, training techniques, and sports technology. Level up your game with data-driven strategies.</p>
+                <div class="d-flex justify-content-center">
+                    <div class="input-group" style="max-width: 400px;">
+                        <input type="text" class="form-control search-box" placeholder="Search articles..." aria-label="Search">
+                        <button class="btn btn-orange" type="button">
+                            <i class="bi bi-search"></i>
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
-    <!-- Main Content -->
-    <div class="container my-5">
-        <!-- Featured Posts Section -->
-        <div class="row mb-5">
-            <div class="col-12">
-                <h2 class="text-navy fw-bold mb-4">
-                    <i class="bi bi-star-fill text-orange me-2"></i>Featured Posts
-                </h2>
-            </div>
-            <div class="col-lg-8">
-                <div class="card featured-post text-white">
-                    <img src="https://images.unsplash.com/photo-1546519638-68e109498ffc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                         class="card-img" alt="Basketball analytics">
-                    <div class="trending-badge">Trending</div>
-                    <div class="card-img-overlay d-flex flex-column justify-content-end">
-                        <div class="mb-2">
-                            <span class="tag">Analytics</span>
-                            <span class="tag">Data Science</span>
-                        </div>
-                        <h3 class="card-title fw-bold">The Ultimate Guide to Basketball Analytics</h3>
-                        <p class="card-text">Discover how modern basketball teams use data science and advanced analytics to gain competitive advantages on and off the court.</p>
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div class="d-flex align-items-center">
-                                <img src="https://images.unsplash.com/photo-1494790108755-2616b39f1c91?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80"
-                                     alt="Sarah Johnson" class="author-avatar me-2">
-                                <small>Sarah Johnson • Jan 15, 2025</small>
-                            </div>
-                            <small class="read-time"><i class="bi bi-clock me-1"></i>8 min read</small>
-                        </div>
+<!-- Main Content -->
+<div class="container my-5">
+    <!-- Featured Posts Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="text-navy fw-bold mb-4">
+                <i class="bi bi-star-fill text-orange me-2"></i>Featured Posts
+            </h2>
+        </div>
+        <div class="col-lg-8">
+            <div class="card featured-post text-white">
+                <img src="https://images.unsplash.com/photo-1546519638-68e109498ffc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                     class="card-img" alt="Basketball analytics">
+                <div class="trending-badge">Trending</div>
+                <div class="card-img-overlay d-flex flex-column justify-content-end">
+                    <div class="mb-2">
+                        <span class="tag">Analytics</span>
+                        <span class="tag">Data Science</span>
                     </div>
-                </div>
-            </div>
-            <div class="col-lg-4">
-                <div class="row">
-                    <div class="col-12 mb-3">
-                        <div class="card post-card">
-                            <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
-                                 class="card-img-top" alt="Basketball training">
-                            <div class="card-body">
-                                <div class="mb-2">
-                                    <span class="tag">Training</span>
-                                </div>
-                                <h6 class="card-title">5 Basketball Training Drills That Actually Work</h6>
-                                <div class="post-meta">
-                                    <small>Mike Chen • Jan 10, 2025 • 5 min read</small>
-                                </div>
-                            </div>
+                    <h3 class="card-title fw-bold">The Ultimate Guide to Basketball Analytics</h3>
+                    <p class="card-text">Discover how modern basketball teams use data science and advanced analytics to gain competitive advantages on and off the court.</p>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <img src="https://images.unsplash.com/photo-1494790108755-2616b39f1c91?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80"
+                                 alt="Sarah Johnson" class="author-avatar me-2">
+                            <small>Sarah Johnson • Jan 15, 2025</small>
                         </div>
-                    </div>
-                    <div class="col-12">
-                        <div class="card post-card">
-                            <img src="https://images.unsplash.com/photo-1574623452334-1e0ac2b3ccb4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
-                                 class="card-img-top" alt="Team chemistry">
-                            <div class="card-body">
-                                <div class="mb-2">
-                                    <span class="tag">Psychology</span>
-                                </div>
-                                <h6 class="card-title">The Psychology of Clutch Performance</h6>
-                                <div class="post-meta">
-                                    <small>Dr. Lisa Park • Jan 5, 2025 • 6 min read</small>
-                                </div>
-                            </div>
-                        </div>
+                        <small class="read-time"><i class="bi bi-clock me-1"></i>8 min read</small>
                     </div>
                 </div>
             </div>
         </div>
-
-        <div class="row">
-            <!-- Main Content Area -->
-            <div class="col-lg-8">
-                <!-- Latest Posts -->
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2 class="text-navy fw-bold mb-0">Latest Posts</h2>
-                    <div class="dropdown">
-                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            Sort by: Recent
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#">Most Recent</a></li>
-                            <li><a class="dropdown-item" href="#">Most Popular</a></li>
-                            <li><a class="dropdown-item" href="#">Most Viewed</a></li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <!-- Post 1 -->
-                    <div class="col-md-6 mb-4">
-                        <div class="card post-card h-100">
-                            <img src="https://images.unsplash.com/photo-1434648957308-5e6a859697e8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
-                                 class="card-img-top" alt="Basketball strategy">
-                            <div class="card-body d-flex flex-column">
-                                <div class="mb-2">
-                                    <span class="tag">Strategy</span>
-                                    <span class="tag">Coaching</span>
-                                </div>
-                                <h5 class="card-title">Advanced Pick and Roll Strategies for Modern Basketball</h5>
-                                <p class="card-text text-muted">Explore how contemporary teams are revolutionizing the pick and roll through innovative spacing and timing concepts.</p>
-                                <div class="mt-auto">
-                                    <div class="d-flex align-items-center justify-content-between">
-                                        <div class="d-flex align-items-center">
-                                            <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80"
-                                                 alt="Coach Williams" class="author-avatar me-2">
-                                            <small class="post-meta">Coach Williams</small>
-                                        </div>
-                                        <small class="post-meta">Dec 28, 2024</small>
-                                    </div>
-                                </div>
+        <div class="col-lg-4">
+            <div class="row">
+                <div class="col-12 mb-3">
+                    <div class="card post-card">
+                        <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+                             class="card-img-top" alt="Basketball training">
+                        <div class="card-body">
+                            <div class="mb-2">
+                                <span class="tag">Training</span>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Post 2 -->
-                    <div class="col-md-6 mb-4">
-                        <div class="card post-card h-100">
-                            <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
-                                 class="card-img-top" alt="Basketball technology">
-                            <div class="card-body d-flex flex-column">
-                                <div class="mb-2">
-                                    <span class="tag">Technology</span>
-                                </div>
-                                <h5 class="card-title">How Wearable Tech is Changing Player Development</h5>
-                                <p class="card-text text-muted">From heart rate monitors to motion sensors, discover how technology is providing unprecedented insights into player performance.</p>
-                                <div class="mt-auto">
-                                    <div class="d-flex align-items-center justify-content-between">
-                                        <div class="d-flex align-items-center">
-                                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80"
-                                                 alt="Tech Expert" class="author-avatar me-2">
-                                            <small class="post-meta">Alex Rodriguez</small>
-                                        </div>
-                                        <small class="post-meta">Dec 22, 2024</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Post 3 -->
-                    <div class="col-md-6 mb-4">
-                        <div class="card post-card h-100">
-                            <img src="https://images.unsplash.com/photo-1546519638-68e109498ffc?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
-                                 class="card-img-top" alt="Youth basketball">
-                            <div class="card-body d-flex flex-column">
-                                <div class="mb-2">
-                                    <span class="tag">Youth</span>
-                                    <span class="tag">Development</span>
-                                </div>
-                                <h5 class="card-title">Building Fundamentals: A Youth Coach's Guide</h5>
-                                <p class="card-text text-muted">Essential fundamentals every young player should master, with progressive drills and age-appropriate techniques.</p>
-                                <div class="mt-auto">
-                                    <div class="d-flex align-items-center justify-content-between">
-                                        <div class="d-flex align-items-center">
-                                            <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80"
-                                                 alt="Youth Coach" class="author-avatar me-2">
-                                            <small class="post-meta">Jennifer Martinez</small>
-                                        </div>
-                                        <small class="post-meta">Dec 18, 2024</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Post 4 -->
-                    <div class="col-md-6 mb-4">
-                        <div class="card post-card h-100">
-                            <img src="https://images.unsplash.com/photo-1574623452334-1e0ac2b3ccb4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
-                                 class="card-img-top" alt="Basketball nutrition">
-                            <div class="card-body d-flex flex-column">
-                                <div class="mb-2">
-                                    <span class="tag">Nutrition</span>
-                                    <span class="tag">Performance</span>
-                                </div>
-                                <h5 class="card-title">Peak Performance Nutrition for Basketball Players</h5>
-                                <p class="card-text text-muted">Optimize your game with science-backed nutrition strategies designed specifically for basketball athletes.</p>
-                                <div class="mt-auto">
-                                    <div class="d-flex align-items-center justify-content-between">
-                                        <div class="d-flex align-items-center">
-                                            <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80"
-                                                 alt="Nutritionist" class="author-avatar me-2">
-                                            <small class="post-meta">Dr. Mark Thompson</small>
-                                        </div>
-                                        <small class="post-meta">Dec 15, 2024</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Post 5 -->
-                    <div class="col-md-6 mb-4">
-                        <div class="card post-card h-100">
-                            <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
-                                 class="card-img-top" alt="Basketball analytics">
-                            <div class="card-body d-flex flex-column">
-                                <div class="mb-2">
-                                    <span class="tag">Analytics</span>
-                                    <span class="tag">Stats</span>
-                                </div>
-                                <h5 class="card-title">Understanding Advanced Basketball Metrics</h5>
-                                <p class="card-text text-muted">Break down complex basketball statistics and learn how to interpret advanced metrics for better game analysis.</p>
-                                <div class="mt-auto">
-                                    <div class="d-flex align-items-center justify-content-between">
-                                        <div class="d-flex align-items-center">
-                                            <img src="https://images.unsplash.com/photo-1494790108755-2616b39f1c91?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80"
-                                                 alt="Data Analyst" class="author-avatar me-2">
-                                            <small class="post-meta">Sarah Johnson</small>
-                                        </div>
-                                        <small class="post-meta">Dec 10, 2024</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Post 6 -->
-                    <div class="col-md-6 mb-4">
-                        <div class="card post-card h-100">
-                            <img src="https://images.unsplash.com/photo-1434648957308-5e6a859697e8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
-                                 class="card-img-top" alt="Mental game">
-                            <div class="card-body d-flex flex-column">
-                                <div class="mb-2">
-                                    <span class="tag">Mental Game</span>
-                                    <span class="tag">Psychology</span>
-                                </div>
-                                <h5 class="card-title">Mental Toughness: The Invisible Advantage</h5>
-                                <p class="card-text text-muted">Develop the mental resilience and focus needed to perform under pressure and overcome adversity on the court.</p>
-                                <div class="mt-auto">
-                                    <div class="d-flex align-items-center justify-content-between">
-                                        <div class="d-flex align-items-center">
-                                            <img src="https://images.unsplash.com/photo-1582750433449-648ed127bb54?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80"
-                                                 alt="Sports Psychologist" class="author-avatar me-2">
-                                            <small class="post-meta">Dr. Lisa Park</small>
-                                        </div>
-                                        <small class="post-meta">Dec 5, 2024</small>
-                                    </div>
-                                </div>
+                            <h6 class="card-title">5 Basketball Training Drills That Actually Work</h6>
+                            <div class="post-meta">
+                                <small>Mike Chen • Jan 10, 2025 • 5 min read</small>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Pagination -->
-                <nav aria-label="Blog pagination" class="mt-4">
-                    <ul class="pagination justify-content-center">
-                        <li class="page-item disabled">
-                            <span class="page-link">Previous</span>
-                        </li>
-                        <li class="page-item active">
-                            <span class="page-link">1</span>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link" href="#">2</a>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link" href="#">3</a>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link" href="#">Next</a>
-                        </li>
-                    </ul>
-                </nav>
-            </div>
-
-            <!-- Sidebar -->
-            <div class="col-lg-4 sidebar">
-                <!-- Newsletter Signup -->
-                <div class="newsletter-section p-4 mb-4">
-                    <h5 class="text-navy fw-bold mb-3">
-                        <i class="bi bi-envelope-heart text-orange me-2"></i>Stay in the Game
-                    </h5>
-                    <p class="text-muted mb-3">Get the latest basketball insights, training tips, and analytics delivered straight to your inbox.</p>
-                    <form>
-                        <div class="mb-3">
-                            <input type="email" class="form-control" placeholder="Your email address" required>
-                        </div>
-                        <button type="submit" class="btn btn-orange w-100">
-                            <i class="bi bi-send me-2"></i>Subscribe Now
-                        </button>
-                    </form>
-                    <small class="text-muted">Join 2,500+ basketball enthusiasts</small>
-                </div>
-
-                <!-- Categories -->
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">Categories</h5>
-                    </div>
-                    <div class="card-body p-0">
-                        <a href="#" class="category-item">
-                            <span><i class="bi bi-graph-up me-2"></i>Analytics</span>
-                            <span class="badge bg-secondary">12</span>
-                        </a>
-                        <a href="#" class="category-item">
-                            <span><i class="bi bi-person-arms-up me-2"></i>Training</span>
-                            <span class="badge bg-secondary">8</span>
-                        </a>
-                        <a href="#" class="category-item">
-                            <span><i class="bi bi-clipboard-data me-2"></i>Strategy</span>
-                            <span class="badge bg-secondary">15</span>
-                        </a>
-                        <a href="#" class="category-item">
-                            <span><i class="bi bi-cpu me-2"></i>Technology</span>
-                            <span class="badge bg-secondary">6</span>
-                        </a>
-                        <a href="#" class="category-item">
-                            <span><i class="bi bi-heart-pulse me-2"></i>Psychology</span>
-                            <span class="badge bg-secondary">4</span>
-                        </a>
-                        <a href="#" class="category-item">
-                            <span><i class="bi bi-apple me-2"></i>Nutrition</span>
-                            <span class="badge bg-secondary">7</span>
-                        </a>
-                        <a href="#" class="category-item">
-                            <span><i class="bi bi-people me-2"></i>Youth Development</span>
-                            <span class="badge bg-secondary">9</span>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Popular Posts -->
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">Popular This Week</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-flex mb-3">
-                            <img src="https://images.unsplash.com/photo-1546519638-68e109498ffc?ixlib=rb-4.0.3&auto=format&fit=crop&w=80&q=80"
-                                 alt="Popular post" class="rounded me-3" style="width: 60px; height: 60px; object-fit: cover;">
-                            <div>
-                                <h6 class="mb-1"><a href="#" class="text-decoration-none text-dark">The Ultimate Guide to Basketball Analytics</a></h6>
-                                <small class="text-muted">8,432 views</small>
+                <div class="col-12">
+                    <div class="card post-card">
+                        <img src="https://images.unsplash.com/photo-1574623452334-1e0ac2b3ccb4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+                             class="card-img-top" alt="Team chemistry">
+                        <div class="card-body">
+                            <div class="mb-2">
+                                <span class="tag">Psychology</span>
+                            </div>
+                            <h6 class="card-title">The Psychology of Clutch Performance</h6>
+                            <div class="post-meta">
+                                <small>Dr. Lisa Park • Jan 5, 2025 • 6 min read</small>
                             </div>
                         </div>
-                        <div class="d-flex mb-3">
-                            <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=80&q=80"
-                                 alt="Popular post" class="rounded me-3" style="width: 60px; height: 60px; object-fit: cover;">
-                            <div>
-                                <h6 class="mb-1"><a href="#" class="text-decoration-none text-dark">5 Basketball Training Drills That Actually Work</a></h6>
-                                <small class="text-muted">6,291 views</small>
-                            </div>
-                        </div>
-                        <div class="d-flex">
-                            <img src="https://images.unsplash.com/photo-1574623452334-1e0ac2b3ccb4?ixlib=rb-4.0.3&auto=format&fit=crop&w=80&q=80"
-                                 alt="Popular post" class="rounded me-3" style="width: 60px; height: 60px; object-fit: cover;">
-                            <div>
-                                <h6 class="mb-1"><a href="#" class="text-decoration-none text-dark">Mental Toughness: The Invisible Advantage</a></h6>
-                                <small class="text-muted">4,875 views</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tags -->
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">Popular Tags</h5>
-                    </div>
-                    <div class="card-body">
-                        <a href="#" class="tag">basketball</a>
-                        <a href="#" class="tag">analytics</a>
-                        <a href="#" class="tag">training</a>
-                        <a href="#" class="tag">nba</a>
-                        <a href="#" class="tag">coaching</a>
-                        <a href="#" class="tag">performance</a>
-                        <a href="#" class="tag">stats</a>
-                        <a href="#" class="tag">youth</a>
-                        <a href="#" class="tag">skills</a>
-                        <a href="#" class="tag">strategy</a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="bg-dark text-light py-5 mt-5">
-        <div class="container">
+    <div class="row">
+        <!-- Main Content Area -->
+        <div class="col-lg-8">
+            <!-- Latest Posts -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="text-navy fw-bold mb-0">Latest Posts</h2>
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        Sort by: Recent
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#">Most Recent</a></li>
+                        <li><a class="dropdown-item" href="#">Most Popular</a></li>
+                        <li><a class="dropdown-item" href="#">Most Viewed</a></li>
+                    </ul>
+                </div>
+            </div>
+
             <div class="row">
-                <div class="col-md-4 mb-4">
-                    <div class="d-flex align-items-center mb-3">
-                        <i class="bi bi-dribbble text-orange me-2" style="font-size: 2rem;"></i>
-                        <span class="fw-bold h4 mb-0">Ultimate Hoopers</span>
+                <!-- Post 1 -->
+                <div class="col-md-6 mb-4">
+                    <div class="card post-card h-100">
+                        <img src="https://images.unsplash.com/photo-1434648957308-5e6a859697e8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+                             class="card-img-top" alt="Basketball strategy">
+                        <div class="card-body d-flex flex-column">
+                            <div class="mb-2">
+                                <span class="tag">Strategy</span>
+                                <span class="tag">Coaching</span>
+                            </div>
+                            <h5 class="card-title">Advanced Pick and Roll Strategies for Modern Basketball</h5>
+                            <p class="card-text text-muted">Explore how contemporary teams are revolutionizing the pick and roll through innovative spacing and timing concepts.</p>
+                            <div class="mt-auto">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center">
+                                        <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80"
+                                             alt="Coach Williams" class="author-avatar me-2">
+                                        <small class="post-meta">Coach Williams</small>
+                                    </div>
+                                    <small class="post-meta">Dec 28, 2024</small>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <p class="text-muted">Elevating basketball performance through data-driven insights, advanced analytics, and comprehensive training resources.</p>
-                    <div class="d-flex">
-                        <a href="#" class="text-light me-3 fs-5"><i class="bi bi-twitter"></i></a>
-                        <a href="#" class="text-light me-3 fs-5"><i class="bi bi-facebook"></i></a>
-                        <a href="#" class="text-light me-3 fs-5"><i class="bi bi-instagram"></i></a>
-                        <a href="#" class="text-light fs-5"><i class="bi bi-linkedin"></i></a>
+                </div>
+
+                <!-- Post 2 -->
+                <div class="col-md-6 mb-4">
+                    <div class="card post-card h-100">
+                        <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+                             class="card-img-top" alt="Basketball technology">
+                        <div class="card-body d-flex flex-column">
+                            <div class="mb-2">
+                                <span class="tag">Technology</span>
+                            </div>
+                            <h5 class="card-title">How Wearable Tech is Changing Player Development</h5>
+                            <p class="card-text text-muted">From heart rate monitors to motion sensors, discover how technology is providing unprecedented insights into player performance.</p>
+                            <div class="mt-auto">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center">
+                                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80"
+                                             alt="Tech Expert" class="author-avatar me-2">
+                                        <small class="post-meta">Alex Rodriguez</small>
+                                    </div>
+                                    <small class="post-meta">Dec 22, 2024</small>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-2 mb-4">
-                    <h6 class="text-orange fw-bold">Quick Links</h6>
-                    <ul class="list-unstyled">
-                        <li><a href="#" class="text-muted text-decoration-none">Home</a></li>
-                        <li><a href="#" class="text-muted text-decoration-none">Features</a></li>
-                        <li><a href="#" class="text-muted text-decoration-none">Blog</a></li>
-                        <li><a href="#" class="text-muted text-decoration-none">Download</a></li>
-                    </ul>
+
+                <!-- Post 3 -->
+                <div class="col-md-6 mb-4">
+                    <div class="card post-card h-100">
+                        <img src="https://images.unsplash.com/photo-1546519638-68e109498ffc?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+                             class="card-img-top" alt="Youth basketball">
+                        <div class="card-body d-flex flex-column">
+                            <div class="mb-2">
+                                <span class="tag">Youth</span>
+                                <span class="tag">Development</span>
+                            </div>
+                            <h5 class="card-title">Building Fundamentals: A Youth Coach's Guide</h5>
+                            <p class="card-text text-muted">Essential fundamentals every young player should master, with progressive drills and age-appropriate techniques.</p>
+                            <div class="mt-auto">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center">
+                                        <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80"
+                                             alt="Youth Coach" class="author-avatar me-2">
+                                        <small class="post-meta">Jennifer Martinez</small>
+                                    </div>
+                                    <small class="post-meta">Dec 18, 2024</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-2 mb-4">
-                    <h6 class="text-orange fw-bold">Categories</h6>
-                    <ul class="list-unstyled">
-                        <li><a href="#" class="text-muted text-decoration-none">Analytics</a></li>
-                        <li><a href="#" class="text-muted text-decoration-none">Training</a></li>
-                        <li><a href="#" class="text-muted text-decoration-none">Strategy</a></li>
-                        <li><a href="#" class="text-muted text-decoration-none">Technology</a></li>
-                    </ul>
+
+                <!-- Post 4 -->
+                <div class="col-md-6 mb-4">
+                    <div class="card post-card h-100">
+                        <img src="https://images.unsplash.com/photo-1574623452334-1e0ac2b3ccb4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+                             class="card-img-top" alt="Basketball nutrition">
+                        <div class="card-body d-flex flex-column">
+                            <div class="mb-2">
+                                <span class="tag">Nutrition</span>
+                                <span class="tag">Performance</span>
+                            </div>
+                            <h5 class="card-title">Peak Performance Nutrition for Basketball Players</h5>
+                            <p class="card-text text-muted">Optimize your game with science-backed nutrition strategies designed specifically for basketball athletes.</p>
+                            <div class="mt-auto">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center">
+                                        <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80"
+                                             alt="Nutritionist" class="author-avatar me-2">
+                                        <small class="post-meta">Dr. Mark Thompson</small>
+                                    </div>
+                                    <small class="post-meta">Dec 15, 2024</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-4 mb-4">
-                    <h6 class="text-orange fw-bold">Stay Connected</h6>
-                    <p class="text-muted small">Get the latest updates and exclusive content delivered to your inbox.</p>
-                    <div class="input-group">
-                        <input type="email" class="form-control" placeholder="Your email">
-                        <button class="btn btn-orange" type="button">Subscribe</button>
+
+                <!-- Post 5 -->
+                <div class="col-md-6 mb-4">
+                    <div class="card post-card h-100">
+                        <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+                             class="card-img-top" alt="Basketball analytics">
+                        <div class="card-body d-flex flex-column">
+                            <div class="mb-2">
+                                <span class="tag">Analytics</span>
+                                <span class="tag">Stats</span>
+                            </div>
+                            <h5 class="card-title">Understanding Advanced Basketball Metrics</h5>
+                            <p class="card-text text-muted">Break down complex basketball statistics and learn how to interpret advanced metrics for better game analysis.</p>
+                            <div class="mt-auto">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center">
+                                        <img src="https://images.unsplash.com/photo-1494790108755-2616b39f1c91?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80"
+                                             alt="Data Analyst" class="author-avatar me-2">
+                                        <small class="post-meta">Sarah Johnson</small>
+                                    </div>
+                                    <small class="post-meta">Dec 10, 2024</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Post 6 -->
+                <div class="col-md-6 mb-4">
+                    <div class="card post-card h-100">
+                        <img src="https://images.unsplash.com/photo-1434648957308-5e6a859697e8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+                             class="card-img-top" alt="Mental game">
+                        <div class="card-body d-flex flex-column">
+                            <div class="mb-2">
+                                <span class="tag">Mental Game</span>
+                                <span class="tag">Psychology</span>
+                            </div>
+                            <h5 class="card-title">Mental Toughness: The Invisible Advantage</h5>
+                            <p class="card-text text-muted">Develop the mental resilience and focus needed to perform under pressure and overcome adversity on the court.</p>
+                            <div class="mt-auto">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center">
+                                        <img src="https://images.unsplash.com/photo-1582750433449-648ed127bb54?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80"
+                                             alt="Sports Psychologist" class="author-avatar me-2">
+                                        <small class="post-meta">Dr. Lisa Park</small>
+                                    </div>
+                                    <small class="post-meta">Dec 5, 2024</small>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <hr class="my-4">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <p class="text-muted small mb-0">&copy; 2025 Ultimate Hoopers. All rights reserved.</p>
+
+            <!-- Pagination -->
+            <nav aria-label="Blog pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item disabled">
+                        <span class="page-link">Previous</span>
+                    </li>
+                    <li class="page-item active">
+                        <span class="page-link">1</span>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">2</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">3</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4 sidebar">
+            <!-- Newsletter Signup -->
+            <div class="newsletter-section p-4 mb-4">
+                <h5 class="text-navy fw-bold mb-3">
+                    <i class="bi bi-envelope-heart text-orange me-2"></i>Stay in the Game
+                </h5>
+                <p class="text-muted mb-3">Get the latest basketball insights, training tips, and analytics delivered straight to your inbox.</p>
+                <form>
+                    <div class="mb-3">
+                        <input type="email" class="form-control" placeholder="Your email address" required>
+                    </div>
+                    <button type="submit" class="btn btn-orange w-100">
+                        <i class="bi bi-send me-2"></i>Subscribe Now
+                    </button>
+                </form>
+                <small class="text-muted">Join 2,500+ basketball enthusiasts</small>
+            </div>
+
+            <!-- Categories -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Categories</h5>
                 </div>
-                <div class="col-md-6 text-md-end">
-                    <a href="#" class="text-muted text-decoration-none small me-3">Privacy Policy</a>
-                    <a href="#" class="text-muted text-decoration-none small me-3">Terms of Service</a>
-                    <a href="#" class="text-muted text-decoration-none small">Contact</a>
+                <div class="card-body p-0">
+                    <a href="#" class="category-item">
+                        <span><i class="bi bi-graph-up me-2"></i>Analytics</span>
+                        <span class="badge bg-secondary">12</span>
+                    </a>
+                    <a href="#" class="category-item">
+                        <span><i class="bi bi-person-arms-up me-2"></i>Training</span>
+                        <span class="badge bg-secondary">8</span>
+                    </a>
+                    <a href="#" class="category-item">
+                        <span><i class="bi bi-clipboard-data me-2"></i>Strategy</span>
+                        <span class="badge bg-secondary">15</span>
+                    </a>
+                    <a href="#" class="category-item">
+                        <span><i class="bi bi-cpu me-2"></i>Technology</span>
+                        <span class="badge bg-secondary">6</span>
+                    </a>
+                    <a href="#" class="category-item">
+                        <span><i class="bi bi-heart-pulse me-2"></i>Psychology</span>
+                        <span class="badge bg-secondary">4</span>
+                    </a>
+                    <a href="#" class="category-item">
+                        <span><i class="bi bi-apple me-2"></i>Nutrition</span>
+                        <span class="badge bg-secondary">7</span>
+                    </a>
+                    <a href="#" class="category-item">
+                        <span><i class="bi bi-people me-2"></i>Youth Development</span>
+                        <span class="badge bg-secondary">9</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Popular Posts -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Popular This Week</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex mb-3">
+                        <img src="https://images.unsplash.com/photo-1546519638-68e109498ffc?ixlib=rb-4.0.3&auto=format&fit=crop&w=80&q=80"
+                             alt="Popular post" class="rounded me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                        <div>
+                            <h6 class="mb-1"><a href="#" class="text-decoration-none text-dark">The Ultimate Guide to Basketball Analytics</a></h6>
+                            <small class="text-muted">8,432 views</small>
+                        </div>
+                    </div>
+                    <div class="d-flex mb-3">
+                        <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=80&q=80"
+                             alt="Popular post" class="rounded me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                        <div>
+                            <h6 class="mb-1"><a href="#" class="text-decoration-none text-dark">5 Basketball Training Drills That Actually Work</a></h6>
+                            <small class="text-muted">6,291 views</small>
+                        </div>
+                    </div>
+                    <div class="d-flex">
+                        <img src="https://images.unsplash.com/photo-1574623452334-1e0ac2b3ccb4?ixlib=rb-4.0.3&auto=format&fit=crop&w=80&q=80"
+                             alt="Popular post" class="rounded me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                        <div>
+                            <h6 class="mb-1"><a href="#" class="text-decoration-none text-dark">Mental Toughness: The Invisible Advantage</a></h6>
+                            <small class="text-muted">4,875 views</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tags -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Popular Tags</h5>
+                </div>
+                <div class="card-body">
+                    <a href="#" class="tag">basketball</a>
+                    <a href="#" class="tag">analytics</a>
+                    <a href="#" class="tag">training</a>
+                    <a href="#" class="tag">nba</a>
+                    <a href="#" class="tag">coaching</a>
+                    <a href="#" class="tag">performance</a>
+                    <a href="#" class="tag">stats</a>
+                    <a href="#" class="tag">youth</a>
+                    <a href="#" class="tag">skills</a>
+                    <a href="#" class="tag">strategy</a>
                 </div>
             </div>
         </div>
-    </footer>
+    </div>
+</div>
 
+<!-- Footer -->
+<footer class="bg-dark text-light py-5 mt-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="bi bi-dribbble text-orange me-2" style="font-size: 2rem;"></i>
+                    <span class="fw-bold h4 mb-0">Ultimate Hoopers</span>
+                </div>
+                <p class="text-muted">Elevating basketball performance through data-driven insights, advanced analytics, and comprehensive training resources.</p>
+                <div class="d-flex">
+                    <a href="#" class="text-light me-3 fs-5"><i class="bi bi-twitter"></i></a>
+                    <a href="#" class="text-light me-3 fs-5"><i class="bi bi-facebook"></i></a>
+                    <a href="#" class="text-light me-3 fs-5"><i class="bi bi-instagram"></i></a>
+                    <a href="#" class="text-light fs-5"><i class="bi bi-linkedin"></i></a>
+                </div>
+            </div>
+            <div class="col-md-2 mb-4">
+                <h6 class="text-orange fw-bold">Quick Links</h6>
+                <ul class="list-unstyled">
+                    <li><a href="#" class="text-muted text-decoration-none">Home</a></li>
+                    <li><a href="#" class="text-muted text-decoration-none">Features</a></li>
+                    <li><a href="#" class="text-muted text-decoration-none">Blog</a></li>
+                    <li><a href="#" class="text-muted text-decoration-none">Download</a></li>
+                </ul>
+            </div>
+            <div class="col-md-2 mb-4">
+                <h6 class="text-orange fw-bold">Categories</h6>
+                <ul class="list-unstyled">
+                    <li><a href="#" class="text-muted text-decoration-none">Analytics</a></li>
+                    <li><a href="#" class="text-muted text-decoration-none">Training</a></li>
+                    <li><a href="#" class="text-muted text-decoration-none">Strategy</a></li>
+                    <li><a href="#" class="text-muted text-decoration-none">Technology</a></li>
+                </ul>
+            </div>
+            <div class="col-md-4 mb-4">
+                <h6 class="text-orange fw-bold">Stay Connected</h6>
+                <p class="text-muted small">Get the latest updates and exclusive content delivered to your inbox.</p>
+                <div class="input-group">
+                    <input type="email" class="form-control" placeholder="Your email">
+                    <button class="btn btn-orange" type="button">Subscribe</button>
+                </div>
+            </div>
+        </div>
+        <hr class="my-4">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <p class="text-muted small mb-0">&copy; 2025 Ultimate Hoopers. All rights reserved.</p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <a href="#" class="text-muted text-decoration-none small me-3">Privacy Policy</a>
+                <a href="#" class="text-muted text-decoration-none small me-3">Terms of Service</a>
+                <a href="#" class="text-muted text-decoration-none small">Contact</a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+@section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-
-    <script>
-        // Search functionality
-        document.querySelector('.search-box').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                const searchTerm = this.value;
-                console.log('Searching for:', searchTerm);
-                // Implement search functionality here
-            }
-        });
-
-        // Add hover effects to post cards
-        document.querySelectorAll('.post-card').forEach(card => {
-            card.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-5px)';
-            });
-
-            card.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateY(0)';
-            });
-        });
-
-        // Newsletter signup
-        document.querySelectorAll('form').forEach(form => {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const email = this.querySelector('input[type="email"]').value;
-                if (email) {
-                    alert('Thank you for subscribing!');
-                    this.reset();
-                }
-            });
-        });
-    </script>
+    <script src="~/js/publicpages.js" asp-append-version="true"></script>
+}
