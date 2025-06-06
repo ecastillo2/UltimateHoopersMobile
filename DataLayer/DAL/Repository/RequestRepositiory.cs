@@ -348,7 +348,7 @@ namespace DataLayer.DAL.Repository
         /// <summary>
         /// DisposeAsync
         /// </summary>
-        /// <returns></returns>
+        /// <returns></returns> 
         public async ValueTask DisposeAsync()
         {
             if (!_disposed)
@@ -367,7 +367,7 @@ namespace DataLayer.DAL.Repository
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public Task<int> BatchUpdateProductsAsync(IEnumerable<Product> products, CancellationToken cancellationToken = default)
+        public Task<int> BatchUpdateRequestsAsync(IEnumerable<Request> requests, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
@@ -378,7 +378,7 @@ namespace DataLayer.DAL.Repository
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public Task<List<Product>> GetProductsAsync(CancellationToken cancellationToken = default)
+        public Task<List<Request>> GetProductsAsync(CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
@@ -389,7 +389,7 @@ namespace DataLayer.DAL.Repository
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public IAsyncEnumerable<Product> StreamAllProductsAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
+        public IAsyncEnumerable<Request> StreamAllRequestsAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
