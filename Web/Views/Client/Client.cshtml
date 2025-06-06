@@ -113,11 +113,23 @@
                             <tr data-status="active">
                                 <td>
                                     <div class="client-container">
+                                        <div class="product-image-cell me-3">
+                                        @if (!string.IsNullOrEmpty(@item.Client.ImageUrl))
+                                        {
+                                            <img src="@item.Client.ImageUrl" alt="@item.Client.Name" class="product-image"
+                                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                                                 loading="lazy">
+                                                <div class="fw-semibold">@item.Client.Name</div>
+                                                <div class="text-muted small">ID: #@item.Client.ClientNumber</div>
+                                        }
+                                        else{
                                         <div class="client-avatar">@clientInitials</div>
                                         <div>
                                             <div class="fw-semibold">@item.Client.Name</div>
                                             <div class="text-muted small">ID: #@item.Client.ClientNumber</div>
                                         </div>
+                                        }
+                                         </div>
                                     </div>
                                 </td>
                                 <td>@(item.Client.CreatedDate?.ToString("MM/dd/yyyy") ?? "N/A")</td>

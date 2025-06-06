@@ -1,116 +1,503 @@
 ﻿/**
- * Client Management JavaScript - FIXED VERSION
- * Corrected form submission and anti-forgery token handling
+ * Client Management JavaScript - COMPLETE FIXED VERSION
+ * Enhanced with proper DataTable refresh, button state management, and fixed toast notifications
  */
 
-// Create UIUtils fallback if not available or missing functions
+// ========== TOAST NOTIFICATION SYSTEM (FIXED) ==========
+function createToastNotification(message, type = 'info', title = '', duration = 5000) {
+    console.log(`${type.toUpperCase()}: ${title} - ${message}`);
+
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${getBootstrapAlertClass(type)} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = `
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        max-width: 500px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    `;
+
+    const icon = getToastIcon(type);
+    toast.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="bi bi-${icon} me-2"></i>
+            <div class="flex-grow-1">
+                ${title ? `<strong>${title}:</strong> ` : ''}${message}
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+
+    document.body.appendChild(toast);
+
+    // Auto remove after duration
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.remove();
+        }
+    }, duration);
+
+    return toast;
+}
+
+function getBootstrapAlertClass(type) {
+    const classMap = {
+        'success': 'success',
+        'error': 'danger',
+        'warning': 'warning',
+        'info': 'info'
+    };
+    return classMap[type] || 'info';
+}
+
+function getToastIcon(type) {
+    const iconMap = {
+        'success': 'check-circle',
+        'error': 'x-circle',
+        'warning': 'exclamation-triangle',
+        'info': 'info-circle'
+    };
+    return iconMap[type] || 'info-circle';
+}
+
+// ========== UIUTILS SYSTEM (FIXED) ==========
 if (typeof UIUtils === 'undefined') {
     window.UIUtils = {};
 }
 
-// Add missing loading functions if they don't exist
-if (!UIUtils.showElementLoading) {
-    UIUtils.showElementLoading = function (selector, message = 'Loading...') {
-        const element = document.querySelector(selector);
-        if (element) {
-            // Store original content
-            if (!element.dataset.originalContent) {
-                element.dataset.originalContent = element.innerHTML;
-            }
+// Fixed UIUtils functions without recursion
+UIUtils.showSuccess = function (message, title = 'Success') {
+    console.log(`✅ ${title}: ${message}`);
+    createToastNotification(message, 'success', title);
+};
 
-            // Show loading state
-            element.innerHTML = `
-                <div class="d-flex justify-content-center align-items-center py-4">
-                    <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
-                    <span class="text-muted">${message}</span>
-                </div>`;
+UIUtils.showError = function (message, title = 'Error') {
+    console.error(`❌ ${title}: ${message}`);
+    createToastNotification(message, 'error', title);
+};
+
+UIUtils.showWarning = function (message, title = 'Warning') {
+    console.warn(`⚠️ ${title}: ${message}`);
+    createToastNotification(message, 'warning', title);
+};
+
+UIUtils.showInfo = function (message, title = 'Info') {
+    console.info(`ℹ️ ${title}: ${message}`);
+    createToastNotification(message, 'info', title);
+};
+
+UIUtils.setButtonLoading = function (button, isLoading, loadingText = 'Loading...') {
+    if (!button) return;
+
+    if (isLoading) {
+        button.disabled = true;
+        if (!button.dataset.originalText) {
+            button.dataset.originalText = button.innerHTML;
         }
-    };
+        button.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status"></span>${loadingText}`;
+    } else {
+        button.disabled = false;
+        if (button.dataset.originalText) {
+            button.innerHTML = button.dataset.originalText;
+            delete button.dataset.originalText;
+        }
+    }
+};
+
+UIUtils.showElementLoading = function (selector, message = 'Loading...') {
+    const element = document.querySelector(selector);
+    if (element) {
+        if (!element.dataset.originalContent) {
+            element.dataset.originalContent = element.innerHTML;
+        }
+        element.innerHTML = `
+            <div class="d-flex justify-content-center align-items-center py-4">
+                <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                <span class="text-muted">${message}</span>
+            </div>`;
+    }
+};
+
+UIUtils.hideElementLoading = function (selector) {
+    const element = document.querySelector(selector);
+    if (element && element.dataset.originalContent) {
+        element.innerHTML = element.dataset.originalContent;
+        delete element.dataset.originalContent;
+    }
+};
+
+UIUtils.showLoading = function (message = 'Loading...') {
+    let loader = document.getElementById('globalLoader');
+    if (!loader) {
+        loader = document.createElement('div');
+        loader.id = 'globalLoader';
+        loader.className = 'position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center';
+        loader.style.cssText = `
+            background: rgba(255, 255, 255, 0.9);
+            z-index: 9999;
+            backdrop-filter: blur(2px);
+        `;
+        loader.innerHTML = `
+            <div class="text-center">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div class="text-muted">${message}</div>
+            </div>
+        `;
+        document.body.appendChild(loader);
+    }
+    loader.style.display = 'flex';
+};
+
+UIUtils.hideLoading = function () {
+    const loader = document.getElementById('globalLoader');
+    if (loader) {
+        loader.style.display = 'none';
+    }
+};
+
+// ========== ENHANCED DATATABLE REFRESH SYSTEM ==========
+
+/**
+ * Main refresh function - determines best strategy based on context
+ */
+function refreshClientDataTable(options = {}) {
+    console.log('🔄 Starting DataTable refresh with options:', options);
+
+    const { clientData, action = 'update', forceReload = false } = options;
+
+    try {
+        if (forceReload) {
+            return reloadDataTableFromServer();
+        }
+
+        switch (action) {
+            case 'create':
+                return handleClientCreate(clientData);
+            case 'update':
+                return handleClientUpdate(clientData);
+            case 'delete':
+                return handleClientDelete(clientData);
+            default:
+                return refreshDataTableDisplay();
+        }
+    } catch (error) {
+        console.error('🚨 Error in DataTable refresh:', error);
+        fallbackRefresh();
+    }
 }
 
-if (!UIUtils.hideElementLoading) {
-    UIUtils.hideElementLoading = function (selector) {
-        const element = document.querySelector(selector);
-        if (element && element.dataset.originalContent) {
-            element.innerHTML = element.dataset.originalContent;
-            delete element.dataset.originalContent;
-        }
-    };
+function reloadDataTableFromServer() {
+    console.log('🔄 Performing full DataTable reload from server');
+
+    try {
+        showTableLoading('Refreshing client data...');
+
+        // Option 1: Try dedicated endpoint
+        fetch('/Client/GetClientsTableData')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success && data.clients) {
+                    rebuildDataTable(data.clients);
+                    hideTableLoading();
+                    console.log('✅ DataTable reloaded from server successfully');
+                } else {
+                    throw new Error(data.message || 'Invalid server response');
+                }
+            })
+            .catch(error => {
+                console.error('🚨 Server reload failed:', error);
+                hideTableLoading();
+                reloadCurrentPage();
+            });
+    } catch (error) {
+        console.error('🚨 Error in server reload:', error);
+        reloadCurrentPage();
+    }
 }
 
-// Add other missing UIUtils functions with fallbacks
-if (!UIUtils.setButtonLoading) {
-    UIUtils.setButtonLoading = function (button, isLoading, loadingText = 'Loading...') {
-        if (!button) return;
+function rebuildDataTable(clientsData) {
+    console.log('🔧 Rebuilding DataTable with new data');
 
-        if (isLoading) {
-            button.disabled = true;
-            if (!button.dataset.originalText) {
-                button.dataset.originalText = button.innerHTML;
-            }
-            button.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status"></span>${loadingText}`;
+    try {
+        if (window.clientsTable && $.fn.dataTable.isDataTable('#clientsTable')) {
+            window.clientsTable.destroy();
+        }
+
+        const tableBody = document.querySelector('#clientsTable tbody');
+        if (tableBody) {
+            tableBody.innerHTML = '';
+
+            clientsData.forEach(item => {
+                const row = createClientTableRow(item);
+                tableBody.appendChild(row);
+            });
+        }
+
+        initializeClientsTable();
+        console.log('✅ DataTable rebuilt successfully');
+        return true;
+    } catch (error) {
+        console.error('🚨 Error rebuilding DataTable:', error);
+        return false;
+    }
+}
+
+function handleClientUpdate(clientData) {
+    console.log('📝 Handling client update in DataTable');
+
+    if (!clientData || !clientData.ClientId) {
+        console.warn('⚠️ No client data provided for update');
+        return refreshDataTableDisplay();
+    }
+
+    try {
+        const success = updateTableRowSmart(clientData);
+
+        if (success) {
+            refreshDataTableDisplay();
+            console.log('✅ Client row updated successfully');
         } else {
-            button.disabled = false;
-            if (button.dataset.originalText) {
-                button.innerHTML = button.dataset.originalText;
-                delete button.dataset.originalText;
-            }
+            console.warn('⚠️ Row update failed, falling back to full refresh');
+            reloadDataTableFromServer();
         }
-    };
-}
-
-// Toast notification fallbacks
-if (!UIUtils.showSuccess) {
-    UIUtils.showSuccess = function (message, title = 'Success') {
-        console.log(`✅ ${title}: ${message}`);
-        showToast(message, 'success', title);
-    };
-}
-
-if (!UIUtils.showError) {
-    UIUtils.showError = function (message, title = 'Error') {
-        console.error(`❌ ${title}: ${message}`);
-        showToast(message, 'error', title);
-    };
-}
-
-if (!UIUtils.showWarning) {
-    UIUtils.showWarning = function (message, title = 'Warning') {
-        console.warn(`⚠️ ${title}: ${message}`);
-        showToast(message, 'warning', title);
-    };
-}
-
-if (!UIUtils.showInfo) {
-    UIUtils.showInfo = function (message, title = 'Info') {
-        console.info(`ℹ️ ${title}: ${message}`);
-        showToast(message, 'info', title);
-    };
-}
-
-// Simple toast function fallback
-function showToast(message, type = 'info', title = '') {
-    // Try to use existing toast system first
-    if (typeof window.showToast === 'function') {
-        window.showToast(message, type, title);
-        return;
-    }
-
-    // Fallback to console and alert for critical errors
-    const emoji = {
-        'success': '✅',
-        'error': '❌',
-        'warning': '⚠️',
-        'info': 'ℹ️'
-    };
-
-    console.log(`${emoji[type] || 'ℹ️'} ${title}: ${message}`);
-
-    // Only show alert for errors to avoid spam
-    if (type === 'error') {
-        alert(`${title}: ${message}`);
+    } catch (error) {
+        console.error('🚨 Error updating client row:', error);
+        reloadDataTableFromServer();
     }
 }
+
+function handleClientCreate(clientData) {
+    console.log('➕ Handling new client creation in DataTable');
+    reloadDataTableFromServer();
+}
+
+function handleClientDelete(clientData) {
+    console.log('🗑️ Handling client deletion in DataTable');
+
+    if (!clientData || !clientData.ClientId) {
+        return refreshDataTableDisplay();
+    }
+
+    try {
+        const row = findClientRowById(clientData.ClientId);
+        if (row && window.clientsTable) {
+            const dataTableRow = window.clientsTable.row(row);
+            dataTableRow.remove();
+            window.clientsTable.draw();
+            console.log('✅ Client row removed successfully');
+        } else {
+            refreshDataTableDisplay();
+        }
+    } catch (error) {
+        console.error('🚨 Error removing client row:', error);
+        refreshDataTableDisplay();
+    }
+}
+
+function updateTableRowSmart(clientData) {
+    console.log('🎯 Smart row update for client:', clientData.ClientId);
+
+    try {
+        const row = findClientRowById(clientData.ClientId);
+        if (!row) {
+            console.warn('⚠️ Row not found for client:', clientData.ClientId);
+            return false;
+        }
+
+        const cells = row.querySelectorAll('td');
+        if (cells.length >= 4) {
+            updateClientNameCell(cells[0], clientData);
+            updateAddressCell(cells[2], clientData);
+            updatePhoneCell(cells[3], clientData);
+
+            row.setAttribute('data-client-name', clientData.Name || '');
+
+            console.log('✅ Row updated successfully');
+            return true;
+        }
+        return false;
+    } catch (error) {
+        console.error('🚨 Error in smart row update:', error);
+        return false;
+    }
+}
+
+function updateClientNameCell(cell, clientData) {
+    if (!cell || !clientData.Name) return;
+
+    try {
+        const nameEl = cell.querySelector('.fw-semibold');
+        const avatar = cell.querySelector('.client-avatar');
+
+        if (nameEl) {
+            nameEl.textContent = clientData.Name;
+        }
+
+        if (avatar) {
+            const initials = getClientInitials(clientData.Name);
+            avatar.textContent = initials;
+        }
+    } catch (error) {
+        console.error('🚨 Error updating name cell:', error);
+    }
+}
+
+function updateAddressCell(cell, clientData) {
+    if (!cell) return;
+
+    try {
+        const address = clientData.Address || '';
+        const city = clientData.City || '';
+        const state = clientData.State || '';
+        const zip = clientData.Zip || '';
+
+        const fullAddress = [address, city, state, zip]
+            .filter(part => part.trim())
+            .join(', ');
+
+        cell.textContent = fullAddress;
+    } catch (error) {
+        console.error('🚨 Error updating address cell:', error);
+    }
+}
+
+function updatePhoneCell(cell, clientData) {
+    if (!cell) return;
+
+    try {
+        cell.textContent = clientData.PhoneNumber || '';
+    } catch (error) {
+        console.error('🚨 Error updating phone cell:', error);
+    }
+}
+
+function refreshDataTableDisplay() {
+    console.log('🔄 Refreshing DataTable display');
+
+    try {
+        if (window.clientsTable && $.fn.dataTable.isDataTable('#clientsTable')) {
+            window.clientsTable.draw(false);
+            console.log('✅ DataTable display refreshed');
+            return true;
+        } else {
+            console.warn('⚠️ DataTable not found');
+            return false;
+        }
+    } catch (error) {
+        console.error('🚨 Error refreshing DataTable display:', error);
+        return false;
+    }
+}
+
+function showTableLoading(message = 'Loading...') {
+    const tableContainer = document.querySelector('#clientsTable_wrapper');
+    if (tableContainer) {
+        let overlay = tableContainer.querySelector('.table-loading-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.className = 'table-loading-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center';
+            overlay.style.cssText = `
+                background: rgba(255, 255, 255, 0.9);
+                z-index: 1000;
+                backdrop-filter: blur(1px);
+            `;
+            tableContainer.style.position = 'relative';
+            tableContainer.appendChild(overlay);
+        }
+
+        overlay.innerHTML = `
+            <div class="text-center">
+                <div class="spinner-border text-primary mb-2" role="status"></div>
+                <div class="text-muted">${message}</div>
+            </div>
+        `;
+        overlay.style.display = 'flex';
+    }
+}
+
+function hideTableLoading() {
+    const overlay = document.querySelector('.table-loading-overlay');
+    if (overlay) {
+        overlay.style.display = 'none';
+    }
+}
+
+function fallbackRefresh() {
+    console.log('⚠️ Using fallback refresh strategy');
+    UIUtils.showInfo('Refreshing client data...', 'Info');
+    setTimeout(() => {
+        refreshDataTableDisplay() || reloadCurrentPage();
+    }, 1000);
+}
+
+function reloadCurrentPage() {
+    console.log('🔄 Reloading current page as last resort');
+    UIUtils.showInfo('Refreshing page to update client data...', 'Info');
+    setTimeout(() => {
+        window.location.reload();
+    }, 1500);
+}
+
+function createClientTableRow(clientItem) {
+    const client = clientItem.Client || clientItem;
+    const row = document.createElement('tr');
+    row.setAttribute('data-status', 'active');
+    row.setAttribute('data-client-name', client.Name || '');
+
+    const initials = getClientInitials(client.Name);
+
+    row.innerHTML = `
+        <td>
+            <div class="client-container">
+                <div class="client-avatar">${initials}</div>
+                <div>
+                    <div class="fw-semibold">${client.Name || 'N/A'}</div>
+                    <div class="text-muted small">ID: #${client.ClientNumber || 'N/A'}</div>
+                </div>
+            </div>
+        </td>
+        <td>${client.CreatedDate ? new Date(client.CreatedDate).toLocaleDateString() : 'N/A'}</td>
+        <td>${[client.Address, client.City, client.State, client.Zip].filter(p => p).join(', ')}</td>
+        <td>${client.PhoneNumber || ''}</td>
+        <td>
+            <div class="table-actions">
+                <button type="button" class="btn btn-sm btn-outline-primary action-icon" 
+                        data-bs-toggle="modal" data-bs-target="#editClientModal" 
+                        data-client-id="${client.ClientId}" title="Edit">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <a href="/Client/Details/${client.ClientId}" class="btn btn-sm btn-primary action-icon" title="View">
+                    <i class="bi bi-eye"></i>
+                </a>
+            </div>
+        </td>
+    `;
+
+    return row;
+}
+
+// Public API for external use
+window.ClientTableRefresh = {
+    refresh: refreshClientDataTable,
+    afterUpdate: (clientData) => refreshClientDataTable({ clientData, action: 'update' }),
+    afterCreate: (clientData) => refreshClientDataTable({ clientData, action: 'create' }),
+    afterDelete: (clientData) => refreshClientDataTable({ clientData, action: 'delete' }),
+    forceReload: () => refreshClientDataTable({ forceReload: true }),
+    redraw: refreshDataTableDisplay,
+    showLoading: showTableLoading,
+    hideLoading: hideTableLoading
+};
+
+// ========== ORIGINAL CLIENT MANAGEMENT FUNCTIONALITY ==========
 
 // Initialize DataTable if the table exists
 const clientsTable = $('#clientsTable');
@@ -145,8 +532,10 @@ function initializeClientsTable() {
         order: [[1, 'desc']]
     });
 
-    // Initialize filters
+    window.clientsTable = table;
     initializeTableFilters(table);
+    console.log('✅ DataTable initialized and stored globally');
+    return table;
 }
 
 // ========== TABLE FILTERS ==========
@@ -162,16 +551,13 @@ function initializeTableFilters(table) {
     }
 
     function applyFilters() {
-        // Remove existing custom filters
         $.fn.dataTable.ext.search = $.fn.dataTable.ext.search.filter(fn =>
             !fn.name || fn.name !== 'clientTableFilter'
         );
 
-        // Add new filter
         const customFilter = function (settings, data, dataIndex) {
             if (settings.nTable.id !== 'clientsTable') return true;
 
-            // Skip if all filters are 'all'
             if (statusFilter.val() === 'all' && joinDateFilter.val() === 'all') {
                 return true;
             }
@@ -179,7 +565,6 @@ function initializeTableFilters(table) {
             const row = $(table.row(dataIndex).node());
 
             try {
-                // Status filtering
                 if (statusFilter.val() !== 'all') {
                     const statusValue = statusFilter.val().toLowerCase();
                     const rowStatus = (row.attr('data-status') || 'active').toLowerCase();
@@ -188,7 +573,6 @@ function initializeTableFilters(table) {
                     }
                 }
 
-                // Date filtering
                 if (joinDateFilter.val() !== 'all') {
                     if (!filterByDate(row, data[1], joinDateFilter.val())) {
                         return false;
@@ -287,7 +671,6 @@ function initializeTableFilters(table) {
         return value.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     }
 
-    // Event listeners
     statusFilter.on('change', applyFilters);
     joinDateFilter.on('change', applyFilters);
 
@@ -309,7 +692,6 @@ function initializeModalHandlers() {
         editClientModal.addEventListener('show.bs.modal', handleEditModalShow);
         editClientModal.addEventListener('hidden.bs.modal', handleEditModalHide);
 
-        // Tab switching handlers
         const tabButtons = editClientModal.querySelectorAll('button[data-bs-toggle="tab"]');
         tabButtons.forEach(button => {
             button.addEventListener('shown.bs.tab', handleTabSwitch);
@@ -334,20 +716,24 @@ function handleEditModalShow(event) {
         return;
     }
 
-    // Set client IDs in forms
     safeSetValue('editClientId', clientId);
     safeSetValue('deleteClientId', clientId);
-
-    // Clear previous data
     clearAllForms();
-
-    // Load client data immediately
     loadClientData(clientId);
 }
 
 function handleEditModalHide() {
-    console.log('🚪 Edit modal closed, clearing forms');
+    console.log('🚪 Edit modal closed, clearing forms and resetting buttons');
+
     clearAllForms();
+
+    const modal = document.getElementById('editClientModal');
+    if (modal) {
+        const buttons = modal.querySelectorAll('button[type="submit"]');
+        buttons.forEach(button => {
+            resetSaveButton(button);
+        });
+    }
 }
 
 function handleTabSwitch(event) {
@@ -360,7 +746,6 @@ function handleTabSwitch(event) {
 
     switch (targetTab) {
         case '#details-tab-pane':
-            // Details should already be loaded when modal opens
             break;
         case '#courts-tab-pane':
             loadClientCourts(clientId);
@@ -392,13 +777,11 @@ function handleDeleteClient() {
 
 // ========== FORM HANDLERS ==========
 function initializeFormHandlers() {
-    // AJAX form submission for client edit
     const editClientForm = document.getElementById('editClientForm');
     if (editClientForm) {
         editClientForm.addEventListener('submit', handleClientFormSubmit);
     }
 
-    // Court management buttons
     document.addEventListener('click', function (e) {
         if (e.target.closest('#addCourtBtn')) {
             e.preventDefault();
@@ -407,7 +790,6 @@ function initializeFormHandlers() {
         }
     });
 
-    // User management buttons  
     document.addEventListener('click', function (e) {
         if (e.target.closest('#addUserBtn')) {
             e.preventDefault();
@@ -417,7 +799,7 @@ function initializeFormHandlers() {
     });
 }
 
-// ========== FIXED FORM SUBMISSION ==========
+// ========== ENHANCED FORM SUBMISSION ==========
 function handleClientFormSubmit(e) {
     e.preventDefault();
 
@@ -426,35 +808,25 @@ function handleClientFormSubmit(e) {
     const form = e.target;
     const submitBtn = form.querySelector('button[type="submit"]');
 
-    // Show loading state
     if (submitBtn) {
         UIUtils.setButtonLoading(submitBtn, true, 'Saving...');
     }
 
-    // Create FormData object (this preserves the form structure)
     const formData = new FormData(form);
 
-    // Debug: Log form data
     console.log('📋 Form data being sent:');
     for (let [key, value] of formData.entries()) {
         console.log(`  ${key}: ${value}`);
     }
 
-    // Get anti-forgery token
     const token = getAntiForgeryToken();
-    if (token) {
-        console.log('🔐 Anti-forgery token found');
-    } else {
-        console.warn('⚠️ No anti-forgery token found');
-    }
 
-    // Option 1: Use FormData with proper headers (RECOMMENDED)
     fetch('/Client/Edit', {
         method: 'POST',
-        body: formData, // Send as FormData, not JSON
+        body: formData,
         headers: {
-            'X-Requested-With': 'XMLHttpRequest', // Indicates AJAX request
-            'RequestVerificationToken': token // Add token as header
+            'X-Requested-With': 'XMLHttpRequest',
+            'RequestVerificationToken': token
         }
     })
         .then(response => {
@@ -464,12 +836,10 @@ function handleClientFormSubmit(e) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 
-            // Check if response is JSON
             const contentType = response.headers.get('content-type');
             if (contentType && contentType.includes('application/json')) {
                 return response.json();
             } else {
-                // If not JSON, it might be a redirect or error page
                 return response.text().then(text => {
                     throw new Error(`Expected JSON response but got: ${text.substring(0, 200)}...`);
                 });
@@ -477,54 +847,74 @@ function handleClientFormSubmit(e) {
         })
         .then(result => {
             console.log('✅ Response received:', result);
-
-            if (submitBtn) {
-                UIUtils.setButtonLoading(submitBtn, false);
-            }
-
-            if (result.success) {
-                UIUtils.showSuccess(result.message || 'Client updated successfully', 'Success');
-
-                // Update the table row if visible
-                const formDataObj = {};
-                for (let [key, value] of formData.entries()) {
-                    formDataObj[key] = value;
-                }
-                updateTableRow(formDataObj);
-
-                // Close modal after short delay
-                setTimeout(() => {
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('editClientModal'));
-                    if (modal) modal.hide();
-                }, 1000);
-            } else {
-                UIUtils.showError(result.message || 'Failed to save client', 'Error');
-            }
+            handleSaveSuccess(result, formData, submitBtn);
         })
         .catch(error => {
             console.error('🚨 Error saving client:', error);
-
-            if (submitBtn) {
-                UIUtils.setButtonLoading(submitBtn, false);
-            }
-
-            UIUtils.showError(`Error saving client: ${error.message}`, 'Error');
+            handleSaveError(error, submitBtn);
         });
 }
 
-// Alternative method using traditional form submission (fallback)
-function handleClientFormSubmitTraditional(e) {
-    console.log('📤 Using traditional form submission as fallback');
-
-    const form = e.target;
-    const submitBtn = form.querySelector('button[type="submit"]');
+// ========== SUCCESS/ERROR HANDLERS ==========
+function handleSaveSuccess(result, formData, submitBtn) {
+    console.log('✅ Handling save success');
 
     if (submitBtn) {
-        UIUtils.setButtonLoading(submitBtn, true, 'Saving...');
+        resetSaveButton(submitBtn);
     }
 
-    // Let the form submit normally - don't prevent default
-    // The server will handle it and redirect back
+    if (result.success) {
+        UIUtils.showSuccess(result.message || 'Client updated successfully', 'Success');
+
+        const formDataObj = {};
+        for (let [key, value] of formData.entries()) {
+            formDataObj[key] = value;
+        }
+
+        // Use enhanced refresh system
+        ClientTableRefresh.afterUpdate(formDataObj);
+
+        setTimeout(() => {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editClientModal'));
+            if (modal) {
+                modal.hide();
+            }
+        }, 1500);
+    } else {
+        UIUtils.showError(result.message || 'Failed to save client', 'Error');
+    }
+}
+
+function handleSaveError(error, submitBtn) {
+    console.error('🚨 Handling save error:', error);
+
+    if (submitBtn) {
+        resetSaveButton(submitBtn);
+    }
+
+    UIUtils.showError(`Error saving client: ${error.message}`, 'Error');
+}
+
+// ========== BUTTON MANAGEMENT ==========
+function resetSaveButton(button) {
+    if (!button) return;
+
+    try {
+        UIUtils.setButtonLoading(button, false);
+        button.disabled = false;
+
+        if (button.dataset.originalText) {
+            button.textContent = button.dataset.originalText;
+            delete button.dataset.originalText;
+        } else {
+            button.textContent = 'Save Changes';
+        }
+
+        button.classList.remove('loading');
+        console.log('✅ Save button reset successfully');
+    } catch (error) {
+        console.error('🚨 Error resetting save button:', error);
+    }
 }
 
 // ========== DATA LOADING FUNCTIONS ==========
@@ -536,7 +926,6 @@ function loadClientData(clientId) {
         return;
     }
 
-    // Try to populate from table data first for immediate feedback
     const row = findClientRowById(clientId);
     if (row) {
         console.log('📋 Found table row, extracting data...');
@@ -544,7 +933,6 @@ function loadClientData(clientId) {
         populateFromTableData(tableData);
     }
 
-    // Always call API for complete data
     fetch(`/Client/GetClientData?id=${encodeURIComponent(clientId)}`)
         .then(response => {
             if (!response.ok) {
@@ -560,13 +948,11 @@ function loadClientData(clientId) {
                 console.log('✅ Client data loaded and populated successfully');
             } else {
                 console.warn('⚠️ API returned success=false:', data.message);
-                // Keep table data if API fails
                 UIUtils.showWarning(`Limited client data loaded: ${data.message || 'API error'}`, 'Warning');
             }
         })
         .catch(error => {
             console.error('🚨 Error loading client data:', error);
-            // Keep table data if API fails
             UIUtils.showWarning(`Using table data only. Error: ${error.message}`, 'Warning');
         });
 }
@@ -576,19 +962,15 @@ function extractTableData(row) {
 
     console.log('📋 Extracting data from table row');
 
-    // Initialize data object
     const dataFromAttributes = {};
 
-    // Get data from button first (most reliable)
     const editBtn = row.querySelector('button[data-client-id]');
     if (editBtn) {
         dataFromAttributes.clientId = editBtn.getAttribute('data-client-id');
     }
 
-    // Extract from cell content
     const cells = row.querySelectorAll('td');
     if (cells.length >= 4) {
-        // Client name and number from first column
         const clientCell = cells[0];
         const nameEl = clientCell.querySelector('.fw-semibold');
         const numberEl = clientCell.querySelector('.text-muted.small');
@@ -601,12 +983,10 @@ function extractTableData(row) {
             if (match) dataFromAttributes.clientNumber = match[1];
         }
 
-        // Date from second column
         if (cells[1]) {
             dataFromAttributes.createdDate = cells[1].textContent.trim();
         }
 
-        // Address from third column
         if (cells[2]) {
             const addressText = cells[2].textContent.trim();
             const addressParts = addressText.split(',').map(part => part.trim());
@@ -618,7 +998,6 @@ function extractTableData(row) {
             }
         }
 
-        // Phone from fourth column
         if (cells[3]) {
             dataFromAttributes.phoneNumber = cells[3].textContent.trim();
         }
@@ -665,12 +1044,10 @@ function populateFromAPIData(data) {
         if (client.notes) safeSetValue('editNotes', client.notes);
         if (client.createdDate) safeSetValue('editCreatedDate', client.createdDate);
 
-        // Set status if available
         if (client.status) {
             safeSetSelect('editStatus', client.status);
         }
 
-        // Load courts data
         if (data.courtList) {
             displayClientCourts(data.courtList);
         }
@@ -686,7 +1063,6 @@ function findClientRowById(clientId) {
 
     console.log('🔍 Looking for row with client ID:', clientId);
 
-    // Try different strategies to find the row
     let row = document.querySelector(`tr[data-client-id="${clientId}"]`);
     if (row) return row;
 
@@ -696,7 +1072,6 @@ function findClientRowById(clientId) {
         if (row) return row;
     }
 
-    // Search within table body
     const tableBody = document.querySelector('#clientsTable tbody');
     if (tableBody) {
         const allRows = tableBody.querySelectorAll('tr');
@@ -758,7 +1133,6 @@ function loadClientUsers(clientId) {
             </td>
         </tr>`;
 
-    // Mock data for now - replace with actual API call
     setTimeout(() => {
         const mockUsers = [
             {
@@ -841,7 +1215,6 @@ function displayClientCourts(courts) {
 
     courtsTableBody.innerHTML = html;
 
-    // Add event listeners
     courtsTableBody.querySelectorAll('.edit-court-btn').forEach(button => {
         button.addEventListener('click', function () {
             const courtId = this.getAttribute('data-court-id');
@@ -913,7 +1286,6 @@ function displayClientUsers(users) {
 
     usersTableBody.innerHTML = html;
 
-    // Add event listeners
     usersTableBody.querySelectorAll('.edit-user-btn').forEach(button => {
         button.addEventListener('click', function () {
             const userId = this.getAttribute('data-user-id');
@@ -934,7 +1306,6 @@ function displayClientUsers(users) {
 function updateClientBusinessDisplay(business) {
     console.log('📊 Updating business display:', business);
 
-    // Update business information
     safeUpdateElement('businessName', business.businessName);
     safeUpdateElement('businessType', business.businessType);
     safeUpdateElement('establishedDate', formatDate(business.establishedDate));
@@ -943,7 +1314,6 @@ function updateClientBusinessDisplay(business) {
     safeUpdateElement('operatingHours', business.operatingHours);
     safeUpdateElement('website', business.website);
 
-    // Update statistics
     if (business.stats) {
         safeUpdateElement('totalBookings', business.stats.totalBookings);
         safeUpdateElement('monthlyUsers', business.stats.monthlyUsers);
@@ -951,7 +1321,6 @@ function updateClientBusinessDisplay(business) {
         safeUpdateElement('repeatCustomers', business.stats.repeatCustomers + '%');
     }
 
-    // Update services list
     if (business.primaryServices) {
         const servicesList = document.getElementById('primaryServices');
         if (servicesList) {
@@ -1073,11 +1442,6 @@ function addClientUser(clientId) {
     const email = prompt('Enter user email address:');
     if (!email) return;
 
-    const userData = {
-        clientId: clientId,
-        email: email
-    };
-
     UIUtils.showInfo('User management functionality coming soon', 'Info');
 }
 
@@ -1150,28 +1514,6 @@ function clearBusinessDisplay() {
     }
 }
 
-function updateTableRow(clientData) {
-    // Update the table row with new data if the table is visible
-    const row = findClientRowById(clientData.ClientId);
-    if (row) {
-        // Update name
-        const nameEl = row.querySelector('.fw-semibold');
-        if (nameEl) nameEl.textContent = clientData.Name;
-
-        // Update address
-        const addressCell = row.cells[2];
-        if (addressCell) {
-            addressCell.textContent = `${clientData.Address}, ${clientData.City}, ${clientData.State}, ${clientData.Zip}`;
-        }
-
-        // Update phone
-        const phoneCell = row.cells[3];
-        if (phoneCell) {
-            phoneCell.textContent = clientData.PhoneNumber;
-        }
-    }
-}
-
 // ========== UTILITY FUNCTIONS ==========
 function safeSetValue(elementId, value) {
     const element = document.getElementById(elementId);
@@ -1219,6 +1561,18 @@ function getUserInitials(firstName, lastName, email) {
     return 'NA';
 }
 
+function getClientInitials(clientName) {
+    if (!clientName) return 'NA';
+
+    const names = clientName.trim().split(' ');
+    if (names.length >= 2) {
+        return `${names[0][0]}${names[1][0]}`.toUpperCase();
+    } else if (names.length === 1 && names[0].length > 0) {
+        return names[0][0].toUpperCase();
+    }
+    return 'NA';
+}
+
 function getStatusClass(status) {
     switch (status?.toLowerCase()) {
         case 'inactive': return 'bg-secondary';
@@ -1237,7 +1591,7 @@ function formatDate(dateString) {
     }
 }
 
-// Debug functions
+// ========== DEBUGGING AND TESTING ==========
 window.clientDebug = {
     loadClientData,
     findClientRowById,
@@ -1248,18 +1602,53 @@ window.clientDebug = {
     loadClientUsers,
     loadClientBusinessData,
     handleClientFormSubmit,
-    handleClientFormSubmitTraditional
+    resetSaveButton
 };
 
-console.log('🐛 Debug functions available: window.clientDebug');
+window.testClientRefresh = {
+    testUpdate: () => {
+        const mockClient = {
+            ClientId: 'test-update-123',
+            Name: 'Updated Test Client',
+            Address: '456 Updated St',
+            City: 'Updated City',
+            State: 'UC',
+            Zip: '54321',
+            PhoneNumber: '555-9999'
+        };
+        ClientTableRefresh.afterUpdate(mockClient);
+    },
 
-// Emergency fallback - if AJAX continues to fail, switch to traditional form submission
-window.switchToTraditionalSubmission = function () {
-    console.log('🔄 Switching to traditional form submission');
-    const editClientForm = document.getElementById('editClientForm');
-    if (editClientForm) {
-        editClientForm.removeEventListener('submit', handleClientFormSubmit);
-        editClientForm.addEventListener('submit', handleClientFormSubmitTraditional);
-        UIUtils.showInfo('Switched to traditional form submission mode', 'Info');
+    testCreate: () => {
+        const mockClient = {
+            ClientId: 'test-create-456',
+            Name: 'New Test Client',
+            Address: '789 New St',
+            City: 'New City',
+            State: 'NC',
+            Zip: '99999',
+            PhoneNumber: '555-1111'
+        };
+        ClientTableRefresh.afterCreate(mockClient);
+    },
+
+    testDelete: () => {
+        ClientTableRefresh.afterDelete({ ClientId: 'test-delete-789' });
+    },
+
+    testForceReload: () => {
+        ClientTableRefresh.forceReload();
+    },
+
+    testLoading: () => {
+        ClientTableRefresh.showLoading('Testing loading state...');
+        setTimeout(() => {
+            ClientTableRefresh.hideLoading();
+        }, 3000);
     }
 };
+
+console.log('🎯 Enhanced Client Management loaded successfully');
+console.log('🐛 Debug functions: window.clientDebug');
+console.log('🧪 Test functions: window.testClientRefresh');
+console.log('🔧 Refresh API: window.ClientTableRefresh');
