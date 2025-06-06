@@ -1030,9 +1030,9 @@
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="signup-client-tab" data-bs-toggle="tab" data-bs-target="#client-signup" type="button" role="tab" aria-controls="client-signup" aria-selected="true">Client</button>
                         </li>
-                        <li class="nav-item" role="presentation">
+                       @*  <li class="nav-item" role="presentation">
                             <button class="nav-link" id="signup-admin-tab" data-bs-toggle="tab" data-bs-target="#admin-signup" type="button" role="tab" aria-controls="admin-signup" aria-selected="false">Admin</button>
-                        </li>
+                        </li> *@
                     </ul>
                     <div class="tab-content" id="signupTabsContent">
                         <div class="tab-pane fade show active" id="client-signup" role="tabpanel" aria-labelledby="signup-client-tab">
@@ -1103,7 +1103,7 @@
                                 <button type="submit" class="btn btn-orange w-100">Create Client Account</button>
                             </form>
                         </div>
-                        <div class="tab-pane fade" id="admin-signup" role="tabpanel" aria-labelledby="signup-admin-tab">
+                       @*  <div class="tab-pane fade" id="admin-signup" role="tabpanel" aria-labelledby="signup-admin-tab">
                             <form asp-controller="Account" asp-action="AdminSignup" method="post">
                                 @Html.AntiForgeryToken()
                                 <div class="row">
@@ -1183,14 +1183,12 @@
                                 </div>
                                 <button type="submit" class="btn btn-navy w-100">Create Admin Account</button>
                             </form>
-                        </div>
+                        </div> *@
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <div id="loginFooter" class="w-100 text-center">
-                    <p class="mb-0">Don't have an account? <a href="#" class="text-orange" id="showSignupForm">Sign up</a></p>
-                </div>
+                
                 <div id="signupFooter" class="w-100 text-center" style="display: none;">
                     <p class="mb-0">Already have an account? <a href="#" class="text-orange" id="showLoginForm">Sign in</a></p>
                 </div>

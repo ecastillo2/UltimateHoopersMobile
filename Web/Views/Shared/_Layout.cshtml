@@ -137,7 +137,8 @@
                                                 Remember me
                                             </label>
                                         </div>
-                                        <a href="#" class="text-orange">Forgot password?</a>
+                                        <a href="#" class="text-orange" onclick="handleForgotPassword()" role="button">Forgot password?</a>
+
                                     </div>
                                     <button type="submit" class="btn btn-orange w-100">Login as Client</button>
                                 </form>
@@ -161,7 +162,7 @@
                                                 Remember me
                                             </label>
                                         </div>
-                                        <a href="#" class="text-navy">Forgot password?</a>
+                                        <a href="#" class="text-navy" onclick="handleForgotPassword()" role="button">Forgot password?</a>
                                     </div>
                                     <button type="submit" class="btn btn-navy w-100">Login as Admin</button>
                                 </form>
@@ -175,9 +176,9 @@
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link active" id="signup-client-tab" data-bs-toggle="tab" data-bs-target="#client-signup" type="button" role="tab" aria-controls="client-signup" aria-selected="true">Client</button>
                             </li>
-                            <li class="nav-item" role="presentation">
+                            @* <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="signup-admin-tab" data-bs-toggle="tab" data-bs-target="#admin-signup" type="button" role="tab" aria-controls="admin-signup" aria-selected="false">Admin</button>
-                            </li>
+                            </li> *@
                         </ul>
                         <div class="tab-content" id="signupTabsContent">
                             <div class="tab-pane fade show active" id="client-signup" role="tabpanel" aria-labelledby="signup-client-tab">
@@ -214,41 +215,18 @@
                                         <label for="clientSignupConfirmPassword" class="form-label">Confirm Password <span class="text-danger">*</span></label>
                                         <input type="password" class="form-control" id="clientSignupConfirmPassword" name="confirmPassword" required>
                                     </div>
-                                    <div class="mb-3">
-                                        <label for="clientSignupAge" class="form-label">Age Group</label>
-                                        <select class="form-select" id="clientSignupAge" name="ageGroup">
-                                            <option value="">Select Age Group</option>
-                                            <option value="youth">Youth (Under 16)</option>
-                                            <option value="teen">Teen (16-18)</option>
-                                            <option value="adult">Adult (18+)</option>
-                                        </select>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="clientSignupSkillLevel" class="form-label">Skill Level</label>
-                                        <select class="form-select" id="clientSignupSkillLevel" name="skillLevel">
-                                            <option value="">Select Skill Level</option>
-                                            <option value="beginner">Beginner</option>
-                                            <option value="intermediate">Intermediate</option>
-                                            <option value="advanced">Advanced</option>
-                                            <option value="professional">Professional</option>
-                                        </select>
-                                    </div>
+                                                                 
                                     <div class="form-check mb-3">
                                         <input class="form-check-input" type="checkbox" id="clientSignupTerms" name="acceptTerms" required>
                                         <label class="form-check-label" for="clientSignupTerms">
                                             I agree to the <a href="#" class="text-orange">Terms of Service</a> and <a href="#" class="text-orange">Privacy Policy</a> <span class="text-danger">*</span>
                                         </label>
                                     </div>
-                                    <div class="form-check mb-3">
-                                        <input class="form-check-input" type="checkbox" id="clientSignupNewsletter" name="subscribeNewsletter">
-                                        <label class="form-check-label" for="clientSignupNewsletter">
-                                            Subscribe to newsletter for training tips and updates
-                                        </label>
-                                    </div>
+                                   
                                     <button type="submit" class="btn btn-orange w-100">Create Client Account</button>
                                 </form>
                             </div>
-                            <div class="tab-pane fade" id="admin-signup" role="tabpanel" aria-labelledby="signup-admin-tab">
+                            @* <div class="tab-pane fade" id="admin-signup" role="tabpanel" aria-labelledby="signup-admin-tab">
                                 <form asp-controller="Account" asp-action="AdminSignup" method="post">
                                     @Html.AntiForgeryToken()
                                     <div class="row">
@@ -328,13 +306,13 @@
                                     </div>
                                     <button type="submit" class="btn btn-navy w-100">Create Admin Account</button>
                                 </form>
-                            </div>
+                            </div> *@
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <div id="loginFooter" class="w-100 text-center">
-                        <p class="mb-0">Don't have an account? <a href="#" class="text-orange" id="showSignupForm">Sign up</a></p>
+                        <p class="mb-0">Don't have an Client account? <a href="#" class="text-orange" id="showSignupForm">Sign up</a></p>
                     </div>
                     <div id="signupFooter" class="w-100 text-center" style="display: none;">
                         <p class="mb-0">Already have an account? <a href="#" class="text-orange" id="showLoginForm">Sign in</a></p>
@@ -372,6 +350,108 @@
             }
         });
     </script>
+
+    <script>
+// Option 1: Simple function approach
+function handleForgotPassword() {
+    console.log('Forgot password clicked');
+    
+    // Close the login modal first
+    const loginModal = document.getElementById('loginModal');
+    if (loginModal) {
+        const modalInstance = bootstrap.Modal.getInstance(loginModal);
+        if (modalInstance) {
+            modalInstance.hide();
+        }
+    }
+    
+    // Navigate to forgot password page after modal closes
+    setTimeout(() => {
+        console.log('Navigating to forgot password page');
+        window.location.href = '/Account/ForgotPassword';
+    }, 300);
+}
+
+// Option 3: Event listener approach (use instead of onClick if preferred)
+document.addEventListener('DOMContentLoaded', function() {
+    const forgotPasswordLinks = document.querySelectorAll('.forgot-password-link');
+    
+    forgotPasswordLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const url = this.dataset.url || '/Account/ForgotPassword';
+            
+            // Close modal
+            const loginModal = document.getElementById('loginModal');
+            if (loginModal) {
+                const modalInstance = bootstrap.Modal.getInstance(loginModal);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+            }
+            
+            // Navigate
+            setTimeout(() => {
+                window.location.href = url;
+            }, 300);
+        });
+    });
+});
+
+// Debug function - call in browser console to test
+window.testForgotPassword = function() {
+    console.log('Testing forgot password functionality...');
+    console.log('Modal element:', document.getElementById('loginModal'));
+    console.log('Forgot password links:', document.querySelectorAll('a[href*="ForgotPassword"], .forgot-password-link'));
+    
+    // Test navigation
+    console.log('Testing navigation to:', '/Account/ForgotPassword');
+    window.location.href = '/Account/ForgotPassword';
+};
+</script>
+
+<!-- CSS to ensure links are clickable -->
+<style>
+.forgot-password-link,
+a[href*="ForgotPassword"] {
+    cursor: pointer !important;
+    pointer-events: auto !important;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+}
+
+.forgot-password-link:hover,
+a[href*="ForgotPassword"]:hover {
+    opacity: 0.8;
+    text-decoration: underline;
+}
+
+/* Ensure modal doesn't interfere with link clicks */
+#loginModal .modal-body a {
+    position: relative;
+    z-index: 1;
+}
+</style>
+
+<!-- Add this JavaScript at the bottom of _Layout.cshtml -->
+<script>
+function handleForgotPassword() {
+    // Close the login modal first
+    const loginModal = document.getElementById('loginModal');
+    if (loginModal) {
+        const modalInstance = bootstrap.Modal.getInstance(loginModal);
+        if (modalInstance) {
+            modalInstance.hide();
+        }
+    }
+    
+    // Navigate to forgot password page after modal closes
+    setTimeout(() => {
+        window.location.href = '/Account/ForgotPassword';
+    }, 300);
+}
+</script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>
