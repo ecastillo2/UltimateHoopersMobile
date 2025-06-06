@@ -1,6 +1,6 @@
 ﻿/**
- * Client Management JavaScript - COMPLETE FIXED VERSION
- * Enhanced with proper DataTable refresh, button state management, and fixed toast notifications
+ * Enhanced Client Management JavaScript with Image Upload Functionality
+ * Enhanced with proper DataTable refresh, button state management, fixed toast notifications, and image handling
  */
 
 // ========== TOAST NOTIFICATION SYSTEM (FIXED) ==========
@@ -337,6 +337,7 @@ function updateClientNameCell(cell, clientData) {
     try {
         const nameEl = cell.querySelector('.fw-semibold');
         const avatar = cell.querySelector('.client-avatar');
+        const image = cell.querySelector('.client-image');
 
         if (nameEl) {
             nameEl.textContent = clientData.Name;
@@ -345,6 +346,16 @@ function updateClientNameCell(cell, clientData) {
         if (avatar) {
             const initials = getClientInitials(clientData.Name);
             avatar.textContent = initials;
+        }
+
+        // Update image if provided
+        if (clientData.imageUrl && image) {
+            image.src = clientData.imageUrl;
+            image.style.display = 'block';
+            if (avatar) avatar.style.display = 'none';
+        } else if (!clientData.imageUrl && image && avatar) {
+            image.style.display = 'none';
+            avatar.style.display = 'flex';
         }
     } catch (error) {
         console.error('🚨 Error updating name cell:', error);
@@ -452,13 +463,21 @@ function createClientTableRow(clientItem) {
     const row = document.createElement('tr');
     row.setAttribute('data-status', 'active');
     row.setAttribute('data-client-name', client.Name || '');
+    row.setAttribute('data-client-id', client.ClientId || '');
 
     const initials = getClientInitials(client.Name);
 
     row.innerHTML = `
         <td>
-            <div class="client-container">
-                <div class="client-avatar">${initials}</div>
+            <div class="client-container d-flex align-items-center">
+                <div class="product-image-cell me-3">
+                    ${client.ImageUrl ?
+            `<img src="${client.ImageUrl}" alt="${client.Name || 'Client'}" class="client-image" 
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" loading="lazy">
+                         <div class="client-avatar" style="display: none;">${initials}</div>` :
+            `<div class="client-avatar">${initials}</div>`
+        }
+                </div>
                 <div>
                     <div class="fw-semibold">${client.Name || 'N/A'}</div>
                     <div class="text-muted small">ID: #${client.ClientNumber || 'N/A'}</div>
@@ -508,8 +527,9 @@ if (clientsTable.length > 0) {
 // Initialize modals and event handlers
 initializeModalHandlers();
 initializeFormHandlers();
+initializeImageHandlers();
 
-console.log('🎯 Client Management initialized successfully');
+console.log('🎯 Enhanced Client Management with Image Upload initialized successfully');
 
 // ========== TABLE INITIALIZATION ==========
 function initializeClientsTable() {
@@ -777,9 +797,18 @@ function handleDeleteClient() {
 
 // ========== FORM HANDLERS ==========
 function initializeFormHandlers() {
+    // Add Client Form
+    const addClientForm = document.getElementById('addClientForm');
+    if (addClientForm) {
+        addClientForm.addEventListener('submit', handleAddClientFormSubmit);
+        console.log('✅ Add client form handler attached');
+    }
+
+    // Edit Client Form
     const editClientForm = document.getElementById('editClientForm');
     if (editClientForm) {
-        editClientForm.addEventListener('submit', handleClientFormSubmit);
+        editClientForm.addEventListener('submit', handleEditClientFormSubmit);
+        console.log('✅ Edit client form handler attached');
     }
 
     document.addEventListener('click', function (e) {
@@ -799,14 +828,95 @@ function initializeFormHandlers() {
     });
 }
 
-// ========== ENHANCED FORM SUBMISSION ==========
-function handleClientFormSubmit(e) {
+function handleAddClientFormSubmit(e) {
     e.preventDefault();
-
-    console.log('📤 Form submission started');
+    console.log('📤 Add client form submitted');
 
     const form = e.target;
     const submitBtn = form.querySelector('button[type="submit"]');
+
+    // Enhanced validation
+    const validationErrors = validateClientForm(form);
+    if (validationErrors.length > 0) {
+        UIUtils.showError(`Please fix the following errors: ${validationErrors.join(', ')}`, 'Validation Error');
+        return;
+    }
+
+    if (submitBtn) {
+        UIUtils.setButtonLoading(submitBtn, true, 'Adding Client...');
+    }
+
+    const formData = new FormData(form);
+
+    fetch(form.action, {
+        method: 'POST',
+        body: formData
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return response.json();
+            } else {
+                // Handle redirect for successful creation
+                UIUtils.showSuccess('Client created successfully!', 'Success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+                return;
+            }
+        })
+        .then(result => {
+            if (result && result.success !== undefined) {
+                if (result.success) {
+                    UIUtils.showSuccess('Client created successfully!', 'Success');
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addClientModal'));
+                    if (modal) modal.hide();
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    UIUtils.showError(`Error creating client: ${result.message || 'Unknown error'}`, 'Error');
+                }
+            }
+        })
+        .catch(error => {
+            console.error('🚨 Error creating client:', error);
+            UIUtils.showError(`Error creating client: ${error.message}`, 'Error');
+        })
+        .finally(() => {
+            if (submitBtn) {
+                UIUtils.setButtonLoading(submitBtn, false);
+            }
+        });
+}
+
+function handleEditClientFormSubmit(e) {
+    e.preventDefault();
+    console.log('📤 Edit client form submitted');
+
+    const form = e.target;
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    // Pre-submission validation
+    const clientIdField = form.querySelector('#editClientId');
+    const clientIdValue = clientIdField?.value;
+
+    console.log('🔍 PRE-SUBMISSION VALIDATION:');
+    console.log('  ClientId value:', `"${clientIdValue}"`);
+
+    if (!clientIdValue || clientIdValue.trim() === '') {
+        console.error('❌ CRITICAL: ClientId is empty at submission!');
+        UIUtils.showError('Client ID is missing. Please close and reopen the edit dialog.', 'Error');
+        return;
+    }
+
+    // Enhanced validation
+    const validationErrors = validateClientForm(form);
+    if (validationErrors.length > 0) {
+        UIUtils.showError(`Please fix the following errors: ${validationErrors.join(', ')}`, 'Validation Error');
+        return;
+    }
 
     if (submitBtn) {
         UIUtils.setButtonLoading(submitBtn, true, 'Saving...');
@@ -814,45 +924,323 @@ function handleClientFormSubmit(e) {
 
     const formData = new FormData(form);
 
-    console.log('📋 Form data being sent:');
+    // Debug: Log form data
+    console.log('📦 FormData contents:');
     for (let [key, value] of formData.entries()) {
-        console.log(`  ${key}: ${value}`);
+        if (value instanceof File) {
+            console.log(`  ${key}: File(${value.name}, ${value.size} bytes)`);
+        } else {
+            console.log(`  ${key}: "${value}"`);
+        }
     }
 
-    const token = getAntiForgeryToken();
-
-    fetch('/Client/Edit', {
+    fetch(form.action, {
         method: 'POST',
         body: formData,
         headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'RequestVerificationToken': token
+            'X-Requested-With': 'XMLHttpRequest'
         }
     })
         .then(response => {
-            console.log('📨 Response status:', response.status);
+            console.log('📡 Response received:', response.status, response.statusText);
 
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-                return response.json();
-            } else {
                 return response.text().then(text => {
-                    throw new Error(`Expected JSON response but got: ${text.substring(0, 200)}...`);
+                    console.error('❌ Server error response:', text);
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 });
             }
+            return response.json();
         })
         .then(result => {
-            console.log('✅ Response received:', result);
-            handleSaveSuccess(result, formData, submitBtn);
+            console.log('📦 Parsed result:', result);
+
+            if (result.success) {
+                UIUtils.showSuccess('Client updated successfully!', 'Success');
+
+                // Use enhanced refresh system
+                ClientTableRefresh.afterUpdate(result.client);
+
+                setTimeout(() => {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editClientModal'));
+                    if (modal) modal.hide();
+                }, 1500);
+            } else {
+                console.error('❌ Server error:', result.message);
+                UIUtils.showError(`Error: ${result.message}`, 'Error');
+
+                if (result.field) {
+                    const errorField = form.querySelector(`#edit${result.field}`);
+                    if (errorField) {
+                        errorField.classList.add('is-invalid');
+                        errorField.focus();
+                    }
+                }
+            }
         })
         .catch(error => {
-            console.error('🚨 Error saving client:', error);
-            handleSaveError(error, submitBtn);
+            console.error('❌ Error updating client:', error);
+            UIUtils.showError(`Error updating client: ${error.message}`, 'Error');
+        })
+        .finally(() => {
+            if (submitBtn) {
+                UIUtils.setButtonLoading(submitBtn, false);
+            }
         });
+}
+
+// ========== IMAGE HANDLERS ==========
+function initializeImageHandlers() {
+    console.log('🖼️ Initializing image handlers...');
+
+    // Initialize image file inputs
+    const imageFileInputs = document.querySelectorAll('input[type="file"][accept*="image"]');
+    imageFileInputs.forEach(input => {
+        input.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleImagePreview(file, input);
+            }
+        });
+        console.log('✅ Image file input handler attached:', input.id);
+    });
+
+    // Initialize image URL inputs
+    const imageUrlInputs = document.querySelectorAll('input[name="ImageUrl"]');
+    imageUrlInputs.forEach(input => {
+        input.addEventListener('blur', function () {
+            if (this.value) {
+                handleImageUrlChange(this);
+            }
+        });
+        console.log('✅ Image URL input handler attached:', input.id);
+    });
+
+    // Initialize clear image buttons
+    const clearAddImageBtn = document.getElementById('clearAddClientImage');
+    if (clearAddImageBtn) {
+        clearAddImageBtn.addEventListener('click', function () {
+            clearAddImagePreview();
+        });
+        console.log('✅ Clear add image button handler attached');
+    }
+
+    const clearEditImageBtn = document.getElementById('clearEditClientImage');
+    if (clearEditImageBtn) {
+        clearEditImageBtn.addEventListener('click', function () {
+            clearEditImagePreview();
+        });
+        console.log('✅ Clear edit image button handler attached');
+    }
+
+    const removeImageBtn = document.getElementById('removeClientImage');
+    if (removeImageBtn) {
+        removeImageBtn.addEventListener('click', function () {
+            removeClientImage();
+        });
+        console.log('✅ Remove image button handler attached');
+    }
+
+    console.log('✅ Image handlers initialized successfully');
+}
+
+function handleImagePreview(file, input) {
+    console.log('🖼️ Handling image preview for file:', file.name);
+
+    // Validate file
+    const validation = validateImageFile(file);
+    if (!validation.isValid) {
+        UIUtils.showError(validation.errorMessage, 'Invalid Image');
+        input.value = '';
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        const imageUrl = e.target.result;
+        updateImagePreview(imageUrl, input);
+    };
+    reader.readAsDataURL(file);
+}
+
+function handleImageUrlChange(input) {
+    console.log('🔗 Handling image URL change:', input.value);
+
+    if (!input.value.trim()) {
+        updateImagePreview('', input);
+        return;
+    }
+
+    // Basic URL validation
+    if (!input.value.match(/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp|bmp)(\?.*)?$/i)) {
+        UIUtils.showWarning('Please enter a valid image URL ending with .jpg, .png, .gif, etc.', 'Invalid URL');
+        return;
+    }
+
+    // If API is available, validate the URL
+    if (window.clientUrls?.validateImageUrl) {
+        validateImageUrlServer(input.value, input);
+    } else {
+        updateImagePreview(input.value, input);
+    }
+}
+
+function validateImageUrlServer(imageUrl, input) {
+    console.log('🔍 Validating image URL on server:', imageUrl);
+
+    fetch(window.clientUrls.validateImageUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'RequestVerificationToken': getAntiForgeryToken()
+        },
+        body: JSON.stringify({ imageUrl: imageUrl })
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateImagePreview(imageUrl, input);
+                UIUtils.showSuccess('Valid image URL', 'Success');
+            } else {
+                UIUtils.showError(data.message || 'Invalid image URL', 'Validation Error');
+                input.classList.add('is-invalid');
+            }
+        })
+        .catch(error => {
+            console.error('🚨 Error validating image URL:', error);
+            updateImagePreview(imageUrl, input);
+            UIUtils.showWarning('Could not validate URL, but proceeding anyway', 'Warning');
+        });
+}
+
+function updateImagePreview(imageUrl, input) {
+    console.log('🖼️ Updating image preview:', imageUrl ? 'with image' : 'clearing');
+
+    const isAddForm = input && input.id.includes('add');
+    const currentImage = document.getElementById(isAddForm ? 'addClientPreviewImage' : 'currentClientImage');
+    const placeholder = document.getElementById(isAddForm ? 'addClientImagePlaceholder' : 'currentClientImagePlaceholder');
+    const container = document.getElementById(isAddForm ? 'addClientImagePreview' : 'currentClientImagePreview');
+
+    if (!currentImage || !placeholder) {
+        console.warn('⚠️ Image preview elements not found');
+        return;
+    }
+
+    if (imageUrl && imageUrl.trim()) {
+        currentImage.src = imageUrl;
+        currentImage.style.display = 'block';
+        placeholder.style.display = 'none';
+        if (container) container.classList.add('has-image');
+
+        currentImage.onerror = function () {
+            console.warn('⚠️ Image failed to load:', imageUrl);
+            currentImage.style.display = 'none';
+            placeholder.style.display = 'flex';
+            if (container) container.classList.remove('has-image');
+            UIUtils.showError('Failed to load image. Please check the URL or try a different image.', 'Image Load Error');
+        };
+
+        console.log('✅ Image preview updated with URL');
+    } else {
+        currentImage.style.display = 'none';
+        placeholder.style.display = 'flex';
+        currentImage.src = '';
+        if (container) container.classList.remove('has-image');
+        console.log('✅ Image preview cleared');
+    }
+
+    // Remove any validation states
+    if (input) {
+        input.classList.remove('is-invalid', 'is-valid');
+    }
+}
+
+function clearAddImagePreview() {
+    console.log('🧹 Clearing add image preview');
+
+    const fileInput = document.getElementById('addClientImageFile');
+    const urlInput = document.getElementById('addClientImageURL');
+
+    if (fileInput) fileInput.value = '';
+    if (urlInput) urlInput.value = '';
+
+    updateImagePreview('', fileInput || urlInput);
+    UIUtils.showInfo('Image cleared', 'Info');
+}
+
+function clearEditImagePreview() {
+    console.log('🧹 Clearing edit image preview');
+
+    const fileInput = document.getElementById('editClientImageFile');
+    const urlInput = document.getElementById('editClientImageURL');
+
+    if (fileInput) fileInput.value = '';
+    if (urlInput) urlInput.value = '';
+
+    updateImagePreview('', fileInput || urlInput);
+    UIUtils.showInfo('Image cleared', 'Info');
+}
+
+function removeClientImage() {
+    console.log('🗑️ Removing client image');
+
+    if (!confirm('Are you sure you want to remove the client image? This action cannot be undone.')) {
+        return;
+    }
+
+    clearEditImagePreview();
+
+    // Add a hidden field to indicate image removal
+    const form = document.getElementById('editClientForm');
+    if (form) {
+        let removeField = form.querySelector('input[name="RemoveImage"]');
+        if (!removeField) {
+            removeField = document.createElement('input');
+            removeField.type = 'hidden';
+            removeField.name = 'RemoveImage';
+            form.appendChild(removeField);
+        }
+        removeField.value = 'true';
+    }
+
+    UIUtils.showInfo('Image will be removed when you save the client', 'Info');
+}
+
+function validateImageFile(file) {
+    const maxFileSize = 5 * 1024 * 1024; // 5MB
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
+
+    if (file.size > maxFileSize) {
+        return {
+            isValid: false,
+            errorMessage: `File size (${formatFileSize(file.size)}) exceeds maximum allowed size (5MB)`
+        };
+    }
+
+    if (!allowedTypes.includes(file.type.toLowerCase())) {
+        return {
+            isValid: false,
+            errorMessage: 'Invalid file type. Allowed types: JPG, PNG, GIF, WebP, BMP'
+        };
+    }
+
+    const extension = '.' + file.name.split('.').pop().toLowerCase();
+    if (!allowedExtensions.includes(extension)) {
+        return {
+            isValid: false,
+            errorMessage: 'Invalid file extension. Allowed extensions: .jpg, .png, .gif, .webp, .bmp'
+        };
+    }
+
+    return { isValid: true };
+}
+
+function formatFileSize(bytes) {
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    if (bytes === 0) return '0 B';
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
 }
 
 // ========== SUCCESS/ERROR HANDLERS ==========
@@ -933,7 +1321,12 @@ function loadClientData(clientId) {
         populateFromTableData(tableData);
     }
 
-    fetch(`/Client/GetClientData?id=${encodeURIComponent(clientId)}`)
+    if (!window.clientUrls?.getClientData) {
+        console.warn('⚠️ GetClientData API URL not configured, using table data only');
+        return;
+    }
+
+    fetch(`${window.clientUrls.getClientData}?id=${encodeURIComponent(clientId)}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -974,6 +1367,7 @@ function extractTableData(row) {
         const clientCell = cells[0];
         const nameEl = clientCell.querySelector('.fw-semibold');
         const numberEl = clientCell.querySelector('.text-muted.small');
+        const imageEl = clientCell.querySelector('.client-image');
 
         if (nameEl) {
             dataFromAttributes.name = nameEl.textContent.trim();
@@ -981,6 +1375,9 @@ function extractTableData(row) {
         if (numberEl) {
             const match = numberEl.textContent.match(/ID: #(\S+)/);
             if (match) dataFromAttributes.clientNumber = match[1];
+        }
+        if (imageEl && imageEl.src) {
+            dataFromAttributes.imageUrl = imageEl.src;
         }
 
         if (cells[1]) {
@@ -1020,6 +1417,10 @@ function populateFromTableData(data) {
         if (data.zip) safeSetValue('editZip', data.zip);
         if (data.phoneNumber) safeSetValue('editPhoneNumber', data.phoneNumber);
         if (data.createdDate) safeSetValue('editCreatedDate', data.createdDate);
+        if (data.imageUrl) {
+            safeSetValue('editClientImageURL', data.imageUrl);
+            updateImagePreview(data.imageUrl, document.getElementById('editClientImageURL'));
+        }
 
         console.log('✅ Table data populated successfully');
     } catch (error) {
@@ -1043,6 +1444,10 @@ function populateFromAPIData(data) {
         if (client.phoneNumber) safeSetValue('editPhoneNumber', client.phoneNumber);
         if (client.notes) safeSetValue('editNotes', client.notes);
         if (client.createdDate) safeSetValue('editCreatedDate', client.createdDate);
+        if (client.imageUrl) {
+            safeSetValue('editClientImageURL', client.imageUrl);
+            updateImagePreview(client.imageUrl, document.getElementById('editClientImageURL'));
+        }
 
         if (client.status) {
             safeSetSelect('editStatus', client.status);
@@ -1099,7 +1504,17 @@ function loadClientCourts(clientId) {
             </td>
         </tr>`;
 
-    fetch(`/Client/GetClientData?id=${encodeURIComponent(clientId)}`)
+    if (!window.clientUrls?.getClientData) {
+        courtsTableBody.innerHTML = `
+            <tr>
+                <td colspan="3" class="text-center py-4 text-muted">
+                    No courts data available.
+                </td>
+            </tr>`;
+        return;
+    }
+
+    fetch(`${window.clientUrls.getClientData}?id=${encodeURIComponent(clientId)}`)
         .then(response => response.json())
         .then(data => {
             if (data.success !== false && data.courtList) {
@@ -1158,6 +1573,11 @@ function loadClientUsers(clientId) {
 
 function loadClientBusinessData(clientId) {
     console.log('📊 Loading business data for client:', clientId);
+
+    if (!window.clientUrls?.getClientBusinessData) {
+        UIUtils.showWarning('Business data API not available', 'Warning');
+        return;
+    }
 
     fetch(`/Client/GetClientBusinessData?id=${encodeURIComponent(clientId)}`)
         .then(response => response.json())
@@ -1458,18 +1878,59 @@ function removeClientUser(clientId, userId) {
     UIUtils.showInfo('User management functionality coming soon', 'Info');
 }
 
+// ========== VALIDATION FUNCTIONS ==========
+function validateClientForm(form) {
+    const errors = [];
+
+    const nameField = form.querySelector('[name="Name"]');
+    if (!nameField?.value?.trim()) {
+        errors.push('Client name is required');
+        nameField?.classList.add('is-invalid');
+    } else {
+        nameField?.classList.remove('is-invalid');
+    }
+
+    const addressField = form.querySelector('[name="Address"]');
+    if (!addressField?.value?.trim()) {
+        errors.push('Address is required');
+        addressField?.classList.add('is-invalid');
+    } else {
+        addressField?.classList.remove('is-invalid');
+    }
+
+    const cityField = form.querySelector('[name="City"]');
+    if (!cityField?.value?.trim()) {
+        errors.push('City is required');
+        cityField?.classList.add('is-invalid');
+    } else {
+        cityField?.classList.remove('is-invalid');
+    }
+
+    const zipField = form.querySelector('[name="Zip"]');
+    if (!zipField?.value?.trim()) {
+        errors.push('Zip code is required');
+        zipField?.classList.add('is-invalid');
+    } else {
+        zipField?.classList.remove('is-invalid');
+    }
+
+    return errors;
+}
+
 // ========== UI STATE MANAGEMENT ==========
 function clearAllForms() {
     clearClientDetailsForm();
     clearCourtsDisplay();
     clearUsersDisplay();
     clearBusinessDisplay();
+    clearImagePreviews();
 }
 
 function clearClientDetailsForm() {
     const fields = [
         'editClientNumber', 'editName', 'editAddress', 'editCity',
-        'editState', 'editZip', 'editPhoneNumber', 'editNotes', 'editCreatedDate'
+        'editState', 'editZip', 'editPhoneNumber', 'editNotes', 'editCreatedDate',
+        'editClientImageURL'
     ];
 
     fields.forEach(field => safeSetValue(field, ''));
@@ -1512,6 +1973,21 @@ function clearBusinessDisplay() {
     if (servicesList) {
         servicesList.innerHTML = '';
     }
+}
+
+function clearImagePreviews() {
+    // Clear edit image preview
+    updateImagePreview('', document.getElementById('editClientImageURL'));
+
+    // Clear add image preview
+    updateImagePreview('', document.getElementById('addClientImageURL'));
+
+    // Reset file inputs
+    const editFileInput = document.getElementById('editClientImageFile');
+    const addFileInput = document.getElementById('addClientImageFile');
+
+    if (editFileInput) editFileInput.value = '';
+    if (addFileInput) addFileInput.value = '';
 }
 
 // ========== UTILITY FUNCTIONS ==========
@@ -1601,8 +2077,11 @@ window.clientDebug = {
     loadClientCourts,
     loadClientUsers,
     loadClientBusinessData,
-    handleClientFormSubmit,
-    resetSaveButton
+    handleEditClientFormSubmit,
+    resetSaveButton,
+    updateImagePreview,
+    validateImageFile,
+    clearImagePreviews
 };
 
 window.testClientRefresh = {
@@ -1614,7 +2093,8 @@ window.testClientRefresh = {
             City: 'Updated City',
             State: 'UC',
             Zip: '54321',
-            PhoneNumber: '555-9999'
+            PhoneNumber: '555-9999',
+            imageUrl: 'https://via.placeholder.com/150'
         };
         ClientTableRefresh.afterUpdate(mockClient);
     },
@@ -1627,7 +2107,8 @@ window.testClientRefresh = {
             City: 'New City',
             State: 'NC',
             Zip: '99999',
-            PhoneNumber: '555-1111'
+            PhoneNumber: '555-1111',
+            imageUrl: 'https://via.placeholder.com/150'
         };
         ClientTableRefresh.afterCreate(mockClient);
     },
@@ -1648,7 +2129,8 @@ window.testClientRefresh = {
     }
 };
 
-console.log('🎯 Enhanced Client Management loaded successfully');
+console.log('🎯 Enhanced Client Management with Image Upload loaded successfully');
+console.log('🖼️ Image upload functionality enabled');
 console.log('🐛 Debug functions: window.clientDebug');
 console.log('🧪 Test functions: window.testClientRefresh');
 console.log('🔧 Refresh API: window.ClientTableRefresh');

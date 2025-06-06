@@ -1,7 +1,7 @@
 ﻿@model Website.ViewModels.ClientsViewModel
 
 @{
-    ViewData["Title"] = "Client";
+    ViewData["Title"] = "Client Management";
     var userType = ViewData["UserType"]?.ToString() ?? "Coach";
 }
 
@@ -10,17 +10,309 @@
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.bootstrap5.min.css">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.bootstrap5.min.css">
     <link rel="stylesheet" type="text/css" href="~/css/management.css">
+    <style>
+        /* Client Image Specific Styles */
+        .client-image {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+            transition: all 0.3s ease;
+        }
+
+            .client-image:hover {
+                transform: scale(1.1);
+                border-color: #007bff;
+                box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+            }
+
+        .client-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+            .client-avatar:hover {
+                transform: scale(1.1);
+                background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+                box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+            }
+
+        .image-preview-container {
+            border: 2px dashed #dee2e6;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+
+            .image-preview-container:hover {
+                border-color: #007bff;
+                background: linear-gradient(135deg, rgba(0, 123, 255, 0.05) 0%, rgba(0, 123, 255, 0.1) 100%);
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+            }
+
+            .image-preview-container.has-image {
+                border: 2px solid #28a745;
+                box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+                background: linear-gradient(135deg, rgba(40, 167, 69, 0.05) 0%, rgba(40, 167, 69, 0.1) 100%);
+            }
+
+            .image-preview-container.drag-over {
+                border-color: #007bff !important;
+                background: linear-gradient(135deg, rgba(0, 123, 255, 0.1) 0%, rgba(0, 123, 255, 0.2) 100%);
+                transform: scale(1.02);
+                box-shadow: 0 8px 25px rgba(0, 123, 255, 0.3);
+            }
+
+            .image-preview-container.error {
+                border-color: #dc3545;
+                background: linear-gradient(135deg, rgba(220, 53, 69, 0.05) 0%, rgba(220, 53, 69, 0.1) 100%);
+                animation: shake 0.5s ease-in-out;
+            }
+
+        #currentClientImage, #addClientPreviewImage {
+            max-width: 100%;
+            max-height: 200px;
+            object-fit: cover;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+        }
+
+            #currentClientImage:hover, #addClientPreviewImage:hover {
+                transform: scale(1.05);
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+                border-color: #007bff;
+            }
+
+        #addClientImagePlaceholder, #currentClientImagePlaceholder {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            padding: 2rem;
+            text-align: center;
+            color: #6c757d;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+        }
+
+            #addClientImagePlaceholder:hover, #currentClientImagePlaceholder:hover {
+                background: linear-gradient(135deg, rgba(0, 123, 255, 0.05) 0%, rgba(0, 123, 255, 0.1) 100%);
+                color: #007bff;
+                transform: translateY(-2px);
+            }
+
+            #addClientImagePlaceholder i, #currentClientImagePlaceholder i {
+                font-size: 3rem;
+                margin-bottom: 1rem;
+                opacity: 0.7;
+                transition: all 0.3s ease;
+            }
+
+            #addClientImagePlaceholder:hover i, #currentClientImagePlaceholder:hover i {
+                opacity: 1;
+                transform: scale(1.1);
+            }
+
+        .form-control[type="file"] {
+            border: 2px dashed #dee2e6;
+            padding: 0.75rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        }
+
+            .form-control[type="file"]:hover {
+                border-color: #007bff;
+                background: linear-gradient(135deg, rgba(0, 123, 255, 0.05) 0%, #ffffff 100%);
+            }
+
+            .form-control[type="file"]:focus {
+                border-color: #007bff;
+                box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+                outline: none;
+            }
+
+        input[name="ImageUrl"] {
+            transition: all 0.3s ease;
+            border-radius: 8px;
+        }
+
+            input[name="ImageUrl"]:focus {
+                border-color: #007bff;
+                box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+                outline: none;
+                transform: translateY(-1px);
+            }
+
+        .is-invalid {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        .is-valid {
+            border-color: #28a745 !important;
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25) !important;
+        }
+
+        .btn-orange {
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(255, 107, 53, 0.3);
+        }
+
+            .btn-orange:hover {
+                background: linear-gradient(135deg, #e55a2b 0%, #e8851a 100%);
+                color: white;
+                transform: translateY(-2px);
+                box-shadow: 0 6px 16px rgba(255, 107, 53, 0.4);
+            }
+
+            .btn-orange:active {
+                transform: translateY(0);
+                box-shadow: 0 2px 4px rgba(255, 107, 53, 0.3);
+            }
+
+        #clearAddClientImage, #clearEditClientImage, #removeClientImage {
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+        }
+
+            #clearAddClientImage:hover, #clearEditClientImage:hover {
+                background-color: #6c757d;
+                border-color: #6c757d;
+                color: white;
+                transform: translateY(-1px);
+                box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);
+            }
+
+            #removeClientImage:hover {
+                background-color: #dc3545;
+                border-color: #dc3545;
+                color: white;
+                transform: translateY(-1px);
+                box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+            }
+
+        .modal-loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1060;
+            backdrop-filter: blur(2px);
+            border-radius: 12px;
+        }
+
+        @@keyframes shake {
+            0%, 100%
+
+        {
+            transform: translateX(0);
+        }
+
+        25% {
+            transform: translateX(-5px);
+        }
+
+        75% {
+            transform: translateX(5px);
+        }
+
+        }
+
+        .client-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .no-clients-message {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #6c757d;
+        }
+
+        /* Responsive Design */
+        @@media (max-width: 768px) {
+            .image-preview-container
+
+        {
+            margin-bottom: 1rem;
+        }
+
+        #currentClientImage, #addClientPreviewImage {
+            max-height: 150px;
+        }
+
+        #addClientImagePlaceholder, #currentClientImagePlaceholder {
+            min-height: 150px;
+            padding: 1rem;
+        }
+
+            #addClientImagePlaceholder i, #currentClientImagePlaceholder i {
+                font-size: 2rem;
+            }
+
+        }
+
+        @@media (max-width: 576px) {
+            .btn-orange
+
+        {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .client-image, .client-avatar {
+            width: 32px;
+            height: 32px;
+            font-size: 12px;
+        }
+
+        }
+    </style>
 }
 
 <div class="dashboard-header">
     <div class="container">
-        <h1>Client</h1>
+        <h1>Client Management</h1>
+        <p class="lead">Manage client profiles, images, and associated data</p>
     </div>
 </div>
 
 <div class="container">
     <!-- Back button to dashboard -->
-    <div class="back-button">
+    <div class="back-button mb-4">
         <a href="@Url.Action("Dashboard", "Dashboard")" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
         </a>
@@ -69,15 +361,16 @@
         </div>
     </div>
 
+    <!-- Add Client Button -->
     <div class="row mb-4">
         <div class="col-12 text-end">
             <button type="button" class="btn btn-orange" data-bs-toggle="modal" data-bs-target="#addClientModal">
-                <i class="bi bi-plus-circle me-2"></i>Add Client
+                <i class="bi bi-plus-circle me-2"></i>Add New Client
             </button>
         </div>
     </div>
 
-    <!-- DataTable -->
+    <!-- Clients DataTable -->
     @if (Model?.Clients != null && Model.Clients.Any())
     {
         <div class="card shadow-sm">
@@ -88,7 +381,7 @@
                             <th>Client</th>
                             <th>Date Joined</th>
                             <th>Address</th>
-                            <th>Phone#</th>
+                            <th>Phone</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -110,37 +403,49 @@
                                 }
                             }
 
-                            <tr data-status="active">
+                            <tr data-status="active" data-client-id="@item.Client.ClientId">
                                 <td>
-                                    <div class="client-container">
-                                        <div class="product-image-cell me-3">
-                                        @if (!string.IsNullOrEmpty(@item.Client.ImageUrl))
-                                        {
-                                            <img src="@item.Client.ImageUrl" alt="@item.Client.Name" class="product-image"
-                                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-                                                 loading="lazy">
-                                                <div class="fw-semibold">@item.Client.Name</div>
-                                                <div class="text-muted small">ID: #@item.Client.ClientNumber</div>
-                                        }
-                                        else{
-                                        <div class="client-avatar">@clientInitials</div>
+                                    <div class="client-container d-flex align-items-center">
+                                        <div class="me-3">
+                                            @if (!string.IsNullOrEmpty(@item.Client.ImageUrl))
+                                            {
+                                                <img src="@item.Client.ImageUrl" alt="@item.Client.Name" class="client-image"
+                                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                                                     loading="lazy">
+                                                <div class="client-avatar" style="display: none;">@clientInitials</div>
+                                            }
+                                            else
+                                            {
+                                                <div class="client-avatar">@clientInitials</div>
+                                            }
+                                        </div>
                                         <div>
                                             <div class="fw-semibold">@item.Client.Name</div>
                                             <div class="text-muted small">ID: #@item.Client.ClientNumber</div>
                                         </div>
-                                        }
-                                         </div>
                                     </div>
                                 </td>
                                 <td>@(item.Client.CreatedDate?.ToString("MM/dd/yyyy") ?? "N/A")</td>
-                                <td>@item.Client.Address, @item.Client.City, @item.Client.State, @item.Client.Zip</td>
-                                <td>@item.Client.PhoneNumber</td>
+                                <td>
+                                    @{
+                                        var addressParts = new List<string>();
+                                        if (!string.IsNullOrEmpty(item.Client.Address)) addressParts.Add(item.Client.Address);
+                                        if (!string.IsNullOrEmpty(item.Client.City)) addressParts.Add(item.Client.City);
+                                        if (!string.IsNullOrEmpty(item.Client.State)) addressParts.Add(item.Client.State);
+                                        if (!string.IsNullOrEmpty(item.Client.Zip)) addressParts.Add(item.Client.Zip);
+                                    }
+                                    @string.Join(", ", addressParts)
+                                </td>
+                                <td>@(item.Client.PhoneNumber ?? "")</td>
                                 <td>
                                     <div class="table-actions">
-                                        <button type="button" class="btn btn-sm btn-outline-primary action-icon" data-bs-toggle="modal" data-bs-target="#editClientModal" data-client-id="@item.Client.ClientId" title="Edit">
+                                        <button type="button" class="btn btn-sm btn-outline-primary action-icon"
+                                                data-bs-toggle="modal" data-bs-target="#editClientModal"
+                                                data-client-id="@item.Client.ClientId" title="Edit Client">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                        <a href="@Url.Action("Details", "Client", new { id = item.Client.ClientId })" class="btn btn-sm btn-primary action-icon" title="View">
+                                        <a href="@Url.Action("Details", "Client", new { id = item.Client.ClientId })"
+                                           class="btn btn-sm btn-primary action-icon" title="View Details">
                                             <i class="bi bi-eye"></i>
                                         </a>
                                     </div>
@@ -159,7 +464,7 @@
             <h3 class="mt-3">No Clients Found</h3>
             <p class="text-muted">There are no clients available at the moment. Add a new client to get started!</p>
             <button type="button" class="btn btn-orange mt-3" data-bs-toggle="modal" data-bs-target="#addClientModal">
-                <i class="bi bi-plus-circle me-2"></i>Add Client
+                <i class="bi bi-plus-circle me-2"></i>Add Your First Client
             </button>
         </div>
     }
@@ -170,52 +475,121 @@
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addClientModalLabel">Add New Client</h5>
+                <h5 class="modal-title" id="addClientModalLabel">
+                    <i class="bi bi-person-plus me-2"></i>Add New Client
+                </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="addClientForm" method="post" action="@Url.Action("Create", "Client")">
+            <form id="addClientForm" method="post" action="@Url.Action("Create", "Client")" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
                 <div class="modal-body">
-                    <div class="row mb-3">
+                    <!-- Image Upload Section -->
+                    <div class="row mb-4">
                         <div class="col-md-12">
-                            <label for="addName" class="form-label">Client Name</label>
-                            <input type="text" class="form-control" id="addName" name="Name" required>
+                            <label class="form-label fw-bold">
+                                <i class="bi bi-camera me-1"></i>Client Image
+                            </label>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="image-preview-container mb-3">
+                                        <div id="addClientImagePreview" class="current-image-preview border rounded p-3 text-center" style="min-height: 200px; background-color: #f8f9fa;">
+                                            <img id="addClientPreviewImage" src="" alt="Client Image Preview" class="img-fluid rounded" style="max-height: 180px; display: none;">
+                                            <div id="addClientImagePlaceholder" class="d-flex flex-column align-items-center justify-content-center h-100">
+                                                <i class="bi bi-person-circle text-muted" style="font-size: 3rem;"></i>
+                                                <p class="text-muted mt-2 mb-0">Image Preview</p>
+                                                <small class="text-muted">No image selected</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="mb-3">
+                                        <label for="addClientImageFile" class="form-label">
+                                            <i class="bi bi-upload me-1"></i>Upload Image
+                                        </label>
+                                        <input type="file" class="form-control" id="addClientImageFile" name="ImageFile" accept="image/*">
+                                        <div class="form-text">
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            Supported formats: JPG, PNG, GIF, BMP, WEBP. Maximum size: 5MB
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="addClientImageURL" class="form-label">
+                                            <i class="bi bi-link-45deg me-1"></i>Or Enter Image URL
+                                        </label>
+                                        <input type="url" class="form-control" id="addClientImageURL" name="ImageUrl" placeholder="https://example.com/image.jpg">
+                                        <div class="form-text">
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            Provide a direct link to the client image
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" id="clearAddClientImage">
+                                            <i class="bi bi-x-circle me-1"></i>Clear Image
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
+
+                    <!-- Client Information -->
                     <div class="row mb-3">
                         <div class="col-md-12">
-                            <label for="addAddress" class="form-label">Address</label>
-                            <input type="text" class="form-control" id="addAddress" name="Address" required>
+                            <label for="addName" class="form-label">
+                                <i class="bi bi-person me-1"></i>Client Name <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="addName" name="Name" required maxlength="100" placeholder="Enter client full name">
                         </div>
                     </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="addAddress" class="form-label">
+                                <i class="bi bi-geo-alt me-1"></i>Address <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="addAddress" name="Address" required maxlength="200" placeholder="Street address">
+                        </div>
+                    </div>
+
                     <div class="row mb-3">
                         <div class="col-md-4">
-                            <label for="addCity" class="form-label">City</label>
-                            <input type="text" class="form-control" id="addCity" name="City" required>
+                            <label for="addCity" class="form-label">City <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="addCity" name="City" required maxlength="50" placeholder="City">
                         </div>
                         <div class="col-md-4">
                             <label for="addState" class="form-label">State</label>
-                            <input type="text" class="form-control" id="addState" name="State">
+                            <input type="text" class="form-control" id="addState" name="State" maxlength="10" placeholder="State">
                         </div>
                         <div class="col-md-4">
-                            <label for="addZip" class="form-label">Zip</label>
-                            <input type="text" class="form-control" id="addZip" name="Zip" required>
+                            <label for="addZip" class="form-label">Zip Code <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="addZip" name="Zip" required maxlength="20" placeholder="Zip code">
                         </div>
                     </div>
+
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="addPhoneNumber" class="form-label">Phone Number</label>
-                            <input type="tel" class="form-control" id="addPhoneNumber" name="PhoneNumber">
+                            <label for="addPhoneNumber" class="form-label">
+                                <i class="bi bi-telephone me-1"></i>Phone Number
+                            </label>
+                            <input type="tel" class="form-control" id="addPhoneNumber" name="PhoneNumber" maxlength="20" placeholder="(555) 123-4567">
                         </div>
                     </div>
+
                     <div class="mb-3">
-                        <label for="addNotes" class="form-label">Notes</label>
-                        <textarea class="form-control" id="addNotes" name="Notes" rows="3" placeholder="Training goals, preferences, medical notes, etc."></textarea>
+                        <label for="addNotes" class="form-label">
+                            <i class="bi bi-card-text me-1"></i>Notes
+                        </label>
+                        <textarea class="form-control" id="addNotes" name="Notes" rows="3" maxlength="500" placeholder="Training goals, preferences, medical notes, etc."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-orange">Add Client</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-orange">
+                        <i class="bi bi-plus-circle me-2"></i>Add Client
+                    </button>
                 </div>
             </form>
         </div>
@@ -224,76 +598,156 @@
 
 <!-- Edit Client Modal -->
 <div class="modal fade" id="editClientModal" tabindex="-1" aria-labelledby="editClientModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editClientModalLabel">Edit Client</h5>
+                <h5 class="modal-title" id="editClientModalLabel">
+                    <i class="bi bi-pencil-square me-2"></i>Edit Client
+                </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                <!-- Navigation Tabs -->
                 <ul class="nav nav-tabs" id="editClientTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="details-tab" data-bs-toggle="tab" data-bs-target="#details-tab-pane" type="button" role="tab" aria-controls="details-tab-pane" aria-selected="true">Details</button>
+                        <button class="nav-link active" id="details-tab" data-bs-toggle="tab" data-bs-target="#details-tab-pane" type="button" role="tab" aria-controls="details-tab-pane" aria-selected="true">
+                            <i class="bi bi-person me-1"></i>Details
+                        </button>
                     </li>
-                    <!-- Courts Tab -->
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="courts-tab" data-bs-toggle="tab" data-bs-target="#courts-tab-pane" type="button" role="tab" aria-controls="courts-tab-pane" aria-selected="false">Courts</button>
+                        <button class="nav-link" id="courts-tab" data-bs-toggle="tab" data-bs-target="#courts-tab-pane" type="button" role="tab" aria-controls="courts-tab-pane" aria-selected="false">
+                            <i class="bi bi-building me-1"></i>Courts
+                        </button>
                     </li>
-                    <!-- Users Tab -->
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="users-tab" data-bs-toggle="tab" data-bs-target="#users-tab-pane" type="button" role="tab" aria-controls="users-tab-pane" aria-selected="false">Users</button>
+                        <button class="nav-link" id="users-tab" data-bs-toggle="tab" data-bs-target="#users-tab-pane" type="button" role="tab" aria-controls="users-tab-pane" aria-selected="false">
+                            <i class="bi bi-people me-1"></i>Users
+                        </button>
                     </li>
                 </ul>
+
                 <div class="tab-content" id="editClientTabContent">
+                    <!-- Details Tab -->
                     <div class="tab-pane fade show active" id="details-tab-pane" role="tabpanel" aria-labelledby="details-tab" tabindex="0">
-                        <form id="editClientForm" method="post" action="@Url.Action("Edit", "Client")" class="mt-4">
+                        <form id="editClientForm" method="post" action="@Url.Action("Edit", "Client")" enctype="multipart/form-data" class="mt-4">
                             @Html.AntiForgeryToken()
                             <input type="hidden" id="editClientId" name="ClientId" value="" />
                             <input type="hidden" id="editClientNumber" name="ClientNumber" value="" />
                             <input type="hidden" id="editCreatedDate" name="CreatedDate" value="" />
 
-                            <div class="row mb-3">
+                            <!-- Image Upload Section -->
+                            <div class="row mb-4">
                                 <div class="col-md-12">
-                                    <label for="editName" class="form-label">Client Name</label>
-                                    <input type="text" class="form-control" id="editName" name="Name" required>
+                                    <label class="form-label fw-bold">
+                                        <i class="bi bi-camera me-1"></i>Client Image
+                                    </label>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="image-preview-container mb-3">
+                                                <div id="currentClientImagePreview" class="current-image-preview border rounded p-3 text-center" style="min-height: 200px; background-color: #f8f9fa;">
+                                                    <img id="currentClientImage" src="" alt="Current Client Image" class="img-fluid rounded" style="max-height: 180px; display: none;">
+                                                    <div id="currentClientImagePlaceholder" class="d-flex flex-column align-items-center justify-content-center h-100">
+                                                        <i class="bi bi-person-circle text-muted" style="font-size: 3rem;"></i>
+                                                        <p class="text-muted mt-2 mb-0">Current Image</p>
+                                                        <small class="text-muted">No image uploaded</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <div class="mb-3">
+                                                <label for="editClientImageFile" class="form-label">
+                                                    <i class="bi bi-upload me-1"></i>Upload New Image
+                                                </label>
+                                                <input type="file" class="form-control" id="editClientImageFile" name="ImageFile" accept="image/*">
+                                                <div class="form-text">
+                                                    <i class="bi bi-info-circle me-1"></i>
+                                                    Supported formats: JPG, PNG, GIF, BMP, WEBP. Maximum size: 5MB
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="editClientImageURL" class="form-label">
+                                                    <i class="bi bi-link-45deg me-1"></i>Or Enter Image URL
+                                                </label>
+                                                <input type="url" class="form-control" id="editClientImageURL" name="ImageUrl" placeholder="https://example.com/image.jpg">
+                                                <div class="form-text">
+                                                    <i class="bi bi-info-circle me-1"></i>
+                                                    Provide a direct link to the client image
+                                                </div>
+                                            </div>
+                                            <div class="mb-2">
+                                                <button type="button" class="btn btn-outline-secondary btn-sm me-2" id="clearEditClientImage">
+                                                    <i class="bi bi-x-circle me-1"></i>Clear Image
+                                                </button>
+                                                <button type="button" class="btn btn-outline-danger btn-sm" id="removeClientImage">
+                                                    <i class="bi bi-trash me-1"></i>Remove Image
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
+
+                            <!-- Client Information -->
                             <div class="row mb-3">
                                 <div class="col-md-12">
-                                    <label for="editAddress" class="form-label">Address</label>
-                                    <input type="text" class="form-control" id="editAddress" name="Address" required>
+                                    <label for="editName" class="form-label">
+                                        <i class="bi bi-person me-1"></i>Client Name <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="editName" name="Name" required maxlength="100">
                                 </div>
                             </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label for="editAddress" class="form-label">
+                                        <i class="bi bi-geo-alt me-1"></i>Address <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="editAddress" name="Address" required maxlength="200">
+                                </div>
+                            </div>
+
                             <div class="row mb-3">
                                 <div class="col-md-4">
-                                    <label for="editCity" class="form-label">City</label>
-                                    <input type="text" class="form-control" id="editCity" name="City" required>
+                                    <label for="editCity" class="form-label">City <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="editCity" name="City" required maxlength="50">
                                 </div>
                                 <div class="col-md-4">
                                     <label for="editState" class="form-label">State</label>
-                                    <input type="text" class="form-control" id="editState" name="State">
+                                    <input type="text" class="form-control" id="editState" name="State" maxlength="10">
                                 </div>
                                 <div class="col-md-4">
-                                    <label for="editZip" class="form-label">Zip</label>
-                                    <input type="text" class="form-control" id="editZip" name="Zip" required>
+                                    <label for="editZip" class="form-label">Zip Code <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="editZip" name="Zip" required maxlength="20">
                                 </div>
                             </div>
+
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <label for="editPhoneNumber" class="form-label">Phone Number</label>
-                                    <input type="tel" class="form-control" id="editPhoneNumber" name="PhoneNumber">
+                                    <label for="editPhoneNumber" class="form-label">
+                                        <i class="bi bi-telephone me-1"></i>Phone Number
+                                    </label>
+                                    <input type="tel" class="form-control" id="editPhoneNumber" name="PhoneNumber" maxlength="20">
                                 </div>
                             </div>
 
                             <div class="mb-3">
-                                <label for="editNotes" class="form-label">Notes</label>
-                                <textarea class="form-control" id="editNotes" name="Notes" rows="3" placeholder="Training goals, preferences, medical notes, etc."></textarea>
+                                <label for="editNotes" class="form-label">
+                                    <i class="bi bi-card-text me-1"></i>Notes
+                                </label>
+                                <textarea class="form-control" id="editNotes" name="Notes" rows="3" maxlength="500" placeholder="Training goals, preferences, medical notes, etc."></textarea>
                             </div>
 
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-danger me-auto" id="deleteClientBtn">Delete Client</button>
-                                <button type="submit" class="btn btn-orange">Save Changes</button>
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                    <i class="bi bi-x-circle me-2"></i>Cancel
+                                </button>
+                                <button type="button" class="btn btn-danger me-auto" id="deleteClientBtn">
+                                    <i class="bi bi-trash me-2"></i>Delete Client
+                                </button>
+                                <button type="submit" class="btn btn-orange">
+                                    <i class="bi bi-check-circle me-2"></i>Save Changes
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -302,7 +756,9 @@
                     <div class="tab-pane fade" id="courts-tab-pane" role="tabpanel" aria-labelledby="courts-tab" tabindex="0">
                         <div class="mt-4">
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="mb-0">Preferred Courts</h6>
+                                <h6 class="mb-0">
+                                    <i class="bi bi-building me-1"></i>Associated Courts
+                                </h6>
                                 <button class="btn btn-sm btn-outline-primary" id="addCourtBtn">
                                     <i class="bi bi-plus-circle me-1"></i>Add Court
                                 </button>
@@ -312,14 +768,14 @@
                                     <thead>
                                         <tr>
                                             <th>Court Name</th>
-                                            <th>Court Size</th>
+                                            <th>Type</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody id="courtsTableBody">
-                                        <!-- Court data will be displayed here -->
                                         <tr>
-                                            <td colspan="5" class="text-center py-4 text-muted">
+                                            <td colspan="3" class="text-center py-4 text-muted">
+                                                <div class="spinner-border spinner-border-sm text-secondary me-2" role="status"></div>
                                                 Loading courts...
                                             </td>
                                         </tr>
@@ -333,7 +789,9 @@
                     <div class="tab-pane fade" id="users-tab-pane" role="tabpanel" aria-labelledby="users-tab" tabindex="0">
                         <div class="mt-4">
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="mb-0">Associated Users</h6>
+                                <h6 class="mb-0">
+                                    <i class="bi bi-people me-1"></i>Associated Users
+                                </h6>
                                 <button class="btn btn-sm btn-outline-primary" id="addUserBtn">
                                     <i class="bi bi-person-plus me-1"></i>Add User
                                 </button>
@@ -350,9 +808,9 @@
                                         </tr>
                                     </thead>
                                     <tbody id="usersTableBody">
-                                        <!-- User data will be displayed here -->
                                         <tr>
                                             <td colspan="5" class="text-center py-4 text-muted">
+                                                <div class="spinner-border spinner-border-sm text-secondary me-2" role="status"></div>
                                                 Loading users...
                                             </td>
                                         </tr>
@@ -372,19 +830,34 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Confirm Deletion</h5>
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle me-2 text-danger"></i>Confirm Deletion
+                </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>Are you sure you want to delete this client? This action cannot be undone.</p>
-                <p class="text-danger"><strong>Note:</strong> All related data for this client will be permanently deleted.</p>
+                <div class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Warning:</strong> This action cannot be undone.
+                </div>
+                <p>Are you sure you want to delete this client? This will permanently remove:</p>
+                <ul class="list-unstyled">
+                    <li><i class="bi bi-check text-danger me-2"></i>Client profile and information</li>
+                    <li><i class="bi bi-check text-danger me-2"></i>Associated images and files</li>
+                    <li><i class="bi bi-check text-danger me-2"></i>Court associations</li>
+                    <li><i class="bi bi-check text-danger me-2"></i>User relationships</li>
+                </ul>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form id="deleteClientForm" method="post" action="@Url.Action("Delete", "Client")">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-2"></i>Cancel
+                </button>
+                <form id="deleteClientForm" method="post" action="@Url.Action("Delete", "Client")" class="d-inline">
                     @Html.AntiForgeryToken()
                     <input type="hidden" id="deleteClientId" name="id" value="" />
-                    <button type="submit" class="btn btn-danger">Delete Client</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-2"></i>Delete Client
+                    </button>
                 </form>
             </div>
         </div>
@@ -392,6 +865,7 @@
 </div>
 
 @section Scripts {
+    <!-- DataTables Scripts -->
     <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
     <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
@@ -400,7 +874,45 @@
     <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.bootstrap5.min.js"></script>
     <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
 
-    <!-- CRITICAL: Add utilities.js BEFORE clientManagement.js -->
+    <!-- API URL Configuration -->
+    <script>
+        window.clientUrls = {
+            getClientData: '@Url.Action("GetClientData", "Client")',
+            uploadImage: '@Url.Action("UploadClientImage", "Client")',
+            validateImageUrl: '@Url.Action("ValidateClientImageUrl", "Client")',
+            addCourt: '@Url.Action("AddClientCourt", "Client")',
+            updateCourt: '@Url.Action("UpdateClientCourt", "Client")',
+            removeCourt: '@Url.Action("RemoveClientCourt", "Client")',
+            getBusinessData: '@Url.Action("GetClientBusinessData", "Client")',
+            getActivity: '@Url.Action("GetClientActivity", "Client")'
+        };
+        console.log('🔗 Client API URLs configured:', window.clientUrls);
+    </script>
+
+    <!-- CRITICAL: Load utilities.js BEFORE clientManagement.js -->
     <script type="text/javascript" src="~/js/utilities.js"></script>
     <script type="text/javascript" src="~/js/clientManagement.js"></script>
+
+    <!-- Initialize on page load -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Client Management page loaded successfully');
+
+            // Show welcome message if no clients exist
+            @if (Model?.Clients == null || !Model.Clients.Any())
+            {
+                    <text>
+                    console.log('📝 No clients found - showing welcome state');
+                    </text>
+            }
+
+            // Initialize tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            console.log('✅ Client Management initialization complete');
+        });
+    </script>
 }

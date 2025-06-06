@@ -17,11 +17,13 @@ namespace Web.Controllers
     public class ClientController : Controller
     {
         private readonly IClientApi _clientApi;
+        private readonly IStorageApi _storageApi;
         private readonly ILogger<ClientController> _logger;
 
-        public ClientController(IClientApi clientApi, ILogger<ClientController> logger)
+        public ClientController(IClientApi clientApi, IStorageApi storageApi, ILogger<ClientController> logger)
         {
             _clientApi = clientApi ?? throw new ArgumentNullException(nameof(clientApi));
+            _storageApi = storageApi ?? throw new ArgumentNullException(nameof(storageApi));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -120,7 +122,7 @@ namespace Web.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authentication("Admin")]
-        public async Task<IActionResult> Create(Client client, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Create(Client client, IFormFile ImageFile, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -132,10 +134,67 @@ namespace Web.Controllers
                     return RedirectToAction("Index", "Home", new { scrollTo = "login" });
                 }
 
+                // Enhanced validation
+                var validationResult = ValidateClient(client);
+                if (!validationResult.IsValid)
+                {
+                    TempData["Error"] = validationResult.ErrorMessage;
+                    return View(client);
+                }
+
+                // Validate image file if provided
+                if (ImageFile != null)
+                {
+                    var fileValidation = ValidateImageFile(ImageFile);
+                    if (!fileValidation.IsValid)
+                    {
+                        TempData["Error"] = fileValidation.ErrorMessage;
+                        return View(client);
+                    }
+                }
+
                 // Set the current date if not provided
                 if (client.CreatedDate == default)
                 {
                     client.CreatedDate = DateTime.UtcNow;
+                }
+
+                // Handle image file upload
+                string imageUrl = null;
+                if (ImageFile != null && ImageFile.Length > 0)
+                {
+                    try
+                    {
+                        client.ImageUrl = client.ClientId + Path.GetExtension(ImageFile.FileName).ToLower();
+                        var uploadResult = await _storageApi.UpdateClientImageFileAsync(client.ClientId, ImageFile);
+
+                        if (uploadResult)
+                        {
+                            imageUrl = $"/api/storage/client/{client.ImageUrl}";
+                            client.ImageUrl = imageUrl;
+                        }
+                        else
+                        {
+                            TempData["Error"] = "Failed to upload image. Please try again.";
+                            return View(client);
+                        }
+                    }
+                    catch (Exception uploadEx)
+                    {
+                        _logger.LogError(uploadEx, "Error uploading image for client: {ClientId}", client.ClientId);
+                        TempData["Error"] = "Error uploading image: " + uploadEx.Message;
+                        return View(client);
+                    }
+                }
+                else if (!string.IsNullOrEmpty(client.ImageUrl))
+                {
+                    // Validate image URL if provided
+                    var urlValidation = await ValidateImageUrl(client.ImageUrl);
+                    if (!urlValidation.IsValid)
+                    {
+                        TempData["Error"] = urlValidation.ErrorMessage;
+                        return View(client);
+                    }
                 }
 
                 // Create new client
@@ -187,7 +246,7 @@ namespace Web.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authentication("Admin")]
-        public async Task<IActionResult> Edit(Client client, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Edit(Client client, IFormFile ImageFile, bool RemoveImage = false, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -241,6 +300,135 @@ namespace Web.Controllers
                     }
                 }
 
+                // Enhanced validation
+                var validationResult = ValidateClient(client);
+                if (!validationResult.IsValid)
+                {
+                    _logger.LogWarning("Client validation failed: {Error}", validationResult.ErrorMessage);
+                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    {
+                        return Json(new { success = false, message = validationResult.ErrorMessage, field = validationResult.Field });
+                    }
+                    else
+                    {
+                        TempData["Error"] = validationResult.ErrorMessage;
+                        return View(client);
+                    }
+                }
+
+                // Get existing client
+                var existingClient = await _clientApi.GetClientByIdAsync(client.ClientId, accessToken, cancellationToken);
+                if (existingClient == null)
+                {
+                    _logger.LogError("Existing client not found for ID: {ClientId}", client.ClientId);
+                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    {
+                        return Json(new { success = false, message = "Client not found" });
+                    }
+                    else
+                    {
+                        TempData["Error"] = "Client not found.";
+                        return RedirectToAction("Client");
+                    }
+                }
+
+                // Handle image operations
+                string imageUrl = existingClient.ImageUrl;
+
+                if (RemoveImage)
+                {
+                    _logger.LogInformation("Removing image for client: {ClientId}", client.ClientId);
+                    imageUrl = null;
+                    client.ImageUrl = null;
+                }
+                else if (ImageFile != null && ImageFile.Length > 0)
+                {
+                    _logger.LogInformation("Processing new image upload for client: {ClientId}", client.ClientId);
+
+                    // Validate and upload new image
+                    var fileValidation = ValidateImageFile(ImageFile);
+                    if (!fileValidation.IsValid)
+                    {
+                        _logger.LogWarning("Image file validation failed: {Error}", fileValidation.ErrorMessage);
+                        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                        {
+                            return Json(new { success = false, message = fileValidation.ErrorMessage });
+                        }
+                        else
+                        {
+                            TempData["Error"] = fileValidation.ErrorMessage;
+                            return View(client);
+                        }
+                    }
+
+                    try
+                    {
+                        var uploadResult = await _storageApi.UpdateClientImageFileAsync(client.ClientId, ImageFile);
+                        if (uploadResult)
+                        {
+                            imageUrl = $"/api/storage/client/{client.ClientId}{Path.GetExtension(ImageFile.FileName).ToLower()}";
+                            client.ImageUrl = imageUrl;
+                            _logger.LogInformation("Image uploaded successfully: {ImageUrl}", imageUrl);
+                        }
+                        else
+                        {
+                            _logger.LogError("Failed to upload image for client: {ClientId}", client.ClientId);
+                            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                            {
+                                return Json(new { success = false, message = "Failed to upload image. Please try again." });
+                            }
+                            else
+                            {
+                                TempData["Error"] = "Failed to upload image. Please try again.";
+                                return View(client);
+                            }
+                        }
+                    }
+                    catch (Exception uploadEx)
+                    {
+                        _logger.LogError(uploadEx, "Error uploading image for client: {ClientId}", client.ClientId);
+                        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                        {
+                            return Json(new { success = false, message = "Error uploading image: " + uploadEx.Message });
+                        }
+                        else
+                        {
+                            TempData["Error"] = "Error uploading image: " + uploadEx.Message;
+                            return View(client);
+                        }
+                    }
+                }
+                else if (!string.IsNullOrEmpty(client.ImageUrl) && client.ImageUrl != existingClient.ImageUrl)
+                {
+                    _logger.LogInformation("Validating new image URL for client: {ClientId}", client.ClientId);
+
+                    // Validate new image URL
+                    var urlValidation = await ValidateImageUrl(client.ImageUrl);
+                    if (!urlValidation.IsValid)
+                    {
+                        _logger.LogWarning("Image URL validation failed: {Error}", urlValidation.ErrorMessage);
+                        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                        {
+                            return Json(new { success = false, message = urlValidation.ErrorMessage });
+                        }
+                        else
+                        {
+                            TempData["Error"] = urlValidation.ErrorMessage;
+                            return View(client);
+                        }
+                    }
+                    imageUrl = client.ImageUrl;
+                }
+                else
+                {
+                    // Keep existing image
+                    client.ImageUrl = existingClient.ImageUrl;
+                }
+
+                // Preserve original client number and created date
+                client.ClientNumber = existingClient.ClientNumber;
+                client.CreatedDate = existingClient.CreatedDate;
+
                 // Log the client data being processed
                 _logger.LogInformation("Processing client update: {ClientId} - {ClientName}", client.ClientId, client.Name);
 
@@ -256,8 +444,20 @@ namespace Web.Controllers
                     {
                         success = true,
                         message = "Client updated successfully",
-                        name = client.Name,
-                        clientId = client.ClientId
+                        client = new
+                        {
+                            clientId = client.ClientId,
+                            name = client.Name,
+                            clientNumber = client.ClientNumber,
+                            address = client.Address,
+                            city = client.City,
+                            state = client.State,
+                            zip = client.Zip,
+                            phoneNumber = client.PhoneNumber,
+                            imageUrl = client.ImageUrl,
+                            notes = "",
+                            createdDate = client.CreatedDate
+                        }
                     });
                 }
                 else
@@ -303,7 +503,7 @@ namespace Web.Controllers
                     return RedirectToAction("Index", "Home", new { scrollTo = "login" });
                 }
 
-                // Get client details first to check permissions
+                // Get client details first to check permissions and clean up image
                 var client = await _clientApi.GetClientByIdAsync(id, accessToken, cancellationToken);
                 if (client == null)
                 {
@@ -314,6 +514,19 @@ namespace Web.Controllers
                 // Delete client
                 await _clientApi.DeleteClientAsync(id, accessToken, cancellationToken);
 
+                // Clean up client image if exists
+                if (!string.IsNullOrEmpty(client.ImageUrl))
+                {
+                    try
+                    {
+                        await _storageApi.RemoveClientImageFileAsync($"{client.ClientId}.webp");
+                    }
+                    catch (Exception imgEx)
+                    {
+                        _logger.LogWarning(imgEx, "Failed to delete client image for: {ClientId}", client.ClientId);
+                    }
+                }
+
                 TempData["Success"] = "Client deleted successfully.";
                 return RedirectToAction("Client");
             }
@@ -322,6 +535,107 @@ namespace Web.Controllers
                 _logger.LogError(ex, "Error deleting client: {ClientId}", id);
                 TempData["Error"] = "An error occurred while deleting the client. Please try again later.";
                 return RedirectToAction("Client");
+            }
+        }
+
+        // Image upload and validation endpoints
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authentication("Admin")]
+        public async Task<IActionResult> UploadClientImage(IFormFile imageFile, string clientId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var accessToken = HttpContext.Session.GetString("UserToken");
+                if (string.IsNullOrEmpty(accessToken))
+                {
+                    return Json(new { success = false, message = "Authentication required" });
+                }
+
+                if (imageFile == null || imageFile.Length == 0)
+                {
+                    return Json(new { success = false, message = "No image file provided" });
+                }
+
+                var validationResult = ValidateImageFile(imageFile);
+                if (!validationResult.IsValid)
+                {
+                    return Json(new { success = false, message = validationResult.ErrorMessage });
+                }
+
+                var uploadResult = await _storageApi.UpdateClientImageFileAsync(clientId, imageFile);
+                if (!uploadResult)
+                {
+                    return Json(new { success = false, message = "Failed to upload image" });
+                }
+
+                var imageUrl = $"/api/storage/client/{clientId}{Path.GetExtension(imageFile.FileName).ToLower()}";
+
+                // Update client with new image URL if clientId is provided
+                if (!string.IsNullOrEmpty(clientId))
+                {
+                    try
+                    {
+                        var client = await _clientApi.GetClientByIdAsync(clientId, accessToken, cancellationToken);
+                        if (client != null)
+                        {
+                            client.ImageUrl = imageUrl;
+                            await _clientApi.UpdateClientAsync(client, accessToken, cancellationToken);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error updating client image URL for client: {ClientId}", clientId);
+                        // Continue anyway - the file was uploaded successfully
+                    }
+                }
+
+                return Json(new
+                {
+                    success = true,
+                    message = "Image uploaded successfully",
+                    imageUrl = imageUrl
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error uploading client image");
+                return Json(new { success = false, message = "Failed to upload image. Please try again." });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authentication("Admin")]
+        public async Task<IActionResult> ValidateClientImageUrl([FromBody] ValidateImageUrlRequest request, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(request?.ImageUrl))
+                {
+                    return Json(new { success = false, message = "No URL provided" });
+                }
+
+                var validation = await ValidateImageUrl(request.ImageUrl);
+
+                if (validation.IsValid)
+                {
+                    return Json(new
+                    {
+                        success = true,
+                        message = "Valid image URL",
+                        imageUrl = request.ImageUrl
+                    });
+                }
+                else
+                {
+                    return Json(new { success = false, message = validation.ErrorMessage });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error validating image URL: {ImageUrl}", request?.ImageUrl);
+                return Json(new { success = false, message = "Error validating image URL" });
             }
         }
 
@@ -374,7 +688,8 @@ namespace Web.Controllers
                         zip = client.Zip,
                         phoneNumber = client.PhoneNumber,
                         createdDate = client.CreatedDate,
-                        notes = "", // Add if you have notes field
+                        imageUrl = client.ImageUrl,
+                        notes =  "", // Add if you have notes field
                         status = "Active" // Add if you have status field
                     },
                     courtList = clientCourts.Select(c => new
@@ -573,6 +888,150 @@ namespace Web.Controllers
                 return Json(new { success = false, message = "Error removing court: " + ex.Message });
             }
         }
+
+        // ========== VALIDATION METHODS ==========
+
+        private ValidationResult ValidateClient(Client client)
+        {
+            if (string.IsNullOrWhiteSpace(client.Name))
+            {
+                return new ValidationResult { IsValid = false, ErrorMessage = "Client name is required", Field = "Name" };
+            }
+
+            if (client.Name.Length > 100)
+            {
+                return new ValidationResult { IsValid = false, ErrorMessage = "Client name cannot exceed 100 characters", Field = "Name" };
+            }
+
+            if (string.IsNullOrWhiteSpace(client.Address))
+            {
+                return new ValidationResult { IsValid = false, ErrorMessage = "Address is required", Field = "Address" };
+            }
+
+            if (string.IsNullOrWhiteSpace(client.City))
+            {
+                return new ValidationResult { IsValid = false, ErrorMessage = "City is required", Field = "City" };
+            }
+
+            if (string.IsNullOrWhiteSpace(client.Zip))
+            {
+                return new ValidationResult { IsValid = false, ErrorMessage = "Zip code is required", Field = "Zip" };
+            }
+
+            return new ValidationResult { IsValid = true };
+        }
+
+        private ValidationResult ValidateImageFile(IFormFile file)
+        {
+            const int maxFileSize = 5 * 1024 * 1024; // 5MB
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp" };
+            var allowedContentTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp", "image/bmp" };
+
+            if (file.Length > maxFileSize)
+            {
+                return new ValidationResult
+                {
+                    IsValid = false,
+                    ErrorMessage = $"File size ({FormatFileSize(file.Length)}) exceeds maximum allowed size (5MB)"
+                };
+            }
+
+            var extension = Path.GetExtension(file.FileName)?.ToLowerInvariant();
+            if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
+            {
+                return new ValidationResult
+                {
+                    IsValid = false,
+                    ErrorMessage = "Invalid file type. Allowed types: JPG, PNG, GIF, WebP, BMP"
+                };
+            }
+
+            if (!allowedContentTypes.Contains(file.ContentType.ToLowerInvariant()))
+            {
+                return new ValidationResult
+                {
+                    IsValid = false,
+                    ErrorMessage = "Invalid file content type. Please upload a valid image file."
+                };
+            }
+
+            return new ValidationResult { IsValid = true };
+        }
+
+        private async Task<ValidationResult> ValidateImageUrl(string imageUrl)
+        {
+            if (string.IsNullOrWhiteSpace(imageUrl))
+            {
+                return new ValidationResult { IsValid = false, ErrorMessage = "Image URL is required" };
+            }
+
+            if (!Uri.TryCreate(imageUrl, UriKind.Absolute, out Uri uri))
+            {
+                return new ValidationResult { IsValid = false, ErrorMessage = "Invalid URL format" };
+            }
+
+            // Check if URL points to an image based on extension
+            var path = uri.AbsolutePath.ToLowerInvariant();
+            var imageExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp" };
+
+            if (!imageExtensions.Any(ext => path.EndsWith(ext)))
+            {
+                return new ValidationResult { IsValid = false, ErrorMessage = "URL does not appear to point to a valid image file" };
+            }
+
+            try
+            {
+                using var httpClient = new HttpClient();
+                httpClient.Timeout = TimeSpan.FromSeconds(10);
+
+                var response = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Head, uri));
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return new ValidationResult { IsValid = false, ErrorMessage = "Image URL is not accessible" };
+                }
+
+                var contentType = response.Content.Headers.ContentType?.MediaType?.ToLowerInvariant();
+                if (!string.IsNullOrEmpty(contentType) && !contentType.StartsWith("image/"))
+                {
+                    return new ValidationResult { IsValid = false, ErrorMessage = "URL does not point to an image" };
+                }
+
+                return new ValidationResult { IsValid = true };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error validating image URL: {ImageUrl}", imageUrl);
+                return new ValidationResult { IsValid = false, ErrorMessage = "Could not validate image URL. Please check the URL and try again." };
+            }
+        }
+
+        private string FormatFileSize(long bytes)
+        {
+            const int scale = 1024;
+            string[] orders = { "B", "KB", "MB", "GB" };
+
+            long max = (long)Math.Pow(scale, orders.Length - 1);
+
+            foreach (string order in orders)
+            {
+                if (bytes > max)
+                    return string.Format("{0:0.##} {1}", decimal.Divide(bytes, max), order);
+
+                max /= scale;
+            }
+
+            return "0 B";
+        }
+
+        // ========== HELPER CLASSES ==========
+
+        private class ValidationResult
+        {
+            public bool IsValid { get; set; }
+            public string ErrorMessage { get; set; }
+            public string Field { get; set; }
+        }
     }
 
     // Request models for court management
@@ -594,4 +1053,6 @@ namespace Web.Controllers
         public string ClientId { get; set; }
         public string CourtId { get; set; }
     }
+
+    
 }
