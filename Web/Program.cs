@@ -43,6 +43,7 @@ builder.Services.AddHttpClient<IReportApi, ReportApi>(client => { });
 builder.Services.AddHttpClient<IPostApi, PostApi>(client => { });
 builder.Services.AddHttpClient<IVideoApi, VideoApi>(client => { });
 builder.Services.AddHttpClient<IGameApi, GameApi>(client => { });
+builder.Services.AddHttpClient<IRequestApi, RequestApi>(client => { });
 
 // Configure session options for remember me functionality
 builder.Services.AddSession(options =>

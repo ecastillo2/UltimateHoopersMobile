@@ -59,6 +59,7 @@ namespace WebAPI.Extensions
             services.AddScoped<IReportRepository, ReportRepository>();
             services.AddScoped<IVideoRepository, VideoRepository>();
             services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
+            services.AddScoped<IRequestRepository, RequestRepository>();
 
             return services;
         }

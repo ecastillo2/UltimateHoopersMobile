@@ -54,6 +54,7 @@ namespace DataLayer.Context
         public virtual DbSet<Subscription> Subscription { get; set; }
         public virtual DbSet<GameLosingPlayer> GameLosingPlayer { get; set; }
         public virtual DbSet<GameWinningPlayer> GameWinningPlayer { get; set; }
+        public virtual DbSet<Request> Request { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
 
