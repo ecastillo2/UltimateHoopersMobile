@@ -106,6 +106,7 @@ namespace WebAPI.Controllers
                     var scoutingReport = await _profileRepository.GetScoutingReportAsync(profileId, cancellationToken);
                     var gameStats = await _profileRepository.GetProfileGameStatisticsAsync(profileId, cancellationToken);
                     var subscription = await _profileRepository.GetProfileSubscriptionAsync(profileId, cancellationToken);
+                    var requests = await _profileRepository.GetProfileRequestsAsync(profileId, cancellationToken);
 
                     // Create a detailed view model with all the additional data
                     var detailedViewModel = new ProfileDetailViewModelDto()
@@ -115,6 +116,7 @@ namespace WebAPI.Controllers
                         GameStatistics = gameStats,
                         Profile = profile,
                         Subscription = subscription != null ? new Subscription(subscription) : null,
+                        RequestList = requests,
                     };
 
                     // Add to our list

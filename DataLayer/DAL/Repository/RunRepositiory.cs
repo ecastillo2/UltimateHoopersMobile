@@ -40,6 +40,21 @@ namespace DataLayer.DAL.Repository
             }
         }
 
+        public async Task<List<Request>> GetRunRequestsAsync(string runId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await _context.Request
+                    .AsNoTracking()
+                    .ToListAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error retrieving Requests");
+                throw;
+            }
+        }
+
         public async Task<(List<Run> Runs, int TotalCount, int TotalPages)> GetRunsPaginatedAsync(int page = 1,int pageSize = 20,CancellationToken cancellationToken = default)
         {
             if (page < 1) page = 1;

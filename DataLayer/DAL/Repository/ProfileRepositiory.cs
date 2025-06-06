@@ -883,6 +883,31 @@ namespace DataLayer.DAL.Repository
             }
         }
 
+        public async Task<IList<Request>> GetProfileRequestsAsync(string profileId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var requests = await _context.Request
+                    .AsNoTracking()
+                    .Where(p => p.ProfileId == profileId)
+                    .ToListAsync(cancellationToken);
+
+                foreach (var item in requests)
+                {
+                    item.Run = await _context.Run
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(r => r.RunId == item.RunId, cancellationToken);
+                }
+
+                return requests;
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error getting requests for profile {ProfileId}", profileId);
+                throw;
+            }
+        }
+
         public async Task<bool> UpdateProfileAsync(Profile profile,CancellationToken cancellationToken = default)
         {
             try

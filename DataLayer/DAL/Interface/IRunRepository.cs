@@ -20,10 +20,7 @@ namespace DataLayer.DAL.Interface
         /// <summary>
         /// Get PrivateRuns with offset-based pagination
         /// </summary>
-        Task<(List<Run> Runs, int TotalCount, int TotalPages)> GetRunsPaginatedAsync(
-            int page = 1,
-            int pageSize = 20,
-            CancellationToken cancellationToken = default);
+        Task<(List<Run> Runs, int TotalCount, int TotalPages)> GetRunsPaginatedAsync(int page = 1,int pageSize = 20,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get PrivateRuns with cursor-based pagination for efficient scrolling
@@ -34,54 +31,43 @@ namespace DataLayer.DAL.Interface
         /// <param name="sortBy">Field to sort by (e.g., "Points", "PlayerNumber", "Status")</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>Courts and the next cursor value</returns>
-        Task<(List<Run> Runs, string NextCursor)> GetRunsWithCursorAsync(
-            string cursor = null,
-            int limit = 20,
-            string direction = "next",
-            string sortBy = "Points",
-            CancellationToken cancellationToken = default);
+        Task<(List<Run> Runs, string NextCursor)> GetRunsWithCursorAsync(string cursor = null,int limit = 20,string direction = "next",string sortBy = "Points",CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Stream all PrivateRuns for efficient memory usage with large datasets
         /// </summary>
-        IAsyncEnumerable<Run> StreamAllRunsAsync(
-            [EnumeratorCancellation] CancellationToken cancellationToken = default);
+        IAsyncEnumerable<Run> StreamAllRunsAsync([EnumeratorCancellation] CancellationToken cancellationToken = default);
 
 
         /// <summary>
         /// Get PrivateRun by ID
         /// </summary>
-        Task<Run> GetRunByIdAsync(
-            string privateRunId,
-            CancellationToken cancellationToken = default);
+        Task<Run> GetRunByIdAsync(string privateRunId,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get PrivateRun by ID
         /// </summary>
-        Task<Court> GetCourtAsync(
-            string courtId,
-            CancellationToken cancellationToken = default);
+        Task<Court> GetCourtAsync(string courtId,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get PrivateRun by ID
         /// </summary>
-        Task<List<Profile>> GetJoinedRunAsync(
-            string privateRunId,
-            CancellationToken cancellationToken = default);
+        Task<List<Profile>> GetJoinedRunAsync(string privateRunId,CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Get PrivateRun by ID
+        /// </summary>
+        Task<List<Request>> GetRunRequestsAsync(string RunId,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Update a profile
         /// </summary>
-        Task<bool> UpdateRunAsync(
-            Run privateRun,
-            CancellationToken cancellationToken = default);
+        Task<bool> UpdateRunAsync(Run privateRun,CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Batch update multiple Run at once
         /// </summary>
-        Task<int> BatchUpdateRunsAsync(
-            IEnumerable<Run> PrivateRuns,
-            CancellationToken cancellationToken = default);
+        Task<int> BatchUpdateRunsAsync(IEnumerable<Run> PrivateRuns,CancellationToken cancellationToken = default);
 
 
         /// <summary>

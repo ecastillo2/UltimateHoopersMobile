@@ -13,6 +13,7 @@ namespace Domain.DtoModel
         public Subscription? Subscription { get; set; }
         public ScoutingReport? ScoutingReport { get; set; }
         public GameStatistics? GameStatistics { get; set; }
-       
+        public IList<Request>? RequestList { get; set; }
+
     }
 }

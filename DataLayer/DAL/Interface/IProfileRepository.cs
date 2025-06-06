@@ -115,6 +115,11 @@ namespace DataLayer.DAL.Interface
         Task<Subscription> GetProfileSubscriptionAsync(string profileId,CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Get Subscriptions for a profile
+        /// </summary>
+        Task<IList<Request>> GetProfileRequestsAsync(string profileId, CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Update a profile
         /// </summary>
         Task<bool> UpdateProfileAsync(Profile profile,CancellationToken cancellationToken = default);

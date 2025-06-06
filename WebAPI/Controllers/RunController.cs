@@ -44,6 +44,30 @@ namespace WebAPI.Controllers
         }
 
         /// <summary>
+        /// Get courts for a specific client
+        /// </summary>
+        /// <param name="clientId">The client ID</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        [HttpGet("{runId}/requests")]
+        [ProducesResponseType(typeof(List<Request>), 200)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> GetRunRequestsAsync(string runId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var privateRuns = await _runRepository.GetRunRequestsAsync(runId, cancellationToken);
+
+                return Ok(privateRuns);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving PrivateRuns");
+                return StatusCode(500, "An error occurred while retrieving PrivateRuns");
+            }
+        }
+
+        /// <summary>
         /// Get Runs Paginated
         /// </summary>
         /// <param name="page"></param>
