@@ -14,17 +14,20 @@ namespace Web.Controllers
     public class RunController : Controller
     {
         private readonly IRunApi _runApi;
+        private readonly IUserApi _userApi;
         private readonly IClientApi _clientApi;
         private readonly IJoinedRunApi _joinedRunApi;
         private readonly ILogger<RunController> _logger;
 
-        public RunController(IRunApi runApi, IClientApi clientApi, IJoinedRunApi joinedRunApi, ILogger<RunController> logger)
+        public RunController(IRunApi runApi, IClientApi clientApi, IJoinedRunApi joinedRunApi, IUserApi userApi, ILogger<RunController> logger)
         {
             _clientApi = clientApi ?? throw new ArgumentNullException(nameof(clientApi));
             _joinedRunApi = joinedRunApi ?? throw new ArgumentNullException(nameof(joinedRunApi));
+            _userApi = userApi ?? throw new ArgumentNullException(nameof(userApi));
             _runApi = runApi ?? throw new ArgumentNullException(nameof(runApi));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
+
 
         [HttpGet]
         public async Task<IActionResult> Run(string cursor = null, int limit = 10, string direction = "next", string sortBy = "StartDate", CancellationToken cancellationToken = default)
@@ -1463,6 +1466,85 @@ namespace Web.Controllers
             }
 
             run.CreatedDate = existingRun.CreatedDate;
+        }
+
+
+        /// <summary>
+        /// Simple user search method - works immediately with mock data
+        /// Replace mock data with your actual user API calls later
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> SearchUsers(string query, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                // Check authentication
+                var accessToken = HttpContext.Session.GetString("UserToken");
+                if (string.IsNullOrEmpty(accessToken))
+                {
+                    return Json(new { success = false, message = "Unauthorized" });
+                }
+
+                // Validate input
+                if (string.IsNullOrEmpty(query) || query.Length < 2)
+                {
+                    return Json(new { success = false, message = "Search query must be at least 2 characters" });
+                }
+
+                _logger.LogInformation("Searching users with query: {Query}", query);
+
+                // Get users (replace this with your actual implementation)
+                var users = await GetUsersForSearch(query, accessToken, cancellationToken);
+
+                // Return formatted response
+                return Json(new
+                {
+                    success = true,
+                    users = users.Select(u => new
+                    {
+                        profileId = u.Profile.ProfileId ?? "",
+                        firstName = u.FirstName ?? "",
+                        lastName = u.LastName ?? "",
+                        userName = u.UserName ?? u.Profile.UserName ?? "Unknown User",
+                        email = u.Email ?? "",
+                        playerNumber = u.Profile.PlayerNumber ?? "",
+                        skillLevel = "",
+                        status = u.Status ?? "Active",
+                        imageUrl = u.Profile.ImageURL ?? ""
+                    }).ToList(),
+                    totalCount = users.Count(),
+                    query = query
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error searching users with query: {Query}", query);
+                return Json(new
+                {
+                    success = false,
+                    message = "An error occurred while searching users",
+                    error = ex.GetType().Name
+                });
+            }
+        }
+
+
+        /// </summary>
+        private async Task<IList<User>> GetUsersForSearch(string query, string accessToken, CancellationToken cancellationToken)
+        {
+
+            try
+            {
+                // Get users with cursor pagination
+                var result = await _userApi.GetUsersSearchAsync(query,accessToken: accessToken, cancellationToken: cancellationToken);
+                return result.ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "API search failed, using fallback");
+                return null;
+            }
+
         }
 
         private class ValidationResult

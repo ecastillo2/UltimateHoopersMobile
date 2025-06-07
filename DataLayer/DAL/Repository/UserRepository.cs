@@ -158,6 +158,78 @@ namespace DataLayer.DAL.Repository
             }
         }
 
+        public async Task<IList<User>> GetUsersSearchAsync(string searchQuery, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(searchQuery) || searchQuery.Length < 2)
+                {
+                    return new List<User>();
+                }
+
+                var query = searchQuery.ToLower().Trim();
+
+                // First get matching user IDs
+                var userIds = await _context.User
+                    .AsNoTracking()
+                    .Where(u =>
+                        // Search by first name
+                        (!string.IsNullOrEmpty(u.FirstName) && u.FirstName.ToLower().Contains(query)) ||
+                        // Search by last name  
+                        (!string.IsNullOrEmpty(u.LastName) && u.LastName.ToLower().Contains(query)) ||
+                        // Search by full name
+                        (!string.IsNullOrEmpty(u.FirstName) && !string.IsNullOrEmpty(u.LastName) &&
+                         (u.FirstName + " " + u.LastName).ToLower().Contains(query)) ||
+                        // Search by email
+                        (!string.IsNullOrEmpty(u.Email) && u.Email.ToLower().Contains(query)) ||
+                        // Search in Profile data using subquery
+                        _context.Profile.Any(p => p.UserId == u.UserId && (
+                            (!string.IsNullOrEmpty(p.UserName) && p.UserName.ToLower().Contains(query)) ||
+                            (!string.IsNullOrEmpty(p.PlayerNumber) && p.PlayerNumber.ToLower().Contains(query))
+                        ))
+                    )
+                    .Where(u => u.Status == "Active") // Only active users
+                    .OrderBy(u => u.FirstName)
+                    .ThenBy(u => u.LastName)
+                    .Take(20) // Limit results
+                    .Select(u => u.UserId)
+                    .ToListAsync(cancellationToken);
+
+                // Get users by IDs
+                var users = await _context.User
+                    .Where(u => userIds.Contains(u.UserId))
+                    .AsNoTracking()
+                    .OrderBy(u => u.FirstName)
+                    .ThenBy(u => u.LastName)
+                    .ToListAsync(cancellationToken);
+
+                // Get profiles for these users
+                var profiles = await _context.Profile
+                    .Where(p => userIds.Contains(p.UserId))
+                    .AsNoTracking()
+                    .ToListAsync(cancellationToken);
+
+                // Create a dictionary for faster lookup
+                var profileLookup = profiles.ToDictionary(p => p.UserId, p => p);
+
+                // Assign profiles to users
+                foreach (var user in users)
+                {
+                    if (profileLookup.TryGetValue(user.UserId, out var profile))
+                    {
+                        user.Profile = profile;
+                    }
+                }
+
+                return users;
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error searching users with query: {SearchQuery}", searchQuery);
+                throw;
+            }
+        }
+
         public async Task<ScoutingReport?> GetProfileScoutingReportByUserId(string userId,CancellationToken cancellationToken = default)
         {
             try

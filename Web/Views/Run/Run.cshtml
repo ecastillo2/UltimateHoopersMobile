@@ -11,623 +11,15 @@
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.bootstrap5.min.css">
     <link rel="stylesheet" type="text/css" href="~/css/management.css">
 
-    <style>
-        /* Additional styles for create run modal consistency */
-        #addRunModal .form-field-required::after {
-            content: " *";
-            color: #dc3545;
-        }
 
-        #addRunModal .address-fields-container {
-            transition: all 0.3s ease;
-            border-radius: 8px;
-            padding: 1rem;
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-        }
-
-            #addRunModal .address-fields-container.custom-address-active {
-                background: #fff;
-                border-color: #0d6efd;
-                box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-            }
-
-        #addRunModal .form-control:disabled,
-        #addRunModal .form-control[readonly] {
-            background-color: #f8f9fa !important;
-            opacity: 1;
-            cursor: not-allowed;
-        }
-
-        #addRunModal .address-preview {
-            padding: 1rem;
-            border-radius: 8px;
-            border: 1px solid #dee2e6;
-            background: #f8f9fa;
-            transition: all 0.3s ease;
-        }
-
-            #addRunModal .address-preview.custom-address {
-                background: #e7f3ff;
-                border-color: #0d6efd;
-            }
-
-            #addRunModal .address-preview.client-address {
-                background: #f8f9fa;
-                border-color: #6c757d;
-            }
-
-            #addRunModal .address-preview .address-text {
-                font-family: 'Courier New', monospace;
-                font-size: 0.9rem;
-                line-height: 1.4;
-                color: #495057;
-                margin-top: 0.5rem;
-            }
-    </style>
-    <style>
-        /* Custom Address Toggle Styles */
-
-        .custom-address-toggle {
-            transition: all 0.3s ease;
-        }
-
-            .custom-address-toggle .form-check-input {
-                transform: scale(1.1);
-            }
-
-            .custom-address-toggle .form-check-label {
-                font-weight: 600;
-                cursor: pointer;
-                user-select: none;
-            }
-
-        /* Address Fields Container */
-        .address-fields-container {
-            transition: all 0.3s ease;
-            border-radius: 8px;
-            padding: 1rem;
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-        }
-
-            .address-fields-container.custom-address-active {
-                background: #fff;
-                border-color: #0d6efd;
-                box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-            }
-
-        /* Address Field States */
-        .editable-address-field {
-            transition: all 0.2s ease;
-            border-color: #ced4da;
-        }
-
-            .editable-address-field:focus {
-                border-color: #86b7fe;
-                outline: 0;
-                box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-            }
-
-            .editable-address-field:hover:not(:disabled) {
-                border-color: #adb5bd;
-            }
-
-        /* Disabled address fields */
-        .form-control:disabled,
-        .form-control[readonly] {
-            background-color: #f8f9fa !important;
-            opacity: 1;
-            cursor: not-allowed;
-        }
-
-        /* Address Source Indicators */
-        .address-source-indicator {
-            padding: 0.5rem;
-            border-radius: 6px;
-            margin-bottom: 0.5rem;
-            transition: all 0.3s ease;
-        }
-
-            .address-source-indicator.client-address {
-                background-color: #e9ecef;
-                border-left: 4px solid #6c757d;
-            }
-
-            .address-source-indicator.custom-address {
-                background-color: #e7f3ff;
-                border-left: 4px solid #0d6efd;
-            }
-
-        /* Address Preview */
-        .address-preview-container {
-            margin-top: 1rem;
-        }
-
-        .address-preview {
-            padding: 1rem;
-            border-radius: 8px;
-            border: 1px solid #dee2e6;
-            background: #f8f9fa;
-            transition: all 0.3s ease;
-        }
-
-            .address-preview.custom-address {
-                background: #e7f3ff;
-                border-color: #0d6efd;
-            }
-
-            .address-preview.client-address {
-                background: #f8f9fa;
-                border-color: #6c757d;
-            }
-
-            .address-preview .address-text {
-                font-family: 'Courier New', monospace;
-                font-size: 0.9rem;
-                line-height: 1.4;
-                color: #495057;
-                margin-top: 0.5rem;
-            }
-
-        /* Form Validation States */
-        .is-invalid {
-            border-color: #dc3545 !important;
-            box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25) !important;
-        }
-
-        .is-valid {
-            border-color: #198754 !important;
-            box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25) !important;
-        }
-
-        /* Custom Toggle Switch Enhancement */
-        .form-check-input:checked {
-            background-color: #0d6efd;
-            border-color: #0d6efd;
-        }
-
-        .form-check-input:focus {
-            border-color: #86b7fe;
-            outline: 0;
-            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-        }
-
-        /* Alert Indicators */
-        .alert {
-            border-radius: 6px;
-        }
-
-        .alert-info {
-            color: #055160;
-            background-color: #cff4fc;
-            border-color: #b6effb;
-        }
-
-        .alert-warning {
-            color: #664d03;
-            background-color: #fff3cd;
-            border-color: #ffecb5;
-        }
-
-        /* Icon Styling */
-        .bi {
-            font-size: 1rem;
-            vertical-align: text-bottom;
-        }
-
-        /* Tab Content Transitions */
-        .tab-pane {
-            opacity: 0;
-            transition: opacity 0.15s linear;
-        }
-
-            .tab-pane.active {
-                opacity: 1;
-            }
-
-        /* Modal Enhancements */
-        .modal-header {
-            border-bottom: 1px solid #dee2e6;
-            padding: 1.5rem;
-        }
-
-        .modal-body {
-            padding: 1.5rem;
-        }
-
-        .modal-footer {
-            border-top: 1px solid #dee2e6;
-            padding: 1rem 1.5rem;
-        }
-
-        /* Button States */
-        .btn:disabled {
-            opacity: 0.65;
-            cursor: not-allowed;
-        }
-
-        .btn-loading {
-            pointer-events: none;
-        }
-
-        /* Spinner */
-        .spinner-border-sm {
-            width: 1rem;
-            height: 1rem;
-        }
-
-        /* Responsive Adjustments */
-        @@media (max-width: 768px) {
-            .address-fields-container
-
-        {
-            padding: 0.75rem;
-        }
-
-        .address-preview {
-            padding: 0.75rem;
-        }
-
-        .modal-body {
-            padding: 1rem;
-        }
-
-        .modal-header,
-        .modal-footer {
-            padding: 1rem;
-        }
-
-        }
-
-        /* Loading State */
-        .loading-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            border-radius: inherit;
-        }
-
-        /* Focus Management */
-        .form-control:focus,
-        .form-select:focus {
-            outline: none;
-        }
-
-        /* Custom Checkbox Styling */
-        .form-check-input[type="checkbox"] {
-            width: 1.2em;
-            height: 1.2em;
-            margin-top: 0.1em;
-            vertical-align: top;
-            border: 1px solid rgba(0, 0, 0, 0.25);
-            border-radius: 0.25em;
-            transition: all 0.15s ease-in-out;
-        }
-
-            .form-check-input[type="checkbox"]:checked {
-                background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e");
-            }
-
-        /* Address Field Animation */
-        @@keyframes fieldHighlight {
-            0%
-
-        {
-            transform: scale(1);
-            box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.4);
-        }
-
-        50% {
-            transform: scale(1.02);
-            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-        }
-
-        100% {
-            transform: scale(1);
-            box-shadow: 0 0 0 0 rgba(13, 110, 253, 0);
-        }
-
-        }
-
-        .editable-address-field:focus {
-            animation: fieldHighlight 0.3s ease-in-out;
-        }
-
-        /* Success/Error States */
-        .field-success {
-            border-color: #198754;
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='m2.3 6.73.4.27 4.5-4.5-.7-.7L2.7 5.6l-1.4-1.4-.7.7z'/%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right calc(0.375em + 0.1875rem) center;
-            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
-        }
-
-        .field-error {
-            border-color: #dc3545;
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='m5.8 4.6 1.4 1.4 1.4-1.4m-2.8 0L7.2 7'/%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right calc(0.375em + 0.1875rem) center;
-            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
-        }
-
-        .loading-spinner {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 9999;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-            .loading-spinner.active {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-            }
-
-        .participant-avatar {
-            width: 40px;
-            height: 40px;
-            background-color: var(--secondary-color);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
-
-        .court-dropdown-loading {
-            background-image: url("data:image/svg+xml,%3csvg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M8 3a5 5 0 11-4.546 2.914.5.5 0 00-.908-.417A6 6 0 108 2v1z'/%3e%3cpath d='M8 4.466V.534a.25.25 0 01.41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 018 4.466z'/%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 8px center;
-            background-size: 16px;
-        }
-
-        .form-field-required::after {
-            content: " *";
-            color: #dc3545;
-        }
-
-        /* Calendar Styles */
-        .calendar-container {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-
-        .calendar-header {
-            background: linear-gradient(135deg, #342580 0%, #0b1733 100%);
-            color: white;
-            padding: 1.5rem;
-            text-align: center;
-        }
-
-        .calendar-nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-            .calendar-nav button {
-                background: rgba(255, 255, 255, 0.2);
-                border: none;
-                color: white;
-                padding: 0.5rem 1rem;
-                border-radius: 25px;
-                cursor: pointer;
-                transition: all 0.3s ease;
-            }
-
-                .calendar-nav button:hover {
-                    background: rgba(255, 255, 255, 0.3);
-                    transform: translateY(-2px);
-                }
-
-        .calendar-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin: 0;
-        }
-
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 1px;
-            background-color: #e9ecef;
-            margin: 0;
-        }
-
-        .calendar-day-header {
-            background-color: #f8f9fa;
-            padding: 1rem 0.5rem;
-            text-align: center;
-            font-weight: 600;
-            color: #495057;
-            font-size: 0.875rem;
-            border-bottom: 2px solid #dee2e6;
-        }
-
-        .calendar-day {
-            background-color: white;
-            min-height: 120px;
-            padding: 0.5rem;
-            position: relative;
-            transition: all 0.2s ease;
-            cursor: pointer;
-        }
-
-            .calendar-day:hover {
-                background-color: #f8f9fa;
-            }
-
-            .calendar-day.other-month {
-                background-color: #f8f9fa;
-                color: #adb5bd;
-            }
-
-            .calendar-day.today {
-                background-color: #fff3cd;
-                border: 2px solid #ffc107;
-            }
-
-            .calendar-day.selected {
-                background-color: #e3f2fd;
-                border: 2px solid #2196f3;
-            }
-
-        .day-number {
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-            font-size: 0.875rem;
-        }
-
-        .day-runs {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            max-height: 80px;
-            overflow-y: auto;
-        }
-
-        .run-item {
-            background: linear-gradient(135deg, #ff6238 0%, #ff8c69 100%);
-            color: white;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-            .run-item:hover {
-                transform: translateY(-1px);
-                box-shadow: 0 2px 8px rgba(255, 98, 56, 0.3);
-            }
-
-            .run-item.pickup {
-                background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            }
-
-            .run-item.training {
-                background: linear-gradient(135deg, #007bff 0%, #6610f2 100%);
-            }
-
-            .run-item.tournament {
-                background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
-            }
-
-            .run-item.youth {
-                background: linear-gradient(135deg, #fd7e14 0%, #ffc107 100%);
-            }
-
-            .run-item.women {
-                background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
-            }
-
-        .run-time {
-            font-size: 0.65rem;
-            opacity: 0.9;
-        }
-
-        .more-runs {
-            font-size: 0.65rem;
-            color: #6c757d;
-            background: #e9ecef;
-            padding: 1px 4px;
-            border-radius: 2px;
-            text-align: center;
-            margin-top: 2px;
-        }
-
-        .calendar-loading {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 400px;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .calendar-empty {
-            text-align: center;
-            padding: 3rem;
-            color: #6c757d;
-        }
-
-        .calendar-stats {
-            display: flex;
-            justify-content: space-around;
-            padding: 1rem;
-            background: #f8f9fa;
-            border-top: 1px solid #dee2e6;
-        }
-
-        .stat-item {
-            text-align: center;
-        }
-
-        .stat-number {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #342580;
-        }
-
-        .stat-label {
-            font-size: 0.875rem;
-            color: #6c757d;
-            margin-top: 0.25rem;
-        }
-
-        /* Run Detail Tooltip */
-        .run-tooltip {
-            position: absolute;
-            background: rgba(0, 0, 0, 0.9);
-            color: white;
-            padding: 0.75rem;
-            border-radius: 8px;
-            font-size: 0.875rem;
-            z-index: 1000;
-            max-width: 250px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.2s ease;
-        }
-
-            .run-tooltip.show {
-                opacity: 1;
-            }
-    </style>
 }
 
-<div class="loading-spinner" id="loadingSpinner">
+@* <div class="loading-spinner" id="loadingSpinner">
     <div class="spinner-border text-primary mb-2" role="status">
         <span class="visually-hidden">Loading...</span>
     </div>
     <div class="text-muted">Loading...</div>
-</div>
+</div> *@
 
 <div class="dashboard-header">
     <div class="container">
@@ -745,115 +137,115 @@
                     </thead>
                     <tbody>
                         @foreach (var run in Model.Runs)
-    {
-        // Determine run status badge
-        string badgeClass = "bg-success";
-        string badgeText = "Upcoming";
-        string statusForFilter = "upcoming";
-
-        if (run.PlayerCount > 0 && run.PlayerLimit > 0 &&
-        (float)run.PlayerCount / run.PlayerLimit >= 0.85)
-        {
-            badgeClass = "bg-warning";
-            badgeText = "Almost Full";
-            statusForFilter = "almost-full";
-        }
-        else if (run.RunDate < DateTime.Now)
-        {
-            badgeClass = "bg-secondary";
-            badgeText = "Past";
-            statusForFilter = "past";
-        }
-
-        // Get host initials
-        string hostInitials = "NA";
-        if (!string.IsNullOrEmpty(run.ProfileId))
-        {
-            var names = run.ProfileId.Split(' ');
-            if (names.Length >= 2)
-            {
-                hostInitials = $"{names[0][0]}{names[1][0]}";
-            }
-            else if (names.Length == 1 && names[0].Length > 0)
-            {
-                hostInitials = names[0][0].ToString();
-            }
-        }
-
-        // Build location string for filtering
-        var locationParts = new List<string>();
-        if (!string.IsNullOrEmpty(run.Client.Address)) locationParts.Add(run.Address);
-        if (!string.IsNullOrEmpty(run.Client.City)) locationParts.Add(run.City);
-        if (!string.IsNullOrEmpty(run.Client.State)) locationParts.Add(run.State);
-        var fullLocation = string.Join(", ", locationParts);
-
-        <tr data-run-type="@(run.Type?.ToLower() ?? "pickup")"
-            data-capacity-current="@(run.JoinedRunProfileList?.Count ?? 0)"
-            data-capacity-max="@(run.PlayerLimit ?? 0)"
-            data-run-date="@(run.RunDate?.ToString("yyyy-MM-dd") ?? "")"
-            data-location="@fullLocation"
-            data-status="@statusForFilter"
-            data-skill-level="@(run.SkillLevel?.ToLower() ?? "intermediate")"
-            data-run-id="@run.RunId">
-            <td>
-                <div class="d-flex align-items-center">
-                    <div class="me-3">
-                        <div class="fw-semibold">@run.Client.Name</div>
-                        <div class="text-muted small">#@(run.RunNumber) • @(run.Type ?? "Pickup") • @(run.SkillLevel ?? "All Levels") </div>
-                    </div>
-                </div>
-            </td>
-            <td>
-                <div>
-                    <div class="fw-semibold">@run.RunDate?.ToString("MMM dd, yyyy")</div>
-                    <div class="text-muted small">
-                        @if (run.StartTime.HasValue)
                         {
-                            @DateTime.Today.Add(run.StartTime.Value).ToString("h:mm tt")
-                        }
-                        @if (run.EndTime.HasValue)
-                        {
-                            <span> - @DateTime.Today.Add(run.EndTime.Value).ToString("h:mm tt")</span>
-                        }
-                    </div>
-                </div>
-            </td>
-            <td>
-                <div>
-                    <div class="fw-semibold">@(run.Client.Address ?? "Location TBD")</div>
-                    @if (!string.IsNullOrEmpty(run.Client.City) || !string.IsNullOrEmpty(run.Client.State))
-                    {
-                        <div class="text-muted small">@run.Client.City@(!string.IsNullOrEmpty(run.Client.City) && !string.IsNullOrEmpty(run.Client.State) ? ", " : "")@run.Client.State</div>
-                    }
-                </div>
-            </td>
-            <td>
-                <div class="capacity-container">
+                            // Determine run status badge
+                            string badgeClass = "bg-success";
+                            string badgeText = "Upcoming";
+                            string statusForFilter = "upcoming";
+
+                            if (run.PlayerCount > 0 && run.PlayerLimit > 0 &&
+                            (float)run.PlayerCount / run.PlayerLimit >= 0.85)
+                            {
+                                badgeClass = "bg-warning";
+                                badgeText = "Almost Full";
+                                statusForFilter = "almost-full";
+                            }
+                            else if (run.RunDate < DateTime.Now)
+                            {
+                                badgeClass = "bg-secondary";
+                                badgeText = "Past";
+                                statusForFilter = "past";
+                            }
+
+                            // Get host initials
+                            string hostInitials = "NA";
+                            if (!string.IsNullOrEmpty(run.ProfileId))
+                            {
+                                var names = run.ProfileId.Split(' ');
+                                if (names.Length >= 2)
+                                {
+                                    hostInitials = $"{names[0][0]}{names[1][0]}";
+                                }
+                                else if (names.Length == 1 && names[0].Length > 0)
+                                {
+                                    hostInitials = names[0][0].ToString();
+                                }
+                            }
+
+                            // Build location string for filtering
+                            var locationParts = new List<string>();
+                            if (!string.IsNullOrEmpty(run.Client.Address)) locationParts.Add(run.Address);
+                            if (!string.IsNullOrEmpty(run.Client.City)) locationParts.Add(run.City);
+                            if (!string.IsNullOrEmpty(run.Client.State)) locationParts.Add(run.State);
+                            var fullLocation = string.Join(", ", locationParts);
+
+                            <tr data-run-type="@(run.Type?.ToLower() ?? "pickup")"
+                                data-capacity-current="@(run.JoinedRunProfileList?.Count ?? 0)"
+                                data-capacity-max="@(run.PlayerLimit ?? 0)"
+                                data-run-date="@(run.RunDate?.ToString("yyyy-MM-dd") ?? "")"
+                                data-location="@fullLocation"
+                                data-status="@statusForFilter"
+                                data-skill-level="@(run.SkillLevel?.ToLower() ?? "intermediate")"
+                                data-run-id="@run.RunId">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3">
+                                            <div class="fw-semibold">@run.Client.Name</div>
+                                            <div class="text-muted small">#@(run.RunNumber) • @(run.Type ?? "Pickup") • @(run.SkillLevel ?? "All Levels") </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <div class="fw-semibold">@run.RunDate?.ToString("MMM dd, yyyy")</div>
+                                        <div class="text-muted small">
+                                            @if (run.StartTime.HasValue)
+                                            {
+                                                @DateTime.Today.Add(run.StartTime.Value).ToString("h:mm tt")
+                                            }
+                                            @if (run.EndTime.HasValue)
+                                            {
+                                                <span> - @DateTime.Today.Add(run.EndTime.Value).ToString("h:mm tt")</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <div class="fw-semibold">@(run.Client.Address ?? "Location TBD")</div>
+                                        @if (!string.IsNullOrEmpty(run.Client.City) || !string.IsNullOrEmpty(run.Client.State))
+                                        {
+                                            <div class="text-muted small">@run.Client.City@(!string.IsNullOrEmpty(run.Client.City) && !string.IsNullOrEmpty(run.Client.State) ? ", " : "")@run.Client.State</div>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="capacity-container">
                                         <div class="capacity-text">@(run.JoinedRunProfileList?.Count ?? 0)/@(run.PlayerLimit ?? 0)</div>
-                    <div class="progress progress-sm" style="width: 60px;">
-                        @{
+                                        <div class="progress progress-sm" style="width: 60px;">
+                                            @{
                                                 var percentFull = run.PlayerLimit > 0 ? ((double)(run.JoinedRunProfileList?.Count ?? 0) / run.PlayerLimit.Value) * 100 : 0;
-                            var progressClass = percentFull >= 85 ? "bg-warning" : "bg-primary";
+                                                var progressClass = percentFull >= 85 ? "bg-warning" : "bg-primary";
+                                            }
+                                            <div class="progress-bar @progressClass" role="progressbar" style="width: @percentFull%" aria-valuenow="@percentFull" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>@(!string.IsNullOrEmpty(run.Occurrence) ? char.ToUpper(run.Occurrence[0]) + run.Occurrence.Substring(1) : "")</td>
+                                <td><span class="badge @badgeClass badge-pill">@badgeText</span></td>
+
+                                <td>
+                                    <div class="table-actions">
+                                        <button type="button" class="btn btn-sm btn-outline-primary action-icon" data-bs-toggle="modal" data-bs-target="#editRunModal" data-run-id="@run.RunId" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <a href="@Url.Action("Details", "Run", new { id = run.RunId })" class="btn btn-sm btn-primary action-icon" title="View">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
                         }
-                        <div class="progress-bar @progressClass" role="progressbar" style="width: @percentFull%" aria-valuenow="@percentFull" aria-valuemin="0" aria-valuemax="100"></div>
-                    </div>
-                </div>
-            </td>
-                            <td>@(!string.IsNullOrEmpty(run.Occurrence)? char.ToUpper(run.Occurrence[0]) + run.Occurrence.Substring(1): "")</td>
-            <td><span class="badge @badgeClass badge-pill">@badgeText</span></td>
-                               
-            <td>
-                <div class="table-actions">
-                    <button type="button" class="btn btn-sm btn-outline-primary action-icon" data-bs-toggle="modal" data-bs-target="#editRunModal" data-run-id="@run.RunId" title="Edit">
-                        <i class="bi bi-pencil"></i>
-                    </button>
-                    <a href="@Url.Action("Details", "Run", new { id = run.RunId })" class="btn btn-sm btn-primary action-icon" title="View">
-                        <i class="bi bi-eye"></i>
-                    </a>
-                </div>
-            </td>
-        </tr>
-    }
                     </tbody>
                 </table>
             </div>
@@ -1199,7 +591,7 @@
                         </div>
                     </div>
 
-                     <div class="row mb-3">
+                    <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="addOccurance" class="form-label">Occurance</label>
                             <select class="form-select" id="addOccurance" name="Occurance">
@@ -1209,7 +601,7 @@
                                 <option value="monthly">Monthly</option>
                             </select>
                         </div>
-                       
+
                     </div>
 
                     <!-- Description Section -->
@@ -1217,7 +609,7 @@
                         <div class="col-md-12">
                             <label for="addRunDescription" class="form-label">Description</label>
                             <textarea class="form-control" id="addRunDescription" name="Description" rows="3"
-                                      placeholder="Describe the run, what to expect, what to bring, etc." ></textarea>
+                                      placeholder="Describe the run, what to expect, what to bring, etc."></textarea>
                             <div class="form-text">Help players understand what to expect from this run</div>
                         </div>
                     </div>
@@ -1506,7 +898,7 @@
                                 <div class="col-md-12">
                                     <label for="editRunDescription" class="form-label">Description</label>
                                     <textarea class="form-control" id="editRunDescription" name="Description" rows="3"
-                                              placeholder="Describe the run, what to expect, what to bring, etc." ></textarea>
+                                              placeholder="Describe the run, what to expect, what to bring, etc."></textarea>
                                     <div class="form-text">Help players understand what to expect from this run</div>
                                 </div>
                             </div>
@@ -1525,7 +917,7 @@
                         <div class="mt-4">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h6 class="mb-0">Current Participants (<span id="currentParticipantsCount">0</span>/<span id="maxParticipantsCount">0</span>)</h6>
-                                <button class="btn btn-sm btn-outline-primary" id="addParticipantBtn">
+                                <button class="btn btn-sm btn-outline-primary" id="addParticipantBtn" data-bs-toggle="modal" data-bs-target="#addParticipantModal">
                                     <i class="bi bi-person-plus me-1"></i>Add Participant
                                 </button>
                             </div>
@@ -1544,6 +936,71 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Participant Search Modal -->
+<div class="modal fade" id="addParticipantModal" tabindex="-1" aria-labelledby="addParticipantModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addParticipantModalLabel">
+                    <i class="bi bi-person-plus me-2"></i>Add Participant
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Search Section -->
+                <div class="mb-4">
+                    <label for="participantSearch" class="form-label">Search for Users</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="participantSearch" 
+                               placeholder="Search by name, email, or username..." autocomplete="off">
+                        <button class="btn btn-outline-secondary" type="button" id="searchUsersBtn">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                    </div>
+                    <div class="form-text">
+                        Type at least 2 characters to search for users
+                    </div>
+                </div>
+
+                <!-- Search Results -->
+                <div id="searchResultsContainer" class="mb-3">
+                    <div id="searchPlaceholder" class="text-center text-muted py-4">
+                        <i class="bi bi-search" style="font-size: 2rem;"></i>
+                        <p class="mt-2 mb-0">Start typing to search for users</p>
+                    </div>
+                </div>
+
+                <!-- Selected User Preview -->
+                <div id="selectedUserContainer" class="d-none">
+                    <div class="alert alert-success d-flex align-items-center" role="alert">
+                        <i class="bi bi-check-circle-fill flex-shrink-0 me-2"></i>
+                        <div class="flex-grow-1">
+                            <strong>Selected User:</strong>
+                            <span id="selectedUserName"></span>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-success ms-2" id="clearSelectionBtn">
+                            <i class="bi bi-x"></i> Clear
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Current Participants Info -->
+                <div class="alert alert-info" role="alert">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Current Capacity:</strong> 
+                    <span id="addParticipantCurrentCount">0</span>/<span id="addParticipantMaxCount">0</span> participants
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmAddParticipantBtn" disabled>
+                    <i class="bi bi-person-plus me-2"></i>Add Participant
+                </button>
             </div>
         </div>
     </div>
@@ -1585,4 +1042,5 @@
     <script type="text/javascript" src="~/js/runManagement.js"></script>
     <script type="text/javascript" src="~/js/utilities.js"></script>
     <script type="text/javascript" src="~/js/runCalendar.js"></script>
+    <script type="text/javascript" src="~/js/participantSearch.js"></script>
 }

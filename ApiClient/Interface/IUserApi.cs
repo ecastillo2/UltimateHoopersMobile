@@ -16,11 +16,7 @@ namespace WebAPI.ApiClients
     /// </summary>
     public interface IUserApi
     {
-        /// <summary>
-        /// Get all Runs
-        /// </summary>
-        Task<List<User>> GetUsersAsync(string accessToken, CancellationToken cancellationToken = default);
-
+        
        
         Task<CursorPaginatedResultDto<UserDetailViewModelDto>> GetUsersWithCursorAsync(
             string cursor = null,
@@ -34,6 +30,11 @@ namespace WebAPI.ApiClients
         /// Get Run by ID
         /// </summary>
         Task<User> GetUserByIdAsync(string userId, string accessToken, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Get Users Search Async
+        /// </summary>
+        Task<List<User>> GetUsersSearchAsync(string searchQuery, string accessToken, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get Run by ID

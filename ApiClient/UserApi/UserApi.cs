@@ -37,11 +37,11 @@ namespace WebAPI.ApiClients
         /// <summary>
         /// Get all Clients
         /// </summary>
-        public async Task<List<User>> GetUsersAsync(string accessToken, CancellationToken cancellationToken = default)
+        public async Task<List<User>> GetUsersSearchAsync(string searchQuery, string accessToken, CancellationToken cancellationToken = default)
         {
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            var response = await _httpClient.GetAsync($"{_baseUrl}/api/User/GetUsers", cancellationToken);
+            var response = await _httpClient.GetAsync($"{_baseUrl}/api/User/{searchQuery}/GetUsersSearchAsync", cancellationToken);
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync(cancellationToken);

@@ -181,14 +181,14 @@ namespace WebAPI.Controllers
         /// <param name="id"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        [HttpGet("{id}")]
-        [ProducesResponseType(typeof(UserDetailViewModelDto), 200)]
+        [HttpGet("{searchQuery}/GetUsersSearchAsync")]
+        [ProducesResponseType(typeof(IList<User>), 200)]
         [ProducesResponseType(404)]
-        public async Task<IActionResult> GetUserById(string id, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetUsersSearchAsync(string searchQuery, CancellationToken cancellationToken)
         {
             try
             {
-                var user = await _repository.GetUserByIdAsync(id, cancellationToken);
+                var user = await _repository.GetUsersSearchAsync(searchQuery, cancellationToken);
 
                 if (user == null)
                     return NotFound();
@@ -197,7 +197,7 @@ namespace WebAPI.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving User {UserId}", id);
+                _logger.LogError(ex, "Error retrieving User {UserId}");
                 return StatusCode(500, "An error occurred while retrieving the User");
             }
         }

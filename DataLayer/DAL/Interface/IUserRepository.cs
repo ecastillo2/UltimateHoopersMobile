@@ -18,7 +18,12 @@ namespace DataLayer.DAL.Interface
         /// </summary>
         Task<List<User>> GetUsersAsync(CancellationToken cancellationToken = default);
 
-      
+        /// <summary>
+        /// Get all PrivateRuns
+        /// </summary>
+        Task<IList<User>> GetUsersSearchAsync(string searchQuery,  CancellationToken cancellationToken = default);
+
+
 
         /// <summary>
         /// Get PrivateRuns with cursor-based pagination for efficient scrolling
