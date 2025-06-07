@@ -1018,7 +1018,7 @@ namespace Web.Controllers
                     return Json(new { success = false, message = "This run is already at maximum capacity" });
                 }
 
-                await _joinedRunApi.AddProfileToJoinedRunAsync(request.RunId, request.ProfileId, accessToken, cancellationToken);
+                await _joinedRunApi.AddProfileToJoinedRunAsync(request.RunId, request.ProfileId, "Request", accessToken, cancellationToken);
 
                 return Json(new { success = true });
             }

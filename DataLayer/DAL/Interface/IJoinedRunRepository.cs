@@ -46,7 +46,7 @@ namespace DataLayer.DAL.Interface
         /// </summary>
         /// <param name="model">Joined run model to insert</param>
         /// <returns>Task representing the asynchronous operation</returns>
-        Task AddProfileToJoinedRunAsync(string profileId, string runId);
+        Task AddProfileToJoinedRunAsync(string profileId, string runId, string status);
 
         /// <summary>
         /// Update player joined run status

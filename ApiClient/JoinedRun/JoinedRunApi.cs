@@ -87,12 +87,25 @@ namespace WebAPI.ApiClients
 
         /// Delete a Run
         /// </summary>
-        public async Task<bool> AddProfileToJoinedRunAsync(string profileId, string runId, string accessToken, CancellationToken cancellationToken = default)
+        public async Task<bool> AddProfileToJoinedRunAsync(string profileId, string runId, string status, string accessToken, CancellationToken cancellationToken = default)
         {
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            try
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            var response = await _httpClient.DeleteAsync($"{_baseUrl}/api/JoinedRun/AddProfileToJoinedRunAsync?profileId={profileId}&runId={runId}", cancellationToken);
-            return response.IsSuccessStatusCode;
+                // POST requests typically expect content, even if empty
+                var content = new StringContent("{}", Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PostAsync($"{_baseUrl}/api/JoinedRun/{profileId}/{runId}/{status}/joinedrun", content, cancellationToken);
+
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                // Log the exception if you have a logger
+                // _logger?.LogError(ex, "Error adding profile {ProfileId} to run {RunId}", profileId, runId);
+                return false;
+            }
         }
 
     }

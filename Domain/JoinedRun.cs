@@ -71,6 +71,11 @@ namespace Domain
         /// </summary>
         public string? SquadId { get; set; }
 
+        /// <summary>
+        /// Gets or sets the date when the player was invited
+        /// </summary>
+        public DateTime? JoinedDate { get; set; }
+
         #endregion
 
         #region Navigation Properties (Not Mapped to Database)

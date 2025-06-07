@@ -237,7 +237,7 @@ namespace DataLayer.DAL.Repository
         /// <param name="profileId"></param>
         /// <param name="runId"></param>
         /// <returns></returns>
-        public async Task AddProfileToJoinedRunAsync(string profileId, string runId)
+        public async Task AddProfileToJoinedRunAsync(string profileId, string runId, string status)
         {
             try
             {
@@ -247,7 +247,7 @@ namespace DataLayer.DAL.Repository
                 JoinedRunId = Guid.NewGuid().ToString(),
                     ProfileId = profileId,
                     RunId = runId,
-                    AcceptedInvite = "Joined",
+                    AcceptedInvite = status,
                     Present = false,
                     InvitedDate = DateTime.UtcNow,
                 };

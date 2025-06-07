@@ -45,7 +45,7 @@ namespace WebAPI.ApiClients
         /// <param name="accessToken"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<bool> AddProfileToJoinedRunAsync(string profileId, string runId, string accessToken, CancellationToken cancellationToken = default);
+        Task<bool> AddProfileToJoinedRunAsync(string profileId, string runId, string status, string accessToken, CancellationToken cancellationToken = default);
 
 
     }

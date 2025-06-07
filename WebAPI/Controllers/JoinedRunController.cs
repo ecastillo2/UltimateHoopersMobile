@@ -160,24 +160,48 @@ namespace WebAPI.Controllers
         /// <response code="200">Returns the joined run</response>
         /// <response code="404">If the joined run was not found</response>
         /// <response code="500">If there was an internal server error</response>
-        [HttpGet("{profileId}/{runId}/joinedrun")]
+        [HttpPost("{profileId}/{runId}/{status}/joinedrun")]
         //[Authorize]
-
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)] // If already joined
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> AddProfileToJoinedRunAsync(string profile, string runId)
+        public async Task<IActionResult> AddProfileToJoinedRunAsync(string profileId, string runId, string status)
         {
             try
             {
-                await _repository.AddProfileToJoinedRunAsync(profile, runId);
+                // Validate input parameters
+                if (string.IsNullOrEmpty(profileId) || string.IsNullOrEmpty(runId))
+                {
+                    return BadRequest(new { message = "ProfileId and RunId are required" });
+                }
 
-               
-                return Ok();
+                // Check if profile is already joined (optional validation)
+                // var existingJoin = await _repository.GetJoinedRunAsync(profileId, runId);
+                // if (existingJoin != null)
+                // {
+                //     return Conflict(new { message = "Profile is already joined to this run" });
+                // }
+
+                await _repository.AddProfileToJoinedRunAsync(profileId, runId, status);
+
+                return Ok(new { message = "Profile successfully joined to run", profileId, runId });
+            }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning(ex, "Invalid parameters for joining run. ProfileId: {ProfileId}, RunId: {RunId}", profileId, runId);
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning(ex, "Cannot join profile {ProfileId} to run {RunId}", profileId, runId);
+                return Conflict(new { message = ex.Message });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving joined run {JoinedRunId}", runId);
-                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while retrieving the joined run" });
+                _logger.LogError(ex, "Error adding profile {ProfileId} to joined run {RunId}", profileId, runId);
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while joining the run" });
             }
         }
 
