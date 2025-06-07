@@ -161,7 +161,7 @@ namespace UltimateHoopers.Services
                     JoinedRunId = "1",
                     ProfileId = profileId,
                     RunId = "run1",
-                    AcceptedInvite = "Accepted",
+                    Status = "Accepted",
                     InvitedDate = DateTime.Now,
                     Run = new Run
                     {
@@ -190,7 +190,7 @@ namespace UltimateHoopers.Services
                     JoinedRunId = "2",
                     ProfileId = profileId,
                     RunId = "run2",
-                    AcceptedInvite = "Accepted",
+                    Status = "Accepted",
                     InvitedDate = DateTime.Now,
                     Run = new Run
                     {

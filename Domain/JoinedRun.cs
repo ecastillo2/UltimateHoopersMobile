@@ -54,7 +54,7 @@ namespace Domain
         /// Gets or sets the acceptance status of the invite
         /// Valid values: "Accepted", "Declined", "Undecided", "Accepted / Pending", "Refund"
         /// </summary>
-        public string? AcceptedInvite { get; set; }
+        public string? Status { get; set; }
 
         /// <summary>
         /// Gets or sets the type of the joined run
@@ -112,31 +112,31 @@ namespace Domain
         /// Gets a value indicating whether the player has accepted the invite (computed property)
         /// </summary>
         [NotMapped]
-        public bool HasAccepted => AcceptedInvite == "Accepted";
+        public bool HasAccepted => Status == "Accepted";
 
         /// <summary>
         /// Gets a value indicating whether the player has declined the invite (computed property)
         /// </summary>
         [NotMapped]
-        public bool HasDeclined => AcceptedInvite == "Declined";
+        public bool HasDeclined => Status == "Declined";
 
         /// <summary>
         /// Gets a value indicating whether the player's status is undecided (computed property)
         /// </summary>
         [NotMapped]
-        public bool IsUndecided => AcceptedInvite == "Undecided" || string.IsNullOrEmpty(AcceptedInvite);
+        public bool IsUndecided => Status == "Undecided" || string.IsNullOrEmpty(Status);
 
         /// <summary>
         /// Gets a value indicating whether the player is pending acceptance (computed property)
         /// </summary>
         [NotMapped]
-        public bool IsPending => AcceptedInvite == "Accepted / Pending";
+        public bool IsPending => Status == "Accepted / Pending";
 
         /// <summary>
         /// Gets a value indicating whether the player has requested a refund (computed property)
         /// </summary>
         [NotMapped]
-        public bool HasRequestedRefund => AcceptedInvite == "Refund";
+        public bool HasRequestedRefund => Status == "Refund";
 
         /// <summary>
         /// Gets a formatted relative time since the invitation (computed property)
@@ -154,7 +154,7 @@ namespace Domain
         /// <param name="status">The new invitation status</param>
         public void UpdateInvitationStatus(string status)
         {
-            AcceptedInvite = status;
+            Status = status;
 
             // If accepting the invitation, default to not present (will be set during actual run)
             if (status == "Accepted")
@@ -188,7 +188,7 @@ namespace Domain
         /// <returns>User-friendly status text</returns>
         public string GetStatusDisplayText()
         {
-            return AcceptedInvite switch
+            return Status switch
             {
                 "Accepted" => "Accepted",
                 "Declined" => "Declined",
@@ -196,7 +196,7 @@ namespace Domain
                 "Refund" => "Refund Requested",
                 "Undecided" => "Pending Response",
                 null => "Pending Response",
-                _ => AcceptedInvite
+                _ => Status
             };
         }
 

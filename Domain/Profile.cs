@@ -100,8 +100,8 @@ namespace Domain
         public ScoutingReport? ScoutingReport { get; set; }
         [NotMapped]
         public GameStatistics GameStatistics { get; set; }
-        [NotMapped]
-        public string? AcceptedInvite { get; set; }
+        //[NotMapped]
+        //public string? Status { get; set; }
         [NotMapped]
         public string? FullName { get; set; }
         [NotMapped]

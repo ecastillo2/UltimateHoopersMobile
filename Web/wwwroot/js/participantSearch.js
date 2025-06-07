@@ -1,5 +1,5 @@
 ﻿/**
- * Participant Search Functionality
+ * Participant Search Functionality - FIXED MODAL BACKDROP ISSUE
  * Handles searching for users to add as participants to runs
  * File: wwwroot/js/participantSearch.js
  */
@@ -10,7 +10,8 @@ window.participantSearchState = {
     selectedUser: null,
     currentParticipants: [],
     searchTimeout: null,
-    isSearching: false
+    isSearching: false,
+    modalInstance: null // Store modal instance
 };
 
 // Initialize participant search functionality when DOM is ready
@@ -36,9 +37,12 @@ function setupParticipantSearchHandlers() {
         return;
     }
 
-    // Modal show/hide handlers
+    // Modal show/hide handlers with proper cleanup
     addParticipantModal.addEventListener('show.bs.modal', handleAddParticipantModalShow);
     addParticipantModal.addEventListener('hidden.bs.modal', handleAddParticipantModalHide);
+
+    // FIXED: Add specific event handlers for modal cleanup
+    addParticipantModal.addEventListener('hide.bs.modal', handleAddParticipantModalHiding);
 
     // Search input handler
     const searchInput = document.getElementById('participantSearch');
@@ -65,7 +69,70 @@ function setupParticipantSearchHandlers() {
         confirmBtn.addEventListener('click', confirmAddParticipant);
     }
 
+    // FIXED: Add cancel button handler for proper cleanup
+    const cancelBtns = addParticipantModal.querySelectorAll('[data-bs-dismiss="modal"]');
+    cancelBtns.forEach(btn => {
+        btn.addEventListener('click', handleCancelClick);
+    });
+
     console.log('✅ Participant search handlers setup complete');
+}
+
+// FIXED: New function to handle modal hiding event
+function handleAddParticipantModalHiding(event) {
+    console.log('🔍 Add participant modal hiding...');
+    // Clean up any ongoing operations
+    if (window.participantSearchState.searchTimeout) {
+        clearTimeout(window.participantSearchState.searchTimeout);
+        window.participantSearchState.searchTimeout = null;
+    }
+}
+
+// FIXED: New function to handle cancel button clicks
+function handleCancelClick(event) {
+    console.log('❌ Add participant modal cancelled');
+
+    // Force close the modal and clean up backdrop
+    const modal = window.participantSearchState.modalInstance ||
+        bootstrap.Modal.getInstance(document.getElementById('addParticipantModal'));
+
+    if (modal) {
+        modal.hide();
+    }
+
+    // FIXED: Force cleanup of any lingering backdrops
+    setTimeout(() => {
+        cleanupModalBackdrop();
+    }, 100);
+}
+
+// FIXED: New function to clean up modal backdrop
+function cleanupModalBackdrop() {
+    console.log('🧹 Cleaning up modal backdrop...');
+
+    // Remove any lingering modal backdrops
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    backdrops.forEach((backdrop, index) => {
+        // Keep only the first backdrop (for the edit run modal)
+        if (index > 0) {
+            console.log('🧹 Removing extra backdrop', index);
+            backdrop.remove();
+        }
+    });
+
+    // Ensure body classes are correct
+    const body = document.body;
+    const openModals = document.querySelectorAll('.modal.show');
+
+    if (openModals.length <= 1) {
+        // Only edit run modal should be open
+        body.classList.add('modal-open');
+        body.style.overflow = '';
+        body.style.paddingRight = '';
+    }
+
+    // Remove any stuck modal-static class
+    body.classList.remove('modal-static');
 }
 
 // Update the existing addParticipantBtn click handler
@@ -91,8 +158,27 @@ function handleAddParticipantClick() {
         return;
     }
 
-    // Show the add participant modal
-    const modal = new bootstrap.Modal(document.getElementById('addParticipantModal'));
+    // FIXED: Proper modal instance management
+    const modalElement = document.getElementById('addParticipantModal');
+    if (!modalElement) {
+        console.error('❌ Add participant modal element not found');
+        return;
+    }
+
+    // Get existing instance or create new one
+    let modal = bootstrap.Modal.getInstance(modalElement);
+    if (!modal) {
+        modal = new bootstrap.Modal(modalElement, {
+            backdrop: true,
+            keyboard: true,
+            focus: true
+        });
+    }
+
+    // Store modal instance for later cleanup
+    window.participantSearchState.modalInstance = modal;
+
+    // Show the modal
     modal.show();
 }
 
@@ -128,7 +214,17 @@ function handleAddParticipantModalShow() {
 
 function handleAddParticipantModalHide() {
     console.log('🔍 Add participant modal closing');
+
+    // Reset search state
     resetParticipantSearch();
+
+    // Clear modal instance reference
+    window.participantSearchState.modalInstance = null;
+
+    // FIXED: Ensure proper cleanup after modal hide
+    setTimeout(() => {
+        cleanupModalBackdrop();
+    }, 150);
 }
 
 function handleSearchInput(event) {
@@ -302,8 +398,6 @@ function displaySearchResults(users, searchTerm) {
     container.innerHTML = resultsHtml;
 }
 
-
-
 function selectUser(element) {
     console.log('👤 User selected');
 
@@ -336,7 +430,6 @@ function selectUser(element) {
 
     console.log('👤 Selected user:', window.participantSearchState.selectedUser);
 }
-
 
 function showSelectedUser() {
     const container = document.getElementById('selectedUserContainer');
@@ -384,6 +477,7 @@ function showSelectedUser() {
         container.classList.remove('d-none');
     }
 }
+
 function clearUserSelection() {
     console.log('🧹 Clearing user selection');
 
@@ -448,8 +542,9 @@ async function confirmAddParticipant() {
             // Show success message
             alert(`${selectedUser.userName} has been added to the run!`);
 
-            // Close modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('addParticipantModal'));
+            // FIXED: Proper modal closure with cleanup
+            const modal = window.participantSearchState.modalInstance ||
+                bootstrap.Modal.getInstance(document.getElementById('addParticipantModal'));
             if (modal) {
                 modal.hide();
             }
@@ -457,6 +552,7 @@ async function confirmAddParticipant() {
             // Refresh participants list
             setTimeout(() => {
                 refreshParticipantsList();
+                cleanupModalBackdrop(); // Ensure clean state
             }, 500);
 
         } else {
@@ -614,6 +710,9 @@ function getAntiForgeryToken() {
 // Make selectUser globally accessible for onclick handlers
 window.selectUser = selectUser;
 
+// FIXED: Global function for manual cleanup (useful for debugging)
+window.cleanupParticipantModalBackdrop = cleanupModalBackdrop;
+
 // Export functions for debugging
 window.participantSearchDebug = {
     state: () => window.participantSearchState,
@@ -623,6 +722,7 @@ window.participantSearchDebug = {
     selectUser: selectUser,
     clearSelection: clearUserSelection,
     confirm: confirmAddParticipant,
+    cleanupBackdrop: cleanupModalBackdrop, // FIXED: Add cleanup function
 
     // Test functions
     testSearch: function (term) {
@@ -647,5 +747,58 @@ window.participantSearchDebug = {
     getSelectedUser: function () {
         console.log('👤 Selected user:', window.participantSearchState.selectedUser);
         return window.participantSearchState.selectedUser;
+    },
+
+    // FIXED: New debug functions for modal testing
+    testModalCleanup: function () {
+        console.log('🧪 Testing modal cleanup...');
+        cleanupModalBackdrop();
+        console.log('✅ Manual cleanup completed');
+    },
+
+    getModalState: function () {
+        const modalElement = document.getElementById('addParticipantModal');
+        const modalInstance = window.participantSearchState.modalInstance;
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        const bodyClasses = document.body.className;
+
+        console.log('🔍 Modal state:', {
+            modalElement: !!modalElement,
+            modalInstance: !!modalInstance,
+            backdropCount: backdrops.length,
+            bodyClasses: bodyClasses,
+            modalShown: modalElement?.classList.contains('show')
+        });
+
+        return {
+            modalElement: !!modalElement,
+            modalInstance: !!modalInstance,
+            backdropCount: backdrops.length,
+            bodyClasses: bodyClasses,
+            modalShown: modalElement?.classList.contains('show')
+        };
+    },
+
+    forceCloseModal: function () {
+        console.log('🚨 Force closing participant modal...');
+
+        const modal = window.participantSearchState.modalInstance ||
+            bootstrap.Modal.getInstance(document.getElementById('addParticipantModal'));
+
+        if (modal) {
+            modal.hide();
+        }
+
+        // Force cleanup
+        setTimeout(() => {
+            cleanupModalBackdrop();
+            console.log('✅ Force close completed');
+        }, 200);
     }
 };
+
+console.log('🐛 PARTICIPANT SEARCH DEBUG:');
+console.log('🐛 Try: window.participantSearchDebug.testModalCleanup() to test cleanup');
+console.log('🐛 Try: window.participantSearchDebug.getModalState() to check modal state');
+console.log('🐛 Try: window.participantSearchDebug.forceCloseModal() to force close');
+console.log('🐛 Try: window.cleanupParticipantModalBackdrop() for direct cleanup');

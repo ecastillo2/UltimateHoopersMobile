@@ -12,7 +12,7 @@ namespace Domain.DtoModel
         public string? ProfileId { get; set; }
         public string? RunId { get; set; }
         public DateTime? InvitedDate { get; set; }
-        public string? AcceptedInvite { get; set; }
+        public string? Status { get; set; }
         public string? Type { get; set; }
         public bool? Present { get; set; }
         public string? SquadId { get; set; }
@@ -26,7 +26,7 @@ namespace Domain.DtoModel
                 ProfileId = ProfileId,
                 RunId = RunId,
                 InvitedDate = InvitedDate,
-                AcceptedInvite = AcceptedInvite,
+                Status = Status,
                 Type = Type,
                 Present = Present,
                 SquadId = SquadId

@@ -152,7 +152,7 @@ namespace DataLayer.DAL.Repository
         /// <summary>
         /// Update player joined run status
         /// </summary>
-        public async Task UpdatePlayerJoinedRun(string profileId, string joinedRunId, string acceptedInvite)
+        public async Task UpdatePlayerJoinedRun(string profileId, string joinedRunId, string status)
         {
             try
             {
@@ -165,7 +165,7 @@ namespace DataLayer.DAL.Repository
                     return;
                 }
 
-                joinedRun.AcceptedInvite = acceptedInvite;
+                joinedRun.Status = status;
                 _context.JoinedRun.Update(joinedRun);
                 await Save();
 
@@ -176,15 +176,15 @@ namespace DataLayer.DAL.Repository
                 if (order != null)
                 {
                     // Update order status based on accepted invite status
-                    if (acceptedInvite == "Accepted")
+                    if (status == "Accepted")
                     {
                         order.Status = "Completed";
                     }
-                    else if (acceptedInvite == "Accepted / Pending")
+                    else if (status == "Accepted / Pending")
                     {
                         order.Status = "Pending";
                     }
-                    else if (acceptedInvite == "Refund")
+                    else if (status == "Refund")
                     {
                         order.Status = "Refund";
                     }
@@ -247,7 +247,7 @@ namespace DataLayer.DAL.Repository
                 JoinedRunId = Guid.NewGuid().ToString(),
                     ProfileId = profileId,
                     RunId = runId,
-                    AcceptedInvite = status,
+                    Status = status,
                     Present = false,
                     InvitedDate = DateTime.UtcNow,
                 };
@@ -367,14 +367,14 @@ namespace DataLayer.DAL.Repository
                     var joinedRun = joinedRuns.FirstOrDefault(jr => jr.ProfileId == profile.ProfileId);
                     if (joinedRun != null)
                     {
-                        profile.AcceptedInvite = joinedRun.AcceptedInvite;
+                        profile.Status = joinedRun.Status;
                     }
                 }
 
                 // Count by status
-                int acceptedCount = joinedRuns.Count(jr => jr.AcceptedInvite == "Accepted");
-                int undecidedCount = joinedRuns.Count(jr => jr.AcceptedInvite == "Undecided" || string.IsNullOrEmpty(jr.AcceptedInvite));
-                int declinedCount = joinedRuns.Count(jr => jr.AcceptedInvite == "Declined");
+                int acceptedCount = joinedRuns.Count(jr => jr.Status == "Accepted");
+                int undecidedCount = joinedRuns.Count(jr => jr.Status == "Undecided" || string.IsNullOrEmpty(jr.Status));
+                int declinedCount = joinedRuns.Count(jr => jr.Status == "Declined");
 
                 return (profiles, acceptedCount, undecidedCount, declinedCount);
             }

@@ -53,9 +53,9 @@ namespace DataLayer.DAL.Interface
         /// </summary>
         /// <param name="profileId">Profile ID</param>
         /// <param name="joinedRunId">Joined run ID</param>
-        /// <param name="acceptedInvite">Accepted invite status</param>
+        /// <param name="status">Accepted invite status</param>
         /// <returns>Task representing the asynchronous operation</returns>
-        Task UpdatePlayerJoinedRun(string profileId, string joinedRunId, string acceptedInvite);
+        Task UpdatePlayerJoinedRun(string profileId, string joinedRunId, string status);
 
         /// <summary>
         /// Update player present status in a joined run

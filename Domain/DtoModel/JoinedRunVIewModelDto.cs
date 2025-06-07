@@ -23,7 +23,7 @@ namespace Domain.DtoModel
             JoinedRunId = privateRun.JoinedRunId;
             InvitedDate = privateRun.InvitedDate;
             ProfileId = privateRun.ProfileId;
-            AcceptedInvite = privateRun.AcceptedInvite;
+            Status = privateRun.Status;
             Type = privateRun.Type;
             Present = privateRun.Present;
             SquadId = privateRun.SquadId;
@@ -52,7 +52,7 @@ namespace Domain.DtoModel
         /// Gets or sets the acceptance status of the invite
         /// Valid values: "Accepted", "Declined", "Undecided", "Accepted / Pending", "Refund"
         /// </summary>
-        public string? AcceptedInvite { get; set; }
+        public string? Status { get; set; }
 
         /// <summary>
         /// Gets or sets the type of the joined run
