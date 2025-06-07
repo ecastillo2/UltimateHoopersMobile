@@ -1,6 +1,7 @@
 ﻿/**
  * FIXED RUN MANAGEMENT - Compatible with runCalendar.js
  * Handles both Edit Run and Create Run forms with identical functionality
+ * NOW INCLUDES: Participants Tab Functionality
  * 
  * NEW FEATURES:
  * - Schedule conflict validation prevents overlapping runs on same court
@@ -10,6 +11,7 @@
  * - Create Run form matches Edit Run layout and functionality
  * - Client selection and dynamic court loading for Create Run
  * - Custom address toggle functionality for both Edit and Create
+ * - Participants tab with load, display, and remove functionality
  * 
  * BACKEND REQUIREMENTS:
  * - Recommended: Add /Run/CheckScheduleConflicts endpoint for optimal performance
@@ -17,6 +19,7 @@
  * - Court loading: Uses /Run/GetRunCourts endpoint for dynamic court loading
  * - Client loading: Uses /Client/GetAllClients endpoint for create run client selection
  * - Client data: Uses /Run/GetClientData endpoint for client address information
+ * - Participants: Uses /Run/GetRunParticipants and /Run/RemoveParticipant endpoints
  */
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -212,6 +215,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 setupCustomAddressToggle();
                 updateAddressDisplay();
             }, 100);
+        }
+
+        // NEW: If switching to participants tab, load participants
+        if (targetTab === '#participants-tab-pane') {
+            const runId = window.runManagementState?.currentRunId || safeGetValue('editRunId');
+            if (runId) {
+                console.log('👥 Loading participants for tab switch');
+                setTimeout(() => {
+                    loadRunParticipants(runId);
+                }, 100);
+            }
         }
     }
 
@@ -443,6 +457,11 @@ document.addEventListener('DOMContentLoaded', function () {
             safeSetSelect('editStatus', data.status || 'Active');
             safeSetSelect('editIsPublic', data.isPublic !== false ? 'true' : 'false');
 
+            // NEW: Set occurrence if present
+            if (data.occurrence || data.Occurrence) {
+                safeSetSelect('editOccurance', data.occurrence || data.Occurrence);
+            }
+
             // ENHANCED: Court selection with multiple fallback properties and auto-population
             const selectedCourtId = extractCourtId(data);
             console.log('🏀 Extracted court ID for auto-selection:', selectedCourtId);
@@ -461,6 +480,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Address handling
             populateAddressDataComplete(data);
+
+            // NEW: Update participant counts
+            if (data.playerLimit) {
+                updateParticipantCounts(data.playerCount || 0);
+            }
 
             // Store complete data for later use
             window.runManagementState.currentRunData = {
@@ -753,6 +777,446 @@ document.addEventListener('DOMContentLoaded', function () {
 
         console.log('Basic run data extracted from table');
         console.log('📋 Extracted what data we could from table');
+    }
+
+    // ========== PARTICIPANTS TAB FUNCTIONALITY ==========
+
+    /**
+     * Load and display participants for a run
+     * @param {string} runId - The run ID to load participants for
+     */
+    async function loadRunParticipants(runId) {
+        console.log('👥 Loading participants for run:', runId);
+
+        if (!runId) {
+            console.error('❌ No run ID provided for loading participants');
+            return;
+        }
+
+        const participantsList = document.getElementById('participantsList');
+        const currentCountElement = document.getElementById('currentParticipantsCount');
+        const maxCountElement = document.getElementById('maxParticipantsCount');
+
+        if (!participantsList) {
+            console.warn('⚠️ Participants list element not found');
+            return;
+        }
+
+        // Show loading state
+        showParticipantsLoading();
+
+        try {
+            const response = await fetch(`/Run/GetRunParticipants?runId=${encodeURIComponent(runId)}`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin'
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const participants = await response.json();
+            console.log('👥 Received participants:', participants);
+
+            // Handle different response formats
+            const participantList = participants.participants || participants || [];
+
+            // Display participants
+            displayParticipants(participantList);
+
+            // Update counts
+            updateParticipantCounts(participantList.length);
+
+            console.log(`✅ Loaded ${participantList.length} participants`);
+
+        } catch (error) {
+            console.error('❌ Error loading participants:', error);
+            showParticipantsError('Unable to load participants. Please try again.');
+        }
+    }
+
+    /**
+     * Display participants in the participants list
+     * @param {Array} participants - Array of participant objects
+     */
+    function displayParticipants(participants) {
+        const participantsList = document.getElementById('participantsList');
+        if (!participantsList) return;
+
+        if (!participants || participants.length === 0) {
+            showEmptyParticipants();
+            return;
+        }
+
+        let participantsHtml = '<div class="participants-grid">';
+
+        participants.forEach((participant, index) => {
+            const userInitials = getUserInitials(participant.userName || 'Unknown Player');
+            const profileImage = participant.imageUrl || participant.imageURL;
+            const playerNumber = participant.playerNumber || '';
+            const status = participant.status || 'Active';
+
+            participantsHtml += `
+                <div class="participant-card" data-participant-id="${participant.profileId || ''}" data-index="${index}">
+                    <div class="participant-avatar">
+                        ${profileImage ?
+                    `<img src="${escapeHtml(profileImage)}" alt="${escapeHtml(participant.userName || 'User')}" 
+                                 class="participant-profile-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                             <div class="participant-profile-initials" style="display: none;">${userInitials}</div>` :
+                    `<div class="participant-profile-initials">${userInitials}</div>`
+                }
+                    </div>
+                    
+                    <div class="participant-info">
+                        <div class="participant-name">
+                            ${escapeHtml(participant.userName || 'Unknown Player')}
+                        </div>
+                        ${playerNumber ? `<div class="participant-number">#${escapeHtml(playerNumber)}</div>` : ''}
+                        <div class="participant-status status-${status.toLowerCase()}">
+                            ${escapeHtml(status)}
+                        </div>
+                    </div>
+                    
+                    <div class="participant-actions">
+                        <button type="button" class="btn btn-sm btn-outline-danger" 
+                                onclick="removeParticipant('${participant.profileId || ''}', '${escapeHtml(participant.userName || 'this participant')}')"
+                                title="Remove participant">
+                            <i class="bi bi-person-dash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+
+        participantsHtml += '</div>';
+
+        participantsList.innerHTML = participantsHtml;
+
+        // Add CSS if not already present
+        addParticipantsCSS();
+    }
+
+    /**
+     * Show loading state for participants
+     */
+    function showParticipantsLoading() {
+        const participantsList = document.getElementById('participantsList');
+        if (participantsList) {
+            participantsList.innerHTML = `
+                <div class="text-center py-4 text-muted">
+                    <div class="spinner-border text-primary mb-2" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <div><i class="bi bi-people me-2"></i>Loading participants...</div>
+                </div>
+            `;
+        }
+    }
+
+    /**
+     * Show empty state when no participants
+     */
+    function showEmptyParticipants() {
+        const participantsList = document.getElementById('participantsList');
+        if (participantsList) {
+            participantsList.innerHTML = `
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-people" style="font-size: 2rem; opacity: 0.5;"></i>
+                    <div class="mt-2">No participants yet</div>
+                    <div class="small">Use the "Add Participant" button to invite players</div>
+                </div>
+            `;
+        }
+    }
+
+    /**
+     * Show error state for participants
+     */
+    function showParticipantsError(message) {
+        const participantsList = document.getElementById('participantsList');
+        if (participantsList) {
+            participantsList.innerHTML = `
+                <div class="text-center py-4 text-danger">
+                    <i class="bi bi-exclamation-triangle" style="font-size: 2rem;"></i>
+                    <div class="mt-2">${escapeHtml(message)}</div>
+                    <button class="btn btn-sm btn-outline-primary mt-2" onclick="reloadParticipants()">
+                        <i class="bi bi-arrow-clockwise me-1"></i>Try Again
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    /**
+     * Update participant count displays
+     */
+    function updateParticipantCounts(currentCount) {
+        const currentCountElement = document.getElementById('currentParticipantsCount');
+        const maxCountElement = document.getElementById('maxParticipantsCount');
+
+        // Also update in add participant modal
+        const addParticipantCurrentCount = document.getElementById('addParticipantCurrentCount');
+        const addParticipantMaxCount = document.getElementById('addParticipantMaxCount');
+
+        if (currentCountElement) {
+            currentCountElement.textContent = currentCount;
+        }
+
+        if (addParticipantCurrentCount) {
+            addParticipantCurrentCount.textContent = currentCount;
+        }
+
+        // Get max count from form or use stored value
+        const maxCount = safeGetValue('editMaxParticipants') ||
+            window.runManagementState.currentRunData?.playerLimit ||
+            '10';
+
+        if (maxCountElement) {
+            maxCountElement.textContent = maxCount;
+        }
+
+        if (addParticipantMaxCount) {
+            addParticipantMaxCount.textContent = maxCount;
+        }
+
+        console.log(`👥 Updated participant counts: ${currentCount}/${maxCount}`);
+    }
+
+    /**
+     * Remove a participant from the run
+     */
+    async function removeParticipant(participantId, participantName) {
+        console.log('👥 Removing participant:', participantName, '(ID:', participantId, ')');
+
+        if (!participantId) {
+            console.error('❌ No participant ID provided');
+            alert('Error: Missing participant information');
+            return;
+        }
+
+        const runId = window.runManagementState?.currentRunId || safeGetValue('editRunId');
+        if (!runId) {
+            console.error('❌ No run ID available');
+            alert('Error: No run selected');
+            return;
+        }
+
+        // Confirm removal
+        const confirmMessage = `Are you sure you want to remove ${participantName} from this run?`;
+        if (!confirm(confirmMessage)) {
+            return;
+        }
+
+        try {
+            // Show loading state for the specific participant
+            const participantCard = document.querySelector(`[data-participant-id="${participantId}"]`);
+            if (participantCard) {
+                participantCard.style.opacity = '0.5';
+                participantCard.style.pointerEvents = 'none';
+            }
+
+            const response = await fetch('/Run/RemoveParticipant', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': getAntiForgeryToken()
+                },
+                body: JSON.stringify({
+                    RunId: runId,
+                    ProfileId: participantId
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                console.log(`✅ Successfully removed ${participantName}`);
+
+                // Show success message briefly
+                console.log(`${participantName} has been removed from the run`);
+
+                // Reload participants list
+                setTimeout(() => {
+                    loadRunParticipants(runId);
+                }, 500);
+
+            } else {
+                throw new Error(result.message || 'Failed to remove participant');
+            }
+
+        } catch (error) {
+            console.error('❌ Error removing participant:', error);
+            alert(`Error removing participant: ${error.message}`);
+
+            // Restore participant card if it exists
+            const participantCard = document.querySelector(`[data-participant-id="${participantId}"]`);
+            if (participantCard) {
+                participantCard.style.opacity = '';
+                participantCard.style.pointerEvents = '';
+            }
+        }
+    }
+
+    /**
+     * Reload participants (used by error retry button)
+     */
+    function reloadParticipants() {
+        const runId = window.runManagementState?.currentRunId || safeGetValue('editRunId');
+        if (runId) {
+            loadRunParticipants(runId);
+        }
+    }
+
+    /**
+     * Get user initials for avatar display
+     */
+    function getUserInitials(name) {
+        if (!name) return '?';
+
+        const parts = name.trim().split(' ');
+        if (parts.length >= 2) {
+            return (parts[0][0] + parts[1][0]).toUpperCase();
+        } else if (parts.length === 1 && parts[0].length > 0) {
+            return parts[0][0].toUpperCase();
+        }
+        return '?';
+    }
+
+    /**
+     * Add CSS styles for participants display
+     */
+    function addParticipantsCSS() {
+        // Check if styles already added
+        if (document.getElementById('participants-styles')) return;
+
+        const style = document.createElement('style');
+        style.id = 'participants-styles';
+        style.textContent = `
+            .participants-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 1rem;
+                margin-top: 1rem;
+            }
+
+            .participant-card {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                padding: 0.75rem;
+                border: 1px solid #dee2e6;
+                border-radius: 8px;
+                background: white;
+                transition: all 0.2s ease;
+            }
+
+            .participant-card:hover {
+                border-color: #007bff;
+                box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15);
+            }
+
+            .participant-avatar {
+                flex-shrink: 0;
+                width: 40px;
+                height: 40px;
+                position: relative;
+            }
+
+            .participant-profile-image,
+            .participant-profile-initials {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+            }
+
+            .participant-profile-image {
+                object-fit: cover;
+                border: 2px solid #dee2e6;
+            }
+
+            .participant-profile-initials {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: linear-gradient(135deg, #007bff, #0056b3);
+                color: white;
+                font-weight: 600;
+                font-size: 0.875rem;
+            }
+
+            .participant-info {
+                flex-grow: 1;
+                min-width: 0;
+            }
+
+            .participant-name {
+                font-weight: 600;
+                color: #333;
+                margin-bottom: 0.25rem;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .participant-number {
+                font-size: 0.875rem;
+                color: #6c757d;
+                margin-bottom: 0.25rem;
+            }
+
+            .participant-status {
+                font-size: 0.75rem;
+                padding: 0.125rem 0.5rem;
+                border-radius: 12px;
+                display: inline-block;
+            }
+
+            .participant-status.status-active {
+                background-color: #d4edda;
+                color: #155724;
+            }
+
+            .participant-status.status-pending {
+                background-color: #fff3cd;
+                color: #856404;
+            }
+
+            .participant-status.status-inactive {
+                background-color: #f8d7da;
+                color: #721c24;
+            }
+
+            .participant-actions {
+                flex-shrink: 0;
+            }
+
+            .participant-actions .btn {
+                border-radius: 50%;
+                width: 32px;
+                height: 32px;
+                padding: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            @media (max-width: 768px) {
+                .participants-grid {
+                    grid-template-columns: 1fr;
+                }
+                
+                .participant-card {
+                    padding: 0.5rem;
+                }
+            }
+        `;
+
+        document.head.appendChild(style);
     }
 
     // ========== FORM HANDLERS ==========
@@ -1496,7 +1960,8 @@ document.addEventListener('DOMContentLoaded', function () {
             IsOutdoor: safeGetValue('addCourtType') === 'true',
             ClientId: safeGetValue('addClientSelect'),
             CourtId: safeGetValue('addCourtList') || null,
-            UseCustomAddress: useCustom
+            UseCustomAddress: useCustom,
+            Occurrence: safeGetValue('addOccurance')
         };
 
         // Add address data
@@ -1535,7 +2000,8 @@ document.addEventListener('DOMContentLoaded', function () {
             { id: 'addIsPublic', defaultValue: 'true' },
             { id: 'addTeamType', defaultValue: 'Individual' },
             { id: 'addStatus', defaultValue: 'Active' },
-            { id: 'addCourtType', defaultValue: 'false' }
+            { id: 'addCourtType', defaultValue: 'false' },
+            { id: 'addOccurance', defaultValue: 'once' }
         ];
 
         selects.forEach(selectInfo => {
@@ -2008,7 +2474,10 @@ document.addEventListener('DOMContentLoaded', function () {
             CourtId: safeGetValue('editCourtList') || null,
 
             // Add client ID (important for court association)
-            ClientId: safeGetValue('editClientId') || null
+            ClientId: safeGetValue('editClientId') || null,
+
+            // Add occurrence
+            Occurrence: safeGetValue('editOccurance')
         };
 
         // Add address data
@@ -2175,7 +2644,7 @@ document.addEventListener('DOMContentLoaded', function () {
         fields.forEach(field => safeSetValue(field, ''));
 
         // Reset selects
-        const selects = ['editSkillLevel', 'editRunType', 'editStatus', 'editIsPublic', 'editCourtList'];
+        const selects = ['editSkillLevel', 'editRunType', 'editStatus', 'editIsPublic', 'editCourtList', 'editOccurance'];
         selects.forEach(select => {
             const element = document.getElementById(select);
             if (element) {
@@ -2270,6 +2739,13 @@ document.addEventListener('DOMContentLoaded', function () {
         return token ? token.value : '';
     }
 
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
     // ========== GLOBAL API (CALENDAR COMPATIBLE) ==========
     // Use different function names to avoid conflicts with calendar
     window.loadRunDataFixed = loadRunDataWithTimeout;
@@ -2279,6 +2755,13 @@ document.addEventListener('DOMContentLoaded', function () {
     window.updateAddressDisplayFixed = updateAddressDisplay;
     window.extractCourtIdFixed = extractCourtId;
     window.validateScheduleConflictsFixed = validateScheduleConflicts;
+
+    // NEW: Participants functions
+    window.loadRunParticipants = loadRunParticipants;
+    window.removeParticipant = removeParticipant;
+    window.reloadParticipants = reloadParticipants;
+    window.displayParticipants = displayParticipants;
+    window.updateParticipantCounts = updateParticipantCounts;
 
     // NEW: Create Run API functions
     window.loadClientsForCreateRunFixed = loadClientsForCreateRun;
@@ -2328,6 +2811,51 @@ document.addEventListener('DOMContentLoaded', function () {
         getCreateRunFormData: getCreateRunFormData,
         validateCreateScheduleConflicts: validateCreateScheduleConflicts,
         clearCreateConflictWarnings: clearCreateConflictWarnings,
+
+        // NEW: Participants debug functions
+        participants: {
+            load: loadRunParticipants,
+            display: displayParticipants,
+            remove: removeParticipant,
+            updateCounts: updateParticipantCounts,
+            showLoading: showParticipantsLoading,
+            showEmpty: showEmptyParticipants,
+            showError: showParticipantsError,
+
+            // Test functions
+            testLoad: function (runId) {
+                console.log('🧪 Testing participant loading for run:', runId);
+                return loadRunParticipants(runId || 'test-run-123');
+            },
+
+            testDisplay: function () {
+                console.log('🧪 Testing participant display with mock data');
+                const mockParticipants = [
+                    {
+                        profileId: 'player-1',
+                        userName: 'John Doe',
+                        playerNumber: '23',
+                        status: 'Active',
+                        imageUrl: null
+                    },
+                    {
+                        profileId: 'player-2',
+                        userName: 'Jane Smith',
+                        playerNumber: '15',
+                        status: 'Active',
+                        imageUrl: 'https://via.placeholder.com/40'
+                    }
+                ];
+                displayParticipants(mockParticipants);
+                updateParticipantCounts(mockParticipants.length);
+            },
+
+            getCurrentRunId: function () {
+                const runId = window.runManagementState?.currentRunId || safeGetValue('editRunId');
+                console.log('🏃 Current run ID:', runId);
+                return runId;
+            }
+        },
 
         checkConflicts: function () {
             const conflicts = [];
@@ -2567,4 +3095,9 @@ document.addEventListener('DOMContentLoaded', function () {
     console.log('🐛 Try: window.runDebugFixed.loadClientsForCreateRun() to load clients');
     console.log('🐛 Try: window.runDebugFixed.validateCreateRunForm() to validate create form');
     console.log('🐛 Try: window.runDebugFixed.resetCreateRunForm() to reset create form');
+    console.log('🐛 PARTICIPANTS FUNCTIONS:');
+    console.log('🐛 Try: window.runDebugFixed.participants.testDisplay() to test participant display');
+    console.log('🐛 Try: window.runDebugFixed.participants.testLoad("runId") to test loading participants');
+    console.log('🐛 Try: window.runDebugFixed.participants.getCurrentRunId() to get current run ID');
+    console.log('👥 Participants functionality added to runManagement.js');
 });
